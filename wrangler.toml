@@ -1,0 +1,8 @@
+name = "bizhigher"
+compatibility_date = "2026-07-01"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bizhigher-db"
+database_id = "a917b539-f3d6-4fd9-b9eb-0b11df59d82a"
