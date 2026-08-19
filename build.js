@@ -18,7 +18,7 @@ const LOGO_SVG = `<svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="t
 
 const FAVICON = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%230A4DF5'/%3E%3Cpath d='M15 44 h9 v-9 h9 v-9 h6.5' stroke='white' stroke-width='6.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M38.5 15.5 h10 v10' stroke='white' stroke-width='6.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E`;
 
-function head({ title, description, pathName, jsonLd }) {
+function head({ title, description, pathName, jsonLd, noindex }) {
   return `<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -26,6 +26,7 @@ function head({ title, description, pathName, jsonLd }) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${title}</title>
 <meta name="description" content="${description}">
+${noindex ? '<meta name="robots" content="noindex">' : ''}
 <link rel="canonical" href="${SITE.domain}${pathName}">
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${description}">
@@ -399,6 +400,63 @@ function servicePage(s) {
 ` + FOOTER;
 }
 
+/* ---------- 페이지: 주문 완료 + 인테이크 ---------- */
+
+function thanksPage() {
+  return head({
+    title: '주문 완료 — 작업 정보를 알려주세요 | BizHigher',
+    description: 'BizHigher 주문이 완료되었습니다. 작업 시작을 위한 질문지를 작성해주세요.',
+    pathName: '/thanks/',
+    noindex: true,
+  }) + nav('') + `
+<section class="audit-hero">
+  <div class="container-narrow">
+    <p class="eyebrow">결제 완료 ✓</p>
+    <h1 class="h1" style="font-size:40px;">주문 감사합니다!</h1>
+    <p class="hero-sub">작업을 시작하려면 아래 질문지만 작성해주세요. 5분이면 충분하고, <b>이 질문지가 제출된 시점부터 딜리버리 기한(영업일 기준)이 시작됩니다.</b></p>
+    <form class="audit-form" id="intake-form" style="max-width:560px;">
+      <input type="hidden" name="service" id="service-field" value="">
+      <input type="text" name="business" placeholder="업체명 (한글/영문)" class="input" required>
+      <input type="text" name="contact_name" placeholder="담당자 성함" class="input" required>
+      <input type="text" name="phone" placeholder="연락처 (문자 가능한 번호)" class="input" required>
+      <input type="email" name="email" placeholder="이메일 (결제하신 이메일)" class="input" required>
+      <input type="text" name="links" placeholder="구글 프로필·웹사이트·SNS 링크 (있는 것만)" class="input">
+      <textarea name="notes" placeholder="비즈니스 소개와 요청사항을 자유롭게 적어주세요 — 주 고객층, 강점, 강조하고 싶은 것, 피하고 싶은 표현 등" class="input" rows="5" style="resize:vertical;"></textarea>
+      <button type="submit" class="btn btn-primary btn-block">질문지 제출 — 작업 시작하기</button>
+      <div class="form-msg" id="form-msg"></div>
+    </form>
+    <p class="note-text">제출 후 확인 연락을 드리고 바로 작업이 시작됩니다. 궁금한 점은 hello@bizhigher.com</p>
+  </div>
+</section>
+<script>
+var params = new URLSearchParams(location.search);
+document.getElementById('service-field').value = params.get('service') || '';
+document.getElementById('intake-form').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const msg = document.getElementById('form-msg');
+  const btn = this.querySelector('button');
+  btn.disabled = true; btn.textContent = '제출 중...';
+  try {
+    const body = Object.fromEntries(new FormData(this).entries());
+    const res = await fetch('/api/intake', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error('server');
+    msg.className = 'form-msg success';
+    msg.textContent = '제출 완료! 곧 확인 연락을 드리고 작업을 시작하겠습니다.';
+    btn.textContent = '제출 완료 ✓';
+  } catch (err) {
+    msg.className = 'form-msg error';
+    msg.textContent = '일시적인 오류입니다. 잠시 후 다시 시도하시거나 hello@bizhigher.com 으로 보내주세요.';
+    btn.disabled = false; btn.textContent = '질문지 제출 — 작업 시작하기';
+  }
+});
+</script>
+` + FOOTER;
+}
+
 /* ---------- 404 ---------- */
 
 function notFoundPage() {
@@ -448,6 +506,7 @@ write('index.html', homePage());
 write('services/index.html', servicesPage());
 write('pricing/index.html', pricingPage());
 write('free-audit/index.html', auditPage());
+write('thanks/index.html', thanksPage());
 DATA.services.forEach((s) => write(`service/${s.slug}/index.html`, servicePage(s)));
 write('404.html', notFoundPage());
 write('sitemap.xml', sitemap());
