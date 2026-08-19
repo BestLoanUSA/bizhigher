@@ -76,19 +76,7 @@ async function generateReport(business, location, env) {
   const found = await placesSearch(`${business} ${location}`, key, 3);
   const place = found[0] || null;
   const biz = place
-    ? {
-        found: true,
-        name: place.name,
-        rating: place.rating,
-        reviewCount: place.reviewCount,
-        photoCount: place.photoCount,
-        websiteUri: place.websiteUri,
-        hasHours: place.hasHours,
-        primaryType: place.primaryType,
-        address: place.address,
-        phone: place.phone,
-        websiteReachable: false,
-      }
+    ? { ...place, found: true, websiteReachable: false }
     : { found: false, name: business };
 
   // B. 웹사이트 접근 확인 (5초 제한)
@@ -96,13 +84,11 @@ async function generateReport(business, location, env) {
     biz.websiteReachable = await checkReachable(biz.websiteUri);
   }
 
-  // C. 동네 경쟁 업체 (같은 업종 검색, 자기 자신 제외, 리뷰 수 상위 3곳)
+  // C. 동네 경쟁 업체 — 같은 업종 타입만 (안경점↔안경점, 식당↔식당)
+  //    업종 타입 정보가 없으면 경쟁 비교를 아예 생략 (엉뚱한 비교보다 생략이 낫다)
   let competitors = [];
   if (biz.found) {
-    const catQuery = `${biz.primaryType || business.split(' ')[0]} ${location}`;
-    const nearby = await placesSearch(catQuery, key, 10);
-    competitors = nearby
-      .filter((p) => p.id !== place.id)
+    competitors = (await competitorsNearby(biz, key).catch(() => []))
       .sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0))
       .slice(0, 3);
   }
@@ -126,6 +112,7 @@ async function generateReport(business, location, env) {
       photoCount: biz.photoCount || 0,
       website: biz.websiteUri || null,
       address: biz.address || null,
+      category: biz.primaryType || null,
       found: biz.found,
     },
     location,
@@ -149,13 +136,17 @@ async function placesSearch(textQuery, key, pageSize) {
       'Content-Type': 'application/json',
       'X-Goog-Api-Key': key,
       'X-Goog-FieldMask':
-        'places.id,places.displayName,places.rating,places.userRatingCount,places.websiteUri,places.regularOpeningHours,places.photos,places.formattedAddress,places.primaryTypeDisplayName,places.nationalPhoneNumber',
+        'places.id,places.displayName,places.rating,places.userRatingCount,places.websiteUri,places.regularOpeningHours,places.photos,places.formattedAddress,places.primaryType,places.primaryTypeDisplayName,places.nationalPhoneNumber,places.location',
     },
     body: JSON.stringify({ textQuery, languageCode: 'ko', pageSize: pageSize || 5 }),
   });
   if (!res.ok) throw new Error('places ' + res.status);
   const data = await res.json();
-  return (data.places || []).map((p) => ({
+  return (data.places || []).map(mapPlace);
+}
+
+function mapPlace(p) {
+  return {
     id: p.id,
     name: (p.displayName && p.displayName.text) || '',
     rating: p.rating || 0,
@@ -164,9 +155,49 @@ async function placesSearch(textQuery, key, pageSize) {
     websiteUri: p.websiteUri || null,
     hasHours: !!p.regularOpeningHours,
     primaryType: (p.primaryTypeDisplayName && p.primaryTypeDisplayName.text) || null,
+    primaryTypeId: p.primaryType || null,
     address: p.formattedAddress || null,
     phone: p.nationalPhoneNumber || null,
-  }));
+    lat: p.location && p.location.latitude,
+    lng: p.location && p.location.longitude,
+  };
+}
+
+/**
+ * 동종 업종 경쟁사 검색 — Nearby Search + 업종 타입 필터
+ * 같은 primaryType(예: optician)을 가진 업체만 반경 내에서 검색하므로
+ * 안경점에 식당이 섞이는 일이 구조적으로 불가능.
+ */
+async function competitorsNearby(biz, key) {
+  if (!biz.primaryTypeId || biz.lat == null) return [];
+  const res = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': key,
+      'X-Goog-FieldMask':
+        'places.id,places.displayName,places.rating,places.userRatingCount,places.primaryType',
+    },
+    body: JSON.stringify({
+      includedPrimaryTypes: [biz.primaryTypeId],
+      maxResultCount: 15,
+      languageCode: 'ko',
+      rankPreference: 'POPULARITY',
+      locationRestriction: {
+        circle: { center: { latitude: biz.lat, longitude: biz.lng }, radius: 15000 },
+      },
+    }),
+  });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return (data.places || [])
+    .filter((p) => p.id !== biz.id && p.primaryType === biz.primaryTypeId)
+    .map((p) => ({
+      id: p.id,
+      name: (p.displayName && p.displayName.text) || '',
+      rating: p.rating || 0,
+      reviewCount: p.userRatingCount || 0,
+    }));
 }
 
 async function checkReachable(url) {
