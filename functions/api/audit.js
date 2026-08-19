@@ -9,6 +9,7 @@
  *   CLAUDE_MODEL           (선택 — 기본 claude-haiku-4-5)
  */
 import { computeScores, templateAnalysis, buildClaudePrompt } from './_engine.js';
+import { notify, esc } from './_notify.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -50,6 +51,18 @@ export async function onRequestPost(context) {
   } catch (err) {
     // 조용히 폴백 — 폼은 성공 처리, 리드로 후속
   }
+  // 3) David에게 알림 (비동기 — 응답을 지연시키지 않음)
+  const reportLink = reportUrl
+    ? `<a href="https://bizhigher.com${reportUrl}">리포트 보기</a>`
+    : '리포트 생성 안 됨 (수동 확인 필요)';
+  context.waitUntil(
+    notify(env, `🔔 새 진단 신청 — ${business}`, [
+      ['업체명', esc(business)],
+      ['위치', esc(location)],
+      ['이메일', esc(email)],
+      ['리포트', reportLink],
+    ])
+  );
 
   return json({ ok: true, reportUrl });
 }
