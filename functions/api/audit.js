@@ -164,12 +164,59 @@ function mapPlace(p) {
 }
 
 /**
- * 동종 업종 경쟁사 검색 — Nearby Search + 업종 타입 필터
- * 같은 primaryType(예: optician)을 가진 업체만 반경 내에서 검색하므로
- * 안경점에 식당이 섞이는 일이 구조적으로 불가능.
+ * 업종 패밀리 — 구글이 같은 업계를 여러 세부 타입으로 쪼개놓기 때문에
+ * (예: 안경점 = optician / optometrist / eye_care_center ...)
+ * 같은 계열을 묶어서 검색해야 진짜 경쟁사가 다 잡힌다.
+ */
+const TYPE_FAMILIES = [
+  ['optician', 'optometrist', 'eye_care_center', 'ophthalmologist', 'sunglasses_store'],
+  ['dentist', 'dental_clinic', 'orthodontist', 'pediatric_dentist'],
+  ['doctor', 'medical_clinic', 'wellness_center', 'chiropractor', 'acupuncture_clinic'],
+  ['hair_salon', 'hair_care', 'barber_shop'],
+  ['beauty_salon', 'nail_salon', 'skin_care_clinic', 'spa', 'massage'],
+  ['real_estate_agency', 'real_estate_consultant'],
+  ['insurance_agency', 'financial_consultant', 'accounting', 'tax_consultant'],
+  ['lawyer', 'legal_services', 'notary_public'],
+  ['gym', 'fitness_center', 'pilates_studio', 'yoga_studio', 'martial_arts_school'],
+  ['supermarket', 'grocery_store', 'asian_grocery_store', 'butcher_shop'],
+  ['cafe', 'coffee_shop', 'bakery', 'dessert_shop', 'tea_house', 'bubble_tea_store'],
+  ['car_repair', 'auto_body_shop', 'tire_shop', 'oil_change_service'],
+  ['laundry', 'dry_cleaning_service'],
+  ['veterinary_care', 'pet_groomer'],
+  ['pharmacy', 'drugstore'],
+];
+
+function typeFamily(t) {
+  if (!t) return null;
+  for (const fam of TYPE_FAMILIES) if (fam.includes(t)) return fam;
+  // 식당류: 같은 요리 타입 우선, 부족하면 일반 식당으로 확장 (아래 2차 검색)
+  if (t === 'restaurant' || t.endsWith('_restaurant')) return [t];
+  return [t];
+}
+
+/**
+ * 동종 업종 경쟁사 검색 — Nearby Search + 업종 패밀리 필터
+ * 결과가 3곳 미만이면 검색 반경을 넓혀 한 번 더 시도.
  */
 async function competitorsNearby(biz, key) {
   if (!biz.primaryTypeId || biz.lat == null) return [];
+  const family = typeFamily(biz.primaryTypeId);
+  if (!family) return [];
+
+  let results = await nearbyByTypes(biz, family, 15000, key);
+
+  // 부족하면: 반경 30km 확장 / 식당류는 일반 restaurant까지 확장
+  if (results.length < 3) {
+    const broadened =
+      biz.primaryTypeId.endsWith('_restaurant') ? [...family, 'restaurant'] : family;
+    const wider = await nearbyByTypes(biz, broadened, 30000, key);
+    const seen = new Set(results.map((r) => r.id));
+    for (const r of wider) if (!seen.has(r.id)) results.push(r);
+  }
+  return results;
+}
+
+async function nearbyByTypes(biz, types, radius, key) {
   const res = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
     method: 'POST',
     headers: {
@@ -179,19 +226,19 @@ async function competitorsNearby(biz, key) {
         'places.id,places.displayName,places.rating,places.userRatingCount,places.primaryType',
     },
     body: JSON.stringify({
-      includedPrimaryTypes: [biz.primaryTypeId],
-      maxResultCount: 15,
+      includedPrimaryTypes: types.slice(0, 5),
+      maxResultCount: 20,
       languageCode: 'ko',
       rankPreference: 'POPULARITY',
       locationRestriction: {
-        circle: { center: { latitude: biz.lat, longitude: biz.lng }, radius: 15000 },
+        circle: { center: { latitude: biz.lat, longitude: biz.lng }, radius },
       },
     }),
   });
   if (!res.ok) return [];
   const data = await res.json();
   return (data.places || [])
-    .filter((p) => p.id !== biz.id && p.primaryType === biz.primaryTypeId)
+    .filter((p) => p.id !== biz.id)
     .map((p) => ({
       id: p.id,
       name: (p.displayName && p.displayName.text) || '',
