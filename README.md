@@ -58,3 +58,4 @@ Claude에게 "진단 신청 들어온 거 보여줘"라고 하면 조회해줍�
 
 `data/services.json`의 각 상품 `stripeLinkA` / `stripeLinkB` 값을 Stripe Payment Link 주소로 교체 → 푸시. 현재는 임시로 `/free-audit/`로 연결되어 있습니다. 
 
+
