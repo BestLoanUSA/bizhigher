@@ -88,7 +88,7 @@ async function generateReport(business, location, env) {
   //    업종 타입 정보가 없으면 경쟁 비교를 아예 생략 (엉뚱한 비교보다 생략이 낫다)
   let competitors = [];
   if (biz.found) {
-    competitors = (await competitorsNearby(biz, key).catch(() => []))
+    competitors = (await competitorsNearby(biz, env, key).catch(() => []))
       .sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0))
       .slice(0, 3);
   }
@@ -113,6 +113,8 @@ async function generateReport(business, location, env) {
       website: biz.websiteUri || null,
       address: biz.address || null,
       category: biz.primaryType || null,
+      categoryGeneric: !!biz.categoryGeneric,
+      inferredIndustry: biz.inferredIndustry || null,
       found: biz.found,
     },
     location,
@@ -194,6 +196,75 @@ function typeFamily(t) {
   return [t];
 }
 
+/** 경쟁사 매칭에 쓸모없는 두루뭉술한 타입들 — 이런 분류는 "업종 미인식"으로 취급 */
+const GENERIC_TYPES = new Set([
+  'store', 'point_of_interest', 'establishment', 'shopping_mall', 'shopping_center',
+  'corporate_office', 'business_center', 'general_contractor', 'food', 'health',
+]);
+
+/** 업체명에서 업종 추론 (결정적 키워드맵 — 한/영) */
+const NAME_KEYWORDS = [
+  [/안경|optic|optix|eyewear|vision|glasses/i, '안경점'],
+  [/치과|dental/i, '치과'],
+  [/한의원|acupunc|한방/i, '한의원'],
+  [/약국|pharmac/i, '약국'],
+  [/부동산|realty|real ?estate/i, '부동산 중개'],
+  [/미용실|헤어|hair/i, '미용실'],
+  [/네일|nail/i, '네일샵'],
+  [/피부|스킨|skin|에스테틱|spa/i, '피부 관리'],
+  [/세탁|cleaner|laundry/i, '세탁소'],
+  [/학원|academy|tutor/i, '학원'],
+  [/보험|insurance/i, '보험'],
+  [/융자|loan|mortgage|lending/i, '융자'],
+  [/변호사|law|attorney|legal/i, '변호사'],
+  [/회계|cpa|tax|accounting/i, '회계사'],
+  [/식당|맛집|restaurant|순두부|bbq|국밥|grill|kitchen|식탁/i, '식당'],
+  [/카페|커피|cafe|coffee/i, '카페'],
+  [/베이커리|빵집|bakery|제과/i, '베이커리'],
+  [/마켓|마트|market|grocery/i, '마켓'],
+  [/정비|오토|auto|tire|body ?shop/i, '자동차 정비'],
+  [/치킨|chicken/i, '치킨집'],
+  [/태권도|martial|taekwondo/i, '태권도장'],
+  [/여행사|travel/i, '여행사'],
+  [/사진|photo|studio/i, '사진관'],
+  [/꽃|flower|florist/i, '꽃집'],
+];
+
+function inferKeywordFromName(name) {
+  for (const [re, kw] of NAME_KEYWORDS) if (re.test(name)) return kw;
+  return null;
+}
+
+/** Claude로 업종 추론 (키워드맵 실패 시 폴백) */
+async function inferKeywordWithClaude(biz, env) {
+  if (!env.ANTHROPIC_API_KEY) return null;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: env.CLAUDE_MODEL || 'claude-haiku-4-5',
+        max_tokens: 60,
+        messages: [{
+          role: 'user',
+          content: `업체명: "${biz.name}" (주소: ${biz.address || '미상'}). 이 업체의 업종을 추론해 구글 지도에서 경쟁사를 찾을 한국어 검색 키워드 하나만 JSON으로 답하라. 예: {"keyword":"안경점"}. JSON만 출력.`,
+        }],
+      }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const text = (data.content && data.content[0] && data.content[0].text) || '';
+    const m = text.match(/\{[\s\S]*\}/);
+    return m ? (JSON.parse(m[0]).keyword || null) : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * 동종 업종 경쟁사 검색 (v5)
  * 방식: 구글이 분류한 업종 이름(예: "안경점")으로 가게 좌표 주변을 텍스트 검색한 뒤,
@@ -201,21 +272,34 @@ function typeFamily(t) {
  * — Nearby 타입 필터가 지원하지 않는 업종(안경점 등)에서도 작동
  * — 패밀리 필터 덕분에 베이커리·마트가 섞이는 것이 구조적으로 불가능
  */
-async function competitorsNearby(biz, key) {
-  if (!biz.primaryTypeId || !biz.primaryType || biz.lat == null) return [];
-  const family = typeFamily(biz.primaryTypeId);
+async function competitorsNearby(biz, env, key) {
+  if (biz.lat == null) return [];
+  const generic = !biz.primaryTypeId || GENERIC_TYPES.has(biz.primaryTypeId);
+  biz.categoryGeneric = generic;
 
-  let results = await searchByTypeNameNear(biz, 20000, key, family);
+  // 검색 키워드 결정: 정상 분류면 구글 업종명, 부실 분류면 업체명에서 추론
+  let keyword = null;
+  if (!generic && biz.primaryType) {
+    keyword = biz.primaryType;
+  } else {
+    keyword = inferKeywordFromName(biz.name) || (await inferKeywordWithClaude(biz, env));
+    biz.inferredIndustry = keyword;
+  }
+  if (!keyword) return [];
+
+  // 타깃 패밀리: 정상 분류면 그 타입의 패밀리, 부실 분류면 검색 결과의 지배적 업종으로 자동 보정
+  const targetFamily = !generic ? typeFamily(biz.primaryTypeId) : null;
+
+  let results = await searchByKeywordNear(biz, keyword, 20000, key, targetFamily);
   if (results.length < 2) {
-    // 반경을 넓혀 한 번 더 (한적한 지역 대응)
-    const wider = await searchByTypeNameNear(biz, 50000, key, family);
+    const wider = await searchByKeywordNear(biz, keyword, 50000, key, targetFamily);
     const seen = new Set(results.map((r) => r.id));
     for (const r of wider) if (!seen.has(r.id)) results.push(r);
   }
   return results;
 }
 
-async function searchByTypeNameNear(biz, radius, key, family) {
+async function searchByKeywordNear(biz, keyword, radius, key, targetFamily) {
   const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
     method: 'POST',
     headers: {
@@ -225,7 +309,7 @@ async function searchByTypeNameNear(biz, radius, key, family) {
         'places.id,places.displayName,places.rating,places.userRatingCount,places.primaryType',
     },
     body: JSON.stringify({
-      textQuery: biz.primaryType, // 업종 이름 그대로 검색 (예: "안경점", "치과", "네일샵")
+      textQuery: keyword, // 업종 키워드로 검색 (예: "안경점", "치과", "네일샵")
       languageCode: 'ko',
       pageSize: 20,
       locationBias: {
@@ -235,19 +319,26 @@ async function searchByTypeNameNear(biz, radius, key, family) {
   });
   if (!res.ok) return [];
   const data = await res.json();
-  return (data.places || [])
-    .filter(
-      (p) =>
-        p.id !== biz.id &&
-        p.primaryType && // 업종 타입이 확인되는 곳만
-        (family ? family.includes(p.primaryType) : p.primaryType === biz.primaryTypeId)
-    )
+  const candidates = (data.places || [])
+    .filter((p) => p.id !== biz.id && p.primaryType && !GENERIC_TYPES.has(p.primaryType))
     .map((p) => ({
       id: p.id,
       name: (p.displayName && p.displayName.text) || '',
       rating: p.rating || 0,
       reviewCount: p.userRatingCount || 0,
+      typeId: p.primaryType,
     }));
+  if (candidates.length === 0) return [];
+
+  // 타깃 패밀리가 없으면(업종 미인식 케이스) 검색 결과의 지배적 업종 패밀리로 자동 보정
+  let family = targetFamily;
+  if (!family) {
+    const counts = {};
+    for (const c of candidates) counts[c.typeId] = (counts[c.typeId] || 0) + 1;
+    const dominant = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
+    family = typeFamily(dominant);
+  }
+  return candidates.filter((c) => family.includes(c.typeId));
 }
 
 async function checkReachable(url) {

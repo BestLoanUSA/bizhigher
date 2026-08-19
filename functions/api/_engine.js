@@ -17,7 +17,7 @@ export function computeScores(biz, competitors) {
     else if ((biz.photoCount || 0) >= 1) exposure += 1;
     if (biz.websiteUri) exposure += 4;
     if (biz.hasHours) exposure += 3;
-    if (biz.primaryType) exposure += 2;
+    if (biz.primaryType && !biz.categoryGeneric) exposure += 2;
   }
   areas.push({ key: 'exposure', label: '구글 노출', score: exposure, max: 20 });
 
@@ -52,7 +52,7 @@ export function computeScores(biz, competitors) {
     if ((biz.photoCount || 0) >= 5) completeness += 5;
     if (biz.address) completeness += 4;
     if (biz.phone) completeness += 3;
-    if (biz.primaryType) completeness += 2;
+    if (biz.primaryType && !biz.categoryGeneric) completeness += 2;
   }
   areas.push({ key: 'completeness', label: '정보 완성도', score: completeness, max: 20 });
 
@@ -135,8 +135,23 @@ export function templateAnalysis(biz, scores, competitors) {
     };
   }
   const sorted = [...scores.areas].sort((a, b) => a.score / a.max - b.score / b.max);
-  const worst = sorted.slice(0, 2);
-  const problems = worst.map((a) => AREA_TEMPLATES[a.key]);
+  let problems;
+  if (biz.categoryGeneric) {
+    // 구글이 업종을 '일반 상점'류로만 인식 → 이것 자체가 1순위 문제
+    const industryNote = biz.inferredIndustry ? ` (실제 업종: ${biz.inferredIndustry}으로 추정)` : '';
+    problems = [
+      {
+        title: '구글이 가게의 업종을 제대로 인식하지 못하고 있습니다',
+        why: `현재 구글은 이 가게를 구체적인 업종이 아닌 "일반 상점"으로 분류하고 있습니다${industryNote}. 이러면 손님이 "근처 ${biz.inferredIndustry || '해당 업종'}"을 검색할 때 지도에 노출되지 않아, 존재하지만 검색되지 않는 가게가 됩니다.`,
+        fix: '구글 비즈니스 프로필의 기본 카테고리와 세부 카테고리를 정확한 업종으로 교정하는 것이 최우선입니다.',
+        serviceSlug: 'google-profile-optimization',
+        serviceName: '구글 비즈니스 프로필 최적화 — $199',
+      },
+      AREA_TEMPLATES[sorted[0].key],
+    ];
+  } else {
+    problems = sorted.slice(0, 2).map((a) => AREA_TEMPLATES[a.key]);
+  }
   const grade = scores.total >= 75 ? '상위권' : scores.total >= 55 ? '평균 수준' : '개선이 시급한 수준';
   const compLine =
     competitors && competitors.length
@@ -161,6 +176,8 @@ export function buildClaudePrompt(biz, scores, competitors) {
       website: biz.websiteUri || null,
       hasHours: biz.hasHours,
       category: biz.primaryType || null,
+      categoryGeneric: !!biz.categoryGeneric,
+      inferredIndustry: biz.inferredIndustry || null,
       address: biz.address || null,
     },
     scores,
@@ -179,6 +196,7 @@ ${JSON.stringify(data, null, 2)}
 - 존댓말, 친근하지만 전문적으로. 사장님이 바로 이해할 수 있는 쉬운 말로.
 - 막연한 표현 대신 데이터의 실제 숫자를 인용할 것 (예: "리뷰가 23개로 경쟁 업체 평균 89개의 4분의 1 수준입니다")
 - problems는 점수가 가장 낮은 영역 2개에 대해 작성
+- 단, categoryGeneric이 true이면 첫 번째 problem은 반드시 "구글이 업종을 일반 상점으로만 인식하고 있어 업종 검색에 노출되지 않는 문제"로 작성 (serviceSlug: google-profile-optimization). inferredIndustry가 있으면 실제 업종으로 언급
 - 각 problem의 serviceSlug는 다음 중 가장 적합한 것 하나: google-profile-optimization(프로필 문제), review-qr-kit(리뷰 부족), seo-blog-pack(웹사이트/검색 노출), ad-creative-pack(광고 필요)
 - serviceName은 해당 상품명과 가격: "구글 비즈니스 프로필 최적화 — $199" / "구글 리뷰 QR 키트 — $79" / "SEO 블로그 아티클 팩 — $149~" / "광고 소재 팩 — $199"
 

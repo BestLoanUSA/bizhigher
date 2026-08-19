@@ -117,7 +117,7 @@ export function renderReportHtml(report, id) {
   <div class="report-head">
     <div class="report-kicker">BIZHIGHER 무료 AI 마케팅 진단</div>
     <h1 class="report-title">${esc(b.name)}</h1>
-    <p class="report-date">${report.business.category ? esc(report.business.category) + ' · ' : ''}${esc(report.location)} · ${new Date(report.generatedAt).toLocaleDateString('ko-KR')}</p>
+    <p class="report-date">${(report.business.inferredIndustry || report.business.category) ? esc(report.business.inferredIndustry || report.business.category) + ' · ' : ''}${esc(report.location)} · ${new Date(report.generatedAt).toLocaleDateString('ko-KR')}</p>
   </div>
 
   <div class="card">
