@@ -189,35 +189,34 @@ const TYPE_FAMILIES = [
 function typeFamily(t) {
   if (!t) return null;
   for (const fam of TYPE_FAMILIES) if (fam.includes(t)) return fam;
-  // 식당류: 같은 요리 타입 우선, 부족하면 일반 식당으로 확장 (아래 2차 검색)
-  if (t === 'restaurant' || t.endsWith('_restaurant')) return [t];
+  // 식당류: 같은 요리 타입 + 일반 식당까지 한 패밀리로 (한식당의 경쟁자는 옆의 다른 식당들)
+  if (t === 'restaurant' || t.endsWith('_restaurant')) return [t, 'restaurant'];
   return [t];
 }
 
 /**
- * 동종 업종 경쟁사 검색 — Nearby Search + 업종 패밀리 필터
- * 결과가 3곳 미만이면 검색 반경을 넓혀 한 번 더 시도.
+ * 동종 업종 경쟁사 검색 (v5)
+ * 방식: 구글이 분류한 업종 이름(예: "안경점")으로 가게 좌표 주변을 텍스트 검색한 뒤,
+ * 결과의 업종 타입이 우리 가게와 같은 패밀리인 것만 통과시킨다.
+ * — Nearby 타입 필터가 지원하지 않는 업종(안경점 등)에서도 작동
+ * — 패밀리 필터 덕분에 베이커리·마트가 섞이는 것이 구조적으로 불가능
  */
 async function competitorsNearby(biz, key) {
-  if (!biz.primaryTypeId || biz.lat == null) return [];
+  if (!biz.primaryTypeId || !biz.primaryType || biz.lat == null) return [];
   const family = typeFamily(biz.primaryTypeId);
-  if (!family) return [];
 
-  let results = await nearbyByTypes(biz, family, 15000, key);
-
-  // 부족하면: 반경 30km 확장 / 식당류는 일반 restaurant까지 확장
-  if (results.length < 3) {
-    const broadened =
-      biz.primaryTypeId.endsWith('_restaurant') ? [...family, 'restaurant'] : family;
-    const wider = await nearbyByTypes(biz, broadened, 30000, key);
+  let results = await searchByTypeNameNear(biz, 20000, key, family);
+  if (results.length < 2) {
+    // 반경을 넓혀 한 번 더 (한적한 지역 대응)
+    const wider = await searchByTypeNameNear(biz, 50000, key, family);
     const seen = new Set(results.map((r) => r.id));
     for (const r of wider) if (!seen.has(r.id)) results.push(r);
   }
   return results;
 }
 
-async function nearbyByTypes(biz, types, radius, key) {
-  const res = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
+async function searchByTypeNameNear(biz, radius, key, family) {
+  const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -226,11 +225,10 @@ async function nearbyByTypes(biz, types, radius, key) {
         'places.id,places.displayName,places.rating,places.userRatingCount,places.primaryType',
     },
     body: JSON.stringify({
-      includedPrimaryTypes: types.slice(0, 5),
-      maxResultCount: 20,
+      textQuery: biz.primaryType, // 업종 이름 그대로 검색 (예: "안경점", "치과", "네일샵")
       languageCode: 'ko',
-      rankPreference: 'POPULARITY',
-      locationRestriction: {
+      pageSize: 20,
+      locationBias: {
         circle: { center: { latitude: biz.lat, longitude: biz.lng }, radius },
       },
     }),
@@ -238,7 +236,12 @@ async function nearbyByTypes(biz, types, radius, key) {
   if (!res.ok) return [];
   const data = await res.json();
   return (data.places || [])
-    .filter((p) => p.id !== biz.id)
+    .filter(
+      (p) =>
+        p.id !== biz.id &&
+        p.primaryType && // 업종 타입이 확인되는 곳만
+        (family ? family.includes(p.primaryType) : p.primaryType === biz.primaryTypeId)
+    )
     .map((p) => ({
       id: p.id,
       name: (p.displayName && p.displayName.text) || '',
