@@ -279,7 +279,7 @@ function auditPage() {
   <div class="container-narrow">
     <p class="eyebrow">무료 · 60초 · 가입 불필요</p>
     <h1 class="h1">내 가게 마케팅,<br>몇 점일까요?</h1>
-    <p class="hero-sub">구글에서 우리 가게가 어떻게 보이는지 AI가 분석해 드립니다. 아래 정보를 남겨주시면 진단 리포트를 이메일로 보내드립니다.</p>
+    <p class="hero-sub">구글에서 우리 가게가 어떻게 보이는지 AI가 분석해 드립니다. 60초 안에 이 화면에서 바로 리포트가 열립니다.</p>
     <form class="audit-form" id="audit-form">
       <input type="text" name="business" placeholder="업체명 (예: 청기와 순두부)" class="input" required>
       <input type="text" name="location" placeholder="도시 또는 구글 프로필 링크" class="input" required>
@@ -287,7 +287,7 @@ function auditPage() {
       <button type="submit" class="btn btn-primary btn-block">무료 진단 시작 →</button>
       <div class="form-msg" id="form-msg"></div>
     </form>
-    <p class="note-text">진단 리포트는 영업일 1일 안에 이메일로 도착합니다. 스팸은 보내지 않습니다.</p>
+    <p class="note-text">분석에 20~40초 정도 걸립니다. 완료되면 리포트 화면으로 자동 이동합니다. 스팸은 보내지 않습니다.</p>
   </div>
 </section>
 <section class="section section-gray">
@@ -305,7 +305,7 @@ document.getElementById('audit-form').addEventListener('submit', async function 
   e.preventDefault();
   const msg = document.getElementById('form-msg');
   const btn = this.querySelector('button');
-  btn.disabled = true; btn.textContent = '접수 중...';
+  btn.disabled = true; btn.textContent = 'AI가 분석 중입니다... (최대 40초)';
   try {
     const body = Object.fromEntries(new FormData(this).entries());
     const res = await fetch('/api/audit', {
@@ -314,6 +314,12 @@ document.getElementById('audit-form').addEventListener('submit', async function 
       body: JSON.stringify(body),
     });
     if (!res.ok) throw new Error('server');
+    const result = await res.json();
+    if (result.reportUrl) {
+      btn.textContent = '리포트 여는 중...';
+      window.location.href = result.reportUrl;
+      return;
+    }
     msg.className = 'form-msg success';
     msg.textContent = '접수되었습니다! 영업일 1일 안에 진단 리포트를 이메일로 보내드릴게요.';
     this.reset();
