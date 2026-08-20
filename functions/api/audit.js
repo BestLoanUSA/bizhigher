@@ -79,6 +79,11 @@ async function generateReport(business, location, env) {
     ? { ...place, found: true, websiteReachable: false }
     : { found: false, name: business };
 
+  // 업종 표기: 가능하면 한국어로 (리포트·프롬프트 표시용)
+  if (biz.found && biz.primaryTypeId) {
+    biz.primaryType = koTypeLabel(biz.primaryTypeId) || biz.primaryType;
+  }
+
   // B. 웹사이트 접근 확인 (5초 제한)
   if (biz.found && biz.websiteUri) {
     biz.websiteReachable = await checkReachable(biz.websiteUri);
@@ -141,7 +146,8 @@ async function placesSearch(textQuery, key, pageSize) {
       'X-Goog-FieldMask':
         'places.id,places.displayName,places.rating,places.userRatingCount,places.websiteUri,places.regularOpeningHours,places.photos,places.formattedAddress,places.primaryType,places.primaryTypeDisplayName,places.nationalPhoneNumber,places.location',
     },
-    body: JSON.stringify({ textQuery, languageCode: 'ko', pageSize: pageSize || 5 }),
+    // languageCode 'en': ko로 요청하면 구글이 업체명을 한국어로 번역해버림 ("New Optix" → "새로운 안경")
+    body: JSON.stringify({ textQuery, languageCode: 'en', pageSize: pageSize || 5 }),
   });
   if (!res.ok) throw new Error('places ' + res.status);
   const data = await res.json();
@@ -203,36 +209,59 @@ const GENERIC_TYPES = new Set([
   'corporate_office', 'business_center', 'general_contractor', 'food', 'health',
 ]);
 
-/** 업체명에서 업종 추론 (결정적 키워드맵 — 한/영) */
+/** 업체명에서 업종 추론 (결정적 키워드맵 — [정규식, 한국어 표기, 영어 검색어]) */
 const NAME_KEYWORDS = [
-  [/안경|optic|optix|eyewear|vision|glasses/i, '안경점'],
-  [/치과|dental/i, '치과'],
-  [/한의원|acupunc|한방/i, '한의원'],
-  [/약국|pharmac/i, '약국'],
-  [/부동산|realty|real ?estate/i, '부동산 중개'],
-  [/미용실|헤어|hair/i, '미용실'],
-  [/네일|nail/i, '네일샵'],
-  [/피부|스킨|skin|에스테틱|spa/i, '피부 관리'],
-  [/세탁|cleaner|laundry/i, '세탁소'],
-  [/학원|academy|tutor/i, '학원'],
-  [/보험|insurance/i, '보험'],
-  [/융자|loan|mortgage|lending/i, '융자'],
-  [/변호사|law|attorney|legal/i, '변호사'],
-  [/회계|cpa|tax|accounting/i, '회계사'],
-  [/식당|맛집|restaurant|순두부|bbq|국밥|grill|kitchen|식탁/i, '식당'],
-  [/카페|커피|cafe|coffee/i, '카페'],
-  [/베이커리|빵집|bakery|제과/i, '베이커리'],
-  [/마켓|마트|market|grocery/i, '마켓'],
-  [/정비|오토|auto|tire|body ?shop/i, '자동차 정비'],
-  [/치킨|chicken/i, '치킨집'],
-  [/태권도|martial|taekwondo/i, '태권도장'],
-  [/여행사|travel/i, '여행사'],
-  [/사진|photo|studio/i, '사진관'],
-  [/꽃|flower|florist/i, '꽃집'],
+  [/안경|optic|optix|eyewear|vision|glasses/i, '안경점', 'optometrist'],
+  [/치과|dental/i, '치과', 'dentist'],
+  [/한의원|acupunc|한방/i, '한의원', 'acupuncture'],
+  [/약국|pharmac/i, '약국', 'pharmacy'],
+  [/부동산|realty|real ?estate/i, '부동산 중개', 'real estate agency'],
+  [/미용실|헤어|hair/i, '미용실', 'hair salon'],
+  [/네일|nail/i, '네일샵', 'nail salon'],
+  [/피부|스킨|skin|에스테틱|spa/i, '피부 관리', 'skin care'],
+  [/세탁|cleaner|laundry/i, '세탁소', 'dry cleaner'],
+  [/학원|academy|tutor/i, '학원', 'tutoring center'],
+  [/보험|insurance/i, '보험', 'insurance agency'],
+  [/융자|loan|mortgage|lending/i, '융자', 'mortgage lender'],
+  [/변호사|law|attorney|legal/i, '변호사', 'attorney'],
+  [/회계|cpa|tax|accounting/i, '회계사', 'accountant'],
+  [/식당|맛집|restaurant|순두부|bbq|국밥|grill|kitchen|식탁/i, '식당', 'restaurant'],
+  [/카페|커피|cafe|coffee/i, '카페', 'coffee shop'],
+  [/베이커리|빵집|bakery|제과/i, '베이커리', 'bakery'],
+  [/마켓|마트|market|grocery/i, '마켓', 'grocery store'],
+  [/정비|오토|auto|tire|body ?shop/i, '자동차 정비', 'auto repair'],
+  [/치킨|chicken/i, '치킨집', 'chicken restaurant'],
+  [/태권도|martial|taekwondo/i, '태권도장', 'taekwondo'],
+  [/여행사|travel/i, '여행사', 'travel agency'],
+  [/사진|photo|studio/i, '사진관', 'photo studio'],
+  [/꽃|flower|florist/i, '꽃집', 'florist'],
 ];
 
 function inferKeywordFromName(name) {
-  for (const [re, kw] of NAME_KEYWORDS) if (re.test(name)) return kw;
+  for (const [re, ko, en] of NAME_KEYWORDS) if (re.test(name)) return { ko, en };
+  return null;
+}
+
+/** 구글 타입 ID → 한국어 표기 (리포트 표시용) */
+const KO_TYPE_LABEL = {
+  optician: '안경점', optometrist: '검안사', eye_care_center: '안경·검안', ophthalmologist: '안과',
+  sunglasses_store: '선글라스 매장', dentist: '치과', dental_clinic: '치과', orthodontist: '교정치과',
+  doctor: '병원', medical_clinic: '클리닉', chiropractor: '카이로프랙틱', acupuncture_clinic: '한의원',
+  hair_salon: '미용실', barber_shop: '이발소', beauty_salon: '뷰티샵', nail_salon: '네일샵',
+  skin_care_clinic: '피부 관리', spa: '스파', massage: '마사지', real_estate_agency: '부동산 중개',
+  insurance_agency: '보험', accounting: '회계', tax_consultant: '세무', lawyer: '변호사',
+  legal_services: '법률 서비스', gym: '헬스장', pilates_studio: '필라테스', yoga_studio: '요가',
+  supermarket: '슈퍼마켓', grocery_store: '마켓', asian_grocery_store: '아시안 마켓',
+  cafe: '카페', coffee_shop: '커피숍', bakery: '베이커리', dessert_shop: '디저트숍',
+  car_repair: '자동차 정비', tire_shop: '타이어샵', laundry: '세탁소', dry_cleaning_service: '세탁소',
+  veterinary_care: '동물병원', pet_groomer: '펫 미용', pharmacy: '약국', drugstore: '약국',
+  restaurant: '식당', korean_restaurant: '한식당',
+};
+
+function koTypeLabel(typeId) {
+  if (!typeId) return null;
+  if (KO_TYPE_LABEL[typeId]) return KO_TYPE_LABEL[typeId];
+  if (typeId.endsWith('_restaurant')) return '식당';
   return null;
 }
 
@@ -252,7 +281,7 @@ async function inferKeywordWithClaude(biz, env) {
         max_tokens: 60,
         messages: [{
           role: 'user',
-          content: `업체명: "${biz.name}" (주소: ${biz.address || '미상'}). 이 업체의 업종을 추론해 구글 지도에서 경쟁사를 찾을 한국어 검색 키워드 하나만 JSON으로 답하라. 예: {"keyword":"안경점"}. JSON만 출력.`,
+          content: `업체명: "${biz.name}" (주소: ${biz.address || '미상'}). 이 업체의 업종을 추론해, 구글 지도에서 경쟁사를 찾을 검색 키워드를 한국어와 영어로 JSON으로만 답하라. 예: {"ko":"안경점","en":"optometrist"}`,
         }],
       }),
     });
@@ -260,7 +289,9 @@ async function inferKeywordWithClaude(biz, env) {
     const data = await res.json();
     const text = (data.content && data.content[0] && data.content[0].text) || '';
     const m = text.match(/\{[\s\S]*\}/);
-    return m ? (JSON.parse(m[0]).keyword || null) : null;
+    if (!m) return null;
+    const p = JSON.parse(m[0]);
+    return p.ko || p.en ? { ko: p.ko || null, en: p.en || null } : null;
   } catch {
     return null;
   }
@@ -278,30 +309,52 @@ async function competitorsNearby(biz, env, key) {
   const generic = !biz.primaryTypeId || GENERIC_TYPES.has(biz.primaryTypeId);
   biz.categoryGeneric = generic;
 
-  // 검색 키워드 결정: 정상 분류면 구글 업종명, 부실 분류면 업체명에서 추론
-  let keyword = null;
-  if (!generic && biz.primaryType) {
-    keyword = biz.primaryType;
+  // 검색 키워드 결정 (영어 + 한국어 둘 다) — 미국에서는 영어 검색이 실제 주변 업체를
+  // 가장 잘 잡고, 한국어 검색은 한국어 상호 업체를 보완한다.
+  let kws = { ko: null, en: null };
+  if (!generic && biz.primaryTypeId) {
+    kws.en = biz.primaryTypeId.replace(/_/g, ' ');
+    kws.ko = koTypeLabel(biz.primaryTypeId);
   } else {
-    keyword = inferKeywordFromName(biz.name) || (await inferKeywordWithClaude(biz, env));
-    biz.inferredIndustry = keyword;
+    const inferred = inferKeywordFromName(biz.name) || (await inferKeywordWithClaude(biz, env));
+    if (inferred) {
+      kws = inferred;
+      biz.inferredIndustry = inferred.ko || inferred.en;
+    }
   }
-  if (!keyword) return [];
+  if (!kws.en && !kws.ko) return [];
 
-  // 도시명을 검색어에 붙이면 지역 결과가 훨씬 정확해진다 ("안경점" → "안경점 Garden Grove")
+  // 쿼리 후보: "키워드 + 도시" 우선, 그다음 키워드 단독(좌표 바이어스만)
   const city = cityFromAddress(biz.address);
-  const query = city ? `${keyword} ${city}` : keyword;
-
-  // 타깃 패밀리: 정상 분류면 그 타입의 패밀리, 부실 분류면 검색 결과의 지배적 업종으로 자동 보정
-  const targetFamily = !generic ? typeFamily(biz.primaryTypeId) : null;
-
-  let results = await searchByKeywordNear(biz, query, 12000, key, targetFamily);
-  if (results.length < 2) {
-    const wider = await searchByKeywordNear(biz, query, 25000, key, targetFamily);
-    const seen = new Set(results.map((r) => r.id));
-    for (const r of wider) if (!seen.has(r.id)) results.push(r);
+  const queries = [];
+  for (const k of [kws.en, kws.ko]) {
+    if (!k) continue;
+    if (city) queries.push(`${k} ${city}`);
+    queries.push(k);
   }
-  return results;
+
+  // 12km → (부족 시) 25km. 쿼리를 순서대로 시도하며 id로 중복 제거.
+  const seen = new Map();
+  for (const radius of [12000, 25000]) {
+    for (const q of queries) {
+      if (seen.size >= 6) break;
+      const found = await searchByKeywordNear(biz, q, radius, key).catch(() => []);
+      for (const r of found) if (!seen.has(r.id)) seen.set(r.id, r);
+    }
+    if (seen.size >= 2) break;
+  }
+  const candidates = [...seen.values()];
+  if (candidates.length === 0) return [];
+
+  // 업종 패밀리 필터: 정상 분류면 그 타입의 패밀리, 부실 분류면 결과의 지배적 업종으로 보정
+  let family = !generic ? typeFamily(biz.primaryTypeId) : null;
+  if (!family) {
+    const counts = {};
+    for (const c of candidates) counts[c.typeId] = (counts[c.typeId] || 0) + 1;
+    const dominant = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
+    family = typeFamily(dominant);
+  }
+  return candidates.filter((c) => family.includes(c.typeId));
 }
 
 /** formattedAddress에서 도시명 추출 — "9520 Garden Grove Blvd, Garden Grove, CA 92844, 미국" → "Garden Grove" */
@@ -325,7 +378,7 @@ function haversineKm(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-async function searchByKeywordNear(biz, keyword, radius, key, targetFamily) {
+async function searchByKeywordNear(biz, keyword, radius, key) {
   const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
     method: 'POST',
     headers: {
@@ -335,8 +388,8 @@ async function searchByKeywordNear(biz, keyword, radius, key, targetFamily) {
         'places.id,places.displayName,places.rating,places.userRatingCount,places.primaryType,places.location',
     },
     body: JSON.stringify({
-      textQuery: keyword, // 업종 키워드로 검색 (예: "안경점", "치과", "네일샵")
-      languageCode: 'ko',
+      textQuery: keyword, // 업종 키워드로 검색 (예: "optometrist Garden Grove", "안경점")
+      languageCode: 'en',
       pageSize: 20,
       locationBias: {
         circle: { center: { latitude: biz.lat, longitude: biz.lng }, radius },
@@ -362,17 +415,7 @@ async function searchByKeywordNear(biz, keyword, radius, key, targetFamily) {
     // 핵심 수정: locationBias는 "권장"일 뿐 강제가 아니라서 유명한 원거리 업체
     // (예: LA 서독안경)가 섞여 들어온다 → 실제 좌표 거리로 하드 필터.
     .filter((p) => p.distanceKm != null && p.distanceKm <= maxKm);
-  if (candidates.length === 0) return [];
-
-  // 타깃 패밀리가 없으면(업종 미인식 케이스) 검색 결과의 지배적 업종 패밀리로 자동 보정
-  let family = targetFamily;
-  if (!family) {
-    const counts = {};
-    for (const c of candidates) counts[c.typeId] = (counts[c.typeId] || 0) + 1;
-    const dominant = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
-    family = typeFamily(dominant);
-  }
-  return candidates.filter((c) => family.includes(c.typeId));
+  return candidates;
 }
 
 async function checkReachable(url) {
