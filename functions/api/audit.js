@@ -123,6 +123,7 @@ async function generateReport(business, location, env) {
       name: c.name,
       rating: c.rating || null,
       reviewCount: c.reviewCount || 0,
+      distanceMi: c.distanceKm != null ? Math.round(c.distanceKm * 6.21) / 10 : null,
     })),
     analysis,
     generatedAt: new Date().toISOString(),
@@ -287,16 +288,41 @@ async function competitorsNearby(biz, env, key) {
   }
   if (!keyword) return [];
 
+  // 도시명을 검색어에 붙이면 지역 결과가 훨씬 정확해진다 ("안경점" → "안경점 Garden Grove")
+  const city = cityFromAddress(biz.address);
+  const query = city ? `${keyword} ${city}` : keyword;
+
   // 타깃 패밀리: 정상 분류면 그 타입의 패밀리, 부실 분류면 검색 결과의 지배적 업종으로 자동 보정
   const targetFamily = !generic ? typeFamily(biz.primaryTypeId) : null;
 
-  let results = await searchByKeywordNear(biz, keyword, 20000, key, targetFamily);
+  let results = await searchByKeywordNear(biz, query, 12000, key, targetFamily);
   if (results.length < 2) {
-    const wider = await searchByKeywordNear(biz, keyword, 50000, key, targetFamily);
+    const wider = await searchByKeywordNear(biz, query, 25000, key, targetFamily);
     const seen = new Set(results.map((r) => r.id));
     for (const r of wider) if (!seen.has(r.id)) results.push(r);
   }
   return results;
+}
+
+/** formattedAddress에서 도시명 추출 — "9520 Garden Grove Blvd, Garden Grove, CA 92844, 미국" → "Garden Grove" */
+function cityFromAddress(address) {
+  if (!address) return null;
+  const parts = address.split(',').map((s) => s.trim());
+  // 주(州)+우편번호 파트("CA 92844") 바로 앞이 도시
+  const stateIdx = parts.findIndex((p) => /^[A-Z]{2}\s*\d{5}/.test(p));
+  if (stateIdx > 0) return parts[stateIdx - 1];
+  return parts.length >= 3 ? parts[1] : null;
+}
+
+/** 두 좌표 간 직선 거리 (km) — locationBias가 뚫려도 여기서 걸러진다 */
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 async function searchByKeywordNear(biz, keyword, radius, key, targetFamily) {
@@ -306,7 +332,7 @@ async function searchByKeywordNear(biz, keyword, radius, key, targetFamily) {
       'Content-Type': 'application/json',
       'X-Goog-Api-Key': key,
       'X-Goog-FieldMask':
-        'places.id,places.displayName,places.rating,places.userRatingCount,places.primaryType',
+        'places.id,places.displayName,places.rating,places.userRatingCount,places.primaryType,places.location',
     },
     body: JSON.stringify({
       textQuery: keyword, // 업종 키워드로 검색 (예: "안경점", "치과", "네일샵")
@@ -319,6 +345,7 @@ async function searchByKeywordNear(biz, keyword, radius, key, targetFamily) {
   });
   if (!res.ok) return [];
   const data = await res.json();
+  const maxKm = radius / 1000;
   const candidates = (data.places || [])
     .filter((p) => p.id !== biz.id && p.primaryType && !GENERIC_TYPES.has(p.primaryType))
     .map((p) => ({
@@ -327,7 +354,14 @@ async function searchByKeywordNear(biz, keyword, radius, key, targetFamily) {
       rating: p.rating || 0,
       reviewCount: p.userRatingCount || 0,
       typeId: p.primaryType,
-    }));
+      distanceKm:
+        p.location && p.location.latitude != null
+          ? haversineKm(biz.lat, biz.lng, p.location.latitude, p.location.longitude)
+          : null,
+    }))
+    // 핵심 수정: locationBias는 "권장"일 뿐 강제가 아니라서 유명한 원거리 업체
+    // (예: LA 서독안경)가 섞여 들어온다 → 실제 좌표 거리로 하드 필터.
+    .filter((p) => p.distanceKm != null && p.distanceKm <= maxKm);
   if (candidates.length === 0) return [];
 
   // 타깃 패밀리가 없으면(업종 미인식 케이스) 검색 결과의 지배적 업종 패밀리로 자동 보정

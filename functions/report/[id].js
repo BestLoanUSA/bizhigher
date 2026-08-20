@@ -55,7 +55,7 @@ export function renderReportHtml(report, id) {
   const compRows = (report.competitors || [])
     .map(
       (c) =>
-        `<div class="comp-row"><span>${esc(c.name)}</span><span>⭐ ${c.rating ?? '-'} · 리뷰 ${c.reviewCount ?? 0}개</span></div>`
+        `<div class="comp-row"><span>${esc(c.name)}${c.distanceMi != null ? ` <small style="color:#8A93A6;font-weight:600;">${c.distanceMi}mi</small>` : ''}</span><span>⭐ ${c.rating ?? '-'} · 리뷰 ${c.reviewCount ?? 0}개</span></div>`
     )
     .join('');
   const compSection = compRows
