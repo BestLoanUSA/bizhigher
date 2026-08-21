@@ -337,11 +337,11 @@ async function competitorsNearby(biz, env, key) {
   const seen = new Map();
   for (const radius of [12000, 25000]) {
     for (const q of queries) {
-      if (seen.size >= 6) break;
+      if (seen.size >= 8) break;
       const found = await searchByKeywordNear(biz, q, radius, key).catch(() => []);
       for (const r of found) if (!seen.has(r.id)) seen.set(r.id, r);
     }
-    if (seen.size >= 2) break;
+    if (seen.size >= 3) break; // 최소 3곳 확보 시도 (리포트 비교표 풍부하게)
   }
   const candidates = [...seen.values()];
   if (candidates.length === 0) return [];

@@ -347,9 +347,14 @@ function servicePage(s) {
     areaServed: 'US',
     url: `${SITE.domain}/service/${s.slug}/`,
   };
+  // Stripe 링크가 아직 없는 상품은 상담(이메일) CTA로 폴백
+  const consultHref = `mailto:${SITE.email}?subject=${encodeURIComponent('[상담 신청] ' + s.name)}&body=${encodeURIComponent('업체명:\n연락처:\n궁금한 점:')}`;
+  const optionA = s.stripeLinkA
+    ? `<a href="${s.stripeLinkA}" class="btn btn-primary btn-block">${s.optionALabel}</a>`
+    : `<a href="${consultHref}" class="btn btn-primary btn-block">${s.optionALabel || '상담 신청하기'}</a>`;
   const optionB = s.stripeLinkB
     ? `<a href="${s.stripeLinkB}" class="btn btn-ghost btn-block">${s.optionBLabel}</a>`
-    : '';
+    : (s.optionBLabel ? `<a href="${consultHref}" class="btn btn-ghost btn-block">${s.optionBLabel}</a>` : '');
   return head({
     title: `${s.name} — ${s.price} | BizHigher`,
     description: s.shortDescription,
@@ -364,9 +369,9 @@ function servicePage(s) {
     <p class="detail-sub">${s.shortDescription}</p>
     <div class="pricebox">
       <div class="pricebox-row"><span class="pricebox-price">${s.price}</span><span class="pricebox-sub">${s.priceSub}</span></div>
-      <a href="${s.stripeLinkA}" class="btn btn-primary btn-block">${s.optionALabel}</a>
+      ${optionA}
       ${optionB}
-      <p class="pricebox-secure">🔒 Stripe 안전결제 · 수정 1회 무료 · 작업 시작 전 전액 환불</p>
+      <p class="pricebox-secure">${s.stripeLinkA ? '🔒 Stripe 안전결제 · 수정 1회 무료 · 작업 시작 전 전액 환불' : '📩 상담 신청 시 1영업일 내 회신드립니다 · 부담 없이 문의하세요'}</p>
     </div>
   </div>
 </header>
