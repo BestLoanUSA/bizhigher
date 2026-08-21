@@ -41,7 +41,7 @@
       "badge": "입문 추천",
       "badgeStyle": "blue",
       "goal": "리뷰·평판",
-      "stripeLinkA": "",
+      "stripeLinkA": "https://buy.stripe.com/fZu5kF5My4Mj3GAd0l4Rq07",
       "optionALabel": "바로 주문하기 — $39",
       "includes": [
         "고해상도 리뷰 QR (스캔 테스트 완료)",
@@ -81,29 +81,30 @@
       ]
     },
     {
-      "slug": "website-one-page",
-      "name": "원페이지 웹사이트 제작",
-      "shortDescription": "우리 가게 첫 홈페이지 — 3영업일, 호스팅비 $0",
-      "price": "$199",
-      "priceSub": "원타임 · 3영업일 · 호스팅 무료",
-      "delivery": "영업일 3일",
+      "slug": "website",
+      "name": "웹사이트 제작",
+      "shortDescription": "원페이지부터 맞춤 제작까지 — 매달 내는 호스팅비 $0",
+      "price": "$199~",
+      "priceSub": "원페이지 $199 · 비즈니스 $499 · 맞춤 $999~",
+      "delivery": "3~7영업일",
       "badge": "신규",
       "badgeStyle": "green",
       "goal": "웹사이트",
-      "stripeLinkA": "",
-      "optionALabel": "바로 시작하기 — $199",
+      "stripeLinkA": "https://buy.stripe.com/3cIaEZej44Mj7WQe4p4Rq0c",
+      "optionALabel": "원페이지 시작하기 — $199",
+      "optionBLabel": "비즈니스·맞춤 제작 무료 상담",
       "includes": [
-        "1페이지 완성형 홈페이지 (소개·서비스·사진·지도·전화·영업시간)",
-        "모바일 최적화 + 한/영 병기 옵션",
-        "기본 SEO (메타태그·비즈니스 스키마)",
-        "구글 비즈니스 프로필 연결",
-        "호스팅비 $0/월 — 도메인 비용만 부담 (연 $12 내외)",
-        "수정 1회 무료"
+        "[원페이지 $199] 1페이지 완성형 홈페이지 — 소개·서비스·사진·지도·전화 (3영업일)",
+        "[비즈니스 $499] 5페이지 내외 + 블로그 구조 + 문의 폼 + 한/영 옵션 (7영업일)",
+        "[맞춤 $999~] 예약·주문·다국어 등 기능형 사이트 — 상담 후 견적",
+        "공통: 모바일 최적화 + 기본 SEO(메타·스키마) + 구글 프로필 연결",
+        "공통: 호스팅비 $0/월 — 도메인 비용만 부담 (연 $12 내외)",
+        "수정 1회 무료 · 유지관리 구독($29/월) 연계 가능"
       ],
       "descriptionTitle": "웹사이트가 없으면, 손님은 경쟁 가게로 갑니다",
       "description": [
-        "구글에서 가게를 발견한 손님이 더 알아보려 할 때 갈 곳을 만들어 드립니다. 전화·오시는 길·서비스 안내가 담긴 1페이지 홈페이지를 3영업일 안에 완성합니다.",
-        "매달 내는 호스팅비가 없습니다. 도메인(연 $12 내외)만 고객 명의로 등록하시면 됩니다."
+        "구글에서 가게를 발견한 손님이 더 알아보려 할 때 갈 곳을 만들어 드립니다. 규모에 따라 세 가지로 준비했습니다 — 첫 홈페이지가 필요하면 원페이지($199, 3영업일), 블로그와 문의 폼으로 검색 유입까지 만들려면 비즈니스($499), 예약·주문 같은 기능이 필요하면 맞춤 제작($999~, 견적제)입니다.",
+        "어떤 규모든 매달 내는 호스팅비가 없습니다. 도메인(연 $12 내외)만 고객 명의로 등록하시면 됩니다. 어느 티어가 맞을지 고민되시면 부담 없이 상담을 신청하세요."
       ]
     },
     {
@@ -116,9 +117,9 @@
       "badge": "인기",
       "badgeStyle": "dark",
       "goal": "온라인 노출",
-      "stripeLinkA": "",
+      "stripeLinkA": "https://buy.stripe.com/cNi7sN8YK92zdhabWh4Rq08",
       "optionALabel": "4편 팩 주문 — $119",
-      "stripeLinkB": "",
+      "stripeLinkB": "https://buy.stripe.com/fZu28tej41A73GA8K54Rq09",
       "optionBLabel": "8편 팩 주문 — $199",
       "includes": [
         "업종·지역 맞춤 키워드 리서치",
@@ -142,7 +143,7 @@
       "priceSub": "원타임 · 영업일 2일",
       "delivery": "영업일 2일",
       "goal": "광고",
-      "stripeLinkA": "",
+      "stripeLinkA": "https://buy.stripe.com/dRm7sNdf092zeleaSd4Rq0a",
       "optionALabel": "바로 주문하기 — $49",
       "includes": [
         "컨셉 3방향 × 규격 3종 = 이미지 15장",
@@ -167,7 +168,7 @@
       "badge": "신규",
       "badgeStyle": "blue",
       "goal": "광고",
-      "stripeLinkA": "",
+      "stripeLinkA": "https://buy.stripe.com/7sYbJ31widiP4KEf8t4Rq0b",
       "optionALabel": "바로 주문하기 — $149",
       "includes": [
         "매장·상품 실사진 보정 (배경 정리 포함)",
@@ -183,51 +184,6 @@
       ]
     },
     {
-      "slug": "website-business",
-      "name": "비즈니스 웹사이트 제작",
-      "shortDescription": "5페이지 규모 + 블로그 + 문의 폼 — 검색 유입의 기반",
-      "price": "$499",
-      "priceSub": "원타임 · 7영업일 · 호스팅 무료",
-      "delivery": "영업일 7일",
-      "goal": "웹사이트",
-      "stripeLinkA": "",
-      "optionALabel": "상담 신청하기",
-      "includes": [
-        "홈·서비스·소개·블로그·문의 등 5페이지 내외",
-        "문의 폼 + 알림 연동",
-        "블로그 구조 (SEO 아티클 팩 연계)",
-        "한/영 이중언어 옵션",
-        "기본 SEO + 사이트맵 + 서치콘솔 등록",
-        "수정 2회 무료"
-      ],
-      "descriptionTitle": "검색으로 손님이 들어오는 구조를 만듭니다",
-      "description": [
-        "소개와 연락처를 넘어, 블로그로 검색 유입을 만들고 문의 폼으로 리드를 받는 구조까지 갖춘 사이트입니다. SEO 블로그 아티클 팩과 연계하면 콘텐츠가 계속 쌓입니다.",
-        "페이지 구성과 콘텐츠 준비 상황이 업체마다 달라, 상담 후 정확한 범위를 확정하고 시작합니다."
-      ]
-    },
-    {
-      "slug": "website-custom",
-      "name": "맞춤 웹사이트 제작",
-      "shortDescription": "예약·주문·다국어 등 기능이 필요한 사이트 — 견적제",
-      "price": "$999~",
-      "priceSub": "견적제 · 상담 후 확정",
-      "delivery": "상담 후 확정",
-      "goal": "웹사이트",
-      "stripeLinkA": "",
-      "optionALabel": "무료 견적 상담",
-      "includes": [
-        "예약 시스템 / 온라인 주문 / 다국어 등 맞춤 기능",
-        "기존 사이트 콘텐츠 이전",
-        "규모·기능 기반 투명한 견적",
-        "제작 후 유지관리 플랜 연계"
-      ],
-      "descriptionTitle": "필요한 기능만큼만, 투명한 견적으로",
-      "description": [
-        "예약, 온라인 주문, 갤러리, 다국어처럼 기능이 필요한 사이트는 범위에 따라 비용이 크게 달라집니다. 원하시는 기능을 알려주시면 1영업일 내 견적을 드립니다."
-      ]
-    },
-    {
       "slug": "start-package",
       "name": "스타트 패키지",
       "shortDescription": "진단 리포트 + 리뷰 QR + 프로필 최적화 — 첫 30일 세트",
@@ -237,7 +193,7 @@
       "badge": "번들 할인",
       "badgeStyle": "dark",
       "goal": "손님 늘리기",
-      "stripeLinkA": "",
+      "stripeLinkA": "https://buy.stripe.com/6oU28t0se7Yva4Y7G14Rq0d",
       "optionALabel": "패키지 주문 — $249",
       "includes": [
         "AI 마케팅 진단 리포트 ($49)",
@@ -260,7 +216,7 @@
       "badge": "번들 할인",
       "badgeStyle": "dark",
       "goal": "손님 늘리기",
-      "stripeLinkA": "",
+      "stripeLinkA": "https://buy.stripe.com/5kQ4gBgrc6Urb92gcx4Rq0e",
       "optionALabel": "패키지 주문 — $449",
       "includes": [
         "스타트 패키지 전체 ($249 상당)",
@@ -283,7 +239,7 @@
       "badge": "신규",
       "badgeStyle": "blue",
       "goal": "구독",
-      "stripeLinkA": "",
+      "stripeLinkA": "https://buy.stripe.com/00wbJ37UG4Mjfpif8t4Rq0f",
       "optionALabel": "구독 시작 — $49/월",
       "includes": [
         "새 구글 리뷰 자동 감지",
@@ -306,7 +262,7 @@
       "priceSub": "구독 · 언제든 해지",
       "delivery": "구독",
       "goal": "구독",
-      "stripeLinkA": "",
+      "stripeLinkA": "https://buy.stripe.com/bJe9AVa2Ogv13GA8K54Rq0g",
       "optionALabel": "구독 시작 — $19/월",
       "includes": [
         "구글 프로필 조회·클릭·전화 추이",
@@ -328,7 +284,7 @@
       "priceSub": "구독 · 언제든 해지",
       "delivery": "구독",
       "goal": "구독",
-      "stripeLinkA": "",
+      "stripeLinkA": "https://buy.stripe.com/8x214pa2O92z6SM0dz4Rq0h",
       "optionALabel": "구독 시작 — $29/월",
       "includes": [
         "콘텐츠 수정 월 2회 (가격·메뉴·사진·공지)",
