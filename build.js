@@ -355,6 +355,9 @@ function servicePage(s) {
   const optionB = s.stripeLinkB
     ? `<a href="${s.stripeLinkB}" class="btn btn-ghost btn-block">${s.optionBLabel}</a>`
     : (s.optionBLabel ? `<a href="${consultHref}" class="btn btn-ghost btn-block">${s.optionBLabel}</a>` : '');
+  const optionC = s.stripeLinkC
+    ? `<a href="${s.stripeLinkC}" class="btn btn-ghost btn-block">${s.optionCLabel}</a>`
+    : (s.optionCLabel ? `<a href="${consultHref}" class="btn btn-ghost btn-block">${s.optionCLabel}</a>` : '');
   return head({
     title: `${s.name} — ${s.price} | BizHigher`,
     description: s.shortDescription,
@@ -371,6 +374,7 @@ function servicePage(s) {
       <div class="pricebox-row"><span class="pricebox-price">${s.price}</span><span class="pricebox-sub">${s.priceSub}</span></div>
       ${optionA}
       ${optionB}
+      ${optionC}
       <p class="pricebox-secure">${s.stripeLinkA ? '🔒 Stripe 안전결제 · 수정 1회 무료 · 작업 시작 전 전액 환불' : '📩 상담 신청 시 1영업일 내 회신드립니다 · 부담 없이 문의하세요'}</p>
     </div>
   </div>
@@ -426,6 +430,24 @@ function thanksPage() {
       <input type="text" name="phone" placeholder="연락처 (문자 가능한 번호)" class="input" required>
       <input type="email" name="email" placeholder="이메일 (결제하신 이메일)" class="input" required>
       <input type="text" name="links" placeholder="구글 프로필·웹사이트·SNS 링크 (있는 것만)" class="input">
+
+      <!-- 웹사이트 제작 전용 질문 (service가 website로 시작할 때만 표시) -->
+      <div id="website-extra" style="display:none;">
+        <p style="font-weight:800;color:var(--navy-900,#0A1B4D);margin:18px 0 10px;font-size:15px;">🌐 웹사이트 제작 질문지</p>
+        <input type="text" data-label="원하는 도메인" placeholder="원하는 도메인 주소 (예: mystore.com — 미정이면 비워두세요)" class="input">
+        <input type="text" data-label="업종·한줄소개" placeholder="업종과 가게 한 줄 소개 (예: 가든그로브 안경점, 한국어 상담)" class="input">
+        <textarea data-label="꼭 들어갈 내용" placeholder="홈페이지에 꼭 들어가야 할 내용 — 영업시간, 대표 서비스/메뉴와 가격, 주차 안내, 예약 방법 등" class="input" rows="3" style="resize:vertical;"></textarea>
+        <select data-label="로고 보유" class="input">
+          <option value="">로고가 있나요?</option>
+          <option>로고 파일 있음 (이메일로 보내드릴게요)</option>
+          <option>로고 없음 — 텍스트 로고로 진행</option>
+          <option>로고 없음 — 로고 제작도 관심 있어요</option>
+        </select>
+        <input type="text" data-label="사진 자산" placeholder="매장·상품 사진 링크 (구글드라이브/카카오 등, 없으면 '이메일로 보낼게요')" class="input">
+        <input type="text" data-label="참고 사이트" placeholder="마음에 드는 참고 사이트 주소 (있다면)" class="input">
+        <input type="text" data-label="선호 분위기" placeholder="선호하는 색·분위기 (예: 깔끔한 화이트, 고급스러운 네이비)" class="input">
+      </div>
+
       <textarea name="notes" placeholder="비즈니스 소개와 요청사항을 자유롭게 적어주세요 — 주 고객층, 강점, 강조하고 싶은 것, 피하고 싶은 표현 등" class="input" rows="5" style="resize:vertical;"></textarea>
       <button type="submit" class="btn btn-primary btn-block">질문지 제출 — 작업 시작하기</button>
       <div class="form-msg" id="form-msg"></div>
@@ -435,7 +457,12 @@ function thanksPage() {
 </section>
 <script>
 var params = new URLSearchParams(location.search);
-document.getElementById('service-field').value = params.get('service') || '';
+var svc = params.get('service') || '';
+document.getElementById('service-field').value = svc;
+// 웹사이트 제작 주문이면 전용 질문지 표시
+if (svc.indexOf('website') === 0 || svc === 'launch-package') {
+  document.getElementById('website-extra').style.display = 'block';
+}
 document.getElementById('intake-form').addEventListener('submit', async function (e) {
   e.preventDefault();
   const msg = document.getElementById('form-msg');
@@ -443,6 +470,15 @@ document.getElementById('intake-form').addEventListener('submit', async function
   btn.disabled = true; btn.textContent = '제출 중...';
   try {
     const body = Object.fromEntries(new FormData(this).entries());
+    // 웹사이트 전용 답변을 notes 앞에 정리해서 붙임
+    const extra = document.getElementById('website-extra');
+    if (extra && extra.style.display !== 'none') {
+      const lines = [];
+      extra.querySelectorAll('[data-label]').forEach(function (el) {
+        if (el.value && el.value.trim()) lines.push('[' + el.getAttribute('data-label') + '] ' + el.value.trim());
+      });
+      if (lines.length) body.notes = '── 웹사이트 질문지 ──\\n' + lines.join('\\n') + (body.notes ? '\\n── 추가 요청 ──\\n' + body.notes : '');
+    }
     const res = await fetch('/api/intake', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
