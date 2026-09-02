@@ -266,13 +266,33 @@ function homePage() {
   var scoreEl = document.getElementById('dm-score');
   var ring = document.getElementById('dm-ring');
   var fills = Array.prototype.slice.call(document.querySelectorAll('.demo-fill'));
+  var fillNums = Array.prototype.slice.call(document.querySelectorAll('.demo-bar > b'));
   var chips = Array.prototype.slice.call(document.querySelectorAll('.demo-chip'));
-  var NAME = '가든그로브 안경점', SCORE = 63;
+  // 루프마다 다른 지역·업종 비즈니스로 순환 (마지막 칩은 항상 완료 스타일)
+  var BIZ = [
+    { name: '가든그로브 안경점', score: 63, bars: [82, 61, 45, 38, 68],
+      chips: ['🔎 경쟁사 대비 리뷰 32개 부족', '📸 프로필 사진 6개월째 업데이트 없음', '✓ 90일 실행 플랜 생성 완료'] },
+    { name: '달라스 한식당', score: 71, bars: [88, 79, 52, 66, 74],
+      chips: ['⭐ 최근 30일 신규 리뷰 12개 — 지역 상위권', '🌐 웹사이트에 메뉴·영업시간 정보 없음', '✓ 90일 실행 플랜 생성 완료'] },
+    { name: 'LA 네일살롱', score: 48, bars: [54, 41, 30, 62, 49],
+      chips: ['🔎 "nail salon near me" 노출 순위권 밖', '💬 미답글 리뷰 9개 — 신뢰도 하락 요인', '✓ 90일 실행 플랜 생성 완료'] },
+    { name: '애틀랜타 수학학원', score: 57, bars: [66, 72, 38, 25, 58],
+      chips: ['📱 SNS 계정 없음 — 학부모 접점 부재', '🏷️ 구글 카테고리 "일반 학교"로 잘못 분류', '✓ 90일 실행 플랜 생성 완료'] },
+  ];
+  var bi = 0;
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function apply(b) {
+    // 바 목표치·숫자·칩 문구를 해당 비즈니스로 교체
+    fills.forEach(function (f, i) { f.setAttribute('data-w', b.bars[i]); });
+    fillNums.forEach(function (n, i) { n.textContent = b.bars[i]; });
+    chips.forEach(function (c, i) { c.textContent = b.chips[i]; });
+  }
   function setFinal() {
-    typeEl.textContent = NAME;
-    scoreEl.textContent = SCORE;
-    if (ring) ring.style.setProperty('--p', SCORE);
+    var b = BIZ[0];
+    apply(b);
+    typeEl.textContent = b.name;
+    scoreEl.textContent = b.score;
+    if (ring) ring.style.setProperty('--p', b.score);
     fills.forEach(function (f) { f.style.width = f.getAttribute('data-w') + '%'; });
     chips.forEach(function (c) { c.classList.add('show'); });
   }
@@ -288,10 +308,13 @@ function homePage() {
   }
   function run() {
     reset();
+    var b = BIZ[bi % BIZ.length];
+    bi++;
+    apply(b);
     // 1) 업체명 타이핑
     var i = 0;
     (function type() {
-      if (i <= NAME.length) { typeEl.textContent = NAME.slice(0, i); i++; timers.push(setTimeout(type, 90)); }
+      if (i <= b.name.length) { typeEl.textContent = b.name.slice(0, i); i++; timers.push(setTimeout(type, 90)); }
     })();
     // 2) 바 채우기 (스태거)
     fills.forEach(function (f, idx) {
@@ -303,7 +326,7 @@ function homePage() {
       function step(ts) {
         if (!start) start = ts;
         var p = Math.min((ts - start) / 1400, 1);
-        var v = Math.round(SCORE * (1 - Math.pow(1 - p, 3)));
+        var v = Math.round(b.score * (1 - Math.pow(1 - p, 3)));
         scoreEl.textContent = v;
         if (ring) ring.style.setProperty('--p', v);
         if (p < 1) requestAnimationFrame(step);
@@ -314,7 +337,7 @@ function homePage() {
     chips.forEach(function (c, idx) {
       t(function () { c.classList.add('show'); }, 3400 + idx * 800);
     });
-    // 5) 루프
+    // 5) 다음 비즈니스로 루프
     t(run, 10500);
   }
   run();
