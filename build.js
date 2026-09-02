@@ -12,6 +12,12 @@ const DATA = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'services.j
 const SITE = DATA.site;
 const DIST = path.join(__dirname, 'dist');
 
+// CSS 캐시 버스팅 — style.css 내용이 바뀌면 주소도 바뀌어 브라우저가 항상 새 CSS를 받음
+const crypto = require('crypto');
+const CSS_VER = crypto.createHash('md5')
+  .update(fs.readFileSync(path.join(__dirname, 'src', 'style.css'), 'utf8'))
+  .digest('hex').slice(0, 8);
+
 /* ---------- 공통 조각 ---------- */
 
 const LOGO_SVG = `<svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#0A4DF5"/><path d="M15 44 h9 v-9 h9 v-9 h6.5" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M38.5 15.5 h10 v10" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -35,7 +41,7 @@ ${noindex ? '<meta name="robots" content="noindex">' : ''}
 <meta property="og:site_name" content="BizHigher">
 <link rel="icon" href="${FAVICON}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/style.css?v=${CSS_VER}">
 ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>` : ''}
 </head>
 <body>`;
@@ -106,6 +112,73 @@ const FOOTER = `
     els.forEach(function (el) { el.classList.add('in'); });
   }, 3000);
 })();
+
+/* 인터랙션 팩 v14 — 카운트업 · 스텝 하이라이트 · 카드 3D 틸트 (모두 선택적 강화, 실패해도 콘텐츠 표시에 영향 없음) */
+(function () {
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* 1) 숫자 카운트업 — 뷰포트 진입 시 1회 */
+  if (!reduced && 'IntersectionObserver' in window) {
+    var stats = document.querySelectorAll('[data-count]');
+    if (stats.length) {
+      var sio = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          sio.unobserve(en.target);
+          var el = en.target;
+          var target = parseInt(el.getAttribute('data-count'), 10) || 0;
+          var pre = el.getAttribute('data-prefix') || '', suf = el.getAttribute('data-suffix') || '';
+          var start = null;
+          function step(ts) {
+            if (!start) start = ts;
+            var p = Math.min((ts - start) / 1200, 1);
+            el.textContent = pre + Math.round(target * (1 - Math.pow(1 - p, 3))) + suf;
+            if (p < 1) requestAnimationFrame(step);
+          }
+          requestAnimationFrame(step);
+        });
+      }, { threshold: 0 });
+      stats.forEach(function (el) { sio.observe(el); });
+    }
+  }
+
+  /* 2) 스텝 카드 순차 하이라이트 — 섹션이 보이는 동안 부드럽게 순환 */
+  var steps = document.getElementById('steps');
+  if (steps && !reduced && 'IntersectionObserver' in window) {
+    var cards = steps.querySelectorAll('.step-card');
+    if (cards.length) {
+      var idx = 0, iv = null;
+      function cycle() {
+        cards.forEach(function (c, i) { c.classList.toggle('step-active', i === idx); });
+        idx = (idx + 1) % cards.length;
+      }
+      var stio = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting && !iv) { cycle(); iv = setInterval(cycle, 2200); }
+          else if (!en.isIntersecting && iv) {
+            clearInterval(iv); iv = null;
+            cards.forEach(function (c) { c.classList.remove('step-active'); });
+          }
+        });
+      }, { threshold: 0.3 });
+      stio.observe(steps);
+    }
+  }
+
+  /* 3) 카드 3D 틸트 — 데스크톱(정밀 포인터)에서만 */
+  if (!reduced && window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
+    var tiltEls = document.querySelectorAll('.prod-card, .tier, .step-card');
+    tiltEls.forEach(function (el) {
+      el.addEventListener('mousemove', function (e) {
+        var r = el.getBoundingClientRect();
+        var rx = ((e.clientY - r.top) / r.height - 0.5) * -5;
+        var ry = ((e.clientX - r.left) / r.width - 0.5) * 5;
+        el.style.transform = 'perspective(800px) rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg) translateY(-4px)';
+      });
+      el.addEventListener('mouseleave', function () { el.style.transform = ''; });
+    });
+  }
+})();
 </script>
 </body>
 </html>`;
@@ -146,23 +219,113 @@ function homePage() {
     jsonLd,
   }) + nav('home') + `
 <header class="hero">
-  <div class="container">
-    <span class="hero-badge">⚡ AI 자동화 마케팅 · 영업일 3일 딜리버리</span>
-    <h1 class="h1">마케팅, 이제<br><span class="grad">주문하세요.</span></h1>
-    <p class="hero-sub">AI가 만들고, 전문가가 검수하고, 영업일 3일 안에 받아보세요. 견적 문의 없는 정찰제 마케팅.</p>
-    <div class="hero-ctas">
-      <a href="/free-audit/" class="btn btn-primary">무료 AI 진단 받기</a>
-      <a href="/services/" class="btn btn-ghost">서비스 둘러보기</a>
+  <div class="container hero-grid">
+    <div class="hero-copy">
+      <span class="hero-badge">⚡ AI 자동화 마케팅 · 영업일 3일 딜리버리</span>
+      <h1 class="h1">마케팅, 이제<br><span class="grad">주문하세요.</span></h1>
+      <p class="hero-sub">AI가 만들고, 전문가가 검수하고, 영업일 3일 안에 받아보세요. 견적 문의 없는 정찰제 마케팅.</p>
+      <div class="hero-ctas">
+        <a href="/free-audit/" class="btn btn-primary">무료 AI 진단 받기</a>
+        <a href="/services/" class="btn btn-ghost">서비스 둘러보기</a>
+      </div>
     </div>
-    <p class="hero-note">미국 전역 한인 비즈니스 — 식당 · 뷰티 · 병원 · 학원 · 부동산 · 융자</p>
+    <div class="hero-demo" aria-hidden="true">
+      <div class="demo-card" id="demo-card">
+        <div class="demo-top"><span class="demo-dot"></span>AI 마케팅 진단 리포트<span class="demo-live">LIVE</span></div>
+        <div class="demo-name"><span id="dm-type"></span><span class="demo-caret"></span></div>
+        <div class="demo-score-row">
+          <div class="demo-ring" id="dm-ring"><div class="demo-ring-in"><b id="dm-score">0</b><small>/100</small></div></div>
+          <div class="demo-bars">
+            <div class="demo-bar"><span>구글 노출</span><div class="demo-track"><div class="demo-fill" data-w="82"></div></div><b>82</b></div>
+            <div class="demo-bar"><span>리뷰·평판</span><div class="demo-track"><div class="demo-fill" data-w="61"></div></div><b>61</b></div>
+            <div class="demo-bar"><span>웹사이트</span><div class="demo-track"><div class="demo-fill" data-w="45"></div></div><b>45</b></div>
+            <div class="demo-bar"><span>SNS</span><div class="demo-track"><div class="demo-fill" data-w="38"></div></div><b>38</b></div>
+            <div class="demo-bar"><span>경쟁사 대비</span><div class="demo-track"><div class="demo-fill" data-w="68"></div></div><b>68</b></div>
+          </div>
+        </div>
+        <div class="demo-chips">
+          <div class="demo-chip">🔎 경쟁사 대비 리뷰 32개 부족</div>
+          <div class="demo-chip">📸 프로필 사진 6개월째 업데이트 없음</div>
+          <div class="demo-chip demo-chip-ok">✓ 90일 실행 플랜 생성 완료</div>
+        </div>
+      </div>
+    </div>
   </div>
+  <div class="marquee"><div class="marquee-track" id="mq-track">
+    <span>식당</span><span>·</span><span>카페</span><span>·</span><span>뷰티살롱</span><span>·</span><span>네일샵</span><span>·</span><span>안경점</span><span>·</span><span>치과</span><span>·</span><span>한의원</span><span>·</span><span>병원</span><span>·</span><span>학원</span><span>·</span><span>부동산</span><span>·</span><span>융자</span><span>·</span><span>보험</span><span>·</span><span>세탁소</span><span>·</span><span>정비소</span><span>·</span><span>변호사</span><span>·</span><span>회계사</span>
+  </div></div>
 </header>
+<script>
+/* 히어로 라이브 리포트 데모 — reduced-motion이면 완성 상태로 정적 표시 */
+(function () {
+  // 마퀴 무한 루프용 콘텐츠 복제
+  var mq = document.getElementById('mq-track');
+  if (mq) mq.innerHTML += mq.innerHTML;
+  var typeEl = document.getElementById('dm-type');
+  if (!typeEl) return;
+  var scoreEl = document.getElementById('dm-score');
+  var ring = document.getElementById('dm-ring');
+  var fills = Array.prototype.slice.call(document.querySelectorAll('.demo-fill'));
+  var chips = Array.prototype.slice.call(document.querySelectorAll('.demo-chip'));
+  var NAME = '가든그로브 안경점', SCORE = 63;
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function setFinal() {
+    typeEl.textContent = NAME;
+    scoreEl.textContent = SCORE;
+    if (ring) ring.style.setProperty('--p', SCORE);
+    fills.forEach(function (f) { f.style.width = f.getAttribute('data-w') + '%'; });
+    chips.forEach(function (c) { c.classList.add('show'); });
+  }
+  if (reduced) { setFinal(); return; }
+  var timers = [];
+  function t(fn, ms) { timers.push(setTimeout(fn, ms)); }
+  function reset() {
+    timers.forEach(clearTimeout); timers = [];
+    typeEl.textContent = ''; scoreEl.textContent = '0';
+    if (ring) ring.style.setProperty('--p', 0);
+    fills.forEach(function (f) { f.style.width = '0%'; });
+    chips.forEach(function (c) { c.classList.remove('show'); });
+  }
+  function run() {
+    reset();
+    // 1) 업체명 타이핑
+    var i = 0;
+    (function type() {
+      if (i <= NAME.length) { typeEl.textContent = NAME.slice(0, i); i++; timers.push(setTimeout(type, 90)); }
+    })();
+    // 2) 바 채우기 (스태거)
+    fills.forEach(function (f, idx) {
+      t(function () { f.style.width = f.getAttribute('data-w') + '%'; }, 1500 + idx * 220);
+    });
+    // 3) 점수 카운트업 + 링
+    t(function () {
+      var start = null;
+      function step(ts) {
+        if (!start) start = ts;
+        var p = Math.min((ts - start) / 1400, 1);
+        var v = Math.round(SCORE * (1 - Math.pow(1 - p, 3)));
+        scoreEl.textContent = v;
+        if (ring) ring.style.setProperty('--p', v);
+        if (p < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }, 1600);
+    // 4) 인사이트 칩
+    chips.forEach(function (c, idx) {
+      t(function () { c.classList.add('show'); }, 3400 + idx * 800);
+    });
+    // 5) 루프
+    t(run, 10500);
+  }
+  run();
+})();
+</script>
 
 <section class="section section-gray">
   <div class="container">
     <p class="eyebrow">HOW IT WORKS</p>
     <h2 class="h2">대행사 미팅은 없습니다</h2>
-    <div class="grid3">
+    <div class="grid3" id="steps">
       <div class="step-card"><div class="step-num">1</div><h3 class="h3">쇼핑하듯 주문</h3><p class="body-sm">가격이 다 공개되어 있습니다. 필요한 서비스를 골라 카드로 결제하세요.</p></div>
       <div class="step-card"><div class="step-num">2</div><h3 class="h3">AI 제작 + 전문가 검수</h3><p class="body-sm">AI가 빠르게 제작하고, 마케팅 전문가가 하나하나 검수합니다.</p></div>
       <div class="step-card"><div class="step-num">3</div><h3 class="h3">영업일 3일 내 딜리버리</h3><p class="body-sm">진행 상황을 확인하고 결과물을 받아보세요. 수정 1회 무료.</p></div>
@@ -188,9 +351,9 @@ function homePage() {
   <div class="container">
     <h2 class="h2">이렇게 진행됩니다</h2>
     <div class="grid3">
-      <div class="stat-box"><div class="stat">3일</div><p class="stat-label">인테이크 완료 후 최대 딜리버리 기한 (영업일)</p></div>
-      <div class="stat-box"><div class="stat">100%</div><p class="stat-label">전문가 검수 — 모든 결과물은 사람이 확인 후 전달</p></div>
-      <div class="stat-box"><div class="stat">$0</div><p class="stat-label">견적·상담 비용 — 모든 가격 사이트에 공개</p></div>
+      <div class="stat-box"><div class="stat" data-count="3" data-suffix="일">3일</div><p class="stat-label">인테이크 완료 후 최대 딜리버리 기한 (영업일)</p></div>
+      <div class="stat-box"><div class="stat" data-count="100" data-suffix="%">100%</div><p class="stat-label">전문가 검수 — 모든 결과물은 사람이 확인 후 전달</p></div>
+      <div class="stat-box"><div class="stat" data-count="0" data-prefix="$">$0</div><p class="stat-label">견적·상담 비용 — 모든 가격 사이트에 공개</p></div>
     </div>
   </div>
 </section>
