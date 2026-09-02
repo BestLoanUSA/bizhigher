@@ -86,6 +86,27 @@ const FOOTER = `
     <p class="footer-copy">© ${new Date().getFullYear()} BizHigher. All rights reserved.</p>
   </div>
 </footer>
+<script>
+/* 스크롤 리빌 — IO 지원 시에만 숨겼다가 나타남 (기본은 항상 보임) + 3초 강제 표시 안전장치 */
+(function () {
+  if (!('IntersectionObserver' in window)) return;
+  var els = document.querySelectorAll('.prod-card, .step-card, .tier, .stat-box, .faq-item, .price-item');
+  if (!els.length) return;
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+    });
+  }, { threshold: 0, rootMargin: '0px 0px -40px 0px' });
+  els.forEach(function (el, i) {
+    el.classList.add('rv');
+    el.style.transitionDelay = Math.min((i % 6) * 60, 300) + 'ms';
+    io.observe(el);
+  });
+  setTimeout(function () {
+    els.forEach(function (el) { el.classList.add('in'); });
+  }, 3000);
+})();
+</script>
 </body>
 </html>`;
 
@@ -126,7 +147,8 @@ function homePage() {
   }) + nav('home') + `
 <header class="hero">
   <div class="container">
-    <h1 class="h1">마케팅, 이제 주문하세요.</h1>
+    <span class="hero-badge">⚡ AI 자동화 마케팅 · 영업일 3일 딜리버리</span>
+    <h1 class="h1">마케팅, 이제<br><span class="grad">주문하세요.</span></h1>
     <p class="hero-sub">AI가 만들고, 전문가가 검수하고, 영업일 3일 안에 받아보세요. 견적 문의 없는 정찰제 마케팅.</p>
     <div class="hero-ctas">
       <a href="/free-audit/" class="btn btn-primary">무료 AI 진단 받기</a>
