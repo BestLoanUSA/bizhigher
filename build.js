@@ -435,16 +435,30 @@ function homePage() {
   </div></div>
   <div class="chan-row" aria-hidden="true">
     <span class="chan-label">당신의 가게가 발견되는 곳</span>
-    <div class="chan-logos">
+    <div class="chan-marquee"><div class="chan-track" id="chan-track">
       <span class="chan" style="--cdot:#4285F4">Google</span>
-      <span class="chan" style="--cdot:#34A853">Google Maps</span>
-      <span class="chan" style="--cdot:#E1306C">Instagram</span>
-      <span class="chan" style="--cdot:#1877F2">Facebook</span>
-      <span class="chan" style="--cdot:#FF0000">YouTube</span>
-      <span class="chan" style="--cdot:#69C9D0">TikTok</span>
-      <span class="chan" style="--cdot:#D32323">Yelp</span>
-      <span class="chan" style="--cdot:#10A37F">ChatGPT</span>
-    </div>
+      <span class="chan" style="--cdot:#34A853;animation-delay:.4s">Google Maps</span>
+      <span class="chan" style="--cdot:#03C75A;animation-delay:.8s">네이버</span>
+      <span class="chan" style="--cdot:#0078D4;animation-delay:1.2s">Bing</span>
+      <span class="chan" style="--cdot:#A2AAAD;animation-delay:1.6s">Apple Maps</span>
+      <span class="chan" style="--cdot:#FEE500;animation-delay:2s">카카오맵</span>
+      <span class="chan" style="--cdot:#33CCFF;animation-delay:2.4s">Waze</span>
+      <span class="chan" style="--cdot:#10A37F;animation-delay:2.8s">ChatGPT</span>
+      <span class="chan" style="--cdot:#4E82EE;animation-delay:3.2s">Gemini</span>
+      <span class="chan" style="--cdot:#20B8CD;animation-delay:3.6s">Perplexity</span>
+      <span class="chan" style="--cdot:#D97757;animation-delay:4s">Claude</span>
+      <span class="chan" style="--cdot:#7B83EB;animation-delay:.2s">Copilot</span>
+      <span class="chan" style="--cdot:#5AC8FA;animation-delay:.6s">Siri</span>
+      <span class="chan" style="--cdot:#00CAFF;animation-delay:1s">Alexa</span>
+      <span class="chan" style="--cdot:#EA4335;animation-delay:1.4s">Google Assistant</span>
+      <span class="chan" style="--cdot:#E1306C;animation-delay:1.8s">Instagram</span>
+      <span class="chan" style="--cdot:#1877F2;animation-delay:2.2s">Facebook</span>
+      <span class="chan" style="--cdot:#FF0000;animation-delay:2.6s">YouTube</span>
+      <span class="chan" style="--cdot:#69C9D0;animation-delay:3s">TikTok</span>
+      <span class="chan" style="--cdot:#D32323;animation-delay:3.4s">Yelp</span>
+      <span class="chan" style="--cdot:#8ED500;animation-delay:3.8s">Nextdoor</span>
+      <span class="chan" style="--cdot:#34E0A1;animation-delay:4.1s">TripAdvisor</span>
+    </div></div>
   </div>
   </div><!-- /cine-stage2 -->
   </div><!-- /hero-sticky -->
@@ -609,9 +623,11 @@ function homePage() {
 <script>
 /* 히어로 라이브 리포트 데모 — reduced-motion이면 완성 상태로 정적 표시 */
 (function () {
-  // 마퀴 무한 루프용 콘텐츠 복제
+  // 마퀴 무한 루프용 콘텐츠 복제 (업종 + 채널)
   var mq = document.getElementById('mq-track');
   if (mq) mq.innerHTML += mq.innerHTML;
+  var ct = document.getElementById('chan-track');
+  if (ct) ct.innerHTML += ct.innerHTML;
   var typeEl = document.getElementById('dm-type');
   if (!typeEl) return;
   var scoreEl = document.getElementById('dm-score');
