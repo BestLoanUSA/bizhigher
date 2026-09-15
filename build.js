@@ -847,16 +847,36 @@ function servicesPage() {
     <div class="banner"><span class="badge">🎁 장기 플랜</span><span class="banner-text">6·12개월 플랜 선택 시 셋업 서비스 무료 — 최대 $1,014 상당 <a href="/pricing/#plans" style="color:var(--blue-600);">플랜 비교 →</a></span></div>
   </div>
 </header>
-<section class="section">
+${[
+  ['expose', '🔍 검색·지도·AI 노출', '구글, 지도, AI 검색 — 손님이 찾는 모든 곳에서 발견되게 합니다.', ''],
+  ['content', '✍️ 콘텐츠·리뷰', '매주 쌓이는 콘텐츠와 관리되는 리뷰가 가게의 신뢰를 만듭니다.', 'section-gray'],
+  ['ads', '📣 광고', '전환 추적 기반으로 광고비가 일하게 만듭니다.', ''],
+  ['web', '🌐 웹사이트', '호스팅비 $0 — 만들고, 계속 관리해 드립니다.', 'section-gray'],
+].map(([cat, title, sub, cls]) => `
+<section class="section svc-cat ${cls}">
   <div class="container">
+    <h2 class="h2-left">${title}</h2>
+    <p class="svc-cat-sub">${sub}</p>
     <div class="grid3">
-      ${DATA.services.map(productCard).join('')}
-      <div class="prod-card prod-card-more">
-        <h3 class="h3">월 구독 상품</h3>
-        <p class="body-sm">SEO 블로그 구독 · SNS 운영 · 리뷰 관리 자동화 — 곧 오픈됩니다.</p>
-        <a href="/free-audit/" class="btn btn-ghost btn-small">오픈 알림 받기</a>
-      </div>
+      ${DATA.services.filter((s) => s.cat === cat).map(productCard).join('')}
     </div>
+  </div>
+</section>`).join('')}
+
+<section class="pkg-band">
+  <div class="container center">
+    <p class="eyebrow" style="color:var(--cyan-400);">PLANS</p>
+    <h2 class="h2" style="color:#fff;">필요한 게 5개 이상이라면,<br>통째로가 답입니다</h2>
+    <p class="pkg-band-sub">패키지 플랜은 개별 구독 대비 <b>최대 58% 저렴</b>하고, 12개월 플랜은 프로필 최적화부터 웹사이트까지 <b>셋업 $1,014 상당이 무료</b>입니다.</p>
+    <div class="pkg-mini-row">
+      ${DATA.packages.map((p) => `
+      <a href="/package/${p.slug}/" class="pkg-mini ${p.popular ? 'pkg-mini-pop' : ''}">
+        <span class="pkg-mini-name">${p.name}</span>
+        <span class="pkg-mini-price">$${p.prices.annual}<small>/월</small></span>
+        <span class="pkg-mini-note">12개월 기준 · <s>$${p.sum}</s></span>
+      </a>`).join('')}
+    </div>
+    <div class="hero-ctas" style="margin-top:30px;"><a href="/pricing/#plans" class="btn btn-primary">플랜 비교하기 →</a></div>
   </div>
 </section>
 ` + FOOTER;
@@ -967,6 +987,28 @@ document.getElementById('audit-form').addEventListener('submit', async function 
 
 /* ---------- 페이지: 서비스 상세 ---------- */
 
+/* 구독 서비스 → 포함된 최저 플랜 매핑 (상세 페이지 업셀 배너용) */
+const PLAN_OF = {
+  'gbp-posting': 'local-starter', 'review-reply': 'local-starter', 'ad-creative-pack': 'local-starter',
+  'local-listing-care': 'local-starter', 'care-plan': 'local-starter',
+  'seo-aio': 'local-growth', 'shortform-video': 'local-growth',
+  'ads-management': 'local-premium', 'seo-blog-pack': 'local-premium',
+};
+
+function planHint(s) {
+  const pslug = PLAN_OF[s.slug];
+  if (!pslug) return '';
+  const p = DATA.packages.find((x) => x.slug === pslug);
+  if (!p) return '';
+  const disc = Math.round((1 - p.prices.annual / p.sum) * 100);
+  return `
+<div class="plan-hint">
+  <span class="plan-hint-badge">플랜 포함</span>
+  <span>이 서비스는 <b>${p.name} 플랜</b>에 포함되어 있습니다 — 묶으면 개별 대비 <b>${disc}% 절약</b> + 12개월 셋업 무료</span>
+  <a href="/package/${p.slug}/">플랜 보기 →</a>
+</div>`;
+}
+
 function servicePage(s) {
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -1005,8 +1047,9 @@ function servicePage(s) {
       ${optionA}
       ${optionB}
       ${optionC}
-      <p class="pricebox-secure">${s.stripeLinkA ? '🔒 Stripe 안전결제 · 수정 1회 무료 · 작업 시작 전 전액 환불' : '📩 상담 신청 시 1영업일 내 회신드립니다 · 부담 없이 문의하세요'}</p>
+      <p class="pricebox-secure">${s.stripeLinkA ? '🔒 Stripe 안전결제 · 수정 1회 무료 · ' + (s.type === 'subscription' ? '언제든 해지' : '작업 시작 전 전액 환불') : '📩 상담 신청 시 1영업일 내 회신드립니다 · 부담 없이 문의하세요'}</p>
     </div>
+    ${planHint(s)}
   </div>
 </header>
 <section class="detail-body">

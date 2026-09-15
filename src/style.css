@@ -730,6 +730,51 @@ img { max-width: 100%; display: block; }
 .h1, .h2, .page-title, .detail-title { font-weight: 900; }
 .h1 { letter-spacing: -0.04em; }
 
+/* ---------- 서비스 페이지 카테고리 + 패키지 밴드 ---------- */
+.svc-cat { padding: 56px 0; }
+.svc-cat .h2-left { margin-top: 0; }
+.svc-cat-sub { font-size: 15.5px; color: var(--ink-600); margin: -6px 0 24px; }
+.pkg-band {
+  position: relative; overflow: hidden;
+  background: radial-gradient(900px 500px at 50% -10%, #10245F 0%, var(--space-900) 50%, var(--space-950) 100%);
+  padding: 96px 24px;
+}
+.pkg-band::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(60% 90% at 50% 110%, rgba(10, 77, 245, 0.25), transparent 70%);
+}
+.pkg-band .container { position: relative; z-index: 1; }
+.pkg-band-sub { font-size: 17px; line-height: 1.7; color: var(--mist-300); max-width: 620px; margin: -18px auto 36px; }
+.pkg-band-sub b { color: #fff; }
+.pkg-mini-row { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+.pkg-mini {
+  display: flex; flex-direction: column; gap: 6px; align-items: center;
+  min-width: 200px; padding: 24px 30px; border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(125, 162, 255, 0.2);
+  transition: transform .2s ease, border-color .2s ease, background-color .2s ease;
+}
+.pkg-mini:hover { transform: translateY(-4px); border-color: var(--blue-300); background: rgba(255, 255, 255, 0.08); }
+.pkg-mini-pop { border-color: var(--cyan-400); box-shadow: 0 0 40px rgba(34, 211, 238, 0.15); }
+.pkg-mini-name { font-size: 15px; font-weight: 800; color: var(--mist-300); }
+.pkg-mini-price { font-size: 34px; font-weight: 900; letter-spacing: -0.03em; color: #fff; }
+.pkg-mini-price small { font-size: 15px; font-weight: 600; color: var(--mist-400); }
+.pkg-mini-note { font-size: 12.5px; color: var(--mist-400); }
+.pkg-mini-note s { opacity: 0.8; }
+
+/* 서비스 상세 — 플랜 업셀 배너 */
+.plan-hint {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-top: 14px; padding: 14px 18px; border-radius: 14px;
+  background: linear-gradient(120deg, #EEF3FF, #E8FBFF);
+  border: 1px solid #CDD9FF; font-size: 14.5px; color: var(--ink-600); line-height: 1.5;
+}
+.plan-hint b { color: var(--ink-900); }
+.plan-hint-badge {
+  flex-shrink: 0; font-size: 11.5px; font-weight: 800; letter-spacing: 0.06em;
+  background: var(--grad-btn); color: #fff; border-radius: 999px; padding: 4px 11px;
+}
+.plan-hint a { font-weight: 800; color: var(--blue-600); white-space: nowrap; margin-left: auto; }
+
 /* ---------- 모션 최소화 ---------- */
 @media (prefers-reduced-motion: reduce) {
   .cine-chev, .mega-text, .chan, .cine-seed, .chan-track { animation: none; }
