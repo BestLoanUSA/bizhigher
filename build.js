@@ -431,7 +431,7 @@ function homePage() {
     </div>
   </div>
   <div class="marquee"><div class="marquee-track" id="mq-track">
-    <span>식당</span><span>·</span><span>카페</span><span>·</span><span>뷰티살롱</span><span>·</span><span>네일샵</span><span>·</span><span>안경점</span><span>·</span><span>치과</span><span>·</span><span>한의원</span><span>·</span><span>병원</span><span>·</span><span>학원</span><span>·</span><span>부동산</span><span>·</span><span>융자</span><span>·</span><span>보험</span><span>·</span><span>세탁소</span><span>·</span><span>정비소</span><span>·</span><span>변호사</span><span>·</span><span>회계사</span><span>·</span>
+    <span>식당</span><span>·</span><span>카페</span><span>·</span><span>베이커리</span><span>·</span><span>마켓</span><span>·</span><span>뷰티살롱</span><span>·</span><span>네일샵</span><span>·</span><span>스킨케어</span><span>·</span><span>마사지</span><span>·</span><span>안경점</span><span>·</span><span>치과</span><span>·</span><span>한의원</span><span>·</span><span>병원</span><span>·</span><span>약국</span><span>·</span><span>학원</span><span>·</span><span>태권도장</span><span>·</span><span>부동산</span><span>·</span><span>융자</span><span>·</span><span>보험</span><span>·</span><span>세무사</span><span>·</span><span>변호사</span><span>·</span><span>회계사</span><span>·</span><span>꽃집</span><span>·</span><span>사진관</span><span>·</span><span>세탁소</span><span>·</span><span>정비소</span><span>·</span><span>HVAC</span><span>·</span><span>이사·무빙</span><span>·</span><span>청소업체</span><span>·</span>
   </div></div>
   <div class="chan-row" aria-hidden="true">
     <span class="chan-label">당신의 가게가 발견되는 곳</span>
@@ -623,11 +623,15 @@ function homePage() {
 <script>
 /* 히어로 라이브 리포트 데모 — reduced-motion이면 완성 상태로 정적 표시 */
 (function () {
-  // 마퀴 무한 루프용 콘텐츠 복제 (업종 + 채널)
-  var mq = document.getElementById('mq-track');
-  if (mq) mq.innerHTML += mq.innerHTML;
-  var ct = document.getElementById('chan-track');
-  if (ct) ct.innerHTML += ct.innerHTML;
+  // 마퀴 무한 루프용 콘텐츠 복제 — 트랙이 화면 폭의 2배 이상이 될 때까지 (초와이드 대응)
+  ['mq-track', 'chan-track'].forEach(function (id) {
+    var t = document.getElementById(id);
+    if (!t) return;
+    var unit = t.innerHTML;
+    var guard = 0;
+    while (t.scrollWidth < window.innerWidth * 2 && guard < 6) { t.innerHTML += unit; guard++; }
+    t.innerHTML += t.innerHTML; // 최종 2배 — translateX(-50%) 루프 기준
+  });
   var typeEl = document.getElementById('dm-type');
   if (!typeEl) return;
   var scoreEl = document.getElementById('dm-score');

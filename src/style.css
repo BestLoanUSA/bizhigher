@@ -651,8 +651,8 @@ img { max-width: 100%; display: block; }
   position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end;
   padding: 90px 24px 44px; opacity: 0; will-change: transform, opacity;
 }
-/* 카피+데모는 남은 공간의 중앙에, 마퀴·채널은 하단에 정박 */
-.hero-cine.cine-on .cine-stage2 > .hero-grid { margin: auto 0; }
+/* 카피+데모는 남은 공간의 중앙에(가로·세로), 마퀴·채널은 하단에 정박 */
+.hero-cine.cine-on .cine-stage2 > .hero-grid { margin: auto; width: 100%; }
 .hero-cine.cine-on .cine-stage2 .marquee { margin-top: 64px; }
 .hero-cine.cine-on .cine-stage2 .chan-row { margin-top: 40px; }
 /* 하단 지평선 글로우 — 남는 남색을 은은하게 채움 */
