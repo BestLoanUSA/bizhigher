@@ -425,7 +425,7 @@ function homePage() {
         <div class="demo-chips">
           <div class="demo-chip">🔎 경쟁사 대비 리뷰 32개 부족</div>
           <div class="demo-chip">📸 프로필 사진 6개월째 업데이트 없음</div>
-          <div class="demo-chip demo-chip-ok">✓ 90일 실행 플랜 생성 완료</div>
+          <div class="demo-chip demo-chip-ok">✓ 180일 실행 플랜 생성 완료</div>
         </div>
       </div>
     </div>
@@ -660,13 +660,13 @@ function homePage() {
   // 루프마다 다른 지역·업종 비즈니스로 순환 (마지막 칩은 항상 완료 스타일)
   var BIZ = [
     { name: '가든그로브 안경점', score: 63, bars: [82, 61, 45, 38, 68],
-      chips: ['🔎 경쟁사 대비 리뷰 32개 부족', '📸 프로필 사진 6개월째 업데이트 없음', '✓ 90일 실행 플랜 생성 완료'] },
+      chips: ['🔎 경쟁사 대비 리뷰 32개 부족', '📸 프로필 사진 6개월째 업데이트 없음', '✓ 180일 실행 플랜 생성 완료'] },
     { name: '달라스 한식당', score: 71, bars: [88, 79, 52, 66, 74],
-      chips: ['⭐ 최근 30일 신규 리뷰 12개 — 지역 상위권', '🌐 웹사이트에 메뉴·영업시간 정보 없음', '✓ 90일 실행 플랜 생성 완료'] },
+      chips: ['⭐ 최근 30일 신규 리뷰 12개 — 지역 상위권', '🌐 웹사이트에 메뉴·영업시간 정보 없음', '✓ 180일 실행 플랜 생성 완료'] },
     { name: 'LA 네일살롱', score: 48, bars: [54, 41, 30, 62, 49],
-      chips: ['🔎 "nail salon near me" 노출 순위권 밖', '💬 미답글 리뷰 9개 — 신뢰도 하락 요인', '✓ 90일 실행 플랜 생성 완료'] },
+      chips: ['🔎 "nail salon near me" 노출 순위권 밖', '💬 미답글 리뷰 9개 — 신뢰도 하락 요인', '✓ 180일 실행 플랜 생성 완료'] },
     { name: '애틀랜타 수학학원', score: 57, bars: [66, 72, 38, 25, 58],
-      chips: ['📱 SNS 계정 없음 — 학부모 접점 부재', '🏷️ 구글 카테고리 "일반 학교"로 잘못 분류', '✓ 90일 실행 플랜 생성 완료'] },
+      chips: ['📱 SNS 계정 없음 — 학부모 접점 부재', '🏷️ 구글 카테고리 "일반 학교"로 잘못 분류', '✓ 180일 실행 플랜 생성 완료'] },
   ];
   var bi = 0;
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
