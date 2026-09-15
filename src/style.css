@@ -784,12 +784,21 @@ img { max-width: 100%; display: block; }
 /* ---------- 시네마틱 narrow 모드 (모바일·좁은 화면) ---------- */
 .hero-cine.cine-on.cine-narrow { height: auto; }
 .cine-narrow .cine-track { height: 230vh; position: relative; }
+/* 히어로 메인 카피: 데스크톱처럼 스티키 안 오버레이로 떠오름 */
 .hero-cine.cine-on.cine-narrow .cine-stage2 {
-  position: static; opacity: 1; transform: none; pointer-events: auto;
-  padding: 56px 20px 44px;
-  background: linear-gradient(180deg, var(--space-950), var(--space-900) 30%, var(--space-950));
+  position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center;
+  padding: 90px 20px 40px; opacity: 0; will-change: transform, opacity;
 }
 .hero-cine.cine-on.cine-narrow .cine-stage2 > .hero-grid { margin: 0 auto; }
+/* 분리된 데모·마퀴·채널: 스티키 종료 지점 바로 아래 흐름으로 */
+.cine-narrow .cine-flow {
+  position: relative;
+  background: linear-gradient(180deg, var(--space-950), var(--space-900) 45%, var(--space-950));
+  padding: 8px 20px 44px;
+}
+.cine-narrow .cine-flow .hero-demo { display: flex; justify-content: center; }
+.cine-narrow .cine-flow .marquee { margin-top: 48px; }
+.cine-narrow .cine-flow .chan-row { margin-top: 34px; }
 @media (max-width: 991px) {
   .cine-beat { white-space: normal; width: 92%; font-size: clamp(24px, 6.5vw, 40px); }
   .cine-beat-brand .grad { font-size: clamp(44px, 13vw, 110px); }

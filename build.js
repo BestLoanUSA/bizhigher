@@ -484,14 +484,21 @@ function homePage() {
     var beats = [document.getElementById('cine-b1'), document.getElementById('cine-b2'), document.getElementById('cine-b3')];
     if (!sticky || !s1 || !s2 || !center || !higher || !origin || !pinsWrap) return;
 
-    /* 모바일/좁은 화면: 스테이지1만 스크럽하고, 스테이지2는 일반 흐름으로 이어지게 재배치 */
+    /* 모바일/좁은 화면: 히어로 메인 카피는 데스크톱처럼 오버레이로 떠오르고,
+       데모 카드·마퀴·채널만 스티키 종료 지점 바로 아래 일반 흐름으로 분리 (빈 구간 제거) */
     var track = hero;
     if (narrow) {
       track = document.createElement('div');
       track.className = 'cine-track';
       hero.insertBefore(track, sticky);
       track.appendChild(sticky);
-      hero.appendChild(s2);
+      var flow = document.createElement('div');
+      flow.className = 'cine-flow';
+      ['.hero-demo', '.marquee', '.chan-row'].forEach(function (sel) {
+        var el = s2.querySelector(sel);
+        if (el) flow.appendChild(el);
+      });
+      hero.appendChild(flow);
       hero.classList.add('cine-narrow');
     }
 
@@ -582,7 +589,7 @@ function homePage() {
 
       /* 3박자(Biz, Higher.) — 등장 후 좌상단 네비 로고로 날아가 도킹 */
       var bIn = seg(p, 0.54, 0.6);
-      var f = seg(p, narrow ? 0.7 : 0.66, narrow ? 0.84 : 0.78);
+      var f = seg(p, 0.66, 0.78);
       var fe = f * f * (3 - 2 * f); /* smoothstep */
       var b3 = beats[2];
       var logo = document.querySelector('.nav .logo');
@@ -606,15 +613,13 @@ function homePage() {
         } else if (f < 0.9) { window.__bhDocked = false; }
       }
 
-      /* 스테이지1 → 스테이지2 전환 (narrow에선 스테이지2가 일반 흐름이라 생략) */
-      s1.style.opacity = String(1 - seg(p, narrow ? 0.86 : 0.74, narrow ? 0.97 : 0.84));
-      s1.style.visibility = p > (narrow ? 0.99 : 0.86) ? 'hidden' : 'visible';
-      if (!narrow) {
-        var e2 = seg(p, 0.74, 0.88);
-        s2.style.opacity = String(e2);
-        s2.style.transform = 'translateY(' + (44 * (1 - e2)) + 'px)';
-        s2.style.pointerEvents = e2 > 0.5 ? 'auto' : 'none';
-      }
+      /* 스테이지1 → 스테이지2 전환 (모든 화면 동일 타이밍) */
+      s1.style.opacity = String(1 - seg(p, 0.74, 0.84));
+      s1.style.visibility = p > 0.86 ? 'hidden' : 'visible';
+      var e2 = seg(p, 0.74, 0.88);
+      s2.style.opacity = String(e2);
+      s2.style.transform = 'translateY(' + (44 * (1 - e2)) + 'px)';
+      s2.style.pointerEvents = e2 > 0.5 ? 'auto' : 'none';
 
       /* 마무리 축소 */
       var e3 = seg(p, 0.92, 1);
