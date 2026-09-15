@@ -59,7 +59,7 @@ function nav(active) {
       <a class="${cls('audit')}" href="/free-audit/">무료 진단</a>
     </div>
     <div class="nav-cta"><a class="btn btn-primary btn-small" href="/free-audit/">무료 진단 받기</a></div>
-    <button class="nav-toggle" aria-label="메뉴 열기" onclick="document.getElementById('mm').classList.toggle('open')">☰</button>
+    <button class="nav-toggle" aria-label="메뉴 열기" onclick="document.getElementById('mm').classList.toggle('open');this.closest('.nav').classList.toggle('menu-open')">☰</button>
   </div>
   <div class="mobile-menu" id="mm">
     <a href="/services/">서비스</a>
@@ -71,6 +71,12 @@ function nav(active) {
 }
 
 const FOOTER = `
+<section class="mega-cta">
+  <div class="container center">
+    <a href="/free-audit/" class="mega-link" aria-label="무료 AI 진단 시작하기"><span class="mega-text">한 단계 위로.</span></a>
+    <p class="mega-sub">내 가게 마케팅, 몇 점일까요? — 60초 무료 AI 진단으로 시작하세요 →</p>
+  </div>
+</section>
 <footer class="footer">
   <div class="container">
     <div class="footer-cols">
@@ -113,9 +119,17 @@ const FOOTER = `
   }, 3000);
 })();
 
-/* 인터랙션 팩 v14 — 카운트업 · 스텝 하이라이트 · 카드 3D 틸트 (모두 선택적 강화, 실패해도 콘텐츠 표시에 영향 없음) */
+/* 인터랙션 팩 — 네비 스크롤 상태 · 카운트업 · 카드 3D 틸트 (모두 선택적 강화, 실패해도 콘텐츠 표시에 영향 없음) */
 (function () {
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* 0) 플로팅 네비 — 스크롤 시 글래스 강화 */
+  var nav = document.querySelector('.nav');
+  if (nav) {
+    var navUpd = function () { nav.classList.toggle('scrolled', window.scrollY > 40); };
+    window.addEventListener('scroll', navUpd, { passive: true });
+    navUpd();
+  }
 
   /* 1) 숫자 카운트업 — 뷰포트 진입 시 1회 */
   if (!reduced && 'IntersectionObserver' in window) {
@@ -363,7 +377,19 @@ function homePage() {
     pathName: '/',
     jsonLd,
   }) + nav('home') + `
-<header class="hero">
+<header class="hero hero-cine" id="cine-hero">
+  <div class="hero-sticky" id="cine-sticky">
+  <div class="cine-stage1" aria-hidden="true">
+    <div class="cine-circle cc1"></div>
+    <div class="cine-circle cc2"></div>
+    <div class="cine-circle cc3"></div>
+    <div class="cine-center">
+      <div class="cine-word">Biz<span class="grad">Higher</span></div>
+      <p class="cine-tag">AI AUTOMATION MARKETING — 내 비즈니스를 한 단계 위로</p>
+    </div>
+    <div class="cine-hint">SCROLL<span class="cine-chev">⌄</span></div>
+  </div>
+  <div class="cine-stage2">
   <div class="container hero-grid">
     <div class="hero-copy">
       <span class="hero-badge">⚡ AI 자동화 마케팅 · 영업일 3일 딜리버리</span>
@@ -399,7 +425,59 @@ function homePage() {
   <div class="marquee"><div class="marquee-track" id="mq-track">
     <span>식당</span><span>·</span><span>카페</span><span>·</span><span>뷰티살롱</span><span>·</span><span>네일샵</span><span>·</span><span>안경점</span><span>·</span><span>치과</span><span>·</span><span>한의원</span><span>·</span><span>병원</span><span>·</span><span>학원</span><span>·</span><span>부동산</span><span>·</span><span>융자</span><span>·</span><span>보험</span><span>·</span><span>세탁소</span><span>·</span><span>정비소</span><span>·</span><span>변호사</span><span>·</span><span>회계사</span>
   </div></div>
+  </div><!-- /cine-stage2 -->
+  </div><!-- /hero-sticky -->
 </header>
+<script>
+/* 시네마틱 히어로 — 데스크톱(992px+)·모션 허용 시에만 활성. 실패·미지원 시 기본 히어로 그대로 표시 */
+(function () {
+  try {
+    var hero = document.getElementById('cine-hero');
+    if (!hero) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!window.matchMedia('(min-width: 992px)').matches) return;
+    var sticky = document.getElementById('cine-sticky');
+    var s1 = hero.querySelector('.cine-stage1');
+    var s2 = hero.querySelector('.cine-stage2');
+    var word = hero.querySelector('.cine-center');
+    var circles = hero.querySelectorAll('.cine-circle');
+    if (!sticky || !s1 || !s2 || !word) return;
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+    function seg(p, a, b) { return clamp((p - a) / (b - a), 0, 1); }
+    var ticking = false;
+    function frame() {
+      ticking = false;
+      var r = hero.getBoundingClientRect();
+      var total = r.height - window.innerHeight;
+      var p = total > 0 ? clamp(-r.top / total, 0, 1) : 1;
+      var grow = seg(p, 0, 0.4);
+      circles.forEach(function (c, i) {
+        c.style.transform = 'translate(-50%,-50%) scale(' + (0.35 + grow * (2.8 + i * 0.6)) + ')';
+        c.style.opacity = String(0.9 * (1 - seg(p, 0.24 + i * 0.05, 0.44)));
+      });
+      word.style.opacity = String(1 - seg(p, 0.08, 0.3));
+      word.style.transform = 'scale(' + (1 + grow * 0.18) + ')';
+      s1.style.opacity = String(1 - seg(p, 0.32, 0.46));
+      s1.style.visibility = p > 0.48 ? 'hidden' : 'visible';
+      var e2 = seg(p, 0.44, 0.62);
+      s2.style.opacity = String(e2);
+      s2.style.transform = 'translateY(' + (44 * (1 - e2)) + 'px)';
+      s2.style.pointerEvents = e2 > 0.5 ? 'auto' : 'none';
+      var e3 = seg(p, 0.86, 1);
+      sticky.style.transform = 'scale(' + (1 - 0.05 * e3) + ')';
+      sticky.style.borderRadius = (36 * e3) + 'px';
+    }
+    function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(frame); } }
+    hero.classList.add('cine-on');
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    frame();
+  } catch (e) {
+    var h = document.getElementById('cine-hero');
+    if (h) h.classList.remove('cine-on');
+  }
+})();
+</script>
 <script>
 /* 히어로 라이브 리포트 데모 — reduced-motion이면 완성 상태로 정적 표시 */
 (function () {
@@ -493,13 +571,64 @@ function homePage() {
   <div class="container">
     <p class="eyebrow">HOW IT WORKS</p>
     <h2 class="h2">대행사 미팅은 없습니다</h2>
-    <div class="grid3" id="steps">
-      <div class="step-card"><div class="step-num">1</div><h3 class="h3">쇼핑하듯 주문</h3><p class="body-sm">가격이 다 공개되어 있습니다. 필요한 서비스를 골라 카드로 결제하세요.</p></div>
-      <div class="step-card"><div class="step-num">2</div><h3 class="h3">AI 제작 + 전문가 검수</h3><p class="body-sm">AI가 빠르게 제작하고, 마케팅 전문가가 하나하나 검수합니다.</p></div>
-      <div class="step-card"><div class="step-num">3</div><h3 class="h3">영업일 3일 내 딜리버리</h3><p class="body-sm">진행 상황을 확인하고 결과물을 받아보세요. 수정 1회 무료.</p></div>
+    <div class="stack-zone">
+      <div class="stack-card"><span class="stack-num">01</span><h3 class="stack-title">쇼핑하듯 주문</h3><p class="stack-desc">가격이 다 공개되어 있습니다. 견적 미팅도, 영업 전화도 없습니다. 필요한 서비스를 골라 카드로 결제하면 끝.</p></div>
+      <div class="stack-card stack-c2"><span class="stack-num">02</span><h3 class="stack-title">AI 제작 + 전문가 검수</h3><p class="stack-desc">AI가 빠르게 제작하고, 마케팅 전문가가 하나하나 검수합니다. 속도와 품질을 둘 다 가져갑니다.</p></div>
+      <div class="stack-card stack-c3"><span class="stack-num">03</span><h3 class="stack-title">영업일 3일 내 딜리버리</h3><p class="stack-desc">결과물과 사용 가이드를 이메일로 받아보세요. 수정 1회 무료. 구독이면 매달 이 사이클이 자동으로 돕니다.</p></div>
     </div>
   </div>
 </section>
+
+<section class="section acc-section">
+  <div class="container">
+    <p class="eyebrow">EXPERTISE</p>
+    <h2 class="h2">BizHigher가 잘하는 것</h2>
+    <div class="acc" id="acc">
+      <a class="acc-item" href="/service/seo-aio/" style="--ga:#0A4DF5;--gb:#062B8F;">
+        <span class="acc-num">01</span><span class="acc-title">로컬 SEO · AIO</span>
+        <span class="acc-body">구글 지도와 AI 검색(ChatGPT) 모두에서 발견되게 만듭니다. 경쟁사 갭 분석으로 시작하는 데이터 기반 최적화.<b>자세히 보기 →</b></span>
+      </a>
+      <a class="acc-item" href="/service/website/" style="--ga:#22D3EE;--gb:#0A4DF5;">
+        <span class="acc-num">02</span><span class="acc-title">웹사이트 제작</span>
+        <span class="acc-body">호스팅비 $0, 영업일 3~7일. 예약·주문까지 되는 사이트를 정찰제로. 유지관리 구독으로 계속 관리됩니다.<b>자세히 보기 →</b></span>
+      </a>
+      <a class="acc-item" href="/service/gbp-posting/" style="--ga:#7C5CFF;--gb:#3B1FA8;">
+        <span class="acc-num">03</span><span class="acc-title">콘텐츠 · 포스팅</span>
+        <span class="acc-body">구글 프로필 + 인스타 + 페이스북에 매주 콘텐츠가 올라갑니다. 블로그까지 더하면 검색 유입이 복리로 쌓입니다.<b>자세히 보기 →</b></span>
+      </a>
+      <a class="acc-item" href="/service/shortform-video/" style="--ga:#2F6BFF;--gb:#0B1B66;">
+        <span class="acc-num">04</span><span class="acc-title">숏폼 · 광고 소재</span>
+        <span class="acc-body">릴스·틱톡용 AI 영상과 매달 새 광고 이미지. 촬영팀 없이 광고급 크리에이티브를 구독으로.<b>자세히 보기 →</b></span>
+      </a>
+      <a class="acc-item" href="/service/ads-management/" style="--ga:#0839C4;--gb:#050A3F;">
+        <span class="acc-num">05</span><span class="acc-title">광고 운영</span>
+        <span class="acc-body">구글·메타·빙 광고를 전환 데이터 기반으로 매주 최적화. 동시 5곳 한정으로 품질을 지킵니다.<b>자세히 보기 →</b></span>
+      </a>
+    </div>
+  </div>
+</section>
+<script>
+/* 아코디언 — 터치·클릭 대응 (기본 1번 활성, 링크 이동은 활성 상태에서만) */
+(function () {
+  var acc = document.getElementById('acc');
+  if (!acc) return;
+  var items = acc.querySelectorAll('.acc-item');
+  if (items.length) items[0].classList.add('on');
+  items.forEach(function (it) {
+    it.addEventListener('click', function (e) {
+      if (!it.classList.contains('on')) {
+        e.preventDefault();
+        items.forEach(function (o) { o.classList.remove('on'); });
+        it.classList.add('on');
+      }
+    });
+    it.addEventListener('mouseenter', function () {
+      items.forEach(function (o) { o.classList.remove('on'); });
+      it.classList.add('on');
+    });
+  });
+})();
+</script>
 
 <section class="section">
   <div class="container">
@@ -543,14 +672,6 @@ function homePage() {
       </div>`).join('')}
     </div>
     <p class="note-text">🎁 12개월 플랜은 프로필 최적화 · 로컬 등록 · 웹사이트까지 셋업 무료 (최대 $1,014 상당) · <a href="/pricing/#plans" style="color:var(--blue-600);font-weight:700;">전체 비교 →</a></p>
-  </div>
-</section>
-
-<section class="cta-band">
-  <div class="container">
-    <h2 class="cta-title">내 가게 마케팅, 몇 점일까요?</h2>
-    <p class="cta-sub">60초 만에 무료 AI 진단 리포트를 받아보세요. 가입도 필요 없습니다.</p>
-    <a href="/free-audit/" class="btn btn-white">무료 진단 시작하기</a>
   </div>
 </section>
 
