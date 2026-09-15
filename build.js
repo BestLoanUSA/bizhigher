@@ -433,6 +433,19 @@ function homePage() {
   <div class="marquee"><div class="marquee-track" id="mq-track">
     <span>식당</span><span>·</span><span>카페</span><span>·</span><span>뷰티살롱</span><span>·</span><span>네일샵</span><span>·</span><span>안경점</span><span>·</span><span>치과</span><span>·</span><span>한의원</span><span>·</span><span>병원</span><span>·</span><span>학원</span><span>·</span><span>부동산</span><span>·</span><span>융자</span><span>·</span><span>보험</span><span>·</span><span>세탁소</span><span>·</span><span>정비소</span><span>·</span><span>변호사</span><span>·</span><span>회계사</span>
   </div></div>
+  <div class="chan-row" aria-hidden="true">
+    <span class="chan-label">당신의 가게가 발견되는 곳</span>
+    <div class="chan-logos">
+      <span class="chan" style="--cdot:#4285F4">Google</span>
+      <span class="chan" style="--cdot:#34A853">Google Maps</span>
+      <span class="chan" style="--cdot:#E1306C">Instagram</span>
+      <span class="chan" style="--cdot:#1877F2">Facebook</span>
+      <span class="chan" style="--cdot:#FF0000">YouTube</span>
+      <span class="chan" style="--cdot:#69C9D0">TikTok</span>
+      <span class="chan" style="--cdot:#D32323">Yelp</span>
+      <span class="chan" style="--cdot:#10A37F">ChatGPT</span>
+    </div>
+  </div>
   </div><!-- /cine-stage2 -->
   </div><!-- /hero-sticky -->
 </header>
@@ -486,9 +499,10 @@ function homePage() {
       range.setStart(node, 1); range.setEnd(node, 2);
       var ir = range.getBoundingClientRect();
       var sr = sticky.getBoundingClientRect();
-      ox = ir.left - sr.left + ir.width / 2;
-      oy = ir.top - sr.top + ir.height * 0.1; /* 글자 상단 = 점(tittle) 위치 */
-      seedPx = Math.max(14, ir.width * 0.62);
+      ox = ir.left - sr.left + ir.width * 0.56;
+      /* i의 점(tittle) 중심: 폰트 어센트 박스 기준 상단에서 약 24% 지점 (실측 보정값) */
+      oy = ir.top - sr.top + ir.height * 0.215;
+      seedPx = Math.max(16, ir.width * 0.8);
       seed.style.width = seedPx + 'px'; seed.style.height = seedPx + 'px';
       origin.style.left = ox + 'px'; origin.style.top = oy + 'px';
       var w = sr.width, h = sr.height;
@@ -533,14 +547,39 @@ function homePage() {
         pn.el.classList.toggle('lit', radius >= pn.dist && p < 0.74);
       });
 
-      /* 3박자 메시지 */
+      /* 3박자 메시지 (1·2박자) */
       beats[0].style.opacity = String(beat(p, 0.18, 0.24, 0.32, 0.38));
       beats[1].style.opacity = String(beat(p, 0.36, 0.42, 0.5, 0.56));
-      beats[2].style.opacity = String(beat(p, 0.54, 0.6, 0.72, 0.78));
-      beats.forEach(function (b, i) {
-        var bp = [seg(p, 0.18, 0.24), seg(p, 0.36, 0.42), seg(p, 0.54, 0.6)][i];
-        b.style.transform = 'translate(-50%,-50%) translateY(' + (22 * (1 - bp)) + 'px)';
+      [0, 1].forEach(function (i) {
+        var bp = [seg(p, 0.18, 0.24), seg(p, 0.36, 0.42)][i];
+        beats[i].style.transform = 'translate(-50%,-50%) translateY(' + (22 * (1 - bp)) + 'px)';
       });
+
+      /* 3박자(Biz, Higher.) — 등장 후 좌상단 네비 로고로 날아가 도킹 */
+      var bIn = seg(p, 0.54, 0.6);
+      var f = seg(p, 0.66, 0.78);
+      var fe = f * f * (3 - 2 * f); /* smoothstep */
+      var b3 = beats[2];
+      var logo = document.querySelector('.nav .logo');
+      var dx = 0, dy = 0;
+      if (logo && f > 0) {
+        var lr = logo.getBoundingClientRect();
+        dx = (lr.left + lr.width / 2 - window.innerWidth / 2) * fe;
+        dy = (lr.top + lr.height / 2 - window.innerHeight / 2) * fe;
+      }
+      var sc3 = 1 - fe * 0.85;
+      b3.style.opacity = String(bIn * (1 - seg(f, 0.88, 1)));
+      b3.style.transform = 'translate(calc(-50% + ' + dx.toFixed(1) + 'px), calc(-50% + ' + dy.toFixed(1) + 'px)) translateY(' + (22 * (1 - bIn) * (1 - fe)) + 'px) scale(' + sc3.toFixed(3) + ')';
+      var b3small = b3.querySelector('small');
+      if (b3small) b3small.style.opacity = String(1 - seg(p, 0.64, 0.68));
+      /* 도킹 순간 로고 반짝 */
+      if (logo) {
+        if (f >= 1 && !window.__bhDocked) {
+          window.__bhDocked = true;
+          logo.classList.add('logo-pop');
+          setTimeout(function () { logo.classList.remove('logo-pop'); }, 800);
+        } else if (f < 0.9) { window.__bhDocked = false; }
+      }
 
       /* 스테이지1 → 스테이지2 전환 */
       s1.style.opacity = String(1 - seg(p, 0.74, 0.84));

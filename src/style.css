@@ -595,6 +595,39 @@ img { max-width: 100%; display: block; }
 .cine-beat-brand { display: flex; flex-direction: column; align-items: center; gap: 16px; }
 .cine-beat-brand .grad { font-size: clamp(64px, 8.5vw, 130px); font-weight: 900; letter-spacing: -0.05em; line-height: 1; }
 .cine-beat-brand small { font-size: clamp(15px, 1.3vw, 19px); font-weight: 700; letter-spacing: 0.14em; color: var(--mist-300); }
+
+/* 도킹 시 네비 로고 반짝 */
+.nav .logo { transition: transform .3s ease, filter .3s ease; }
+.nav .logo.logo-pop { transform: scale(1.12); filter: drop-shadow(0 0 16px rgba(47, 107, 255, 0.9)); }
+
+/* 채널 워드마크 행 (히어로 하단) */
+.chan-row { position: relative; z-index: 1; margin-top: 46px; text-align: center; }
+.chan-label {
+  display: block; font-size: 11.5px; font-weight: 800; letter-spacing: 0.26em;
+  text-transform: uppercase; color: var(--mist-400); margin-bottom: 18px;
+}
+.chan-logos { display: flex; justify-content: center; align-items: center; gap: 34px; flex-wrap: wrap; }
+.chan {
+  position: relative; font-size: 16.5px; font-weight: 800; letter-spacing: -0.01em;
+  color: var(--mist-400); padding-left: 15px; white-space: nowrap;
+  animation: chantwinkle 4.2s ease-in-out infinite;
+  transition: color .25s ease;
+}
+.chan::before {
+  content: ""; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--cdot); box-shadow: 0 0 8px var(--cdot);
+}
+.chan:hover { color: #fff; }
+.chan:nth-child(1) { animation-delay: 0s; } .chan:nth-child(2) { animation-delay: .5s; }
+.chan:nth-child(3) { animation-delay: 1s; } .chan:nth-child(4) { animation-delay: 1.5s; }
+.chan:nth-child(5) { animation-delay: 2s; } .chan:nth-child(6) { animation-delay: 2.5s; }
+.chan:nth-child(7) { animation-delay: 3s; } .chan:nth-child(8) { animation-delay: 3.5s; }
+@keyframes chantwinkle {
+  0%, 100% { opacity: 0.55; }
+  12% { opacity: 1; text-shadow: 0 0 18px rgba(125, 162, 255, 0.5); }
+  24% { opacity: 0.55; text-shadow: none; }
+}
 .cine-center {
   position: absolute; inset: 0; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 18px; will-change: transform, opacity;
@@ -683,7 +716,7 @@ img { max-width: 100%; display: block; }
 
 /* ---------- 모션 최소화 ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .cine-chev, .mega-text { animation: none; }
+  .cine-chev, .mega-text, .chan, .cine-seed { animation: none; }
   .acc-item, .acc-title, .acc-body { transition: none; }
 }
 
@@ -706,4 +739,6 @@ img { max-width: 100%; display: block; }
   .stack-desc { font-size: 15.5px; }
   .mega-cta { padding: 72px 20px 20px; }
   .mega-sub { font-size: 14px; }
+  .chan-logos { gap: 18px 22px; }
+  .chan { font-size: 14px; }
 }
