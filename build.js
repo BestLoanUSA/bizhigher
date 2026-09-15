@@ -768,7 +768,7 @@ function homePage() {
       </a>
       <a class="acc-item" href="/service/ads-management/" style="--ga:#0839C4;--gb:#050A3F;">
         <span class="acc-num">05</span><span class="acc-title">광고 운영</span>
-        <span class="acc-body">구글·메타·빙 광고를 전환 데이터 기반으로 매주 최적화. 동시 5곳 한정으로 품질을 지킵니다.<b>자세히 보기 →</b></span>
+        <span class="acc-body">구글·메타·빙 광고를 전환 데이터 기반으로 매주 최적화. 효율을 올리고 품질을 더합니다.<b>자세히 보기 →</b></span>
       </a>
     </div>
   </div>
