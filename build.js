@@ -200,6 +200,151 @@ function productCard(s) {
 </a>`;
 }
 
+/* ---------- 패키지 공통 ---------- */
+
+const PERIODS = [
+  { key: 'monthly', label: '월간', per: '/월', note: '매월 결제 · 언제든 취소' },
+  { key: 'six', label: '6개월', per: '/월', months: 6, note: '6개월 선결제' },
+  { key: 'annual', label: '12개월', per: '/월', months: 12, note: '12개월 선결제' },
+];
+
+function pkgConsultHref(pkg, periodLabel) {
+  return `mailto:${SITE.email}?subject=${encodeURIComponent(`[플랜 신청] ${pkg.name} — ${periodLabel}`)}&body=${encodeURIComponent('업체명:\n연락처:\n웹사이트/구글 프로필 링크:\n궁금한 점:')}`;
+}
+
+function packageMatrixSection() {
+  // 서버 렌더는 12개월(기본) 기준 — JS가 토글 시 갱신
+  const pkgsJson = JSON.stringify(DATA.packages.map((p) => ({
+    slug: p.slug, name: p.name, sum: p.sum, prices: p.prices, links: p.links || {},
+  })));
+  const gifts = DATA.setupGifts;
+  const cards = DATA.packages.map((p) => {
+    const price = p.prices.annual;
+    const total = price * 12;
+    const disc = Math.round((1 - price / p.sum) * 100);
+    return `
+      <div class="tier pk-card ${p.popular ? 'tier-pop' : ''}" data-slug="${p.slug}">
+        ${p.popular ? '<div class="tier-badge">가장 인기</div>' : ''}
+        <h3 class="h3">${p.name}</h3>
+        <p class="pk-sum">개별 합계 <s>$${p.sum}/월</s> <span class="pk-disc">${disc}% 할인</span></p>
+        <div class="tier-price">$<span class="pk-price">${price}</span><span class="tier-per">/월</span></div>
+        <p class="pk-total">총 $${total.toLocaleString('en-US')} · 12개월 선결제</p>
+        <ul class="pk-list">${p.includes.map((i) => `<li>${i}</li>`).join('')}</ul>
+        <a class="btn ${p.popular ? 'btn-primary' : 'btn-ghost'} btn-block pk-cta" href="${pkgConsultHref(p, '12개월')}">플랜 시작하기</a>
+        <a class="pk-more" href="/package/${p.slug}/">자세히 보기 →</a>
+      </div>`;
+  }).join('');
+  return `
+<section class="section" id="plans">
+  <div class="container">
+    <p class="eyebrow">PLANS</p>
+    <h2 class="h2">우리 가게 마케팅, 통째로 맡기세요</h2>
+    <div class="period-toggle" id="period-toggle" role="tablist">
+      <button type="button" data-period="monthly">월간</button>
+      <button type="button" data-period="six">6개월</button>
+      <button type="button" data-period="annual" class="on">12개월 <span class="pt-save">최대 혜택</span></button>
+    </div>
+    <div class="gift-note" id="gift-note">🎁 <b>12개월 플랜 셋업 무료</b> — ${gifts.annual.items.join(' + ')} <b>($${gifts.annual.value} 상당${gifts.premiumAnnualExtra ? ` · Premium은 ${gifts.premiumAnnualExtra}` : ''})</b></div>
+    <div class="grid3 pk-grid">${cards}</div>
+    <p class="note-text">장기 플랜은 시작 후 30일 내 해지 시 잔여 금액 환불 (제공된 서비스·셋업은 정가 차감) · 월간 플랜은 언제든 취소</p>
+  </div>
+</section>
+<script>
+(function () {
+  var PKGS = ${pkgsJson};
+  var GIFTS = ${JSON.stringify(gifts)};
+  var CONSULT = ${JSON.stringify(Object.fromEntries(DATA.packages.map((p) => [p.slug, { monthly: pkgConsultHref(p, '월간'), six: pkgConsultHref(p, '6개월'), annual: pkgConsultHref(p, '12개월') }])))};
+  var toggle = document.getElementById('period-toggle');
+  if (!toggle) return;
+  var noteEl = document.getElementById('gift-note');
+  function fmt(n) { return n.toLocaleString('en-US'); }
+  function render(period) {
+    PKGS.forEach(function (p) {
+      var card = document.querySelector('.pk-card[data-slug="' + p.slug + '"]');
+      if (!card) return;
+      var price = p.prices[period];
+      var disc = Math.round((1 - price / p.sum) * 100);
+      card.querySelector('.pk-price').textContent = price;
+      card.querySelector('.pk-disc').textContent = disc + '% 할인';
+      var months = period === 'six' ? 6 : period === 'annual' ? 12 : 0;
+      card.querySelector('.pk-total').textContent = months
+        ? '총 $' + fmt(price * months) + ' · ' + (months === 6 ? '6개월' : '12개월') + ' 선결제'
+        : '매월 결제 · 언제든 취소';
+      var cta = card.querySelector('.pk-cta');
+      cta.href = (p.links && p.links[period]) || CONSULT[p.slug][period];
+    });
+    if (noteEl) {
+      if (period === 'annual') noteEl.innerHTML = '🎁 <b>12개월 플랜 셋업 무료</b> — ' + GIFTS.annual.items.join(' + ') + ' <b>($' + GIFTS.annual.value + ' 상당' + (GIFTS.premiumAnnualExtra ? ' · Premium은 ' + GIFTS.premiumAnnualExtra : '') + ')</b>';
+      else if (period === 'six') noteEl.innerHTML = '🎁 <b>6개월 플랜 셋업 무료</b> — ' + GIFTS.six.items.join(' + ') + ' <b>($' + GIFTS.six.value + ' 상당)</b>';
+      else noteEl.innerHTML = '💡 6·12개월 플랜을 선택하면 셋업 서비스(최대 $' + GIFTS.annual.value + ' 상당)가 무료입니다';
+    }
+  }
+  toggle.addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-period]');
+    if (!btn) return;
+    toggle.querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b === btn); });
+    render(btn.getAttribute('data-period'));
+  });
+})();
+</script>`;
+}
+
+/* ---------- 페이지: 패키지 상세 ---------- */
+
+function packagePage(p) {
+  const gifts = DATA.setupGifts;
+  const rows = PERIODS.map((per) => {
+    const price = p.prices[per.key];
+    const months = per.months || 0;
+    const totalTxt = months ? `총 $${(price * months).toLocaleString('en-US')} 선결제` : '매월 결제 · 언제든 취소';
+    const disc = Math.round((1 - price / p.sum) * 100);
+    const href = (p.links && p.links[per.key]) || pkgConsultHref(p, per.label);
+    const primary = per.key === 'annual';
+    return `<a href="${href}" class="btn ${primary ? 'btn-primary' : 'btn-ghost'} btn-block">${per.label} — $${price}/월 <span class="pk-btn-sub">(${totalTxt} · ${disc}%↓)</span></a>`;
+  }).join('');
+  return head({
+    title: `${p.name} 플랜 — 월 $${p.prices.annual}부터 | BizHigher`,
+    description: p.tagline,
+    pathName: `/package/${p.slug}/`,
+  }) + nav('pricing') + `
+<header class="detail-head">
+  <div class="container-narrow">
+    <a href="/pricing/#plans" class="back-link">← 전체 플랜</a>
+    ${p.popular ? '<span class="badge">가장 인기</span>' : '<span class="badge">플랜</span>'}
+    <h1 class="detail-title">${p.name}</h1>
+    <p class="detail-sub">${p.tagline}</p>
+    <div class="pricebox">
+      <div class="pricebox-row"><span class="pricebox-price">$${p.prices.annual}<span style="font-size:18px;font-weight:600;color:var(--ink-400);">/월</span></span><span class="pricebox-sub">12개월 기준 · 개별 합계 <s>$${p.sum}/월</s></span></div>
+      ${rows}
+      <p class="pricebox-secure">🎁 6개월: 셋업 $${gifts.six.value} 무료 · 12개월: 셋업 $${gifts.annual.value} 무료${p.slug === 'local-premium' ? ` (${gifts.premiumAnnualExtra})` : ''}<br>장기 플랜 30일 만족 보장 — 해지 시 잔여 환불(제공분 정가 차감)</p>
+    </div>
+  </div>
+</header>
+<section class="detail-body">
+  <div class="container-narrow">
+    <h2 class="h2-left">플랜에 포함된 것</h2>
+    <ul class="includes-list">${p.includes.map((i) => `<li>${i}</li>`).join('')}</ul>
+    <h2 class="h2-left">장기 플랜 무료 셋업</h2>
+    <ul class="includes-list">
+      ${gifts.six.items.map((i) => `<li><b>6개월+</b> ${i}</li>`).join('')}
+      ${gifts.annual.items.slice(1).map((i) => `<li><b>12개월</b> ${i}</li>`).join('')}
+      ${p.slug === 'local-premium' ? `<li><b>12개월</b> ${gifts.premiumAnnualExtra}</li>` : ''}
+    </ul>
+    <div class="detail-desc">
+      <p>온보딩 순서: 1개월차에 프로필 최적화·리뷰 QR·로컬 등록을 마치고, 2개월차에 웹사이트·지역 페이지를 제작합니다. 월간 서비스(포스팅·리뷰·소재 등)는 결제 직후 질문지 제출과 함께 바로 시작됩니다.</p>
+      <p>모든 결과물은 전문가 검수 후 전달되며, 매달 초 성과 리포트로 진행 상황을 숫자로 확인하실 수 있습니다.</p>
+    </div>
+  </div>
+</section>
+<section class="section section-gray">
+  <div class="container-narrow">
+    <h2 class="h2">다른 플랜과 비교하기</h2>
+    <div class="hero-ctas"><a href="/pricing/#plans" class="btn btn-primary">전체 플랜 보기</a></div>
+  </div>
+</section>
+` + FOOTER;
+}
+
 /* ---------- 페이지: 홈 ---------- */
 
 function homePage() {
@@ -361,10 +506,10 @@ function homePage() {
     <p class="eyebrow">SERVICES</p>
     <h2 class="h2">지금 필요한 게 뭐예요?</h2>
     <div class="grid3">
-      ${DATA.services.map(productCard).join('')}
+      ${DATA.services.slice(0, 8).map(productCard).join('')}
       <a href="/services/" class="prod-card prod-card-more">
-        <h3 class="h3">전체 서비스 보기 →</h3>
-        <p class="body-sm">월 구독 상품은 곧 오픈됩니다. 오픈 알림을 받아보세요.</p>
+        <h3 class="h3">전체 ${DATA.services.length}개 서비스 보기 →</h3>
+        <p class="body-sm">원타임부터 월 구독까지 — 필요한 것만 골라 담으세요.</p>
       </a>
     </div>
   </div>
@@ -383,13 +528,21 @@ function homePage() {
 
 <section class="section">
   <div class="container">
-    <p class="eyebrow">PRICING</p>
-    <h2 class="h2">투명한 정찰제</h2>
+    <p class="eyebrow">PLANS</p>
+    <h2 class="h2">통째로 맡기면 훨씬 저렴합니다</h2>
     <div class="grid3">
-      <div class="tier"><h3 class="h3">원타임 서비스</h3><div class="tier-price">$49~</div><p class="body-sm">필요할 때 한 번씩. 진단 리포트부터 프로필 최적화까지.</p><a href="/services/" class="btn btn-ghost btn-block">서비스 보기</a></div>
-      <div class="tier tier-pop"><div class="tier-badge">가장 인기</div><h3 class="h3">Growth 패키지</h3><div class="tier-price">$499<span class="tier-per">/월</span></div><p class="body-sm">블로그 + SNS + 리뷰 관리 + 월간 리포트. 곧 오픈 예정.</p><a href="/pricing/" class="btn btn-primary btn-block">오픈 알림 받기</a></div>
-      <div class="tier"><h3 class="h3">파운딩 멤버</h3><div class="tier-price">50%</div><p class="body-sm">첫 10곳 한정 전 상품 반값 + 성과 사례 공개 동의.</p><a href="/free-audit/" class="btn btn-ghost btn-block">진단부터 시작</a></div>
+      ${DATA.packages.map((p) => `
+      <div class="tier ${p.popular ? 'tier-pop' : ''}">
+        ${p.popular ? '<div class="tier-badge">가장 인기</div>' : ''}
+        <h3 class="h3">${p.name}</h3>
+        <p class="pk-sum">개별 합계 <s>$${p.sum}/월</s></p>
+        <div class="tier-price">$${p.prices.annual}<span class="tier-per">/월</span></div>
+        <p class="body-sm">${p.tagline}</p>
+        <p class="pk-total">12개월 기준 · 월간 $${p.prices.monthly}</p>
+        <a href="/package/${p.slug}/" class="btn ${p.popular ? 'btn-primary' : 'btn-ghost'} btn-block">플랜 보기</a>
+      </div>`).join('')}
     </div>
+    <p class="note-text">🎁 12개월 플랜은 프로필 최적화 · 로컬 등록 · 웹사이트까지 셋업 무료 (최대 $1,014 상당) · <a href="/pricing/#plans" style="color:var(--blue-600);font-weight:700;">전체 비교 →</a></p>
   </div>
 </section>
 
@@ -422,7 +575,7 @@ function servicesPage() {
   <div class="container">
     <h1 class="page-title">서비스</h1>
     <p class="page-sub">모든 가격은 정찰제입니다. 견적 문의가 필요 없습니다.</p>
-    <div class="banner"><span class="badge">파운딩 멤버</span><span class="banner-text">첫 10곳 한정 전 상품 50% 할인 — 성과 사례 공개에 동의하시는 분</span></div>
+    <div class="banner"><span class="badge">🎁 장기 플랜</span><span class="banner-text">6·12개월 플랜 선택 시 셋업 서비스 무료 — 최대 $1,014 상당 <a href="/pricing/#plans" style="color:var(--blue-600);">플랜 비교 →</a></span></div>
   </div>
 </header>
 <section class="section">
@@ -454,23 +607,23 @@ function pricingPage() {
     <p class="page-sub">숨은 비용도, 견적 미팅도 없습니다. 모든 가격이 여기 있습니다.</p>
   </div>
 </header>
+${packageMatrixSection()}
+<section class="section section-gray">
+  <div class="container-narrow">
+    <h2 class="h2">개별 구독</h2>
+    <div class="price-list">
+      ${DATA.services.filter((s) => s.type === 'subscription').map((s) => `<a href="/service/${s.slug}/" class="price-item"><span><span class="price-item-name">${s.name}</span><span class="price-item-meta">${s.delivery} · 언제든 해지</span></span><span class="price-item-price">${s.price}</span></a>`).join('')}
+    </div>
+    <p class="note-text">모든 구독은 Stripe 고객 포털에서 직접 해지할 수 있습니다 · 구독 고객 전원 월간 성과 리포트 무료</p>
+  </div>
+</section>
 <section class="section">
   <div class="container-narrow">
     <h2 class="h2">원타임 서비스</h2>
     <div class="price-list">
-      ${DATA.services.map((s) => `<a href="/service/${s.slug}/" class="price-item"><span><span class="price-item-name">${s.name}</span><span class="price-item-meta">${s.delivery}</span></span><span class="price-item-price">${s.price === '$149~' ? '$149 / $249' : s.price}</span></a>`).join('')}
+      ${DATA.services.filter((s) => s.type !== 'subscription').map((s) => `<a href="/service/${s.slug}/" class="price-item"><span><span class="price-item-name">${s.name}</span><span class="price-item-meta">${s.delivery}</span></span><span class="price-item-price">${s.price === '$149~' ? '$149 / $249' : s.price}</span></a>`).join('')}
     </div>
-    <p class="note-text">모든 상품에 수정 1회 무료 포함 · 작업 시작 전 전액 환불</p>
-  </div>
-</section>
-<section class="section section-gray">
-  <div class="container">
-    <h2 class="h2">월 구독 패키지 — 곧 오픈</h2>
-    <div class="grid3">
-      <div class="tier"><h3 class="h3">Starter</h3><div class="tier-price">$249<span class="tier-per">/월</span></div><p class="body-sm">리뷰 관리 자동화 + SEO 블로그 월 4편 + 월간 리포트</p><a href="/free-audit/" class="btn btn-ghost btn-block">오픈 알림 받기</a></div>
-      <div class="tier tier-pop"><div class="tier-badge">가장 인기 예정</div><h3 class="h3">Growth</h3><div class="tier-price">$499<span class="tier-per">/월</span></div><p class="body-sm">Starter 전체 + SNS 주 3회 운영 + 통합 마케팅 대시보드</p><a href="/free-audit/" class="btn btn-primary btn-block">오픈 알림 받기</a></div>
-      <div class="tier"><h3 class="h3">Premium</h3><div class="tier-price">$899<span class="tier-per">/월</span></div><p class="body-sm">Growth 전체 + Google Ads 운영 + 블로그 월 8편 (광고비 별도, 최소 $1,000/월)</p><a href="/free-audit/" class="btn btn-ghost btn-block">오픈 알림 받기</a></div>
-    </div>
+    <p class="note-text">모든 원타임 상품에 수정 1회 무료 포함 · 작업 시작 전 전액 환불</p>
   </div>
 </section>
 ` + FOOTER;
@@ -668,7 +821,8 @@ var params = new URLSearchParams(location.search);
 var svc = params.get('service') || '';
 document.getElementById('service-field').value = svc;
 // 웹사이트 제작 주문이면 전용 질문지 표시
-if (svc.indexOf('website') === 0 || svc === 'launch-package') {
+// 웹사이트 제작 주문 또는 웹사이트가 포함된 12개월 플랜이면 전용 질문지 표시
+if (svc.indexOf('website') === 0 || (svc.indexOf('local-') === 0 && svc.indexOf('annual') > -1)) {
   document.getElementById('website-extra').style.display = 'block';
 }
 document.getElementById('intake-form').addEventListener('submit', async function (e) {
@@ -727,7 +881,7 @@ function notFoundPage() {
 /* ---------- sitemap & robots ---------- */
 
 function sitemap() {
-  const urls = ['/', '/services/', '/pricing/', '/free-audit/', ...DATA.services.map((s) => `/service/${s.slug}/`)];
+  const urls = ['/', '/services/', '/pricing/', '/free-audit/', ...DATA.services.map((s) => `/service/${s.slug}/`), ...DATA.packages.map((p) => `/package/${p.slug}/`)];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map((u) => `  <url><loc>${SITE.domain}${u}</loc></url>`).join('\n')}
@@ -757,6 +911,7 @@ write('pricing/index.html', pricingPage());
 write('free-audit/index.html', auditPage());
 write('thanks/index.html', thanksPage());
 DATA.services.forEach((s) => write(`service/${s.slug}/index.html`, servicePage(s)));
+DATA.packages.forEach((p) => write(`package/${p.slug}/index.html`, packagePage(p)));
 write('404.html', notFoundPage());
 write('sitemap.xml', sitemap());
 write('robots.txt', ROBOTS);
