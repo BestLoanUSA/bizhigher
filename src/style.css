@@ -205,7 +205,7 @@ img { max-width: 100%; display: block; }
 
 /* ---------- 업종 마퀴 ---------- */
 .marquee {
-  position: relative; z-index: 1; overflow: hidden; margin-top: 72px;
+  position: relative; z-index: 1; overflow: hidden; margin-top: 84px;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
 }
@@ -603,8 +603,8 @@ img { max-width: 100%; display: block; }
 /* 채널 워드마크 행 (히어로 하단) */
 .chan-row { position: relative; z-index: 1; margin-top: 46px; text-align: center; }
 .chan-label {
-  display: block; font-size: 11.5px; font-weight: 800; letter-spacing: 0.26em;
-  text-transform: uppercase; color: var(--mist-400); margin-bottom: 18px;
+  display: block; font-size: 15.5px; font-weight: 800; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--mist-300); margin-bottom: 22px;
 }
 .chan-marquee {
   overflow: hidden;
@@ -648,10 +648,20 @@ img { max-width: 100%; display: block; }
 .cine-chev { font-size: 22px; animation: chev 1.6s ease-in-out infinite; }
 @keyframes chev { 0%, 100% { transform: translateY(0); opacity: .9; } 50% { transform: translateY(7px); opacity: .4; } }
 .hero-cine.cine-on .cine-stage2 {
-  position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center;
-  padding: 90px 24px 20px; opacity: 0; will-change: transform, opacity;
+  position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 90px 24px 44px; opacity: 0; will-change: transform, opacity;
 }
-.hero-cine.cine-on .cine-stage2 .marquee { margin-top: 56px; }
+/* 카피+데모는 남은 공간의 중앙에, 마퀴·채널은 하단에 정박 */
+.hero-cine.cine-on .cine-stage2 > .hero-grid { margin: auto 0; }
+.hero-cine.cine-on .cine-stage2 .marquee { margin-top: 64px; }
+.hero-cine.cine-on .cine-stage2 .chan-row { margin-top: 40px; }
+/* 하단 지평선 글로우 — 남는 남색을 은은하게 채움 */
+.hero-cine.cine-on .hero-sticky::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 42vh;
+  pointer-events: none; z-index: 0;
+  background: radial-gradient(75% 130% at 50% 118%, rgba(10, 77, 245, 0.3), rgba(34, 211, 238, 0.07) 48%, transparent 72%);
+}
+.hero-cine.cine-on .cine-stage2 > * { position: relative; z-index: 1; }
 
 /* ---------- 스태킹 카드 (HOW IT WORKS) ---------- */
 .stack-zone { display: flex; flex-direction: column; gap: 26px; }

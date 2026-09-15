@@ -431,7 +431,7 @@ function homePage() {
     </div>
   </div>
   <div class="marquee"><div class="marquee-track" id="mq-track">
-    <span>식당</span><span>·</span><span>카페</span><span>·</span><span>뷰티살롱</span><span>·</span><span>네일샵</span><span>·</span><span>안경점</span><span>·</span><span>치과</span><span>·</span><span>한의원</span><span>·</span><span>병원</span><span>·</span><span>학원</span><span>·</span><span>부동산</span><span>·</span><span>융자</span><span>·</span><span>보험</span><span>·</span><span>세탁소</span><span>·</span><span>정비소</span><span>·</span><span>변호사</span><span>·</span><span>회계사</span>
+    <span>식당</span><span>·</span><span>카페</span><span>·</span><span>뷰티살롱</span><span>·</span><span>네일샵</span><span>·</span><span>안경점</span><span>·</span><span>치과</span><span>·</span><span>한의원</span><span>·</span><span>병원</span><span>·</span><span>학원</span><span>·</span><span>부동산</span><span>·</span><span>융자</span><span>·</span><span>보험</span><span>·</span><span>세탁소</span><span>·</span><span>정비소</span><span>·</span><span>변호사</span><span>·</span><span>회계사</span><span>·</span>
   </div></div>
   <div class="chan-row" aria-hidden="true">
     <span class="chan-label">당신의 가게가 발견되는 곳</span>
