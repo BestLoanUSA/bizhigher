@@ -471,7 +471,7 @@ function homePage() {
     var hero = document.getElementById('cine-hero');
     if (!hero) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    if (!window.matchMedia('(min-width: 992px)').matches) return;
+    var narrow = window.matchMedia('(max-width: 991px)').matches;
     var sticky = document.getElementById('cine-sticky');
     var s1 = hero.querySelector('.cine-stage1');
     var s2 = hero.querySelector('.cine-stage2');
@@ -484,20 +484,31 @@ function homePage() {
     var beats = [document.getElementById('cine-b1'), document.getElementById('cine-b2'), document.getElementById('cine-b3')];
     if (!sticky || !s1 || !s2 || !center || !higher || !origin || !pinsWrap) return;
 
+    /* 모바일/좁은 화면: 스테이지1만 스크럽하고, 스테이지2는 일반 흐름으로 이어지게 재배치 */
+    var track = hero;
+    if (narrow) {
+      track = document.createElement('div');
+      track.className = 'cine-track';
+      hero.insertBefore(track, sticky);
+      track.appendChild(sticky);
+      hero.appendChild(s2);
+      hero.classList.add('cine-narrow');
+    }
+
     /* 손님 행동 신호 핀 — chip: 라벨 있는 신호, dot: 밀도용 글로우 핀 (x,y = 화면 %) */
     var PINS = [
       { x: 68, y: 26, label: '📞 전화 문의' },
       { x: 34, y: 34, label: '🧭 길찾기 +1' },
-      { x: 80, y: 56, label: '⭐ 새 리뷰 5.0' },
+      { x: 80, y: 56, label: '⭐ 새 리뷰 5.0', edge: true },
       { x: 22, y: 62, label: '📅 예약 요청' },
       { x: 55, y: 80, label: '👀 프로필 조회 +12' },
-      { x: 12, y: 24, label: '💬 "영업하나요?"' },
+      { x: 12, y: 24, label: '💬 "영업하나요?"', edge: true },
       { x: 45, y: 16 }, { x: 88, y: 34 }, { x: 90, y: 76 }, { x: 8, y: 46 },
       { x: 28, y: 82 }, { x: 70, y: 88 }, { x: 16, y: 78 }, { x: 84, y: 12 }, { x: 40, y: 60 },
     ];
     PINS.forEach(function (pn) {
       var el = document.createElement('div');
-      el.className = 'cine-pin' + (pn.label ? ' cine-chip' : '');
+      el.className = 'cine-pin' + (pn.label ? ' cine-chip' : '') + (pn.edge ? ' edge' : '');
       el.style.left = pn.x + '%';
       el.style.top = pn.y + '%';
       el.innerHTML = pn.label ? '<i></i><span>' + pn.label + '</span>' : '<i></i>';
@@ -533,7 +544,7 @@ function homePage() {
     var ticking = false;
     function frame() {
       ticking = false;
-      var r = hero.getBoundingClientRect();
+      var r = track.getBoundingClientRect();
       var total = r.height - window.innerHeight;
       var p = total > 0 ? clamp(-r.top / total, 0, 1) : 1;
 
@@ -571,7 +582,7 @@ function homePage() {
 
       /* 3박자(Biz, Higher.) — 등장 후 좌상단 네비 로고로 날아가 도킹 */
       var bIn = seg(p, 0.54, 0.6);
-      var f = seg(p, 0.66, 0.78);
+      var f = seg(p, narrow ? 0.7 : 0.66, narrow ? 0.84 : 0.78);
       var fe = f * f * (3 - 2 * f); /* smoothstep */
       var b3 = beats[2];
       var logo = document.querySelector('.nav .logo');
@@ -595,13 +606,15 @@ function homePage() {
         } else if (f < 0.9) { window.__bhDocked = false; }
       }
 
-      /* 스테이지1 → 스테이지2 전환 */
-      s1.style.opacity = String(1 - seg(p, 0.74, 0.84));
-      s1.style.visibility = p > 0.86 ? 'hidden' : 'visible';
-      var e2 = seg(p, 0.74, 0.88);
-      s2.style.opacity = String(e2);
-      s2.style.transform = 'translateY(' + (44 * (1 - e2)) + 'px)';
-      s2.style.pointerEvents = e2 > 0.5 ? 'auto' : 'none';
+      /* 스테이지1 → 스테이지2 전환 (narrow에선 스테이지2가 일반 흐름이라 생략) */
+      s1.style.opacity = String(1 - seg(p, narrow ? 0.86 : 0.74, narrow ? 0.97 : 0.84));
+      s1.style.visibility = p > (narrow ? 0.99 : 0.86) ? 'hidden' : 'visible';
+      if (!narrow) {
+        var e2 = seg(p, 0.74, 0.88);
+        s2.style.opacity = String(e2);
+        s2.style.transform = 'translateY(' + (44 * (1 - e2)) + 'px)';
+        s2.style.pointerEvents = e2 > 0.5 ? 'auto' : 'none';
+      }
 
       /* 마무리 축소 */
       var e3 = seg(p, 0.92, 1);
@@ -771,10 +784,26 @@ function homePage() {
       }
     });
     it.addEventListener('mouseenter', function () {
+      if (window.matchMedia('(max-width: 991px)').matches) return;
       items.forEach(function (o) { o.classList.remove('on'); });
       it.classList.add('on');
     });
   });
+  /* 좁은 화면: 스크롤 위치에 따라 카드가 순서대로 하나씩 확장 */
+  var accTick = false;
+  function accScroll() {
+    accTick = false;
+    if (!window.matchMedia('(max-width: 991px)').matches) return;
+    var r = acc.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > window.innerHeight) return;
+    var pr = (window.innerHeight * 0.55 - r.top) / r.height;
+    var idx = Math.max(0, Math.min(items.length - 1, Math.floor(pr * items.length)));
+    items.forEach(function (o, i) { o.classList.toggle('on', i === idx); });
+  }
+  window.addEventListener('scroll', function () {
+    if (!accTick) { accTick = true; requestAnimationFrame(accScroll); }
+  }, { passive: true });
+  accScroll();
 })();
 </script>
 

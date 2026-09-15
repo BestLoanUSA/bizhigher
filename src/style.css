@@ -638,7 +638,7 @@ img { max-width: 100%; display: block; }
   position: absolute; inset: 0; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 18px; will-change: transform, opacity;
 }
-.cine-word { font-size: clamp(80px, 16vw, 230px); font-weight: 900; letter-spacing: -0.05em; line-height: 0.95; color: #fff; text-shadow: 0 10px 60px rgba(3, 8, 30, 0.6); }
+.cine-word { font-size: clamp(48px, 16vw, 230px); font-weight: 900; letter-spacing: -0.05em; line-height: 0.95; color: #fff; text-shadow: 0 10px 60px rgba(3, 8, 30, 0.6); }
 .cine-tag { font-size: 14px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; color: var(--mist-300); }
 .cine-hint {
   position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%);
@@ -781,6 +781,24 @@ img { max-width: 100%; display: block; }
   .acc-item, .acc-title, .acc-body { transition: none; }
 }
 
+/* ---------- 시네마틱 narrow 모드 (모바일·좁은 화면) ---------- */
+.hero-cine.cine-on.cine-narrow { height: auto; }
+.cine-narrow .cine-track { height: 230vh; position: relative; }
+.hero-cine.cine-on.cine-narrow .cine-stage2 {
+  position: static; opacity: 1; transform: none; pointer-events: auto;
+  padding: 56px 20px 44px;
+  background: linear-gradient(180deg, var(--space-950), var(--space-900) 30%, var(--space-950));
+}
+.hero-cine.cine-on.cine-narrow .cine-stage2 > .hero-grid { margin: 0 auto; }
+@media (max-width: 991px) {
+  .cine-beat { white-space: normal; width: 92%; font-size: clamp(24px, 6.5vw, 40px); }
+  .cine-beat-brand .grad { font-size: clamp(44px, 13vw, 110px); }
+  .cine-chip span { font-size: 11.5px; padding: 5px 10px; }
+}
+@media (max-width: 480px) {
+  .cine-pin.edge span { display: none; }
+}
+
 /* ---------- v17 반응형 ---------- */
 @media (max-width: 991px) {
   .acc { flex-direction: column; height: auto; }
@@ -794,7 +812,9 @@ img { max-width: 100%; display: block; }
   .page-head { padding-top: 118px; }
   .detail-head { padding-top: 112px; }
   .audit-hero { padding-top: 126px; }
-  .stack-card { position: static; min-height: 0; padding: 32px 26px; }
+  .stack-card { top: 86px; min-height: 0; padding: 34px 24px; }
+  .stack-c2 { top: 108px; }
+  .stack-c3 { top: 130px; }
   .stack-num { font-size: 52px; }
   .stack-title { font-size: 23px; }
   .stack-desc { font-size: 15.5px; }
