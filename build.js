@@ -380,13 +380,21 @@ function homePage() {
 <header class="hero hero-cine" id="cine-hero">
   <div class="hero-sticky" id="cine-sticky">
   <div class="cine-stage1" aria-hidden="true">
-    <div class="cine-circle cc1"></div>
-    <div class="cine-circle cc2"></div>
-    <div class="cine-circle cc3"></div>
-    <div class="cine-center">
-      <div class="cine-word">Biz<span class="grad">Higher</span></div>
+    <div class="cine-pins" id="cine-pins"></div>
+    <div class="cine-origin" id="cine-origin">
+      <div class="cine-ring cr1"></div>
+      <div class="cine-ring cr2"></div>
+      <div class="cine-ring cr3"></div>
+      <div class="cine-ring cr4"></div>
+      <div class="cine-seed" id="cine-seed"></div>
+    </div>
+    <div class="cine-center" id="cine-center">
+      <div class="cine-word" id="cine-word">Biz<span class="grad" id="cine-higher">Higher</span></div>
       <p class="cine-tag">AI AUTOMATION MARKETING — 내 비즈니스를 한 단계 위로</p>
     </div>
+    <div class="cine-beat" id="cine-b1">당신의 비즈니스를 <b>더 멀리,</b></div>
+    <div class="cine-beat" id="cine-b2"><b>더 많은 손님에게.</b></div>
+    <div class="cine-beat cine-beat-brand" id="cine-b3"><span class="grad">Biz, Higher.</span><small>내 비즈니스를 한 단계 위로</small></div>
     <div class="cine-hint">SCROLL<span class="cine-chev">⌄</span></div>
   </div>
   <div class="cine-stage2">
@@ -429,7 +437,8 @@ function homePage() {
   </div><!-- /hero-sticky -->
 </header>
 <script>
-/* 시네마틱 히어로 — 데스크톱(992px+)·모션 허용 시에만 활성. 실패·미지원 시 기본 히어로 그대로 표시 */
+/* 시네마틱 히어로 v17.1 — i점 원점 리플 + 손님 신호 칩 + 3박자 메시지
+   데스크톱(992px+)·모션 허용 시에만 활성. 실패·미지원 시 기본 히어로 그대로 표시 */
 (function () {
   try {
     var hero = document.getElementById('cine-hero');
@@ -439,38 +448,118 @@ function homePage() {
     var sticky = document.getElementById('cine-sticky');
     var s1 = hero.querySelector('.cine-stage1');
     var s2 = hero.querySelector('.cine-stage2');
-    var word = hero.querySelector('.cine-center');
-    var circles = hero.querySelectorAll('.cine-circle');
-    if (!sticky || !s1 || !s2 || !word) return;
+    var center = document.getElementById('cine-center');
+    var higher = document.getElementById('cine-higher');
+    var origin = document.getElementById('cine-origin');
+    var seed = document.getElementById('cine-seed');
+    var rings = hero.querySelectorAll('.cine-ring');
+    var pinsWrap = document.getElementById('cine-pins');
+    var beats = [document.getElementById('cine-b1'), document.getElementById('cine-b2'), document.getElementById('cine-b3')];
+    if (!sticky || !s1 || !s2 || !center || !higher || !origin || !pinsWrap) return;
+
+    /* 손님 행동 신호 핀 — chip: 라벨 있는 신호, dot: 밀도용 글로우 핀 (x,y = 화면 %) */
+    var PINS = [
+      { x: 68, y: 26, label: '📞 전화 문의' },
+      { x: 34, y: 34, label: '🧭 길찾기 +1' },
+      { x: 80, y: 56, label: '⭐ 새 리뷰 5.0' },
+      { x: 22, y: 62, label: '📅 예약 요청' },
+      { x: 55, y: 80, label: '👀 프로필 조회 +12' },
+      { x: 12, y: 24, label: '💬 "영업하나요?"' },
+      { x: 45, y: 16 }, { x: 88, y: 34 }, { x: 90, y: 76 }, { x: 8, y: 46 },
+      { x: 28, y: 82 }, { x: 70, y: 88 }, { x: 16, y: 78 }, { x: 84, y: 12 }, { x: 40, y: 60 },
+    ];
+    PINS.forEach(function (pn) {
+      var el = document.createElement('div');
+      el.className = 'cine-pin' + (pn.label ? ' cine-chip' : '');
+      el.style.left = pn.x + '%';
+      el.style.top = pn.y + '%';
+      el.innerHTML = pn.label ? '<i></i><span>' + pn.label + '</span>' : '<i></i>';
+      pinsWrap.appendChild(el);
+      pn.el = el;
+    });
+
+    var ox = 0, oy = 0, maxR = 1, seedPx = 22, ringBase = 1;
+    function layout() {
+      /* "Higher"의 i(인덱스 1) 글자 위 점 좌표를 실측해 원점으로 */
+      var node = higher.firstChild;
+      var range = document.createRange();
+      range.setStart(node, 1); range.setEnd(node, 2);
+      var ir = range.getBoundingClientRect();
+      var sr = sticky.getBoundingClientRect();
+      ox = ir.left - sr.left + ir.width / 2;
+      oy = ir.top - sr.top + ir.height * 0.1; /* 글자 상단 = 점(tittle) 위치 */
+      seedPx = Math.max(14, ir.width * 0.62);
+      seed.style.width = seedPx + 'px'; seed.style.height = seedPx + 'px';
+      origin.style.left = ox + 'px'; origin.style.top = oy + 'px';
+      var w = sr.width, h = sr.height;
+      maxR = Math.max(Math.hypot(ox, oy), Math.hypot(w - ox, oy), Math.hypot(ox, h - oy), Math.hypot(w - ox, h - oy));
+      ringBase = rings[0] ? rings[0].offsetWidth : 200;
+      PINS.forEach(function (pn) {
+        pn.dist = Math.hypot(w * pn.x / 100 - ox, h * pn.y / 100 - oy);
+      });
+    }
+
     function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
     function seg(p, a, b) { return clamp((p - a) / (b - a), 0, 1); }
+    function beat(p, i1, i2, o1, o2) { return seg(p, i1, i2) * (1 - seg(p, o1, o2)); }
     var ticking = false;
     function frame() {
       ticking = false;
       var r = hero.getBoundingClientRect();
       var total = r.height - window.innerHeight;
       var p = total > 0 ? clamp(-r.top / total, 0, 1) : 1;
-      var grow = seg(p, 0, 0.4);
-      circles.forEach(function (c, i) {
-        c.style.transform = 'translate(-50%,-50%) scale(' + (0.35 + grow * (2.8 + i * 0.6)) + ')';
-        c.style.opacity = String(0.9 * (1 - seg(p, 0.24 + i * 0.05, 0.44)));
+
+      /* 워드마크: i점만 남기고 일찍 퇴장 */
+      center.style.opacity = String(1 - seg(p, 0.06, 0.18));
+      center.style.transform = 'scale(' + (1 + seg(p, 0, 0.2) * 0.12) + ')';
+
+      /* 씨앗 점: 깨어나서 커지다가 파동에 자리를 내줌 */
+      var wake = seg(p, 0.03, 0.16);
+      seed.style.transform = 'translate(-50%,-50%) scale(' + (1 + wake * 7) + ')';
+      seed.style.opacity = String(0.95 * (1 - seg(p, 0.3, 0.44)));
+
+      /* 파동 링 4개 — 순차 확장, 퍼질수록 옅어짐 */
+      var grow = seg(p, 0.06, 0.56);
+      var radius = grow * maxR * 1.08;
+      rings.forEach(function (rg, i) {
+        var rp = clamp(grow * 1.35 - i * 0.17, 0, 1);
+        var sc = Math.max(0.02, rp * (2.15 * maxR) / ringBase);
+        rg.style.transform = 'translate(-50%,-50%) scale(' + sc + ')';
+        rg.style.opacity = String(rp > 0 ? 0.65 * (1 - rp) + 0.05 : 0);
       });
-      word.style.opacity = String(1 - seg(p, 0.08, 0.3));
-      word.style.transform = 'scale(' + (1 + grow * 0.18) + ')';
-      s1.style.opacity = String(1 - seg(p, 0.32, 0.46));
-      s1.style.visibility = p > 0.48 ? 'hidden' : 'visible';
-      var e2 = seg(p, 0.44, 0.62);
+
+      /* 신호 핀 점등 — 파동이 닿는 순서대로 (되감으면 역순 소등) */
+      PINS.forEach(function (pn) {
+        pn.el.classList.toggle('lit', radius >= pn.dist && p < 0.74);
+      });
+
+      /* 3박자 메시지 */
+      beats[0].style.opacity = String(beat(p, 0.18, 0.24, 0.32, 0.38));
+      beats[1].style.opacity = String(beat(p, 0.36, 0.42, 0.5, 0.56));
+      beats[2].style.opacity = String(beat(p, 0.54, 0.6, 0.72, 0.78));
+      beats.forEach(function (b, i) {
+        var bp = [seg(p, 0.18, 0.24), seg(p, 0.36, 0.42), seg(p, 0.54, 0.6)][i];
+        b.style.transform = 'translate(-50%,-50%) translateY(' + (22 * (1 - bp)) + 'px)';
+      });
+
+      /* 스테이지1 → 스테이지2 전환 */
+      s1.style.opacity = String(1 - seg(p, 0.74, 0.84));
+      s1.style.visibility = p > 0.86 ? 'hidden' : 'visible';
+      var e2 = seg(p, 0.74, 0.88);
       s2.style.opacity = String(e2);
       s2.style.transform = 'translateY(' + (44 * (1 - e2)) + 'px)';
       s2.style.pointerEvents = e2 > 0.5 ? 'auto' : 'none';
-      var e3 = seg(p, 0.86, 1);
+
+      /* 마무리 축소 */
+      var e3 = seg(p, 0.92, 1);
       sticky.style.transform = 'scale(' + (1 - 0.05 * e3) + ')';
       sticky.style.borderRadius = (36 * e3) + 'px';
     }
     function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(frame); } }
     hero.classList.add('cine-on');
+    layout();
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll, { passive: true });
+    window.addEventListener('resize', function () { layout(); onScroll(); }, { passive: true });
     frame();
   } catch (e) {
     var h = document.getElementById('cine-hero');

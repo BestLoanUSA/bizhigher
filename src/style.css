@@ -514,7 +514,7 @@ img { max-width: 100%; display: block; }
 .hero-cine .hero-sticky { position: relative; }
 
 /* JS가 데스크톱에서 .cine-on을 붙였을 때만 스크럽 모드 */
-.hero-cine.cine-on { height: 280vh; padding: 0; background: var(--space-950); overflow: visible; }
+.hero-cine.cine-on { height: 340vh; padding: 0; background: var(--space-950); overflow: visible; }
 .hero-cine.cine-on::before, .hero-cine.cine-on::after { display: none; }
 .hero-cine.cine-on .hero-sticky {
   position: sticky; top: 0; height: 100vh; overflow: hidden;
@@ -531,15 +531,70 @@ img { max-width: 100%; display: block; }
   mask-image: radial-gradient(720px 460px at 50% 40%, #000 30%, transparent 75%);
 }
 .hero-cine.cine-on .cine-stage1 { display: block; position: absolute; inset: 0; }
-.cine-circle {
-  position: absolute; left: 50%; top: 50%;
-  width: 34vmin; height: 34vmin; border-radius: 50%;
-  transform: translate(-50%, -50%) scale(0.35);
-  will-change: transform, opacity; pointer-events: none;
+/* 원점(=Higher의 i점) 기준 파동 시스템 */
+.cine-origin { position: absolute; left: 50%; top: 50%; will-change: transform; pointer-events: none; }
+.cine-seed {
+  position: absolute; left: 0; top: 0; width: 22px; height: 22px; border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 38% 35%, #7DA2FF, #2F6BFF 55%, #0A4DF5);
+  box-shadow: 0 0 24px rgba(47, 107, 255, 0.9), 0 0 70px rgba(34, 211, 238, 0.4);
+  animation: seedpulse 2.2s ease-in-out infinite;
+  will-change: transform, opacity;
 }
-.cc1 { background: radial-gradient(circle at 35% 35%, #2F6BFF, #0A4DF5 55%, #062B8F); box-shadow: 0 0 120px rgba(10, 77, 245, 0.55); }
-.cc2 { background: transparent; border: 2px solid rgba(34, 211, 238, 0.5); box-shadow: 0 0 80px rgba(34, 211, 238, 0.25) inset; }
-.cc3 { background: transparent; border: 1.5px solid rgba(124, 92, 255, 0.35); }
+@keyframes seedpulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.5); } }
+.cine-ring {
+  position: absolute; left: 0; top: 0; width: 200px; height: 200px; border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0.02);
+  border: 2px solid rgba(47, 107, 255, 0.75);
+  box-shadow: 0 0 30px rgba(10, 77, 245, 0.35), 0 0 26px rgba(10, 77, 245, 0.2) inset;
+  opacity: 0; will-change: transform, opacity;
+}
+.cr2 { border-color: rgba(34, 211, 238, 0.6); }
+.cr3 { border-color: rgba(125, 162, 255, 0.5); }
+.cr4 { border-color: rgba(124, 92, 255, 0.45); }
+
+/* 손님 행동 신호 핀 */
+.cine-pins { position: absolute; inset: 0; pointer-events: none; }
+.cine-pin {
+  position: absolute; transform: translate(-50%, -50%) scale(0.4); opacity: 0;
+  display: flex; align-items: center; gap: 8px;
+  transition: transform .5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity .35s ease;
+  will-change: transform, opacity;
+}
+.cine-pin.lit { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+.cine-pin i {
+  width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+  background: var(--cyan-400);
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.9);
+  position: relative;
+}
+.cine-pin.lit i::after {
+  content: ""; position: absolute; inset: -5px; border-radius: 50%;
+  border: 1.5px solid rgba(34, 211, 238, 0.7);
+  animation: pinping 1.6s ease-out infinite;
+}
+@keyframes pinping { 0% { transform: scale(0.6); opacity: 1; } 100% { transform: scale(2.4); opacity: 0; } }
+.cine-chip span {
+  font-size: 13.5px; font-weight: 700; color: #fff; white-space: nowrap;
+  background: rgba(8, 15, 40, 0.75); border: 1px solid rgba(125, 162, 255, 0.3);
+  border-radius: 999px; padding: 7px 13px;
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 8px 26px rgba(3, 8, 30, 0.5);
+}
+
+/* 3박자 메시지 */
+.cine-beat {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(30px, 3.6vw, 52px); font-weight: 800; letter-spacing: -0.02em;
+  color: var(--mist-300); text-align: center; white-space: nowrap;
+  opacity: 0; will-change: transform, opacity; pointer-events: none;
+  text-shadow: 0 8px 40px rgba(3, 8, 30, 0.8);
+}
+.cine-beat b { color: #fff; font-weight: 900; }
+.cine-beat-brand { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.cine-beat-brand .grad { font-size: clamp(64px, 8.5vw, 130px); font-weight: 900; letter-spacing: -0.05em; line-height: 1; }
+.cine-beat-brand small { font-size: clamp(15px, 1.3vw, 19px); font-weight: 700; letter-spacing: 0.14em; color: var(--mist-300); }
 .cine-center {
   position: absolute; inset: 0; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 18px; will-change: transform, opacity;
