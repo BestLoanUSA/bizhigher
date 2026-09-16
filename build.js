@@ -57,6 +57,11 @@ ${noindex ? '<meta name="robots" content="noindex">' : ''}
 <meta property="og:url" content="${SITE.domain}${pathName}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="BizHigher">
+<meta property="og:image" content="${SITE.domain}/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="${SITE.domain}/og-image.png">
 <link rel="icon" href="${FAVICON}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="/style.css?v=${CSS_VER}">
@@ -112,6 +117,11 @@ const FOOTER = `
       <div class="footer-col">
         <span class="footer-head">문의</span>
         <a href="mailto:${SITE.email}" class="footer-link">${SITE.email}</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">약관</span>
+        <a href="/privacy/" class="footer-link">개인정보처리방침</a>
+        <a href="/terms/" class="footer-link">이용약관</a>
       </div>
     </div>
     <p class="footer-copy">© ${new Date().getFullYear()} BizHigher. All rights reserved.</p>
@@ -1225,6 +1235,69 @@ document.getElementById('intake-form').addEventListener('submit', async function
 ` + FOOTER;
 }
 
+
+/* ---------- 페이지: 법적 고지 ---------- */
+
+function legalPage(title, pathName, bodyHtml) {
+  return head({
+    title: `${title} | BizHigher`,
+    description: `BizHigher ${title}`,
+    pathName,
+  }) + nav('') + `
+<header class="page-head">
+  <div class="container-narrow"><h1 class="page-title" style="font-size:34px;">${title}</h1>
+  <p class="page-sub">최종 업데이트: 2026년 9월 16일</p></div>
+</header>
+<section class="detail-body" style="padding-top:8px;">
+  <div class="container-narrow legal-body">${bodyHtml}</div>
+</section>
+` + FOOTER;
+}
+
+const PRIVACY_HTML = `
+<p>BizHigher(이하 "회사", bizhigher.com)는 이용자의 개인정보를 소중히 다룹니다. 본 방침은 회사가 어떤 정보를 수집하고 어떻게 사용하는지 설명합니다.</p>
+<h2 class="h2-left">1. 수집하는 정보</h2>
+<p>• <b>직접 제공 정보</b>: 무료 진단 신청 및 주문 질문지를 통해 업체명, 담당자 성함, 이메일, 전화번호, 웹사이트·소셜 링크 등을 수집합니다.<br>
+• <b>결제 정보</b>: 결제는 Stripe가 처리하며, 회사는 카드번호를 저장하지 않습니다.<br>
+• <b>자동 수집 정보</b>: Google Analytics 및 Microsoft Clarity를 통해 방문 기록, 기기·브라우저 정보, 사이트 이용 행태(쿠키 포함)가 수집될 수 있습니다.</p>
+<h2 class="h2-left">2. 이용 목적</h2>
+<p>서비스 제공 및 결과물 제작·전달, 주문·구독 관리, 고객 문의 응대, 서비스 개선과 사이트 분석, 서비스 관련 안내에 사용합니다. 이용자의 동의 없이 제3자에게 개인정보를 판매하지 않습니다.</p>
+<h2 class="h2-left">3. 제3자 서비스</h2>
+<p>회사는 서비스 운영을 위해 다음 처리자를 이용합니다: Stripe(결제), Google Analytics(분석), Microsoft Clarity(분석), Cloudflare(호스팅·보안), Resend(이메일 발송). 각 서비스는 자체 개인정보처리방침에 따라 정보를 처리합니다.</p>
+<h2 class="h2-left">4. 보관 및 파기</h2>
+<p>개인정보는 서비스 제공에 필요한 기간 동안 보관하며, 목적 달성 후 관련 법령이 정한 기간을 제외하고 지체 없이 파기합니다. 구독 해지 후에도 법적 의무 이행을 위한 최소한의 거래 기록은 보관될 수 있습니다.</p>
+<h2 class="h2-left">5. 이용자의 권리</h2>
+<p>이용자는 언제든지 자신의 개인정보에 대한 열람, 정정, 삭제를 요청할 수 있습니다. 캘리포니아 거주자는 CCPA에 따른 권리(수집 정보 확인, 삭제 요청, 판매 거부 — 회사는 개인정보를 판매하지 않습니다)를 행사할 수 있습니다. 요청은 아래 연락처로 보내주세요.</p>
+<h2 class="h2-left">6. 쿠키</h2>
+<p>사이트는 분석 목적의 쿠키를 사용합니다. 브라우저 설정에서 쿠키를 차단할 수 있으며, 이 경우 일부 기능이 제한될 수 있습니다.</p>
+<h2 class="h2-left">7. 문의</h2>
+<p>개인정보 관련 문의: <a href="mailto:hello@bizhigher.com" style="color:var(--blue-600);font-weight:700;">hello@bizhigher.com</a></p>
+`;
+
+const TERMS_HTML = `
+<p>본 약관은 BizHigher(bizhigher.com, 이하 "회사")가 제공하는 마케팅 서비스 이용에 관한 회사와 고객 간의 권리·의무를 규정합니다. 서비스를 주문하면 본 약관에 동의한 것으로 봅니다.</p>
+<h2 class="h2-left">1. 서비스</h2>
+<p>회사는 AI 기술과 전문가 검수를 결합한 마케팅 서비스(진단 리포트, 프로필 최적화, 콘텐츠·광고 제작, 웹사이트 제작, 월 구독 관리 등)를 제공합니다. 각 서비스의 내용·가격·제공 기한은 사이트의 해당 서비스 페이지에 명시된 바에 따릅니다.</p>
+<h2 class="h2-left">2. 주문과 작업 시작</h2>
+<p>결제 후 제공되는 질문지(인테이크) 제출 시점부터 제공 기한(영업일 기준)이 시작됩니다. 고객이 제공한 정보·자료가 부정확하거나 지연 제공될 경우 기한이 조정될 수 있습니다.</p>
+<h2 class="h2-left">3. 구독과 해지</h2>
+<p>월간 구독은 언제든 해지할 수 있으며, 결제 이메일의 구독 관리 링크(Stripe 고객 포털)에서 직접 처리됩니다. 해지 시 다음 결제부터 청구되지 않으며, 이미 결제된 기간의 서비스는 기간 만료일까지 제공됩니다.</p>
+<h2 class="h2-left">4. 환불</h2>
+<p>• 원타임 서비스: 작업 시작(질문지 제출) 전 전액 환불됩니다.<br>
+• 월간 구독: 해지 시 다음 결제부터 청구가 중단되며, 이미 결제된 월은 환불되지 않습니다.<br>
+• 6·12개월 플랜: 시작 후 30일 이내 해지 시 잔여 금액을 환불하며, 이미 제공된 서비스와 셋업은 개별 정가 기준으로 차감 후 정산합니다. 30일 경과 후에는 환불되지 않으나 남은 기간의 서비스는 계속 제공됩니다.</p>
+<h2 class="h2-left">5. 결과물과 지식재산권</h2>
+<p>대금이 완납된 결과물의 사용 권리는 고객에게 있습니다. 회사는 고객이 별도로 거부 의사를 밝히지 않는 한, 완성된 결과물을 포트폴리오로 소개할 수 있습니다. 고객이 제공한 자료(로고, 사진 등)에 대한 권리와 책임은 고객에게 있습니다.</p>
+<h2 class="h2-left">6. 고객의 협조</h2>
+<p>일부 서비스는 고객의 계정 권한 부여(예: 구글 비즈니스 프로필 관리자 초대, Search Console 사용자 추가, 광고 계정 접근)가 필요합니다. 권한 미제공으로 인한 지연은 회사의 책임이 아닙니다.</p>
+<h2 class="h2-left">7. 보증의 한계</h2>
+<p>회사는 전문적이고 성실한 서비스 제공을 약속하지만, 검색 순위·광고 성과·매출 등 특정 결과를 보장하지 않습니다. 검색 엔진과 광고 플랫폼의 정책·알고리즘은 회사가 통제할 수 없습니다.</p>
+<h2 class="h2-left">8. 책임 제한</h2>
+<p>회사의 배상 책임은 관련 법이 허용하는 최대 한도 내에서 해당 서비스에 대해 고객이 실제 지불한 금액을 초과하지 않습니다.</p>
+<h2 class="h2-left">9. 기타</h2>
+<p>본 약관은 미국 캘리포니아주 법률에 따라 해석됩니다. 회사는 약관을 개정할 수 있으며, 중요한 변경은 사이트에 공지합니다. 문의: <a href="mailto:hello@bizhigher.com" style="color:var(--blue-600);font-weight:700;">hello@bizhigher.com</a></p>
+`;
+
 /* ---------- 404 ---------- */
 
 function notFoundPage() {
@@ -1246,7 +1319,7 @@ function notFoundPage() {
 /* ---------- sitemap & robots ---------- */
 
 function sitemap() {
-  const urls = ['/', '/services/', '/pricing/', '/free-audit/', ...DATA.services.map((s) => `/service/${s.slug}/`), ...DATA.packages.map((p) => `/package/${p.slug}/`)];
+  const urls = ['/', '/services/', '/pricing/', '/free-audit/', '/privacy/', '/terms/', ...DATA.services.map((s) => `/service/${s.slug}/`), ...DATA.packages.map((p) => `/package/${p.slug}/`)];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map((u) => `  <url><loc>${SITE.domain}${u}</loc></url>`).join('\n')}
@@ -1278,6 +1351,10 @@ write('thanks/index.html', thanksPage());
 DATA.services.forEach((s) => write(`service/${s.slug}/index.html`, servicePage(s)));
 DATA.packages.forEach((p) => write(`package/${p.slug}/index.html`, packagePage(p)));
 write('404.html', notFoundPage());
+write('privacy/index.html', legalPage('개인정보처리방침', '/privacy/', PRIVACY_HTML));
+write('terms/index.html', legalPage('이용약관', '/terms/', TERMS_HTML));
+fs.copyFileSync(path.join(__dirname, 'src', 'og-image.png'), path.join(DIST, 'og-image.png'));
+console.log('  \u2713 og-image.png');
 write('sitemap.xml', sitemap());
 write('robots.txt', ROBOTS);
 write('style.css', fs.readFileSync(path.join(__dirname, 'src', 'style.css'), 'utf8'));
