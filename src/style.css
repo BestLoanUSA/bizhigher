@@ -832,3 +832,8 @@ img { max-width: 100%; display: block; }
   .chan-logos { gap: 18px 22px; }
   .chan { font-size: 14px; }
 }
+
+/* ---------- 법적 페이지 ---------- */
+.legal-body p { font-size: 15.5px; line-height: 1.75; color: var(--ink-600); margin-bottom: 14px; }
+.legal-body .h2-left { font-size: 20px; margin: 30px 0 10px; }
+.legal-body b { color: var(--ink-900); }
