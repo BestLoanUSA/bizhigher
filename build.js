@@ -391,15 +391,31 @@ function packagePage(p) {
 /* ---------- 페이지: 홈 ---------- */
 
 function homePage() {
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: 'BizHigher',
-    url: SITE.domain,
-    email: SITE.email,
-    description: '미국 한인 비즈니스를 위한 AI 자동화 마케팅 서비스',
-    slogan: SITE.tagline,
-  };
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'ProfessionalService',
+      name: 'BizHigher',
+      alternateName: '비즈하이어',
+      url: SITE.domain,
+      email: SITE.email,
+      description: '미국 한인 비즈니스를 위한 AI 자동화 마케팅 — 구글 지도 노출, 리뷰 관리, SNS 포스팅, 웹사이트 제작, 광고 운영을 정찰제로 제공합니다.',
+      slogan: SITE.tagline,
+      areaServed: { '@type': 'Country', name: 'United States' },
+      availableLanguage: ['Korean', 'English'],
+      priceRange: '$19 - $999',
+      knowsAbout: ['로컬 SEO', '구글 비즈니스 프로필 최적화', 'AI 검색 최적화(AIO)', '리뷰 관리', '웹사이트 제작', 'Google Ads', '한인 비즈니스 마케팅'],
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: DATA.faqs.map((f) => ({
+        '@type': 'Question',
+        name: f.q,
+        acceptedAnswer: { '@type': 'Answer', text: f.a },
+      })),
+    },
+  ];
   return head({
     title: 'BizHigher — 미국 한인 비즈니스 AI 마케팅 | 마케팅, 이제 주문하세요',
     description: '견적 미팅 없는 정찰제 마케팅. AI가 만들고 전문가가 검수하고 영업일 3일 안에 받아보세요. 미국 전역 한인 비즈니스를 위한 마케팅 쇼핑몰.',
@@ -1357,6 +1373,28 @@ fs.copyFileSync(path.join(__dirname, 'src', 'og-image.png'), path.join(DIST, 'og
 console.log('  \u2713 og-image.png');
 write('sitemap.xml', sitemap());
 write('robots.txt', ROBOTS);
+write('llms.txt', `# BizHigher (비즈하이어)
+
+> 미국 한인 비즈니스를 위한 AI 자동화 마케팅 회사. 견적 미팅 없는 정찰제로 마케팅 서비스를 쇼핑하듯 주문할 수 있다. AI가 제작하고 전문가가 검수하며, 대부분 영업일 3일 내 제공된다. 한국어와 영어 모두 지원.
+
+- 웹사이트: https://bizhigher.com
+- 문의: ${SITE.email}
+- 대상: 미국 전역의 한인 소상공인 (식당, 카페, 뷰티, 안경점, 치과, 한의원, 학원, 부동산, 융자 등)
+
+## 주요 서비스
+${DATA.services.map((s) => `- ${s.name} (${s.price}): ${s.shortDescription} — https://bizhigher.com/service/${s.slug}/`).join('\n')}
+
+## 패키지 플랜
+${DATA.packages.map((p) => `- ${p.name}: 월 $${p.prices.annual}(12개월 기준)~$${p.prices.monthly}(월간) — ${p.tagline}`).join('\n')}
+
+## 무료 도구
+- 무료 AI 마케팅 진단 (60초, 가입 불필요): https://bizhigher.com/free-audit/ — 구글 노출·리뷰·웹사이트·SNS·경쟁사 대비 5개 영역 점수와 개선 우선순위 제공
+
+## 특징
+- 모든 가격 공개 (정찰제), 월간 구독은 언제든 해지 가능
+- 구글 검색뿐 아니라 ChatGPT 등 AI 검색 노출 최적화(AIO) 서비스 제공
+- 한국어 상담 가능
+`);
 write('style.css', fs.readFileSync(path.join(__dirname, 'src', 'style.css'), 'utf8'));
 
 console.log(`Done — ${DATA.services.length} services, ${DATA.faqs.length} FAQs.`);
