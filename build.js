@@ -80,6 +80,7 @@ function nav(active) {
     <div class="nav-links">
       <a class="${cls('services')}" href="/services/">서비스</a>
       <a class="${cls('pricing')}" href="/pricing/">가격</a>
+      <a class="${cls('blog')}" href="/blog/">블로그</a>
       <a class="${cls('audit')}" href="/free-audit/">무료 진단</a>
     </div>
     <div class="nav-cta"><a class="btn btn-primary btn-small" href="/free-audit/">무료 진단 받기</a></div>
@@ -88,6 +89,7 @@ function nav(active) {
   <div class="mobile-menu" id="mm">
     <a href="/services/">서비스</a>
     <a href="/pricing/">가격</a>
+    <a href="/blog/">블로그</a>
     <a href="/free-audit/">무료 진단</a>
     <a class="btn btn-primary btn-block" href="/free-audit/" style="border-bottom:none;color:#fff;">무료 진단 받기</a>
   </div>
@@ -113,6 +115,7 @@ const FOOTER = `
         <a href="/services/" class="footer-link">전체 서비스</a>
         <a href="/pricing/" class="footer-link">가격</a>
         <a href="/free-audit/" class="footer-link">무료 진단</a>
+        <a href="/blog/" class="footer-link">블로그</a>
       </div>
       <div class="footer-col">
         <span class="footer-head">문의</span>
@@ -1252,6 +1255,172 @@ document.getElementById('intake-form').addEventListener('submit', async function
 }
 
 
+/* ---------- 블로그 엔진 (의존성 없는 마크다운 변환) ---------- */
+
+function mdToHtml(md) {
+  const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const inline = (s) => s
+    .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+    .replace(/\*(.+?)\*/g, '<i>$1</i>')
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+    .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2">$1</a>');
+  const lines = md.split('\n');
+  const out = [];
+  let i = 0;
+  const hIds = [];
+  while (i < lines.length) {
+    const line = lines[i];
+    if (!line.trim()) { i++; continue; }
+    if (/^### /.test(line)) { out.push(`<h3>${inline(esc(line.slice(4)))}</h3>`); i++; continue; }
+    if (/^## /.test(line)) {
+      const t = line.slice(3).trim();
+      const id = 'h' + (hIds.length + 1);
+      hIds.push({ id, t });
+      out.push(`<h2 id="${id}">${inline(esc(t))}</h2>`); i++; continue;
+    }
+    if (/^---\s*$/.test(line)) { out.push('<hr>'); i++; continue; }
+    if (/^> /.test(line)) {
+      const buf = [];
+      while (i < lines.length && /^> ?/.test(lines[i])) { buf.push(inline(esc(lines[i].replace(/^> ?/, '')))); i++; }
+      out.push(`<blockquote>${buf.join('<br>')}</blockquote>`); continue;
+    }
+    if (/^\|/.test(line)) {
+      const rows = [];
+      while (i < lines.length && /^\|/.test(lines[i])) { rows.push(lines[i]); i++; }
+      const cells = (r) => r.split('|').slice(1, -1).map((c) => inline(esc(c.trim())));
+      const head = cells(rows[0]);
+      const body = rows.slice(2).map((r) => `<tr>${cells(r).map((c) => `<td>${c}</td>`).join('')}</tr>`).join('');
+      out.push(`<div class="tbl-wrap"><table><thead><tr>${head.map((c) => `<th>${c}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div>`);
+      continue;
+    }
+    if (/^[-*] /.test(line)) {
+      const buf = [];
+      while (i < lines.length && /^[-*] /.test(lines[i])) { buf.push(`<li>${inline(esc(lines[i].slice(2)))}</li>`); i++; }
+      out.push(`<ul>${buf.join('')}</ul>`); continue;
+    }
+    if (/^\d+\. /.test(line)) {
+      const buf = [];
+      while (i < lines.length && /^\d+\. /.test(lines[i])) { buf.push(`<li>${inline(esc(lines[i].replace(/^\d+\. /, '')))}</li>`); i++; }
+      out.push(`<ol>${buf.join('')}</ol>`); continue;
+    }
+    if (/^!!! /.test(line)) { out.push(`<div class="callout">${inline(esc(line.slice(4)))}</div>`); i++; continue; }
+    // 문단 (연속 줄 병합)
+    const buf = [line];
+    i++;
+    while (i < lines.length && lines[i].trim() && !/^(#|[-*] |\d+\. |>|\||---|!!!)/.test(lines[i])) { buf.push(lines[i]); i++; }
+    out.push(`<p>${inline(esc(buf.join(' ')))}</p>`);
+  }
+  return { html: out.join('\n'), toc: hIds };
+}
+
+function loadPosts() {
+  const dir = path.join(__dirname, 'content', 'blog');
+  if (!fs.existsSync(dir)) return [];
+  return fs.readdirSync(dir).filter((f) => f.endsWith('.md')).map((f) => {
+    const raw = fs.readFileSync(path.join(dir, f), 'utf8');
+    const m = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+    const meta = {};
+    m[1].split('\n').forEach((l) => {
+      const idx = l.indexOf(':');
+      if (idx > 0) meta[l.slice(0, idx).trim()] = l.slice(idx + 1).trim();
+    });
+    const body = m[2].trim();
+    // faq는 본문 끝 "## 자주 묻는 질문" 섹션에서 추출 (### 질문 / 문단 답변)
+    const faqs = [];
+    const fm = body.match(/## 자주 묻는 질문\n([\s\S]*)$/);
+    if (fm) {
+      const parts = fm[1].split(/^### /m).filter((x) => x.trim());
+      parts.forEach((p) => {
+        const nl = p.indexOf('\n');
+        faqs.push({ q: p.slice(0, nl).trim(), a: p.slice(nl).trim().replace(/\n+/g, ' ') });
+      });
+    }
+    const words = body.replace(/[#>*|\-]/g, '').length;
+    return { slug: meta.slug || f.replace(/\.md$/, ''), title: meta.title, description: meta.description,
+      date: meta.date, category: meta.category || '가이드', keywords: meta.keywords || '',
+      related: meta.related || '', body, faqs, readMin: Math.max(3, Math.round(words / 600)) };
+  }).sort((a, b) => (a.date < b.date ? 1 : -1));
+}
+
+function blogCard(p) {
+  return `
+<a href="/blog/${p.slug}/" class="prod-card">
+  <span class="badge">${p.category}</span>
+  <h3 class="h3">${p.title}</h3>
+  <p class="body-sm">${p.description}</p>
+  <div class="price-row"><span class="price-sub">${p.date} · ${p.readMin}분 읽기</span></div>
+  <span class="card-cta">읽어보기 →</span>
+</a>`;
+}
+
+function blogIndexPage(posts) {
+  return head({
+    title: '블로그 — 미국 한인 비즈니스 마케팅 가이드 | BizHigher',
+    description: '구글 등록, 리뷰 관리, AI 검색 노출까지 — 미국에서 가게 운영하는 한인 사장님을 위한 실전 마케팅 가이드.',
+    pathName: '/blog/',
+  }) + nav('blog') + `
+<header class="page-head">
+  <div class="container">
+    <h1 class="page-title">블로그</h1>
+    <p class="page-sub">미국에서 가게 하는 한인 사장님을 위한 실전 마케팅 가이드 — 전부 무료입니다.</p>
+  </div>
+</header>
+<section class="section">
+  <div class="container">
+    <div class="grid3">${posts.map(blogCard).join('')}</div>
+  </div>
+</section>
+` + FOOTER;
+}
+
+function blogPostPage(p, posts) {
+  const { html, toc } = mdToHtml(p.body);
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org', '@type': 'BlogPosting',
+      headline: p.title, description: p.description,
+      datePublished: p.date, dateModified: p.date, inLanguage: 'ko',
+      author: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
+      publisher: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
+      mainEntityOfPage: `${SITE.domain}/blog/${p.slug}/`, keywords: p.keywords,
+    },
+  ];
+  if (p.faqs.length) {
+    jsonLd.push({ '@context': 'https://schema.org', '@type': 'FAQPage',
+      mainEntity: p.faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) });
+  }
+  const relSvc = p.related ? DATA.services.find((s) => s.slug === p.related) : null;
+  const others = posts.filter((x) => x.slug !== p.slug).slice(0, 3);
+  return head({
+    title: `${p.title} | BizHigher 블로그`,
+    description: p.description,
+    pathName: `/blog/${p.slug}/`,
+    jsonLd,
+  }) + nav('blog') + `
+<header class="page-head">
+  <div class="container-narrow">
+    <a href="/blog/" class="back-link">← 블로그</a>
+    <span class="badge">${p.category}</span>
+    <h1 class="page-title" style="font-size:36px;line-height:1.25;">${p.title}</h1>
+    <p class="page-sub">${p.date} · ${p.readMin}분 읽기 · BizHigher</p>
+  </div>
+</header>
+<section class="detail-body" style="padding-top:4px;">
+  <div class="container-narrow">
+    ${toc.length > 2 ? `<nav class="toc"><b>목차</b><ol>${toc.map((h) => `<li><a href="#${h.id}">${h.t}</a></li>`).join('')}</ol></nav>` : ''}
+    <article class="post-body">${html}</article>
+    <div class="post-cta">
+      <b>우리 가게는 지금 몇 점일까요?</b>
+      <p>이 글에서 다룬 항목들을 60초 만에 자동으로 점검해 드립니다. 가입 없이 업체명과 도시만 입력하세요.</p>
+      <a href="/free-audit/" class="btn btn-primary">무료 AI 진단 받기 →</a>
+      ${relSvc ? `<a href="/service/${relSvc.slug}/" class="btn btn-ghost">맡기고 싶다면: ${relSvc.name} (${relSvc.price})</a>` : ''}
+    </div>
+    ${others.length ? `<h2 class="h2-left" style="margin-top:48px;">함께 읽으면 좋은 글</h2><div class="grid3">${others.map(blogCard).join('')}</div>` : ''}
+  </div>
+</section>
+` + FOOTER;
+}
+
 /* ---------- 페이지: 법적 고지 ---------- */
 
 function legalPage(title, pathName, bodyHtml) {
@@ -1335,7 +1504,8 @@ function notFoundPage() {
 /* ---------- sitemap & robots ---------- */
 
 function sitemap() {
-  const urls = ['/', '/services/', '/pricing/', '/free-audit/', '/privacy/', '/terms/', ...DATA.services.map((s) => `/service/${s.slug}/`), ...DATA.packages.map((p) => `/package/${p.slug}/`)];
+  const posts = loadPosts();
+  const urls = ['/', '/services/', '/pricing/', '/free-audit/', '/privacy/', '/terms/', '/blog/', ...posts.map((p) => `/blog/${p.slug}/`), ...DATA.services.map((s) => `/service/${s.slug}/`), ...DATA.packages.map((p) => `/package/${p.slug}/`)];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map((u) => `  <url><loc>${SITE.domain}${u}</loc></url>`).join('\n')}
@@ -1368,6 +1538,11 @@ DATA.services.forEach((s) => write(`service/${s.slug}/index.html`, servicePage(s
 DATA.packages.forEach((p) => write(`package/${p.slug}/index.html`, packagePage(p)));
 write('404.html', notFoundPage());
 write('privacy/index.html', legalPage('개인정보처리방침', '/privacy/', PRIVACY_HTML));
+const POSTS = loadPosts();
+if (POSTS.length) {
+  write('blog/index.html', blogIndexPage(POSTS));
+  POSTS.forEach((p) => write(`blog/${p.slug}/index.html`, blogPostPage(p, POSTS)));
+}
 write('terms/index.html', legalPage('이용약관', '/terms/', TERMS_HTML));
 fs.copyFileSync(path.join(__dirname, 'src', 'og-image.png'), path.join(DIST, 'og-image.png'));
 console.log('  \u2713 og-image.png');
@@ -1389,6 +1564,9 @@ ${DATA.packages.map((p) => `- ${p.name}: 월 $${p.prices.annual}(12개월 기준
 
 ## 무료 도구
 - 무료 AI 마케팅 진단 (60초, 가입 불필요): https://bizhigher.com/free-audit/ — 구글 노출·리뷰·웹사이트·SNS·경쟁사 대비 5개 영역 점수와 개선 우선순위 제공
+
+## 블로그 (한인 비즈니스 마케팅 가이드)
+${loadPosts().map((p) => `- ${p.title}: https://bizhigher.com/blog/${p.slug}/`).join('\n')}
 
 ## 특징
 - 모든 가격 공개 (정찰제), 월간 구독은 언제든 해지 가능

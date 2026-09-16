@@ -837,3 +837,26 @@ img { max-width: 100%; display: block; }
 .legal-body p { font-size: 15.5px; line-height: 1.75; color: var(--ink-600); margin-bottom: 14px; }
 .legal-body .h2-left { font-size: 20px; margin: 30px 0 10px; }
 .legal-body b { color: var(--ink-900); }
+
+/* ---------- 블로그 ---------- */
+.toc { background: var(--gray-50); border: 1px solid var(--line); border-radius: 14px; padding: 18px 22px; margin-bottom: 30px; font-size: 14.5px; }
+.toc b { display: block; margin-bottom: 8px; font-size: 13px; letter-spacing: 0.08em; color: var(--ink-400); }
+.toc ol { margin: 0 0 0 18px; display: flex; flex-direction: column; gap: 6px; }
+.toc a { color: var(--blue-600); font-weight: 600; }
+.post-body { font-size: 16.5px; line-height: 1.85; color: #2A2E37; }
+.post-body p { margin-bottom: 18px; }
+.post-body h2 { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin: 44px 0 14px; scroll-margin-top: 100px; }
+.post-body h3 { font-size: 19px; font-weight: 700; margin: 28px 0 10px; }
+.post-body ul, .post-body ol { margin: 0 0 18px 22px; display: flex; flex-direction: column; gap: 8px; }
+.post-body blockquote { border-left: 3px solid var(--blue-600); background: var(--blue-50); border-radius: 0 12px 12px 0; padding: 14px 18px; margin-bottom: 18px; color: var(--ink-600); }
+.post-body code { background: var(--gray-50); border: 1px solid var(--line); border-radius: 6px; padding: 1px 7px; font-size: 14px; }
+.post-body hr { border: none; border-top: 1px solid var(--line); margin: 34px 0; }
+.post-body .callout { background: #FFF8E6; border: 1px solid #F5DFA1; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; font-size: 15px; }
+.tbl-wrap { overflow-x: auto; margin-bottom: 20px; }
+.post-body table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+.post-body th { background: var(--gray-50); text-align: left; font-weight: 700; }
+.post-body th, .post-body td { border: 1px solid var(--line); padding: 10px 14px; vertical-align: top; }
+.post-cta { margin-top: 44px; background: linear-gradient(120deg, #EEF3FF, #E8FBFF); border: 1px solid #CDD9FF; border-radius: 18px; padding: 28px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.post-cta b { font-size: 19px; }
+.post-cta p { font-size: 15px; color: var(--ink-600); }
+.post-cta .btn + .btn { margin-top: 4px; }
