@@ -1321,6 +1321,7 @@ function loadPosts() {
   return fs.readdirSync(dir).filter((f) => f.endsWith('.md')).map((f) => {
     const raw = fs.readFileSync(path.join(dir, f), 'utf8');
     const m = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+    if (!m) return null;
     const meta = {};
     m[1].split('\n').forEach((l) => {
       const idx = l.indexOf(':');
@@ -1341,7 +1342,7 @@ function loadPosts() {
     return { slug: meta.slug || f.replace(/\.md$/, ''), title: meta.title, description: meta.description,
       date: meta.date, category: meta.category || '가이드', keywords: meta.keywords || '',
       related: meta.related || '', body, faqs, readMin: Math.max(3, Math.round(words / 600)) };
-  }).sort((a, b) => (a.date < b.date ? 1 : -1));
+  }).filter(Boolean).sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
 function blogCard(p) {
