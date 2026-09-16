@@ -150,7 +150,7 @@ export function renderReportHtml(report, id) {
   <div class="card"><h2 class="sec-title">다음 단계</h2><p class="next-step">${esc(report.analysis.nextStep || '')}</p>
     <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
       <a href="/services/" class="btn btn-primary">서비스 둘러보기</a>
-      <a href="/pricing/" class="btn btn-ghost">가격 보기</a>
+      <a href="/pricing/#plans" class="btn btn-ghost">통째로 맡기기 — 패키지 월 $219부터</a>
     </div>
   </div>
 

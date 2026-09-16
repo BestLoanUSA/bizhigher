@@ -93,14 +93,14 @@ const AREA_TEMPLATES = {
     why: '구글은 최신 리뷰 활동을 지도 순위에 반영하고, 손님은 리뷰 수와 별점으로 가게를 고릅니다. 리뷰가 멈춰 있으면 순위도 매출도 서서히 밀립니다.',
     fix: '방문 손님에게 자연스럽게 리뷰를 요청하는 시스템(QR 등)을 매장에 두는 것부터 시작하세요.',
     serviceSlug: 'review-qr-kit',
-    serviceName: '구글 리뷰 QR 키트 — $79',
+    serviceName: '구글 리뷰 QR 키트 — $39',
   },
   website: {
     title: '웹사이트가 없거나 신뢰를 주지 못합니다',
     why: '구글 프로필에서 가게를 발견한 손님의 상당수가 웹사이트를 확인한 뒤 방문을 결정합니다. 웹사이트가 없으면 이 손님들이 경쟁 업체로 넘어갑니다.',
-    fix: '웹사이트가 준비되기 전까지는 구글 프로필이 웹사이트 역할을 합니다. 프로필의 설명·사진·서비스 항목부터 완벽하게 채우세요.',
-    serviceSlug: 'google-profile-optimization',
-    serviceName: '구글 비즈니스 프로필 최적화 — $199',
+    fix: '한 페이지짜리라도 가게 정보·사진·지도·전화가 명확한 자체 웹사이트를 만드는 것이 가장 확실한 해결입니다.',
+    serviceSlug: 'website',
+    serviceName: '웹사이트 제작 — $199~',
   },
   completeness: {
     title: '프로필 정보가 비어 있습니다',
@@ -114,7 +114,7 @@ const AREA_TEMPLATES = {
     why: '손님이 검색했을 때 나란히 비교되는 것은 결국 동네 경쟁 업체입니다. 별점·리뷰 수에서 밀리면 지도 노출과 선택 모두에서 불리해집니다.',
     fix: '리뷰 확보와 프로필 최적화를 병행해 경쟁 업체와의 격차부터 줄이세요.',
     serviceSlug: 'review-qr-kit',
-    serviceName: '구글 리뷰 QR 키트 — $79',
+    serviceName: '구글 리뷰 QR 키트 — $39',
   },
 };
 
@@ -197,8 +197,8 @@ ${JSON.stringify(data, null, 2)}
 - 막연한 표현 대신 데이터의 실제 숫자를 인용할 것 (예: "리뷰가 23개로 경쟁 업체 평균 89개의 4분의 1 수준입니다")
 - problems는 점수가 가장 낮은 영역 2개에 대해 작성
 - 단, categoryGeneric이 true이면 첫 번째 problem은 반드시 "구글이 업종을 일반 상점으로만 인식하고 있어 업종 검색에 노출되지 않는 문제"로 작성 (serviceSlug: google-profile-optimization). inferredIndustry가 있으면 실제 업종으로 언급
-- 각 problem의 serviceSlug는 다음 중 가장 적합한 것 하나: google-profile-optimization(프로필 문제), review-qr-kit(리뷰 부족), seo-blog-pack(웹사이트/검색 노출), ad-creative-pack(광고 필요)
-- serviceName은 해당 상품명과 가격: "구글 비즈니스 프로필 최적화 — $199" / "구글 리뷰 QR 키트 — $79" / "SEO 블로그 아티클 팩 — $149~" / "광고 소재 팩 — $199"
+- 각 problem의 serviceSlug는 다음 중 가장 적합한 것 하나: google-profile-optimization(프로필·카테고리·정보 문제), review-qr-kit(리뷰 부족), website(웹사이트 없음·부실), local-listing-setup(구글 밖 디렉토리·NAP 노출 부족), seo-blog-pack(검색 유입 콘텐츠 부족), ads-setup(노출 자체가 급해 광고가 필요한 경우)
+- serviceName은 해당 상품명과 가격 그대로: "구글 비즈니스 프로필 최적화 — $199" / "구글 리뷰 QR 키트 — $39" / "웹사이트 제작 — $199~" / "로컬 등록 셋업 — $129" / "SEO 블로그 구독 — $99/월" / "광고 셋업 — $299"
 
 반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트 없이 JSON만:
 {"summary":"2~3문장 종합 평가 (총점과 핵심 문제 언급)","problems":[{"title":"문제 제목","why":"왜 문제인지 2문장, 숫자 인용","fix":"해결 방향 1~2문장","serviceSlug":"...","serviceName":"..."},{...}],"nextStep":"다음 단계 제안 1~2문장"}`;
