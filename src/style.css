@@ -860,3 +860,17 @@ img { max-width: 100%; display: block; }
 .post-cta b { font-size: 19px; }
 .post-cta p { font-size: 15px; color: var(--ink-600); }
 .post-cta .btn + .btn { margin-top: 4px; }
+
+/* ---------- 블로그 사이드 목차 (스크롤스파이) ---------- */
+.post-layout { display: grid; grid-template-columns: 250px minmax(0, 720px); gap: 48px; justify-content: center; align-items: start; }
+.toc-side { position: sticky; top: 104px; margin-bottom: 0; max-height: calc(100vh - 130px); overflow-y: auto; }
+.toc-side a { color: var(--ink-600); font-weight: 500; display: block; padding: 3px 0 3px 10px; border-left: 2px solid transparent; transition: color .2s ease, border-color .2s ease; }
+.toc-side a.on { color: var(--blue-600); font-weight: 700; border-left-color: var(--blue-600); }
+.toc-side ol { list-style: none; margin: 0; }
+.post-body figure { margin: 8px 0 22px; }
+.post-body figure img { border-radius: 14px; border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(10, 27, 77, 0.08); }
+.post-body figcaption { font-size: 13px; color: var(--ink-400); text-align: center; margin-top: 8px; }
+@media (max-width: 991px) {
+  .post-layout { grid-template-columns: 1fr; gap: 0; }
+  .toc-side { position: static; max-height: none; margin-bottom: 28px; }
+}

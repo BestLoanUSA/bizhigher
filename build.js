@@ -1304,6 +1304,8 @@ function mdToHtml(md) {
       out.push(`<ol>${buf.join('')}</ol>`); continue;
     }
     if (/^!!! /.test(line)) { out.push(`<div class="callout">${inline(esc(line.slice(4)))}</div>`); i++; continue; }
+    const img = line.match(/^!\[(.*?)\]\((.+?)\)\s*$/);
+    if (img) { out.push(`<figure><img src="${img[2]}" alt="${esc(img[1])}" loading="lazy">${img[1] ? `<figcaption>${esc(img[1])}</figcaption>` : ''}</figure>`); i++; continue; }
     // 문단 (연속 줄 병합)
     const buf = [line];
     i++;
@@ -1406,8 +1408,9 @@ function blogPostPage(p, posts) {
   </div>
 </header>
 <section class="detail-body" style="padding-top:4px;">
-  <div class="container-narrow">
-    ${toc.length > 2 ? `<nav class="toc"><b>목차</b><ol>${toc.map((h) => `<li><a href="#${h.id}">${h.t}</a></li>`).join('')}</ol></nav>` : ''}
+  <div class="container post-layout">
+    ${toc.length > 2 ? `<aside class="toc toc-side" id="toc"><b>목차</b><ol>${toc.map((h) => `<li><a href="#${h.id}" data-h="${h.id}">${h.t}</a></li>`).join('')}</ol></aside>` : '<div></div>'}
+    <div class="post-main">
     <article class="post-body">${html}</article>
     <div class="post-cta">
       <b>우리 가게는 지금 몇 점일까요?</b>
@@ -1416,8 +1419,33 @@ function blogPostPage(p, posts) {
       ${relSvc ? `<a href="/service/${relSvc.slug}/" class="btn btn-ghost">맡기고 싶다면: ${relSvc.name} (${relSvc.price})</a>` : ''}
     </div>
     ${others.length ? `<h2 class="h2-left" style="margin-top:48px;">함께 읽으면 좋은 글</h2><div class="grid3">${others.map(blogCard).join('')}</div>` : ''}
+    </div><!-- /post-main -->
   </div>
 </section>
+<script>
+/* 목차 스크롤스파이 — 실패해도 목차·본문 표시엔 영향 없음 */
+(function () {
+  try {
+    if (!('IntersectionObserver' in window)) return;
+    var links = document.querySelectorAll('#toc a[data-h]');
+    if (!links.length) return;
+    var map = {};
+    links.forEach(function (a) { map[a.getAttribute('data-h')] = a; });
+    var current = null;
+    var hs = document.querySelectorAll('.post-body h2[id]');
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          if (current) current.classList.remove('on');
+          current = map[en.target.id];
+          if (current) current.classList.add('on');
+        }
+      });
+    }, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+    hs.forEach(function (h) { io.observe(h); });
+  } catch (e) {}
+})();
+</script>
 ` + FOOTER;
 }
 
@@ -1539,6 +1567,14 @@ DATA.packages.forEach((p) => write(`package/${p.slug}/index.html`, packagePage(p
 write('404.html', notFoundPage());
 write('privacy/index.html', legalPage('개인정보처리방침', '/privacy/', PRIVACY_HTML));
 const POSTS = loadPosts();
+const IMGDIR = path.join(__dirname, 'content', 'blog', 'img');
+if (fs.existsSync(IMGDIR)) {
+  fs.mkdirSync(path.join(DIST, 'blog-img'), { recursive: true });
+  fs.readdirSync(IMGDIR).forEach((f) => {
+    fs.copyFileSync(path.join(IMGDIR, f), path.join(DIST, 'blog-img', f));
+  });
+  console.log('  \u2713 blog-img/');
+}
 if (POSTS.length) {
   write('blog/index.html', blogIndexPage(POSTS));
   POSTS.forEach((p) => write(`blog/${p.slug}/index.html`, blogPostPage(p, POSTS)));
