@@ -874,3 +874,69 @@ img { max-width: 100%; display: block; }
   .post-layout { grid-template-columns: 1fr; gap: 0; }
   .toc-side { position: static; max-height: none; margin-bottom: 28px; }
 }
+
+/* ---------- v22: 히어로 카피 + 180일 비포/애프터 데모 + 대행사 비교표 ---------- */
+.h1-hero { font-size: 44px; }
+
+/* 데모 — 문제 칩(경고) / 반전 스왑 */
+.demo-chip { transition: opacity 0.45s ease, transform 0.25s ease, color 0.3s ease, background 0.3s ease, border-color 0.3s ease; }
+.demo-chip-warn { color: #FFD9A0; border-color: rgba(255, 187, 112, 0.3); background: rgba(255, 170, 80, 0.08); }
+.demo-chip.swap { transform: scaleY(0.1); opacity: 0.25; }
+
+/* 데모 — 180일 실행 플랜 버튼 */
+.demo-plan {
+  margin-top: 12px; padding: 11px 14px; border-radius: 12px; text-align: center;
+  font-size: 13.5px; font-weight: 800; letter-spacing: 0.01em; color: #fff;
+  background: var(--grad-btn); box-shadow: var(--glow-blue);
+  opacity: 0; transform: translateY(8px);
+  transition: opacity 0.5s ease, transform 0.16s ease, background 0.45s ease, box-shadow 0.45s ease, filter 0.16s ease;
+}
+.demo-plan.show { opacity: 1; transform: none; }
+.demo-plan.press { transform: scale(0.93); filter: brightness(1.4); }
+.demo-plan.running { animation: planPulse 0.9s ease-in-out infinite; }
+.demo-plan.done { background: linear-gradient(120deg, #0BB273, #059669); box-shadow: 0 8px 26px rgba(11, 178, 115, 0.4); }
+@keyframes planPulse {
+  0%, 100% { box-shadow: 0 8px 24px rgba(10, 77, 245, 0.3); }
+  50% { box-shadow: 0 8px 34px rgba(34, 211, 238, 0.55); }
+}
+
+/* 대행사 비교표 */
+.vs-sub { text-align: center; font-size: 16.5px; line-height: 1.6; color: var(--ink-600); max-width: 560px; margin: -28px auto 40px; }
+.vs-table { display: grid; grid-template-columns: 0.72fr 1fr 1.28fr; max-width: 880px; margin: 0 auto; }
+.vs-c { display: flex; align-items: center; gap: 9px; padding: 16px 18px; font-size: 15px; line-height: 1.45; border-bottom: 1px solid var(--line); }
+.vs-c i { font-style: normal; font-weight: 800; flex: 0 0 auto; }
+.vs-lab { font-weight: 800; font-size: 13.5px; letter-spacing: 0.04em; color: var(--ink-400); text-transform: uppercase; }
+.vs-old { color: var(--ink-600); background: var(--gray-50); }
+.vs-old i { color: var(--ink-400); }
+.vs-head { font-weight: 800; font-size: 15.5px; color: var(--ink-900); justify-content: center; text-align: center; }
+.vs-head.vs-old { background: var(--gray-50); color: var(--ink-600); }
+.vs-head-lab { border-bottom: 1px solid var(--line); }
+/* BizHigher 컬럼 — 떠 있는 강조 패널 */
+.vs-bh {
+  position: relative; font-weight: 700; color: #fff;
+  background: linear-gradient(160deg, var(--space-900), var(--navy-900));
+  border-bottom: 1px solid rgba(125, 162, 255, 0.18);
+  border-left: 1px solid rgba(125, 162, 255, 0.3); border-right: 1px solid rgba(125, 162, 255, 0.3);
+  box-shadow: 12px 0 44px rgba(10, 77, 245, 0.13), -12px 0 44px rgba(10, 77, 245, 0.13);
+}
+.vs-bh i { color: var(--cyan-400); }
+.vs-bh-head { flex-direction: column; gap: 4px; padding: 18px; border-top: 1px solid rgba(125, 162, 255, 0.3); border-radius: 18px 18px 0 0; background: linear-gradient(160deg, #0A1B4D, #081130); }
+.vs-bh-head .vs-logo { font-size: 19px; font-weight: 800; letter-spacing: -0.02em; color: #fff; }
+.vs-bh-head .vs-logo b { background: var(--grad-brand); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.vs-badge { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--cyan-400); border: 1px solid rgba(34, 211, 238, 0.4); border-radius: 999px; padding: 3px 10px; }
+.vs-bh-last { border-radius: 0 0 18px 18px; border-bottom: 1px solid rgba(125, 162, 255, 0.3); }
+.vs-note { text-align: center; font-size: 13px; color: var(--ink-400); margin-top: 22px; }
+.vs-note a { color: var(--blue-600); font-weight: 700; }
+
+@media (max-width: 767px) {
+  .h1-hero { font-size: 28px; }
+  .vs-table { grid-template-columns: 1fr 1.22fr; }
+  .vs-lab { grid-column: 1 / -1; padding: 14px 4px 6px; border-bottom: none; font-size: 12px; }
+  .vs-head-lab { display: none; }
+  .vs-c { padding: 12px 12px; font-size: 13.5px; }
+  .vs-old { border-radius: 12px 0 0 12px; border-bottom: none; }
+  .vs-bh { border-bottom: none; border-radius: 0 12px 12px 0; box-shadow: 0 10px 30px rgba(10, 77, 245, 0.16); }
+  .vs-bh-head, .vs-bh-last { border-radius: 0 12px 12px 0; }
+  .vs-head.vs-old { border-radius: 12px 0 0 12px; }
+  .vs-sub { margin-top: -16px; font-size: 14.5px; }
+}

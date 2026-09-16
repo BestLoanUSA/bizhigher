@@ -402,7 +402,7 @@ function homePage() {
       alternateName: '비즈하이어',
       url: SITE.domain,
       email: SITE.email,
-      description: '미국 한인 비즈니스를 위한 AI 자동화 마케팅 — 구글 지도 노출, 리뷰 관리, SNS 포스팅, 웹사이트 제작, 광고 운영을 정찰제로 제공합니다.',
+      description: '미국 한인 비즈니스를 위한 AI 광고회사 — 구글 지도 노출, 리뷰 관리, SNS 포스팅, 웹사이트 제작, 광고 운영을 AI 자동화와 전문가 검수로 대행사 절반 이하 가격에 정찰제로 제공합니다.',
       slogan: SITE.tagline,
       areaServed: { '@type': 'Country', name: 'United States' },
       availableLanguage: ['Korean', 'English'],
@@ -420,8 +420,8 @@ function homePage() {
     },
   ];
   return head({
-    title: 'BizHigher — 미국 한인 비즈니스 AI 마케팅 | 마케팅, 이제 주문하세요',
-    description: '견적 미팅 없는 정찰제 마케팅. AI가 만들고 전문가가 검수하고 영업일 3일 안에 받아보세요. 미국 전역 한인 비즈니스를 위한 마케팅 쇼핑몰.',
+    title: 'BizHigher — 한인 비즈니스를 위한 AI 마케팅·광고회사 | 대행사 절반 이하 가격',
+    description: 'AI가 만들고 광고 전문가가 검수합니다. 대행사 절반 이하 가격으로 10배 빠르게 — 견적 미팅 없는 정찰제. 미국 전역 한인 비즈니스를 위한 AI 광고회사.',
     pathName: '/',
     jsonLd,
   }) + nav('home') + `
@@ -448,9 +448,9 @@ function homePage() {
   <div class="cine-stage2">
   <div class="container hero-grid">
     <div class="hero-copy">
-      <span class="hero-badge">⚡ AI 자동화 마케팅 · 영업일 3일 딜리버리</span>
-      <h1 class="h1">마케팅, 이제<br><span class="grad">주문하세요.</span></h1>
-      <p class="hero-sub">AI가 만들고, 전문가가 검수하고, 영업일 3일 안에 받아보세요. 견적 문의 없는 정찰제 마케팅.</p>
+      <span class="hero-badge">🇺🇸 한인 비즈니스를 위한 AI 광고회사</span>
+      <h1 class="h1 h1-hero">광고 대행사 절반 이하의 가격으로,<br><span class="grad">10배 빠르게.</span></h1>
+      <p class="hero-sub">AI가 만들고 광고 전문가가 검수합니다. 사람만 쓰는 회사보다 빠르고, 저렴하고, 24시간 쉬지 않습니다. 견적 미팅 없는 광고 마케팅, 지금 주문하세요.</p>
       <div class="hero-ctas">
         <a href="/free-audit/" class="btn btn-primary">무료 AI 진단 받기</a>
         <a href="/services/" class="btn btn-ghost">서비스 둘러보기</a>
@@ -473,8 +473,8 @@ function homePage() {
         <div class="demo-chips">
           <div class="demo-chip">🔎 경쟁사 대비 리뷰 32개 부족</div>
           <div class="demo-chip">📸 프로필 사진 6개월째 업데이트 없음</div>
-          <div class="demo-chip demo-chip-ok">✓ 90일 실행 플랜 생성 완료</div>
         </div>
+        <div class="demo-plan" id="dm-plan"><span id="dm-plan-txt">🚀 180일 실행 플랜 시작</span></div>
       </div>
     </div>
   </div>
@@ -705,33 +705,60 @@ function homePage() {
   var fills = Array.prototype.slice.call(document.querySelectorAll('.demo-fill'));
   var fillNums = Array.prototype.slice.call(document.querySelectorAll('.demo-bar > b'));
   var chips = Array.prototype.slice.call(document.querySelectorAll('.demo-chip'));
-  // 루프마다 다른 지역·업종 비즈니스로 순환 (마지막 칩은 항상 완료 스타일)
+  var planBtn = document.getElementById('dm-plan');
+  var planTxt = document.getElementById('dm-plan-txt');
+  // 비포/애프터 스토리 — 형편없는 진단 → 플랜 시작 버튼 클릭 → 180일 뒤 극적 반전
   var BIZ = [
-    { name: '가든그로브 안경점', score: 63, bars: [82, 61, 45, 38, 68],
-      chips: ['🔎 경쟁사 대비 리뷰 32개 부족', '📸 프로필 사진 6개월째 업데이트 없음', '✓ 90일 실행 플랜 생성 완료'] },
-    { name: '달라스 한식당', score: 71, bars: [88, 79, 52, 66, 74],
-      chips: ['⭐ 최근 30일 신규 리뷰 12개 — 지역 상위권', '🌐 웹사이트에 메뉴·영업시간 정보 없음', '✓ 90일 실행 플랜 생성 완료'] },
-    { name: 'LA 네일살롱', score: 48, bars: [54, 41, 30, 62, 49],
-      chips: ['🔎 "nail salon near me" 노출 순위권 밖', '💬 미답글 리뷰 9개 — 신뢰도 하락 요인', '✓ 90일 실행 플랜 생성 완료'] },
-    { name: '애틀랜타 수학학원', score: 57, bars: [66, 72, 38, 25, 58],
-      chips: ['📱 SNS 계정 없음 — 학부모 접점 부재', '🏷️ 구글 카테고리 "일반 학교"로 잘못 분류', '✓ 90일 실행 플랜 생성 완료'] },
+    { name: '가든그로브 안경점', s0: 41, s1: 94, b0: [48, 34, 45, 22, 39], b1: [96, 91, 88, 82, 95],
+      prob: ['🔎 경쟁사 대비 리뷰 32개 부족', '📸 프로필 사진 6개월째 업데이트 없음'],
+      win:  ['⭐ 리뷰 187개 — 동네 안경점 1위', '📸 매주 새 사진·게시물 자동 업로드'] },
+    { name: '애틀랜타 수학학원', s0: 29, s1: 92, b0: [31, 42, 25, 12, 33], b1: [93, 89, 86, 90, 88],
+      prob: ['🏷️ 구글 카테고리 "일반 학교"로 잘못 분류', '📱 SNS 계정 없음 — 학부모 접점 부재'],
+      win:  ['🏷️ "수학학원" 지도 검색 최상단 노출', '📱 인스타 학부모 팔로워 1,200+'] },
+    { name: '달라스 한식당', s0: 37, s1: 95, b0: [44, 51, 18, 35, 40], b1: [97, 94, 90, 87, 93],
+      prob: ['🌐 웹사이트 없음 — 메뉴·영업시간 못 찾음', '🔎 "korean bbq near me" 순위권 밖'],
+      win:  ['🌐 예약되는 웹사이트 — 월 방문 2,400', '🔎 "korean bbq near me" 첫 화면 노출'] },
+    { name: 'LA 네일살롱', s0: 33, s1: 91, b0: [38, 29, 30, 41, 35], b1: [92, 90, 85, 94, 89],
+      prob: ['💬 미답글 리뷰 9개 — 신뢰도 하락 요인', '📉 신규 손님 문의 월 6건'],
+      win:  ['💬 모든 리뷰 24시간 내 답글 자동화', '📈 신규 문의 월 31건 — 5배 증가'] },
   ];
   var bi = 0;
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function apply(b) {
-    // 바 목표치·숫자·칩 문구를 해당 비즈니스로 교체
-    fills.forEach(function (f, i) { f.setAttribute('data-w', b.bars[i]); });
-    fillNums.forEach(function (n, i) { n.textContent = b.bars[i]; });
-    chips.forEach(function (c, i) { c.textContent = b.chips[i]; });
+  function setBars(vals, animate) {
+    fills.forEach(function (f, i) {
+      f.setAttribute('data-w', vals[i]);
+      if (animate) f.style.width = vals[i] + '%';
+    });
+    fillNums.forEach(function (n, i) { n.textContent = vals[i]; });
+  }
+  function setChips(texts, ok, show) {
+    chips.forEach(function (c, i) {
+      c.textContent = texts[i];
+      c.classList.toggle('demo-chip-ok', !!ok);
+      c.classList.toggle('demo-chip-warn', !ok);
+      if (show) c.classList.add('show');
+    });
+  }
+  function countScore(from, to, ms) {
+    var start = null;
+    function step(ts) {
+      if (!start) start = ts;
+      var p = Math.min((ts - start) / ms, 1);
+      var v = Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3)));
+      scoreEl.textContent = v;
+      if (ring) ring.style.setProperty('--p', v);
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
   }
   function setFinal() {
     var b = BIZ[0];
-    apply(b);
     typeEl.textContent = b.name;
-    scoreEl.textContent = b.score;
-    if (ring) ring.style.setProperty('--p', b.score);
-    fills.forEach(function (f) { f.style.width = f.getAttribute('data-w') + '%'; });
-    chips.forEach(function (c) { c.classList.add('show'); });
+    scoreEl.textContent = b.s1;
+    if (ring) ring.style.setProperty('--p', b.s1);
+    setBars(b.b1, true);
+    setChips(b.win, true, true);
+    if (planBtn) { planBtn.classList.add('show', 'done'); planTxt.textContent = '✓ 180일 실행 플랜 완료'; }
   }
   if (reduced) { setFinal(); return; }
   var timers = [];
@@ -742,40 +769,59 @@ function homePage() {
     if (ring) ring.style.setProperty('--p', 0);
     fills.forEach(function (f) { f.style.width = '0%'; });
     chips.forEach(function (c) { c.classList.remove('show'); });
+    if (planBtn) {
+      planBtn.classList.remove('show', 'press', 'done', 'running');
+      planTxt.textContent = '🚀 180일 실행 플랜 시작';
+    }
   }
   function run() {
     reset();
     var b = BIZ[bi % BIZ.length];
     bi++;
-    apply(b);
-    // 1) 업체명 타이핑
+    // ── BEFORE: 형편없는 진단 ──
+    setBars(b.b0, false);
+    setChips(b.prob, false, false);
     var i = 0;
     (function type() {
-      if (i <= b.name.length) { typeEl.textContent = b.name.slice(0, i); i++; timers.push(setTimeout(type, 90)); }
+      if (i <= b.name.length) { typeEl.textContent = b.name.slice(0, i); i++; timers.push(setTimeout(type, 85)); }
     })();
-    // 2) 바 채우기 (스태거)
     fills.forEach(function (f, idx) {
-      t(function () { f.style.width = f.getAttribute('data-w') + '%'; }, 1500 + idx * 220);
+      t(function () { f.style.width = b.b0[idx] + '%'; }, 1300 + idx * 180);
     });
-    // 3) 점수 카운트업 + 링
+    t(function () { countScore(0, b.s0, 1100); }, 1400);
+    t(function () { chips[0].classList.add('show'); }, 2700);
+    t(function () { chips[1].classList.add('show'); }, 3400);
+    // ── 버튼 등장 → 클릭 연출 ──
+    t(function () { if (planBtn) planBtn.classList.add('show'); }, 4200);
+    t(function () { if (planBtn) planBtn.classList.add('press'); }, 5200);
+    t(function () { if (planBtn) planBtn.classList.remove('press'); }, 5440);
+    // ── AFTER: DAY 카운트 + 점수 급상승 + 문제→장점 반전 ──
     t(function () {
+      if (planBtn) planBtn.classList.add('running');
       var start = null;
-      function step(ts) {
+      function day(ts) {
         if (!start) start = ts;
-        var p = Math.min((ts - start) / 1400, 1);
-        var v = Math.round(b.score * (1 - Math.pow(1 - p, 3)));
-        scoreEl.textContent = v;
-        if (ring) ring.style.setProperty('--p', v);
-        if (p < 1) requestAnimationFrame(step);
+        var p = Math.min((ts - start) / 1500, 1);
+        planTxt.textContent = '플랜 진행 중 · DAY ' + Math.max(1, Math.round(180 * p));
+        if (p < 1) requestAnimationFrame(day);
       }
-      requestAnimationFrame(step);
-    }, 1600);
-    // 4) 인사이트 칩
-    chips.forEach(function (c, idx) {
-      t(function () { c.classList.add('show'); }, 3400 + idx * 800);
-    });
-    // 5) 다음 비즈니스로 루프
-    t(run, 10500);
+      requestAnimationFrame(day);
+      countScore(b.s0, b.s1, 1600);
+      fills.forEach(function (f, idx) {
+        t(function () { f.style.width = b.b1[idx] + '%'; }, idx * 120);
+      });
+      fillNums.forEach(function (n, idx) { t(function () { n.textContent = b.b1[idx]; }, 600 + idx * 120); });
+    }, 5600);
+    t(function () { chips[0].classList.add('swap'); }, 6100);
+    t(function () { chips[0].textContent = b.win[0]; chips[0].classList.add('demo-chip-ok'); chips[0].classList.remove('demo-chip-warn', 'swap'); }, 6350);
+    t(function () { chips[1].classList.add('swap'); }, 6700);
+    t(function () { chips[1].textContent = b.win[1]; chips[1].classList.add('demo-chip-ok'); chips[1].classList.remove('demo-chip-warn', 'swap'); }, 6950);
+    t(function () {
+      if (planBtn) { planBtn.classList.remove('running'); planBtn.classList.add('done'); }
+      planTxt.textContent = '✓ 180일 실행 플랜 완료';
+    }, 7300);
+    // ── 홀드 후 다음 비즈니스 ──
+    t(run, 13000);
   }
   run();
 })();
@@ -786,10 +832,39 @@ function homePage() {
     <p class="eyebrow">HOW IT WORKS</p>
     <h2 class="h2">대행사 미팅은 없습니다</h2>
     <div class="stack-zone">
-      <div class="stack-card"><span class="stack-num">01</span><h3 class="stack-title">쇼핑하듯 주문</h3><p class="stack-desc">가격이 다 공개되어 있습니다. 견적 미팅도, 영업 전화도 없습니다. 필요한 서비스를 골라 카드로 결제하면 끝.</p></div>
-      <div class="stack-card stack-c2"><span class="stack-num">02</span><h3 class="stack-title">AI 제작 + 전문가 검수</h3><p class="stack-desc">AI가 빠르게 제작하고, 마케팅 전문가가 하나하나 검수합니다. 속도와 품질을 둘 다 가져갑니다.</p></div>
-      <div class="stack-card stack-c3"><span class="stack-num">03</span><h3 class="stack-title">영업일 3일 내 딜리버리</h3><p class="stack-desc">결과물과 사용 가이드를 이메일로 받아보세요. 수정 1회 무료. 구독이면 매달 이 사이클이 자동으로 돕니다.</p></div>
+      <div class="stack-card"><span class="stack-num">01</span><h3 class="stack-title">쇼핑하듯 주문</h3><p class="stack-desc">모든 가격이 공개돼 있습니다. 견적 미팅 0번, 영업 전화 0통 — 대행사 계약에 쓰던 2주를 클릭 몇 번으로 끝내세요.</p></div>
+      <div class="stack-card stack-c2"><span class="stack-num">02</span><h3 class="stack-title">AI 제작 + 전문가 검수</h3><p class="stack-desc">AI가 몇 시간 만에 초안을 만들고, 광고 전문가가 전략과 디테일을 잡습니다. 대행사 품질은 그대로, 인건비 거품은 뺐습니다 — AI를 제대로 쓰는 회사만 낼 수 있는 가격입니다.</p></div>
+      <div class="stack-card stack-c3"><span class="stack-num">03</span><h3 class="stack-title">받고 끝이 아닙니다</h3><p class="stack-desc">영업일 3일 내 딜리버리, 수정 1회 무료. 구독이면 AI가 24시간 데이터를 지켜보며 매주 최적화 사이클이 자동으로 돕니다.</p></div>
     </div>
+  </div>
+</section>
+
+<section class="section vs-section">
+  <div class="container">
+    <p class="eyebrow">WHY AI AGENCY</p>
+    <h2 class="h2">대행사와 비교하지 마세요</h2>
+    <p class="vs-sub">사람만 쓰는 대행사와 AI 광고회사는 구조가 다릅니다. 구조가 다르면, 가격과 속도가 다릅니다.</p>
+    <div class="vs-table" role="table" aria-label="일반 대행사와 BizHigher 비교">
+      <div class="vs-c vs-lab vs-head-lab"></div>
+      <div class="vs-c vs-old vs-head">일반 대행사</div>
+      <div class="vs-c vs-bh vs-head vs-bh-head"><span class="vs-logo">Biz<b>Higher</b></span><span class="vs-badge">AI 광고회사</span></div>
+      <div class="vs-c vs-lab">시작까지</div>
+      <div class="vs-c vs-old"><i>—</i>미팅 · 견적 · 계약, 보통 2주+</div>
+      <div class="vs-c vs-bh"><i>✓</i>온라인 주문 — 오늘 바로 시작</div>
+      <div class="vs-c vs-lab">첫 결과물</div>
+      <div class="vs-c vs-old"><i>—</i>2~4주</div>
+      <div class="vs-c vs-bh"><i>✓</i>영업일 3일</div>
+      <div class="vs-c vs-lab">비용</div>
+      <div class="vs-c vs-old"><i>—</i>월 리테이너 $1,500~</div>
+      <div class="vs-c vs-bh"><i>✓</i>월 $219부터 · 정찰제</div>
+      <div class="vs-c vs-lab">모니터링</div>
+      <div class="vs-c vs-old"><i>—</i>담당자 근무시간에만</div>
+      <div class="vs-c vs-bh"><i>✓</i>AI 24시간 + 전문가 검수</div>
+      <div class="vs-c vs-lab">해지</div>
+      <div class="vs-c vs-old"><i>—</i>전화 · 위약금</div>
+      <div class="vs-c vs-bh vs-bh-last"><i>✓</i>클릭 2번, 언제든</div>
+    </div>
+    <p class="vs-note">* 일반 대행사 항목은 미국 로컬 마케팅 대행사의 일반적인 계약 조건 기준입니다. <a href="/pricing/">BizHigher 정찰제 가격표 보기 →</a></p>
   </div>
 </section>
 
@@ -876,11 +951,11 @@ function homePage() {
 
 <section class="section section-navy">
   <div class="container">
-    <h2 class="h2">이렇게 진행됩니다</h2>
+    <h2 class="h2">AI 광고회사의 숫자</h2>
     <div class="grid3">
-      <div class="stat-box"><div class="stat" data-count="3" data-suffix="일">3일</div><p class="stat-label">인테이크 완료 후 최대 딜리버리 기한 (영업일)</p></div>
-      <div class="stat-box"><div class="stat" data-count="100" data-suffix="%">100%</div><p class="stat-label">전문가 검수 — 모든 결과물은 사람이 확인 후 전달</p></div>
-      <div class="stat-box"><div class="stat" data-count="0" data-prefix="$">$0</div><p class="stat-label">견적·상담 비용 — 모든 가격 사이트에 공개</p></div>
+      <div class="stat-box"><div class="stat" data-count="3" data-suffix="일">3일</div><p class="stat-label">대행사 평균 2~4주 걸리는 결과물을 영업일 3일에</p></div>
+      <div class="stat-box"><div class="stat" data-count="24" data-suffix="시간">24시간</div><p class="stat-label">AI는 퇴근하지 않습니다 — 데이터 모니터링·자동화 상시 가동</p></div>
+      <div class="stat-box"><div class="stat" data-count="58" data-suffix="%">58%</div><p class="stat-label">개별 구매 대비 12개월 플랜 절감률 — 정찰제라 계산이 됩니다</p></div>
     </div>
   </div>
 </section>
@@ -1321,7 +1396,6 @@ function loadPosts() {
   return fs.readdirSync(dir).filter((f) => f.endsWith('.md')).map((f) => {
     const raw = fs.readFileSync(path.join(dir, f), 'utf8');
     const m = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
-    if (!m) return null;
     const meta = {};
     m[1].split('\n').forEach((l) => {
       const idx = l.indexOf(':');
@@ -1342,7 +1416,7 @@ function loadPosts() {
     return { slug: meta.slug || f.replace(/\.md$/, ''), title: meta.title, description: meta.description,
       date: meta.date, category: meta.category || '가이드', keywords: meta.keywords || '',
       related: meta.related || '', body, faqs, readMin: Math.max(3, Math.round(words / 600)) };
-  }).filter(Boolean).sort((a, b) => (a.date < b.date ? 1 : -1));
+  }).sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
 function blogCard(p) {
