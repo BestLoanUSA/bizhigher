@@ -1414,7 +1414,7 @@ function loadPosts() {
     }
     const words = body.replace(/[#>*|\-]/g, '').length;
     return { slug: meta.slug || f.replace(/\.md$/, ''), title: meta.title, description: meta.description,
-      date: meta.date, category: meta.category || '가이드', keywords: meta.keywords || '',
+      date: meta.date, updated: meta.updated || '', category: meta.category || '가이드', keywords: meta.keywords || '',
       related: meta.related || '', body, faqs, readMin: Math.max(3, Math.round(words / 600)) };
   }).sort((a, b) => (a.date < b.date ? 1 : -1));
 }
@@ -1456,7 +1456,7 @@ function blogPostPage(p, posts) {
     {
       '@context': 'https://schema.org', '@type': 'BlogPosting',
       headline: p.title, description: p.description,
-      datePublished: p.date, dateModified: p.date, inLanguage: 'ko',
+      datePublished: p.date, dateModified: p.updated || p.date, inLanguage: 'ko',
       author: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
       publisher: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
       mainEntityOfPage: `${SITE.domain}/blog/${p.slug}/`, keywords: p.keywords,
@@ -1606,12 +1606,30 @@ function notFoundPage() {
 
 /* ---------- sitemap & robots ---------- */
 
+/* lastmod는 "내용이 실제로 바뀐 날"일 때만 의미가 있다.
+   빌드할 때마다 오늘 날짜를 모든 URL에 찍으면 구글은 그 사이트맵의 lastmod를
+   통째로 신뢰하지 않게 된다 — 그래서 진짜 날짜를 아는 URL에만 넣는다.
+   글 내용을 고쳤으면 그 글의 front matter에 updated: YYYY-MM-DD 를 추가하면 된다. */
 function sitemap() {
   const posts = loadPosts();
-  const urls = ['/', '/services/', '/pricing/', '/free-audit/', '/privacy/', '/terms/', '/blog/', ...posts.map((p) => `/blog/${p.slug}/`), ...DATA.services.map((s) => `/service/${s.slug}/`), ...DATA.packages.map((p) => `/package/${p.slug}/`)];
+  const postDates = posts.map((p) => p.updated || p.date).filter(Boolean).sort();
+  const newestPost = postDates.length ? postDates[postDates.length - 1] : '';
+
+  const urls = [
+    { u: '/' },
+    { u: '/services/' },
+    { u: '/pricing/' },
+    { u: '/free-audit/' },
+    { u: '/privacy/' },
+    { u: '/terms/' },
+    { u: '/blog/', d: newestPost },
+    ...posts.map((p) => ({ u: `/blog/${p.slug}/`, d: p.updated || p.date })),
+    ...DATA.services.map((s) => ({ u: `/service/${s.slug}/` })),
+    ...DATA.packages.map((p) => ({ u: `/package/${p.slug}/` })),
+  ];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map((u) => `  <url><loc>${SITE.domain}${u}</loc></url>`).join('\n')}
+${urls.map((x) => `  <url><loc>${SITE.domain}${x.u}</loc>${x.d ? `<lastmod>${x.d}</lastmod>` : ''}</url>`).join('\n')}
 </urlset>`;
 }
 
