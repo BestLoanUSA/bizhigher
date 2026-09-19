@@ -42,7 +42,12 @@ const ANALYTICS = `
   gtag('config', 'G-6D7XST08PS');
 </script>`;
 
-function head({ title, description, pathName, jsonLd, noindex }) {
+/* src/og/<slug>.png 이 있으면 그 글 전용 카드를 쓴다. 없으면 사이트 기본 이미지. */
+function ogFor(slug) {
+  return fs.existsSync(path.join(__dirname, 'src', 'og', `${slug}.png`)) ? `/og/${slug}.png` : null;
+}
+
+function head({ title, description, pathName, jsonLd, noindex, ogImage, ogType }) {
   return `<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -55,13 +60,13 @@ ${noindex ? '<meta name="robots" content="noindex">' : ''}
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${description}">
 <meta property="og:url" content="${SITE.domain}${pathName}">
-<meta property="og:type" content="website">
+<meta property="og:type" content="${ogType || 'website'}">
 <meta property="og:site_name" content="BizHigher">
-<meta property="og:image" content="${SITE.domain}/og-image.png">
+<meta property="og:image" content="${SITE.domain}${ogImage || '/og-image.png'}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="${SITE.domain}/og-image.png">
+<meta name="twitter:image" content="${SITE.domain}${ogImage || '/og-image.png'}">
 <link rel="icon" href="${FAVICON}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="/style.css?v=${CSS_VER}">
@@ -1476,6 +1481,8 @@ function blogPostPage(p, posts) {
     description: p.description,
     pathName: `/blog/${p.slug}/`,
     jsonLd,
+    ogImage: ogFor(p.slug),
+    ogType: 'article',
   }) + nav('blog') + `
 <header class="page-head">
   <div class="container-narrow">
@@ -1645,6 +1652,8 @@ function dataReportPage(s) {
       description: e.dek || s.title,
       pathName: `/data/${s.slug}/`,
       jsonLd,
+      ogImage: ogFor(s.slug),
+      ogType: 'article',
     }) +
     nav('data') +
     `
@@ -1694,6 +1703,8 @@ function dataReportPage(s) {
 
       ${e.meaning ? `<h2 id="meaning">이 숫자가 뜻하는 것</h2>${e.meaning}` : ''}
 
+      ${seriesNav(s.slug)}
+
       <h2 id="reuse">데이터 내려받기 · 인용</h2>
       <p>원자료를 CSV로 공개합니다. 기사·발표·보고서에 자유롭게 쓰실 수 있습니다 (CC BY 4.0 — 출처와 링크만 남겨 주세요).</p>
       <p><a class="btn btn-primary" href="/data/${s.slug}/data.csv" download>CSV 내려받기 (${s.byCategory.length + s.byCity.length + 1}행)</a></p>
@@ -1741,13 +1752,30 @@ function dataIndexPage(surveys) {
     `
 <header class="page-head">
   <div class="container-narrow">
-    <span class="badge">공개 데이터</span>
-    <h1 class="page-title">데이터 리포트</h1>
-    <p class="page-sub">미국 한인 비즈니스의 온라인 실태를 추정치가 아닌 직접 확인으로, 분기마다 공개합니다.<br>CSV 원자료까지 그대로 열어 두었으니, 출처만 남기고 자유롭게 인용하세요.</p>
+    <span class="badge">공개 데이터 · 정기 발행</span>
+    <h1 class="page-title">한인 업소 온라인 실태 조사</h1>
+    <p class="page-sub">미국 한인 비즈니스가 온라인에서 어떤 상태인지를, 추정이 아니라 한 곳씩 직접 확인해 정기적으로 공개합니다.<br>원자료 CSV까지 함께 엽니다. 출처만 남기면 인용은 자유입니다.</p>
   </div>
 </header>
-<section class="section">
+<section class="section" style="padding-bottom:0;">
   <div class="container-narrow">
+    <div class="tbl-wrap"><table style="width:100%;border-collapse:collapse;font-size:14.5px;">
+      <caption style="caption-side:top;text-align:left;font-weight:700;padding-bottom:8px;">발행 주기</caption>
+      <tbody>
+        <tr><td style="border:1px solid var(--line);padding:10px 14px;white-space:nowrap;font-weight:700;">분기 1회</td><td style="border:1px solid var(--line);padding:10px 14px;">모수를 다시 세고 직전 분기와 비교하는 전수 조사</td></tr>
+        <tr><td style="border:1px solid var(--line);padding:10px 14px;white-space:nowrap;font-weight:700;">2~3주 1회</td><td style="border:1px solid var(--line);padding:10px 14px;">같은 데이터에 질문 하나를 더하는 단일 주제 리포트</td></tr>
+      </tbody>
+    </table></div>
+    <p style="font-size:15px;color:var(--ink-600);line-height:1.8;">
+      <b>한 번 발행한 숫자는 고치지 않습니다.</b> 값이 달라졌으면 같은 글을 수정하는 대신 새 리포트를 냅니다. 인용한 쪽의 숫자가 나중에 틀려지는 일이 없도록 하기 위해서입니다.<br>
+      <b>인용은 자유입니다.</b> 모든 리포트와 원자료 CSV는 CC BY 4.0으로 공개합니다. 출처와 링크만 남겨 주세요.<br>
+      <b>추가 집계를 요청할 수 있습니다.</b> 기사나 발표에 필요한 형태가 따로 있으면 <a href="mailto:${SITE.email}">${SITE.email}</a>로 알려 주세요. 가공해서 보내 드립니다.
+    </p>
+  </div>
+</section>
+<section class="section" style="padding-top:40px;">
+  <div class="container-narrow">
+    <h2 class="h2-left" style="margin-top:0;">발행한 리포트</h2>
     ${
       surveys.length
         ? surveys
@@ -1884,6 +1912,8 @@ function metricReportPage(s) {
       description: e.dek || s.title,
       pathName: `/data/${s.slug}/`,
       jsonLd,
+      ogImage: ogFor(s.slug),
+      ogType: 'article',
     }) +
     nav('data') +
     `
@@ -1924,6 +1954,8 @@ function metricReportPage(s) {
 
       ${e.meaning ? `<h2 id="meaning">이 숫자가 뜻하는 것</h2>${e.meaning}` : ''}
 
+      ${seriesNav(s.slug)}
+
       <h2 id="reuse">데이터 내려받기 · 인용</h2>
       <p>원자료를 CSV로 공개합니다. 기사·발표·보고서에 자유롭게 쓰실 수 있습니다 (CC BY 4.0 — 출처와 링크만 남겨 주세요).</p>
       <p><a class="btn btn-primary" href="/data/${s.slug}/data.csv" download>CSV 내려받기 (${csvLines}행)</a></p>
@@ -1941,6 +1973,22 @@ function metricReportPage(s) {
 ` +
     FOOTER
   );
+}
+
+/* 리포트끼리 서로 링크한다. 손으로 적으면 3호를 낼 때 1·2호를 고치는 걸 잊는다. */
+function seriesNav(currentSlug) {
+  const all = loadSurveys()
+    .concat(loadReports())
+    .map((x) => ({
+      slug: x.slug,
+      title: (x.editorial && x.editorial.headline) || x.title,
+      asOf: x.asOf,
+    }))
+    .filter((x) => x.slug && x.slug !== currentSlug)
+    .sort((a, b) => (a.asOf < b.asOf ? 1 : -1));
+  if (!all.length) return '';
+  return `<h2 id="series">이 시리즈의 다른 리포트</h2>
+<ul>${all.map((x) => `<li><a href="/data/${x.slug}/">${x.title}</a> <span style="color:var(--ink-400)">(${x.asOf})</span></li>`).join('')}</ul>`;
 }
 
 /* ---------- 페이지: 법적 고지 ---------- */
@@ -2111,6 +2159,15 @@ if (SURVEYS.length || REPORTS.length) {
 write('terms/index.html', legalPage('이용약관', '/terms/', TERMS_HTML));
 fs.copyFileSync(path.join(__dirname, 'src', 'og-image.png'), path.join(DIST, 'og-image.png'));
 console.log('  \u2713 og-image.png');
+const OGDIR = path.join(__dirname, 'src', 'og');
+if (fs.existsSync(OGDIR)) {
+  const pngs = fs.readdirSync(OGDIR).filter((f) => f.endsWith('.png'));
+  if (pngs.length) {
+    fs.mkdirSync(path.join(DIST, 'og'), { recursive: true });
+    pngs.forEach((f) => fs.copyFileSync(path.join(OGDIR, f), path.join(DIST, 'og', f)));
+    console.log(`  \u2713 og/ (${pngs.length}\uc7a5)`);
+  }
+}
 write('sitemap.xml', sitemap());
 write('robots.txt', ROBOTS);
 write('llms.txt', `# BizHigher (비즈하이어)
