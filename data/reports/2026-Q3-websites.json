@@ -1,0 +1,114 @@
+{
+  "kind": "metrics",
+  "slug": "korean-business-websites-2026-q3",
+  "quarter": "2026-Q3",
+  "asOf": "2026-09-19",
+  "title": "한인 업소 웹사이트 첫 화면 점검 2026-Q3",
+  "subline": "2026-09-19 기준 · 자체 도메인 81곳 중 접속에 성공한 74곳 · 같은 점검을 두 번 실행 · BizHigher",
+  "cardNote": "접속 성공 74곳 · 두 번 실측",
+  "stats": [
+    {"value":"0","label":"AI 크롤러를 막고 있는 곳 (81곳 중)"},
+    {"value":"30","label":"검색·AI가 “업소”로 읽을 수 있게 정리된 곳 (74곳 중)"},
+    {"value":"9","label":"첫 화면에서 주문·예약이 되는 곳 (74곳 중)"}
+  ],
+  "editorial": {
+    "headline": "문은 다 열려 있는데, 들어와서 읽을 게 없습니다",
+    "dek": "1호에서 자체 도메인을 확인한 81곳의 웹사이트를 한 곳씩 열어 첫 화면을 봤습니다. AI 크롤러를 막고 있는 곳은 한 곳도 없었습니다. 그런데 접속에 성공한 74곳 중 영업시간이 첫 화면에 적혀 있는 곳은 41곳, 검색과 AI가 “업소”로 인식할 수 있게 정리된 곳은 30곳이었습니다.",
+    "findings": [
+      {"title":"AI를 막고 있는 곳은 한 곳도 없습니다","body":"GPTBot·ClaudeBot·PerplexityBot·CCBot·Google-Extended 등 10종을 robots.txt에서 확인했는데, 81곳 중 막고 있는 곳은 0곳이었습니다. 다섯 번 돌린 모든 실행에서 0이었습니다. “AI가 내 사이트를 못 읽는다”는 걱정의 원인은 차단이 아닙니다."},
+      {"title":"문제는 읽을 내용이 없다는 쪽입니다","body":"접속에 성공한 74곳 중 영업시간이 첫 화면에 적힌 곳은 41곳, 업종·주소·전화를 기계가 읽을 수 있는 형태(LocalBusiness 구조화 데이터)로 정리한 곳은 30곳이었습니다. 크롤러는 들어올 수 있지만, 들어와서 가져갈 사실이 절반뿐입니다."},
+      {"title":"준비가 된 곳은 대체로 업주가 준비한 게 아닙니다","body":"AI를 위한 안내 파일(llms.txt)을 가진 곳은 81곳 중 15곳입니다. 그중 7곳이 Wix로 만든 사이트였는데, 이번 조사에서 Wix로 만든 사이트는 모두 8곳입니다. 반대로 Squarespace 6곳과 Webflow 3곳에서는 한 곳도 나오지 않았습니다. 업주들이 각자 판단해 만들어 올렸다면 한 도구에만 이렇게 몰릴 수 없습니다. 파일 내용도 “TANG is a Korean restaurant offering…” 같은 자동 생성 문장이었습니다. 제작 도구를 무엇으로 골랐는지가 AI 검색 준비 정도를 가르고 있고, 업주 대부분은 그 사실을 모르고 있을 가능성이 큽니다."},
+      {"title":"손님이 첫 화면에서 바로 행동할 수 있는 곳은 9곳입니다","body":"온라인 주문이나 예약 링크가 첫 화면에 있는 곳은 74곳 중 9곳이었습니다. 한식당만 보면 접속된 33곳 중 7곳입니다. 확인된 서비스는 DoorDash 3곳, ChowNow 3곳, 토스트 2곳, Grubhub·Uber Eats·Fresha·Zocdoc 각 1곳입니다(한 곳이 여러 개를 쓰기도 합니다)."},
+      {"title":"한국어가 첫 화면에 있는 곳은 20곳입니다","body":"다만 이 숫자는 조심해서 읽어야 합니다. 저희는 첫 화면만 봤기 때문에, 언어 전환 버튼이 있거나 한국어 페이지가 따로 있는 경우는 잡히지 않습니다. 실제보다 낮게 나온 수치로 보는 편이 맞습니다."}
+    ],
+    "meaning": "<p>1호에서 “웹사이트가 없는 곳이 47곳”이라고 했습니다. 이번에는 <b>있는 쪽</b>을 열어봤습니다. HTTPS는 74곳 전부, 휴대폰 대응도 사실상 전부 되어 있었습니다. 기술적으로 뒤처진 게 아닙니다.</p><p>비어 있는 것은 <b>사실</b>입니다. 영업시간, 기계가 읽을 수 있는 업소 정보, 지금 바로 주문하거나 예약할 수 있는 버튼. 사람이 눈으로 보면 대충 알 수 있는 것들이지만, 검색 엔진과 AI는 적혀 있지 않으면 없는 것으로 처리합니다. 그래서 AI가 한인 업소를 설명할 때 근거로 삼는 것이 업소 자신의 페이지가 아니라 남의 페이지가 됩니다.</p><p>그리고 이 준비를 지금 대신 해주고 있는 것은 제작 도구입니다. 업주가 Wix를 고른 이유는 AI 검색 때문이 아니었을 텐데, 결과적으로 그 선택이 가장 큰 차이를 만들고 있습니다. 바꿔 말하면, 첫 화면에 영업시간 한 줄과 업소 정보 한 덩어리를 넣는 것만으로 대부분이 따라잡을 수 있는 격차이기도 합니다.</p>"
+  },
+  "method": [
+    {"label":"대상","text":"1호 조사에서 자체 도메인 웹사이트를 확인한 81곳입니다. 그중 74곳에 접속했고, 조사용 접속을 방화벽이 막은 4곳과 연결 자체가 되지 않은 3곳은 품질 집계에서 제외했습니다."},
+    {"label":"무엇을 봤나","text":"손님이 검색해서 도착하는 <b>첫 화면</b>만 봤습니다. 안쪽 페이지나 사진 속에 있는 정보는 세지 않았습니다. 검색과 AI가 가장 먼저 읽는 것도 이 화면입니다."},
+    {"label":"무엇을 읽었나","text":"공개된 첫 화면의 메타 정보와 robots.txt·llms.txt만 읽었습니다. 본문·사진·글은 저장하지 않았습니다."},
+    {"label":"예의","text":"robots.txt를 먼저 읽고, 우리 접근을 막은 사이트는 열지 않았습니다. 업소당 요청은 최대 세 번(robots.txt, llms.txt, 첫 화면)입니다. 정체를 밝힌 User-Agent를 썼습니다."},
+    {"label":"측정 오차","text":"같은 점검을 연달아 두 번 실행했습니다. 항목에 따라 최대 4곳까지 결과가 달랐습니다. 아래 “전체” 표에 두 번의 실측을 그대로 나란히 실었습니다. 업종별·도시별 표는 2차 실행 기준입니다."}
+  ],
+  "callout": "<b>이 표는 “첫 화면에 있는가”를 잽니다.</b> 영업시간이 안쪽 페이지에 있거나 사진 안에 적혀 있으면 이 조사에서는 “없음”으로 집계됩니다. 실제 업소 운영을 평가한 것이 아니라, 검색·AI·처음 방문한 손님이 첫 화면에서 무엇을 얻을 수 있는지를 잰 것입니다.",
+  "tables": [
+    {
+      "heading": "전체 — 두 번의 실측",
+      "id": "all",
+      "csvName": "overall",
+      "caption": "2026-09-19 · 같은 점검을 연달아 두 번 실행",
+      "note": "두 열의 차이가 이 조사의 측정 오차입니다. 일시적인 응답 실패나 사이트가 매번 조금씩 다른 내용을 돌려주기 때문에 생깁니다.",
+      "columns": [{"key":"name","label":"항목"},{"key":"base","label":"모수","csv":false},{"key":"a","label":"1차"},{"key":"b","label":"2차","strong":true}],
+      "rows": [
+        {"name":"접속 성공","base":"81곳","a":74,"b":74},
+        {"name":"조사 접속을 방화벽이 막음","base":"81곳","a":4,"b":4},
+        {"name":"연결 실패","base":"81곳","a":3,"b":3},
+        {"name":"AI 크롤러 차단","base":"81곳","a":0,"b":0},
+        {"name":"llms.txt 보유","base":"81곳","a":15,"b":15},
+        {"name":"robots.txt 보유","base":"81곳","a":66,"b":62},
+        {"name":"HTTPS","base":"74곳","a":74,"b":74},
+        {"name":"휴대폰 대응","base":"74곳","a":73,"b":74},
+        {"name":"구조화 데이터(JSON-LD)","base":"74곳","a":56,"b":53},
+        {"name":"└ LocalBusiness 계열","base":"74곳","a":31,"b":30,"indent":true},
+        {"name":"og 태그","base":"74곳","a":63,"b":60},
+        {"name":"meta description","base":"74곳","a":54,"b":51},
+        {"name":"영업시간 표기","base":"74곳","a":44,"b":41},
+        {"name":"온라인 주문·예약 링크","base":"74곳","a":10,"b":9},
+        {"name":"SNS 링크","base":"74곳","a":44,"b":43},
+        {"name":"한국어 표기","base":"74곳","a":21,"b":20}
+      ]
+    },
+    {
+      "heading": "제작 도구별 llms.txt 보유",
+      "id": "platform",
+      "csvName": "by_platform",
+      "caption": "2026-09-19 · 2차 실행 기준 · 두 번의 실행에서 동일",
+      "note": "“확인 불가”는 방화벽 차단 4곳과 연결 실패 3곳입니다. 이 표의 숫자는 두 번의 실행에서 한 곳도 달라지지 않았습니다.",
+      "columns": [{"key":"name","label":"제작 도구"},{"key":"sites","label":"사이트"},{"key":"llms","label":"llms.txt 보유","strong":true}],
+      "rows": [
+        {"name":"Wix","sites":8,"llms":7},
+        {"name":"WordPress","sites":20,"llms":3},
+        {"name":"기타·직접 제작","sites":33,"llms":2},
+        {"name":"Squarespace","sites":6,"llms":0},
+        {"name":"Webflow","sites":3,"llms":0},
+        {"name":"GoDaddy","sites":2,"llms":1},
+        {"name":"Shopify","sites":1,"llms":1},
+        {"name":"Weebly","sites":1,"llms":0},
+        {"name":"확인 불가","sites":7,"llms":1}
+      ]
+    },
+    {
+      "heading": "업종별",
+      "id": "by-category",
+      "csvName": "by_category",
+      "caption": "2026-09-19 · 2차 실행 기준",
+      "note": "모수가 작은 업종은 비율로 읽지 말고 실수로 읽어 주세요. 세탁소·자동차는 자체 도메인을 가진 업소 자체가 각각 2곳·3곳뿐입니다.",
+      "columns": [{"key":"name","label":"업종"},{"key":"checked","label":"대상"},{"key":"reachable","label":"접속 성공"},{"key":"hours","label":"영업시간"},{"key":"lb","label":"LocalBusiness","strong":true},{"key":"order","label":"주문·예약"}],
+      "rows": [
+        {"name":"한식당","checked":36,"reachable":33,"hours":23,"lb":17,"order":7},
+        {"name":"치과","checked":13,"reachable":11,"hours":5,"lb":7,"order":1},
+        {"name":"뷰티·미용","checked":10,"reachable":10,"hours":4,"lb":1,"order":1},
+        {"name":"한인마트","checked":10,"reachable":10,"hours":5,"lb":1,"order":0},
+        {"name":"학교·학원","checked":7,"reachable":5,"hours":1,"lb":3,"order":0},
+        {"name":"자동차","checked":3,"reachable":3,"hours":2,"lb":0,"order":0},
+        {"name":"세탁소","checked":2,"reachable":2,"hours":1,"lb":1,"order":0}
+      ]
+    },
+    {
+      "heading": "도시별",
+      "id": "by-city",
+      "csvName": "by_city",
+      "caption": "2026-09-19 · 2차 실행 기준",
+      "columns": [{"key":"name","label":"도시"},{"key":"checked","label":"대상"},{"key":"reachable","label":"접속 성공"},{"key":"hours","label":"영업시간"},{"key":"lb","label":"LocalBusiness","strong":true},{"key":"order","label":"주문·예약"}],
+      "rows": [
+        {"name":"한인타운","checked":17,"reachable":17,"hours":13,"lb":5,"order":3},
+        {"name":"어바인","checked":14,"reachable":12,"hours":5,"lb":4,"order":1},
+        {"name":"부에나팍","checked":11,"reachable":10,"hours":5,"lb":6,"order":1},
+        {"name":"가든그로브","checked":11,"reachable":10,"hours":4,"lb":1,"order":1},
+        {"name":"풀러튼","checked":10,"reachable":8,"hours":3,"lb":4,"order":2},
+        {"name":"토랜스","checked":10,"reachable":10,"hours":5,"lb":6,"order":1},
+        {"name":"세리토스","checked":8,"reachable":7,"hours":6,"lb":4,"order":0}
+      ]
+    }
+  ]
+}
