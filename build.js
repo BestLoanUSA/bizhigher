@@ -1714,6 +1714,8 @@ function dataReportPage(s) {
 }
 
 function dataIndexPage(surveys) {
+  /* 1호(surveys)와 2호 이후(reports)를 한 목록으로 합친다 */
+  surveys = surveys.concat(loadReports()).sort((a, b) => (a.asOf < b.asOf ? 1 : -1));
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
@@ -1754,12 +1756,186 @@ function dataIndexPage(surveys) {
   <span class="badge">${s.quarter}</span>
   <h2 class="h2-left" style="margin:0 0 8px;">${(s.editorial && s.editorial.headline) || s.title}</h2>
   <p style="color:var(--ink-600);margin:0 0 10px;">${(s.editorial && s.editorial.dek) || ''}</p>
-  <p style="font-size:14px;color:var(--ink-400);margin:0;">${s.asOf} 기준 · 확인한 업소 ${s.totals.businesses}곳 · CSV 제공</p>
+  <p style="font-size:14px;color:var(--ink-400);margin:0;">${s.asOf} 기준 · ${s.totals ? `확인한 업소 ${s.totals.businesses}곳` : s.cardNote || '전수 점검'} · CSV 제공</p>
 </a>`
             )
             .join('')
         : '<p>준비 중입니다.</p>'
     }
+  </div>
+</section>
+` +
+    FOOTER
+  );
+}
+
+/* ---------- 데이터 리포트: 지표형 (/data/) ---------- */
+/* data/reports/*.json 은 표 구조까지 데이터에 담는다. 리포트마다 페이지 함수를 새로
+   만들지 않기 위해서다. 2호부터 새 리포트는 전부 이 형식을 쓴다.
+   1호(surveys/)는 이미 발행됐으므로 기존 renderer를 그대로 둔다. */
+
+function loadReports() {
+  const dir = path.join(__dirname, 'data', 'reports');
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith('.json'))
+    .map((f) => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')))
+    .sort((a, b) => (a.asOf < b.asOf ? 1 : -1));
+}
+
+function reportTable(t) {
+  const head = t.columns.map((c) => `<th>${c.label}</th>`).join('');
+  const body = t.rows
+    .map((r) => {
+      const tds = t.columns
+        .map((c) => {
+          const v = r[c.key];
+          const cell = v === undefined || v === null || v === '' ? '<span style="color:var(--ink-400)">—</span>' : v;
+          return `<td${c.strong ? ' style="font-weight:700"' : ''}>${cell}</td>`;
+        })
+        .join('');
+      return `<tr${r.indent ? ' style="color:var(--ink-600)"' : ''}>${tds}</tr>`;
+    })
+    .join('');
+  return `<div class="tbl-wrap"><table>
+${t.caption ? `<caption style="caption-side:top;text-align:left;font-weight:700;padding-bottom:8px;">${t.caption}</caption>` : ''}
+<thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>${
+    t.note ? `<p style="font-size:14px;color:var(--ink-400);margin-top:-8px;">${t.note}</p>` : ''
+  }`;
+}
+
+/* 롱 포맷 CSV — 표 구조가 리포트마다 달라도 한 파일로 나간다 */
+function reportCsv(s) {
+  const esc = (v) => (/[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v));
+  const lines = ['table,segment,metric,value'];
+  s.tables.forEach((t) => {
+    const key = t.csvName || t.caption || '';
+    const labelCol = t.columns[0];
+    t.columns.slice(1).forEach((c) => {
+      if (c.csv === false) return;
+      t.rows.forEach((r) => {
+        const v = r[c.key];
+        if (v === undefined || v === null || v === '') return;
+        lines.push([key, r[labelCol.key], c.label, v].map(esc).join(','));
+      });
+    });
+  });
+  return lines.join('\n');
+}
+
+function metricReportPage(s) {
+  const e = s.editorial || {};
+  const url = `${SITE.domain}/data/${s.slug}/`;
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Dataset',
+      '@id': `${url}#dataset`,
+      name: s.title,
+      description: e.dek || s.title,
+      url,
+      inLanguage: 'ko',
+      datePublished: s.asOf,
+      temporalCoverage: s.asOf,
+      isAccessibleForFree: true,
+      license: 'https://creativecommons.org/licenses/by/4.0/',
+      creator: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
+      publisher: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
+      spatialCoverage: { '@type': 'Place', name: 'Los Angeles County and Orange County, California, USA' },
+      measurementTechnique: (s.method[0] || {}).text,
+      variableMeasured: (s.stats || []).map((x) => ({
+        '@type': 'PropertyValue',
+        name: x.label,
+        value: x.value,
+      })),
+      distribution: [
+        { '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${url}data.csv`, name: `${s.title} (CSV)` },
+      ],
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: e.headline || s.title,
+      description: e.dek || s.title,
+      datePublished: s.asOf,
+      dateModified: s.asOf,
+      inLanguage: 'ko',
+      mainEntityOfPage: url,
+      author: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
+      publisher: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
+      about: { '@id': `${url}#dataset` },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: '홈', item: `${SITE.domain}/` },
+        { '@type': 'ListItem', position: 2, name: '데이터', item: `${SITE.domain}/data/` },
+        { '@type': 'ListItem', position: 3, name: s.title, item: url },
+      ],
+    },
+  ];
+  const csvLines = reportCsv(s).split('\n').length - 1;
+
+  return (
+    head({
+      title: `${s.title} | BizHigher 데이터`,
+      description: e.dek || s.title,
+      pathName: `/data/${s.slug}/`,
+      jsonLd,
+    }) +
+    nav('data') +
+    `
+<header class="page-head">
+  <div class="container-narrow">
+    <a href="/data/" class="back-link">← 데이터 리포트</a>
+    <span class="badge">${s.quarter} 조사</span>
+    <h1 class="page-title" style="font-size:36px;line-height:1.25;">${e.headline || s.title}</h1>
+    <p class="page-sub">${s.subline || `${s.asOf} 기준 · BizHigher`}</p>
+  </div>
+</header>
+
+<section class="section-navy" style="padding:44px 0;">
+  <div class="container">
+    <div class="grid3">
+      ${(s.stats || [])
+        .map((x) => `<div class="stat-box"><div class="stat">${x.value}</div><div class="stat-label">${x.label}</div></div>`)
+        .join('')}
+    </div>
+  </div>
+</section>
+
+<section class="detail-body" style="padding-top:36px;">
+  <div class="container-narrow">
+    <article class="post-body">
+      ${e.dek ? `<p style="font-size:18px;color:var(--ink-600);">${e.dek}</p>` : ''}
+
+      <h2 id="findings">이번 점검에서 확인한 것</h2>
+      ${(e.findings || []).map((f) => `<h3>${f.title}</h3><p>${f.body}</p>`).join('')}
+
+      ${(s.tables || [])
+        .map((t) => `${t.heading ? `<h2 id="${t.id || ''}">${t.heading}</h2>` : ''}${reportTable(t)}`)
+        .join('')}
+
+      <h2 id="method">조사 방법과 한계</h2>
+      <ul>${(s.method || []).map((m) => `<li><b>${m.label}</b> — ${m.text}</li>`).join('')}</ul>
+      ${s.callout ? `<div class="callout">${s.callout}</div>` : ''}
+
+      ${e.meaning ? `<h2 id="meaning">이 숫자가 뜻하는 것</h2>${e.meaning}` : ''}
+
+      <h2 id="reuse">데이터 내려받기 · 인용</h2>
+      <p>원자료를 CSV로 공개합니다. 기사·발표·보고서에 자유롭게 쓰실 수 있습니다 (CC BY 4.0 — 출처와 링크만 남겨 주세요).</p>
+      <p><a class="btn btn-primary" href="/data/${s.slug}/data.csv" download>CSV 내려받기 (${csvLines}행)</a></p>
+      <blockquote>BizHigher, 「${s.title}」, ${s.asOf}. ${url}</blockquote>
+      <p style="font-size:14px;color:var(--ink-400);">숫자에 대한 문의나 추가 집계 요청은 <a href="mailto:${SITE.email}">${SITE.email}</a>로 보내 주세요. 언론사에는 요청하신 형태로 가공해 드립니다.</p>
+    </article>
+
+    <div class="post-cta">
+      <b>우리 가게 첫 화면은 어떻게 보일까요?</b>
+      <p>업체명과 도시만 넣으면 60초 안에 웹사이트·구글 노출·리뷰·SNS를 점검해 드립니다. 가입 없이 무료입니다.</p>
+      <a href="/free-audit/" class="btn btn-primary">무료 AI 진단 받기 →</a>
+    </div>
   </div>
 </section>
 ` +
@@ -1872,6 +2048,7 @@ function sitemap() {
     ...DATA.packages.map((p) => ({ u: `/package/${p.slug}/` })),
     ...(surveys.length ? [{ u: '/data/', d: surveys[0].asOf }] : []),
     ...surveys.map((x) => ({ u: `/data/${x.slug}/`, d: x.asOf })),
+    ...loadReports().map((x) => ({ u: `/data/${x.slug}/`, d: x.asOf })),
   ];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -1918,8 +2095,13 @@ if (POSTS.length) {
   write('blog/index.html', blogIndexPage(POSTS));
   POSTS.forEach((p) => write(`blog/${p.slug}/index.html`, blogPostPage(p, POSTS)));
 }
+const REPORTS = loadReports();
+REPORTS.forEach((x) => {
+  write(`data/${x.slug}/index.html`, metricReportPage(x));
+  write(`data/${x.slug}/data.csv`, reportCsv(x));
+});
 const SURVEYS = loadSurveys();
-if (SURVEYS.length) {
+if (SURVEYS.length || REPORTS.length) {
   write('data/index.html', dataIndexPage(SURVEYS));
   SURVEYS.forEach((x) => {
     write(`data/${x.slug}/index.html`, dataReportPage(x));
@@ -1947,6 +2129,7 @@ ${DATA.packages.map((p) => `- ${p.name}: 월 $${p.prices.annual}(12개월 기준
 
 ## 공개 데이터 (인용 자유, CC BY 4.0)
 ${loadSurveys().map((x) => `- ${x.title}: https://bizhigher.com/data/${x.slug}/ — ${x.asOf} 기준 직접 확인한 ${x.totals.businesses}곳 중 자체 도메인 보유 ${x.totals.withOwnDomain}곳, 웹사이트 없음 ${x.totals.noWebsite}곳. CSV 원자료 제공.`).join('\n')}
+${loadReports().map((x) => `- ${x.title}: https://bizhigher.com/data/${x.slug}/ — ${(x.editorial && x.editorial.dek) || ''} CSV 원자료 제공.`).join('\n')}
 
 ## 무료 도구
 - 무료 AI 마케팅 진단 (60초, 가입 불필요): https://bizhigher.com/free-audit/ — 구글 노출·리뷰·웹사이트·SNS·경쟁사 대비 5개 영역 점수와 개선 우선순위 제공
