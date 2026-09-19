@@ -1,0 +1,121 @@
+table,segment,metric,value
+overall,접속 성공,1차,74
+overall,조사 접속을 방화벽이 막음,1차,4
+overall,연결 실패,1차,3
+overall,AI 크롤러 차단,1차,0
+overall,llms.txt 보유,1차,15
+overall,robots.txt 보유,1차,66
+overall,HTTPS,1차,74
+overall,휴대폰 대응,1차,73
+overall,구조화 데이터(JSON-LD),1차,56
+overall,└ LocalBusiness 계열,1차,31
+overall,og 태그,1차,63
+overall,meta description,1차,54
+overall,영업시간 표기,1차,44
+overall,온라인 주문·예약 링크,1차,10
+overall,SNS 링크,1차,44
+overall,한국어 표기,1차,21
+overall,접속 성공,2차,74
+overall,조사 접속을 방화벽이 막음,2차,4
+overall,연결 실패,2차,3
+overall,AI 크롤러 차단,2차,0
+overall,llms.txt 보유,2차,15
+overall,robots.txt 보유,2차,62
+overall,HTTPS,2차,74
+overall,휴대폰 대응,2차,74
+overall,구조화 데이터(JSON-LD),2차,53
+overall,└ LocalBusiness 계열,2차,30
+overall,og 태그,2차,60
+overall,meta description,2차,51
+overall,영업시간 표기,2차,41
+overall,온라인 주문·예약 링크,2차,9
+overall,SNS 링크,2차,43
+overall,한국어 표기,2차,20
+by_platform,Wix,사이트,8
+by_platform,WordPress,사이트,20
+by_platform,기타·직접 제작,사이트,33
+by_platform,Squarespace,사이트,6
+by_platform,Webflow,사이트,3
+by_platform,GoDaddy,사이트,2
+by_platform,Shopify,사이트,1
+by_platform,Weebly,사이트,1
+by_platform,확인 불가,사이트,7
+by_platform,Wix,llms.txt 보유,7
+by_platform,WordPress,llms.txt 보유,3
+by_platform,기타·직접 제작,llms.txt 보유,2
+by_platform,Squarespace,llms.txt 보유,0
+by_platform,Webflow,llms.txt 보유,0
+by_platform,GoDaddy,llms.txt 보유,1
+by_platform,Shopify,llms.txt 보유,1
+by_platform,Weebly,llms.txt 보유,0
+by_platform,확인 불가,llms.txt 보유,1
+by_category,한식당,대상,36
+by_category,치과,대상,13
+by_category,뷰티·미용,대상,10
+by_category,한인마트,대상,10
+by_category,학교·학원,대상,7
+by_category,자동차,대상,3
+by_category,세탁소,대상,2
+by_category,한식당,접속 성공,33
+by_category,치과,접속 성공,11
+by_category,뷰티·미용,접속 성공,10
+by_category,한인마트,접속 성공,10
+by_category,학교·학원,접속 성공,5
+by_category,자동차,접속 성공,3
+by_category,세탁소,접속 성공,2
+by_category,한식당,영업시간,23
+by_category,치과,영업시간,5
+by_category,뷰티·미용,영업시간,4
+by_category,한인마트,영업시간,5
+by_category,학교·학원,영업시간,1
+by_category,자동차,영업시간,2
+by_category,세탁소,영업시간,1
+by_category,한식당,LocalBusiness,17
+by_category,치과,LocalBusiness,7
+by_category,뷰티·미용,LocalBusiness,1
+by_category,한인마트,LocalBusiness,1
+by_category,학교·학원,LocalBusiness,3
+by_category,자동차,LocalBusiness,0
+by_category,세탁소,LocalBusiness,1
+by_category,한식당,주문·예약,7
+by_category,치과,주문·예약,1
+by_category,뷰티·미용,주문·예약,1
+by_category,한인마트,주문·예약,0
+by_category,학교·학원,주문·예약,0
+by_category,자동차,주문·예약,0
+by_category,세탁소,주문·예약,0
+by_city,한인타운,대상,17
+by_city,어바인,대상,14
+by_city,부에나팍,대상,11
+by_city,가든그로브,대상,11
+by_city,풀러튼,대상,10
+by_city,토랜스,대상,10
+by_city,세리토스,대상,8
+by_city,한인타운,접속 성공,17
+by_city,어바인,접속 성공,12
+by_city,부에나팍,접속 성공,10
+by_city,가든그로브,접속 성공,10
+by_city,풀러튼,접속 성공,8
+by_city,토랜스,접속 성공,10
+by_city,세리토스,접속 성공,7
+by_city,한인타운,영업시간,13
+by_city,어바인,영업시간,5
+by_city,부에나팍,영업시간,5
+by_city,가든그로브,영업시간,4
+by_city,풀러튼,영업시간,3
+by_city,토랜스,영업시간,5
+by_city,세리토스,영업시간,6
+by_city,한인타운,LocalBusiness,5
+by_city,어바인,LocalBusiness,4
+by_city,부에나팍,LocalBusiness,6
+by_city,가든그로브,LocalBusiness,1
+by_city,풀러튼,LocalBusiness,4
+by_city,토랜스,LocalBusiness,6
+by_city,세리토스,LocalBusiness,4
+by_city,한인타운,주문·예약,3
+by_city,어바인,주문·예약,1
+by_city,부에나팍,주문·예약,1
+by_city,가든그로브,주문·예약,1
+by_city,풀러튼,주문·예약,2
+by_city,토랜스,주문·예약,1
+by_city,세리토스,주문·예약,0

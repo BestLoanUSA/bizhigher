@@ -1,0 +1,51 @@
+# BizHigher (비즈하이어)
+
+> 미국 한인 비즈니스를 위한 AI 자동화 마케팅 회사. 견적 미팅 없는 정찰제로 마케팅 서비스를 쇼핑하듯 주문할 수 있다. AI가 제작하고 전문가가 검수하며, 대부분 영업일 3일 내 제공된다. 한국어와 영어 모두 지원.
+
+- 웹사이트: https://bizhigher.com
+- 문의: hello@bizhigher.com
+- 대상: 미국 전역의 한인 소상공인 (식당, 카페, 뷰티, 안경점, 치과, 한의원, 학원, 부동산, 융자 등)
+
+## 주요 서비스
+- AI 마케팅 진단 리포트 ($49): 내 가게 온라인 마케팅 20페이지 정밀 분석 + 180일 실행 플랜 — https://bizhigher.com/service/ai-marketing-report/
+- 구글 리뷰 QR 키트 ($39): 스캔 추적되는 리뷰 QR + 테이블텐트·포스터 디자인 — https://bizhigher.com/service/review-qr-kit/
+- 구글 비즈니스 프로필 최적화 ($199): 경쟁사 갭 분석으로 구글 지도 노출을 좌우하는 프로필을 A부터 Z까지 — https://bizhigher.com/service/google-profile-optimization/
+- 로컬 등록 셋업 ($129): 구글 밖 30곳 + 한인 디렉토리에 우리 가게 정보를 등록합니다 — https://bizhigher.com/service/local-listing-setup/
+- 로컬 등록 관리 ($19/월): 매달 5곳씩 등록이 늘고, 정보가 바뀌면 전체에 반영됩니다 — https://bizhigher.com/service/local-listing-care/
+- 웹사이트 제작 ($199~): 원페이지부터 맞춤 제작까지 — 매달 내는 호스팅비 $0 — https://bizhigher.com/service/website/
+- 지역 랜딩페이지 팩 ($149~): 옆 도시 손님까지 — 도시별 전용 페이지로 검색 노출을 넓힙니다 — https://bizhigher.com/service/local-landing-pack/
+- SEO 블로그 구독 ($99/월): 매주 검색 유입용 아티클이 쌓입니다 — 콘텐츠는 복리입니다 — https://bizhigher.com/service/seo-blog-pack/
+- SEO/AIO 관리 ($249/월): 구글 검색과 AI 검색(ChatGPT 등) 모두에서 발견되게 만듭니다 — https://bizhigher.com/service/seo-aio/
+- 광고 소재 구독 ($49/월): 매달 새 광고 이미지가 도착합니다 — 소재 피로도 걱정 끝 — https://bizhigher.com/service/ad-creative-pack/
+- 숏폼 영상 구독 ($149/월): 릴스·틱톡·쇼츠용 AI 영상이 매달 4편 도착합니다 — https://bizhigher.com/service/shortform-video/
+- 광고 셋업 ($299): 전환 추적 없이 광고 돌리면 돈이 어디로 가는지 모릅니다 — https://bizhigher.com/service/ads-setup/
+- 광고 운영 ($249/월): 구글·메타·빙 광고를 전문가+AI가 매주 최적화합니다 — https://bizhigher.com/service/ads-management/
+- 리뷰 답글 대행 ($49/월): 새 리뷰 감지 → 한/영 답글 작성 → 승인 후 게시 — https://bizhigher.com/service/review-reply/
+- 포스팅 관리 ($59/월): 구글 프로필 + 인스타 + 페이스북 — 꾸준히 올리는 가게가 이깁니다 — https://bizhigher.com/service/gbp-posting/
+- 웹사이트 유지관리 ($29/월): 월 2회 수정 + 백업 + 모니터링 — 사이트를 늘 최신으로 — https://bizhigher.com/service/care-plan/
+
+## 패키지 플랜
+- Local Starter: 월 $139(12개월 기준)~$219(월간) — 동네 장사의 기본기 — 매주 콘텐츠가 올라가고, 리뷰가 관리되고, 등록이 쌓입니다
+- Local Growth: 월 $279(12개월 기준)~$439(월간) — 검색과 AI에서 발견되고, 영상까지 — 성장 구간의 표준
+- Local Premium: 월 $479(12개월 기준)~$759(월간) — 광고 운영까지 통째로 — 마케팅 담당 직원 한 명 몫
+
+## 공개 데이터 (인용 자유, CC BY 4.0)
+- LA·OC 한인 업소 온라인 실태 조사 2026-Q3: https://bizhigher.com/data/korean-business-online-2026-q3/ — 2026-09-19 기준 직접 확인한 129곳 중 자체 도메인 보유 81곳, 웹사이트 없음 47곳. CSV 원자료 제공.
+- 한인 업소 웹사이트 첫 화면 점검 2026-Q3: https://bizhigher.com/data/korean-business-websites-2026-q3/ — 1호에서 자체 도메인을 확인한 81곳의 웹사이트를 한 곳씩 열어 첫 화면을 봤습니다. AI 크롤러를 막고 있는 곳은 한 곳도 없었습니다. 그런데 접속에 성공한 74곳 중 영업시간이 첫 화면에 적혀 있는 곳은 41곳, 검색과 AI가 “업소”로 인식할 수 있게 정리된 곳은 30곳이었습니다. CSV 원자료 제공.
+
+## 무료 도구
+- 무료 AI 마케팅 진단 (60초, 가입 불필요): https://bizhigher.com/free-audit/ — 구글 노출·리뷰·웹사이트·SNS·경쟁사 대비 5개 영역 점수와 개선 우선순위 제공
+
+## 블로그 (한인 비즈니스 마케팅 가이드)
+- 손님을 부르는 가게 사진 찍는 법 — 폰 카메라로 충분합니다: https://bizhigher.com/blog/store-photo-guide/
+- 옐프(Yelp), 아직도 중요할까? 한인 가게를 위한 옐프 관리 최소한의 정석: https://bizhigher.com/blog/yelp-management-guide/
+- 미국에서 내 가게 구글 지도에 등록하는 법 — 2026 완벽 가이드: https://bizhigher.com/blog/google-business-profile-guide/
+- 가게 웹사이트, 꼭 만들어야 하나요? — 구글 프로필만으로 부족해지는 순간들: https://bizhigher.com/blog/do-you-need-a-website/
+- 구글 리뷰 늘리는 법 — 정지 안 당하고 안전하게 (실전 가이드): https://bizhigher.com/blog/google-review-guide/
+- 내 가게가 구글 검색에 안 나오는 7가지 이유 (그리고 각각의 해결법): https://bizhigher.com/blog/not-showing-on-google/
+- 손님이 ChatGPT에게 맛집을 물어보는 시대 — 내 가게가 AI의 추천을 받는 법 (AIO 입문): https://bizhigher.com/blog/ai-search-optimization-aio/
+
+## 특징
+- 모든 가격 공개 (정찰제), 월간 구독은 언제든 해지 가능
+- 구글 검색뿐 아니라 ChatGPT 등 AI 검색 노출 최적화(AIO) 서비스 제공
+- 한국어 상담 가능
