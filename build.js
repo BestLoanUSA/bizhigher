@@ -81,6 +81,7 @@ function nav(active) {
       <a class="${cls('services')}" href="/services/">서비스</a>
       <a class="${cls('pricing')}" href="/pricing/">가격</a>
       <a class="${cls('blog')}" href="/blog/">블로그</a>
+      <a class="${cls('data')}" href="/data/">데이터</a>
       <a class="${cls('audit')}" href="/free-audit/">무료 진단</a>
     </div>
     <div class="nav-cta"><a class="btn btn-primary btn-small" href="/free-audit/">무료 진단 받기</a></div>
@@ -90,6 +91,7 @@ function nav(active) {
     <a href="/services/">서비스</a>
     <a href="/pricing/">가격</a>
     <a href="/blog/">블로그</a>
+    <a href="/data/">데이터</a>
     <a href="/free-audit/">무료 진단</a>
     <a class="btn btn-primary btn-block" href="/free-audit/" style="border-bottom:none;color:#fff;">무료 진단 받기</a>
   </div>
@@ -116,6 +118,7 @@ const FOOTER = `
         <a href="/pricing/" class="footer-link">가격</a>
         <a href="/free-audit/" class="footer-link">무료 진단</a>
         <a href="/blog/" class="footer-link">블로그</a>
+        <a href="/data/" class="footer-link">데이터 리포트</a>
       </div>
       <div class="footer-col">
         <span class="footer-head">문의</span>
@@ -1524,6 +1527,246 @@ function blogPostPage(p, posts) {
 ` + FOOTER;
 }
 
+/* ---------- 데이터 리포트 (/data/) ---------- */
+/* data/surveys/*.json 은 "발행 시점의 스냅샷"이다.
+   한 번 올린 분기 파일의 숫자는 절대 다시 만들지 않는다 — 인용된 숫자가 조용히 바뀌면
+   리포트의 신뢰가 통째로 무너진다. 숫자가 달라졌으면 다음 분기 파일을 새로 만든다. */
+
+const PCT_MIN = 15; // 모수가 이보다 작은 구간은 비율을 쓰지 않는다. 실수만 보여준다.
+
+function loadSurveys() {
+  const dir = path.join(__dirname, 'data', 'surveys');
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith('.json'))
+    .map((f) => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')))
+    .map((s) => ({ ...s, slug: s.slug || `korean-business-online-${s.quarter.toLowerCase()}` }))
+    .sort((a, b) => (a.quarter < b.quarter ? 1 : -1));
+}
+
+const pct = (n, d) => Math.round((n / d) * 100);
+const dash = '<span style="color:var(--ink-400)">—</span>';
+
+function surveyRows(rows) {
+  return rows
+    .map((r) => {
+      const none = r.total - r.withWebsite;
+      return `<tr><td>${r.name}</td><td>${r.total}</td><td><b>${r.withOwnDomain}</b></td><td>${none}</td><td>${
+        r.total >= PCT_MIN ? `${pct(r.withOwnDomain, r.total)}%` : dash
+      }</td></tr>`;
+    })
+    .join('');
+}
+
+function surveyTable(caption, rows) {
+  return `<div class="tbl-wrap"><table>
+<caption style="caption-side:top;text-align:left;font-weight:700;padding-bottom:8px;">${caption}</caption>
+<thead><tr><th>구분</th><th>확인한 업소</th><th>자체 도메인</th><th>웹사이트 없음</th><th>자체 도메인 비율</th></tr></thead>
+<tbody>${surveyRows(rows)}</tbody></table></div>`;
+}
+
+function surveyCsv(s) {
+  const line = (t, r) => `${t},${r.name},${r.total},${r.withWebsite},${r.withOwnDomain},${r.total - r.withWebsite}`;
+  return [
+    'segment_type,segment,businesses_verified,with_any_web_presence,with_own_domain,no_website',
+    ...s.byCategory.map((r) => line('category', r)),
+    ...s.byCity.map((r) => line('city', r)),
+    `all,전체,${s.totals.businesses},${s.totals.withWebsite},${s.totals.withOwnDomain},${s.totals.noWebsite}`,
+  ].join('\n');
+}
+
+function dataReportPage(s) {
+  const e = s.editorial || {};
+  const url = `${SITE.domain}/data/${s.slug}/`;
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Dataset',
+      '@id': `${url}#dataset`,
+      name: s.title,
+      description: e.dek || s.title,
+      url,
+      inLanguage: 'ko',
+      datePublished: s.asOf,
+      temporalCoverage: s.asOf,
+      isAccessibleForFree: true,
+      license: 'https://creativecommons.org/licenses/by/4.0/',
+      creator: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
+      publisher: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
+      spatialCoverage: {
+        '@type': 'Place',
+        name: 'Los Angeles County and Orange County, California, USA',
+      },
+      measurementTechnique: s.method.verification,
+      variableMeasured: [
+        { '@type': 'PropertyValue', name: '확인한 업소 수', value: s.totals.businesses },
+        { '@type': 'PropertyValue', name: '자체 도메인 웹사이트 보유', value: s.totals.withOwnDomain },
+        { '@type': 'PropertyValue', name: '웹사이트 없음', value: s.totals.noWebsite },
+      ],
+      distribution: [
+        {
+          '@type': 'DataDownload',
+          encodingFormat: 'text/csv',
+          contentUrl: `${url}data.csv`,
+          name: `${s.title} (CSV)`,
+        },
+      ],
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: e.headline || s.title,
+      description: e.dek || s.title,
+      datePublished: s.asOf,
+      dateModified: s.asOf,
+      inLanguage: 'ko',
+      mainEntityOfPage: url,
+      author: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
+      publisher: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
+      about: { '@id': `${url}#dataset` },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: '홈', item: `${SITE.domain}/` },
+        { '@type': 'ListItem', position: 2, name: '데이터', item: `${SITE.domain}/data/` },
+        { '@type': 'ListItem', position: 3, name: s.title, item: url },
+      ],
+    },
+  ];
+
+  const citation = `BizHigher, 「${s.title}」, ${s.asOf}. ${url}`;
+
+  return (
+    head({
+      title: `${s.title} | BizHigher 데이터`,
+      description: e.dek || s.title,
+      pathName: `/data/${s.slug}/`,
+      jsonLd,
+    }) +
+    nav('data') +
+    `
+<header class="page-head">
+  <div class="container-narrow">
+    <a href="/data/" class="back-link">← 데이터 리포트</a>
+    <span class="badge">${s.quarter} 조사</span>
+    <h1 class="page-title" style="font-size:36px;line-height:1.25;">${e.headline || s.title}</h1>
+    <p class="page-sub">${s.asOf} 기준 · 직접 확인한 ${s.totals.businesses}곳 전수 집계 · BizHigher</p>
+  </div>
+</header>
+
+<section class="section-navy" style="padding:44px 0;">
+  <div class="container">
+    <div class="grid3">
+      <div class="stat-box"><div class="stat">${s.totals.businesses}</div><div class="stat-label">직접 확인한 한인 업소</div></div>
+      <div class="stat-box"><div class="stat">${s.totals.withOwnDomain}</div><div class="stat-label">자체 도메인 웹사이트를 가진 곳</div></div>
+      <div class="stat-box"><div class="stat">${s.totals.noWebsite}</div><div class="stat-label">웹사이트가 아예 없는 곳</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="detail-body" style="padding-top:36px;">
+  <div class="container-narrow">
+    <article class="post-body">
+      ${e.dek ? `<p style="font-size:18px;color:var(--ink-600);">${e.dek}</p>` : ''}
+
+      <h2 id="findings">이번 조사에서 확인한 것</h2>
+      ${(e.findings || []).map((f) => `<h3>${f.title}</h3><p>${f.body}</p>`).join('')}
+
+      <h2 id="by-category">업종별</h2>
+      ${surveyTable(`${s.asOf} 기준 · 확인한 ${s.totals.businesses}곳`, s.byCategory)}
+      <p style="font-size:14px;color:var(--ink-400);">모수가 ${PCT_MIN}곳 미만인 구간은 비율을 계산하지 않았습니다. 실수로 읽어 주세요.</p>
+
+      <h2 id="by-city">도시별</h2>
+      ${surveyTable(`${s.asOf} 기준 · 확인한 ${s.totals.businesses}곳`, s.byCity)}
+
+      <h2 id="method">조사 방법과 한계</h2>
+      <ul>
+        <li><b>범위</b> — ${s.method.scope}</li>
+        <li><b>확인 방법</b> — ${s.method.verification}</li>
+        <li><b>“자체 사이트”의 정의</b> — ${s.method.websiteDefinition}</li>
+        <li><b>수집하지 않은 것</b> — ${s.method.noGooglePlaces}</li>
+        <li><b>확인 시점</b> — ${s.freshness.oldestVerifiedAt} ~ ${s.freshness.newestVerifiedAt}</li>
+      </ul>
+      <div class="callout"><b>표본이 아니라 전수입니다.</b> ${s.method.caveat}</div>
+
+      ${e.meaning ? `<h2 id="meaning">이 숫자가 뜻하는 것</h2>${e.meaning}` : ''}
+
+      <h2 id="reuse">데이터 내려받기 · 인용</h2>
+      <p>원자료를 CSV로 공개합니다. 기사·발표·보고서에 자유롭게 쓰실 수 있습니다 (CC BY 4.0 — 출처와 링크만 남겨 주세요).</p>
+      <p><a class="btn btn-primary" href="/data/${s.slug}/data.csv" download>CSV 내려받기 (${s.byCategory.length + s.byCity.length + 1}행)</a></p>
+      <blockquote>${citation}</blockquote>
+      <p style="font-size:14px;color:var(--ink-400);">숫자에 대한 문의나 추가 집계 요청은 <a href="mailto:${SITE.email}">${SITE.email}</a>로 보내 주세요. 언론사에는 요청하신 형태로 가공해 드립니다.</p>
+    </article>
+
+    <div class="post-cta">
+      <b>우리 가게는 이 표의 어느 칸에 있을까요?</b>
+      <p>업체명과 도시만 넣으면 60초 안에 웹사이트·구글 노출·리뷰·SNS를 점검해 드립니다. 가입 없이 무료입니다.</p>
+      <a href="/free-audit/" class="btn btn-primary">무료 AI 진단 받기 →</a>
+    </div>
+  </div>
+</section>
+` +
+    FOOTER
+  );
+}
+
+function dataIndexPage(surveys) {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'BizHigher 데이터 리포트',
+    url: `${SITE.domain}/data/`,
+    inLanguage: 'ko',
+    hasPart: surveys.map((s) => ({
+      '@type': 'Dataset',
+      name: s.title,
+      url: `${SITE.domain}/data/${s.slug}/`,
+      datePublished: s.asOf,
+    })),
+  };
+  return (
+    head({
+      title: '데이터 리포트 | BizHigher',
+      description:
+        '미국 한인 비즈니스의 온라인 실태를 직접 확인해 분기마다 공개합니다. 원자료 CSV를 함께 제공하며 인용은 자유입니다.',
+      pathName: '/data/',
+      jsonLd,
+    }) +
+    nav('data') +
+    `
+<header class="page-head">
+  <div class="container-narrow">
+    <span class="badge">공개 데이터</span>
+    <h1 class="page-title">데이터 리포트</h1>
+    <p class="page-sub">미국 한인 비즈니스의 온라인 실태를, 추정이 아니라 한 곳씩 직접 확인해 분기마다 공개합니다.<br>원자료 CSV까지 함께 엽니다. 출처만 남기면 인용은 자유입니다.</p>
+  </div>
+</header>
+<section class="section">
+  <div class="container-narrow">
+    ${
+      surveys.length
+        ? surveys
+            .map(
+              (s) => `<a class="prod-card" href="/data/${s.slug}/" style="display:block;margin-bottom:16px;">
+  <span class="badge">${s.quarter}</span>
+  <h2 class="h2-left" style="margin:0 0 8px;">${(s.editorial && s.editorial.headline) || s.title}</h2>
+  <p style="color:var(--ink-600);margin:0 0 10px;">${(s.editorial && s.editorial.dek) || ''}</p>
+  <p style="font-size:14px;color:var(--ink-400);margin:0;">${s.asOf} 기준 · 확인한 업소 ${s.totals.businesses}곳 · CSV 제공</p>
+</a>`
+            )
+            .join('')
+        : '<p>준비 중입니다.</p>'
+    }
+  </div>
+</section>
+` +
+    FOOTER
+  );
+}
+
 /* ---------- 페이지: 법적 고지 ---------- */
 
 function legalPage(title, pathName, bodyHtml) {
@@ -1612,6 +1855,7 @@ function notFoundPage() {
    글 내용을 고쳤으면 그 글의 front matter에 updated: YYYY-MM-DD 를 추가하면 된다. */
 function sitemap() {
   const posts = loadPosts();
+  const surveys = loadSurveys();
   const postDates = posts.map((p) => p.updated || p.date).filter(Boolean).sort();
   const newestPost = postDates.length ? postDates[postDates.length - 1] : '';
 
@@ -1626,6 +1870,8 @@ function sitemap() {
     ...posts.map((p) => ({ u: `/blog/${p.slug}/`, d: p.updated || p.date })),
     ...DATA.services.map((s) => ({ u: `/service/${s.slug}/` })),
     ...DATA.packages.map((p) => ({ u: `/package/${p.slug}/` })),
+    ...(surveys.length ? [{ u: '/data/', d: surveys[0].asOf }] : []),
+    ...surveys.map((x) => ({ u: `/data/${x.slug}/`, d: x.asOf })),
   ];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -1672,6 +1918,14 @@ if (POSTS.length) {
   write('blog/index.html', blogIndexPage(POSTS));
   POSTS.forEach((p) => write(`blog/${p.slug}/index.html`, blogPostPage(p, POSTS)));
 }
+const SURVEYS = loadSurveys();
+if (SURVEYS.length) {
+  write('data/index.html', dataIndexPage(SURVEYS));
+  SURVEYS.forEach((x) => {
+    write(`data/${x.slug}/index.html`, dataReportPage(x));
+    write(`data/${x.slug}/data.csv`, surveyCsv(x));
+  });
+}
 write('terms/index.html', legalPage('이용약관', '/terms/', TERMS_HTML));
 fs.copyFileSync(path.join(__dirname, 'src', 'og-image.png'), path.join(DIST, 'og-image.png'));
 console.log('  \u2713 og-image.png');
@@ -1690,6 +1944,9 @@ ${DATA.services.map((s) => `- ${s.name} (${s.price}): ${s.shortDescription} — 
 
 ## 패키지 플랜
 ${DATA.packages.map((p) => `- ${p.name}: 월 $${p.prices.annual}(12개월 기준)~$${p.prices.monthly}(월간) — ${p.tagline}`).join('\n')}
+
+## 공개 데이터 (인용 자유, CC BY 4.0)
+${loadSurveys().map((x) => `- ${x.title}: https://bizhigher.com/data/${x.slug}/ — ${x.asOf} 기준 직접 확인한 ${x.totals.businesses}곳 중 자체 도메인 보유 ${x.totals.withOwnDomain}곳, 웹사이트 없음 ${x.totals.noWebsite}곳. CSV 원자료 제공.`).join('\n')}
 
 ## 무료 도구
 - 무료 AI 마케팅 진단 (60초, 가입 불필요): https://bizhigher.com/free-audit/ — 구글 노출·리뷰·웹사이트·SNS·경쟁사 대비 5개 영역 점수와 개선 우선순위 제공
