@@ -1743,7 +1743,7 @@ function dataIndexPage(surveys) {
   <div class="container-narrow">
     <span class="badge">공개 데이터</span>
     <h1 class="page-title">데이터 리포트</h1>
-    <p class="page-sub">미국 한인 비즈니스의 온라인 실태를, 추정이 아니라 한 곳씩 직접 확인해 분기마다 공개합니다.<br>원자료 CSV까지 함께 엽니다. 출처만 남기면 인용은 자유입니다.</p>
+    <p class="page-sub">미국 한인 비즈니스의 온라인 실태를 추정치가 아닌 직접 확인으로, 분기마다 공개합니다.<br>CSV 원자료까지 그대로 열어 두었으니, 출처만 남기고 자유롭게 인용하세요.</p>
   </div>
 </header>
 <section class="section">
