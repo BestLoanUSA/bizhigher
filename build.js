@@ -254,6 +254,20 @@ function productCard(s) {
 </a>`;
 }
 
+/* 가격 문자열("$199", "$19/월", "$199~")에서 숫자만 추출 — 구조화 데이터의 offers.price 용 */
+function priceToNumber(priceStr) {
+  const m = String(priceStr).replace(/,/g, '').match(/\$([\d.]+)/);
+  return m ? Number(m[1]) : null;
+}
+
+function breadcrumbList(items) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((it, i) => ({ '@type': 'ListItem', position: i + 1, name: it.name, item: it.url })),
+  };
+}
+
 /* ---------- 패키지 공통 ---------- */
 
 const PERIODS = [
@@ -347,6 +361,32 @@ function packageMatrixSection() {
 
 function packagePage(p) {
   const gifts = DATA.setupGifts;
+  const url = `${SITE.domain}/package/${p.slug}/`;
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Service',
+      name: `${p.name} 플랜`,
+      description: p.tagline,
+      provider: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
+      areaServed: { '@type': 'Country', name: 'United States' },
+      url,
+      offers: PERIODS.map((per) => ({
+        '@type': 'Offer',
+        name: `${per.label} 결제`,
+        price: p.prices[per.key],
+        priceCurrency: 'USD',
+        url,
+        availability: 'https://schema.org/InStock',
+        eligibleDuration: per.months ? { '@type': 'QuantitativeValue', value: per.months, unitCode: 'MON' } : undefined,
+      })),
+    },
+    breadcrumbList([
+      { name: '홈', url: `${SITE.domain}/` },
+      { name: '가격', url: `${SITE.domain}/pricing/` },
+      { name: p.name, url },
+    ]),
+  ];
   const rows = PERIODS.map((per) => {
     const price = p.prices[per.key];
     const months = per.months || 0;
@@ -360,6 +400,7 @@ function packagePage(p) {
     title: `${p.name} 플랜 — 월 $${p.prices.annual}부터 | BizHigher`,
     description: p.tagline,
     pathName: `/package/${p.slug}/`,
+    jsonLd,
   }) + nav('pricing') + `
 <header class="detail-head">
   <div class="container-narrow">
@@ -1000,10 +1041,30 @@ function homePage() {
 /* ---------- 페이지: 서비스 목록 ---------- */
 
 function servicesPage() {
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: '마케팅 서비스',
+      url: `${SITE.domain}/services/`,
+      inLanguage: 'ko',
+      hasPart: DATA.services.map((s) => ({
+        '@type': 'Service',
+        name: s.name,
+        url: `${SITE.domain}/service/${s.slug}/`,
+        offers: { '@type': 'Offer', price: priceToNumber(s.price), priceCurrency: 'USD' },
+      })),
+    },
+    breadcrumbList([
+      { name: '홈', url: `${SITE.domain}/` },
+      { name: '서비스', url: `${SITE.domain}/services/` },
+    ]),
+  ];
   return head({
     title: '마케팅 서비스 | BizHigher — 견적 문의 없는 정찰제',
     description: 'SEO 블로그, 구글 프로필 최적화, 광고 소재, 리뷰 관리까지. 미국 한인 비즈니스를 위한 마케팅을 쇼핑하듯 주문하세요. 모든 가격 공개.',
     pathName: '/services/',
+    jsonLd,
   }) + nav('services') + `
 <header class="page-head">
   <div class="container">
@@ -1050,10 +1111,30 @@ ${[
 /* ---------- 페이지: 가격 ---------- */
 
 function pricingPage() {
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: '가격 안내',
+      url: `${SITE.domain}/pricing/`,
+      inLanguage: 'ko',
+      hasPart: DATA.packages.map((p) => ({
+        '@type': 'Service',
+        name: `${p.name} 플랜`,
+        url: `${SITE.domain}/package/${p.slug}/`,
+        offers: { '@type': 'Offer', price: p.prices.annual, priceCurrency: 'USD' },
+      })),
+    },
+    breadcrumbList([
+      { name: '홈', url: `${SITE.domain}/` },
+      { name: '가격', url: `${SITE.domain}/pricing/` },
+    ]),
+  ];
   return head({
     title: '가격 안내 | BizHigher — 투명한 정찰제 마케팅',
     description: '숨은 비용도 견적 미팅도 없습니다. 원타임 $49부터 월 구독까지, 미국 한인 비즈니스 마케팅 전 상품 가격표.',
     pathName: '/pricing/',
+    jsonLd,
   }) + nav('pricing') + `
 <header class="page-head">
   <div class="container">
@@ -1174,16 +1255,40 @@ function planHint(s) {
 </div>`;
 }
 
-function servicePage(s) {
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Service',
-    name: s.name,
-    description: s.shortDescription,
-    provider: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
-    areaServed: 'US',
-    url: `${SITE.domain}/service/${s.slug}/`,
-  };
+function servicePage(s, posts) {
+  const url = `${SITE.domain}/service/${s.slug}/`;
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Service',
+      name: s.name,
+      description: s.shortDescription,
+      provider: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
+      areaServed: { '@type': 'Country', name: 'United States' },
+      url,
+      offers: {
+        '@type': 'Offer',
+        price: priceToNumber(s.price),
+        priceCurrency: 'USD',
+        url,
+        availability: 'https://schema.org/InStock',
+        ...(s.type === 'subscription' ? { priceSpecification: { '@type': 'UnitPriceSpecification', price: priceToNumber(s.price), priceCurrency: 'USD', unitText: 'MONTH' } } : {}),
+      },
+    },
+    breadcrumbList([
+      { name: '홈', url: `${SITE.domain}/` },
+      { name: '서비스', url: `${SITE.domain}/services/` },
+      { name: s.name, url },
+    ]),
+  ];
+  if (s.faqs && s.faqs.length) {
+    jsonLd.push({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: s.faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+    });
+  }
+  const relatedPosts = (posts || []).filter((x) => x.related === s.slug).slice(0, 3);
   // Stripe 링크가 아직 없는 상품은 상담(이메일) CTA로 폴백
   const consultHref = `mailto:${SITE.email}?subject=${encodeURIComponent('[상담 신청] ' + s.name)}&body=${encodeURIComponent('업체명:\n연락처:\n궁금한 점:')}`;
   const optionA = s.stripeLinkA
@@ -1244,6 +1349,20 @@ function servicePage(s) {
     </div>
   </div>
 </section>
+${s.faqs && s.faqs.length ? `
+<section class="section section-gray">
+  <div class="container-narrow">
+    <h2 class="h2">자주 묻는 질문</h2>
+    ${s.faqs.map((f) => `<div class="faq-item"><h3 class="faq-q">${f.q}</h3><p class="faq-a">${f.a}</p></div>`).join('')}
+  </div>
+</section>` : ''}
+${relatedPosts.length ? `
+<section class="section">
+  <div class="container">
+    <h2 class="h2">관련 가이드 읽어보기</h2>
+    <div class="grid3">${relatedPosts.map(blogCard).join('')}</div>
+  </div>
+</section>` : ''}
 ` + FOOTER;
 }
 
@@ -2126,11 +2245,11 @@ write('services/index.html', servicesPage());
 write('pricing/index.html', pricingPage());
 write('free-audit/index.html', auditPage());
 write('thanks/index.html', thanksPage());
-DATA.services.forEach((s) => write(`service/${s.slug}/index.html`, servicePage(s)));
+const POSTS = loadPosts();
+DATA.services.forEach((s) => write(`service/${s.slug}/index.html`, servicePage(s, POSTS)));
 DATA.packages.forEach((p) => write(`package/${p.slug}/index.html`, packagePage(p)));
 write('404.html', notFoundPage());
 write('privacy/index.html', legalPage('개인정보처리방침', '/privacy/', PRIVACY_HTML));
-const POSTS = loadPosts();
 const IMGDIR = path.join(__dirname, 'content', 'blog', 'img');
 if (fs.existsSync(IMGDIR)) {
   fs.mkdirSync(path.join(DIST, 'blog-img'), { recursive: true });
@@ -2172,7 +2291,7 @@ write('sitemap.xml', sitemap());
 write('robots.txt', ROBOTS);
 write('llms.txt', `# BizHigher (비즈하이어)
 
-> 미국 한인 비즈니스를 위한 AI 자동화 마케팅 회사. 견적 미팅 없는 정찰제로 마케팅 서비스를 쇼핑하듯 주문할 수 있다. AI가 제작하고 전문가가 검수하며, 대부분 영업일 3일 내 제공된다. 한국어와 영어 모두 지원.
+> 미국 한인 비즈니스를 위한 AI 자동화 마케팅 회사. 견적 미팅 없는 정찰제로 마케팅 서비스를 쇼핑하듯 주문할 수 있다. AI가 제작하고 전문가가 검수하며, 대부분 영업일 3일 내 제공된다. 웹사이트는 한국어로 운영되며, 결과물(웹사이트·콘텐츠·광고 소재)은 한국어·영어 모두 제작 가능하다.
 
 - 웹사이트: https://bizhigher.com
 - 문의: ${SITE.email}
