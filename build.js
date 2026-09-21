@@ -22,7 +22,6 @@ const CSS_VER = crypto.createHash('md5')
 
 const LOGO_SVG = `<svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#0A4DF5"/><path d="M15 44 h9 v-9 h9 v-9 h6.5" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M38.5 15.5 h10 v10" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-const FAVICON = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%230A4DF5'/%3E%3Cpath d='M15 44 h9 v-9 h9 v-9 h6.5' stroke='white' stroke-width='6.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M38.5 15.5 h10 v10' stroke='white' stroke-width='6.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E`;
 
 const ANALYTICS = `
 <script type="text/javascript">
@@ -67,7 +66,10 @@ ${noindex ? '<meta name="robots" content="noindex">' : ''}
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="${SITE.domain}${ogImage || '/og-image.png'}">
-<link rel="icon" href="${FAVICON}">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="/style.css?v=${CSS_VER}">
 ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>` : ''}
@@ -2278,6 +2280,10 @@ if (SURVEYS.length || REPORTS.length) {
 write('terms/index.html', legalPage('이용약관', '/terms/', TERMS_HTML));
 fs.copyFileSync(path.join(__dirname, 'src', 'og-image.png'), path.join(DIST, 'og-image.png'));
 console.log('  \u2713 og-image.png');
+['favicon.ico', 'favicon.svg', 'favicon-48x48.png', 'apple-touch-icon.png'].forEach((f) => {
+  fs.copyFileSync(path.join(__dirname, 'src', f), path.join(DIST, f));
+});
+console.log('  \u2713 favicon.ico, favicon.svg, favicon-48x48.png, apple-touch-icon.png');
 const OGDIR = path.join(__dirname, 'src', 'og');
 if (fs.existsSync(OGDIR)) {
   const pngs = fs.readdirSync(OGDIR).filter((f) => f.endsWith('.png'));
