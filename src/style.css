@@ -251,6 +251,8 @@ img { max-width: 100%; display: block; }
 .badge { display: inline-block; align-self: flex-start; font-size: 12px; font-weight: 700; padding: 4px 11px; border-radius: 999px; background: var(--blue-50); color: var(--blue-600); margin-bottom: 12px; }
 .badge-green { background: #E7F7EE; color: #0B7A3E; }
 .badge-dark { background: var(--ink-900); color: #fff; }
+.badge-hub { background: var(--grad-btn); color: #fff; }
+.prod-card.is-hub { border-color: var(--blue-300); background: linear-gradient(180deg, var(--blue-50) 0%, #fff 65%); }
 
 .price-row { display: flex; align-items: baseline; gap: 8px; margin-top: auto; padding-top: 16px; }
 .price { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
@@ -860,6 +862,10 @@ img { max-width: 100%; display: block; }
 .post-cta b { font-size: 19px; }
 .post-cta p { font-size: 15px; color: var(--ink-600); }
 .post-cta .btn + .btn { margin-top: 4px; }
+
+.hub-callout { display: block; background: var(--blue-50); border: 1px solid var(--blue-300); border-radius: 14px; padding: 14px 18px; margin-top: 18px; font-size: 14.5px; font-weight: 600; color: var(--blue-600); transition: border-color .15s ease; }
+.hub-callout:hover { border-color: var(--blue-600); }
+.hub-callout b { color: var(--ink-900); }
 
 /* ---------- 블로그 사이드 목차 (스크롤스파이) ---------- */
 .post-layout { display: grid; grid-template-columns: 250px minmax(0, 720px); gap: 48px; justify-content: center; align-items: start; }

@@ -1544,14 +1544,14 @@ function loadPosts() {
     const words = body.replace(/[#>*|\-]/g, '').length;
     return { slug: meta.slug || f.replace(/\.md$/, ''), title: meta.title, description: meta.description,
       date: meta.date, updated: meta.updated || '', category: meta.category || '가이드', keywords: meta.keywords || '',
-      related: meta.related || '', body, faqs, readMin: Math.max(3, Math.round(words / 600)) };
+      related: meta.related || '', hub: meta.hub === 'true', body, faqs, readMin: Math.max(3, Math.round(words / 600)) };
   }).sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
 function blogCard(p) {
   return `
-<a href="/blog/${p.slug}/" class="prod-card">
-  <span class="badge">${p.category}</span>
+<a href="/blog/${p.slug}/" class="prod-card${p.hub ? ' is-hub' : ''}">
+  <span class="badge${p.hub ? ' badge-hub' : ''}">${p.hub ? '🧭 가이드 · ' : ''}${p.category}</span>
   <h3 class="h3">${p.title}</h3>
   <p class="body-sm">${p.description}</p>
   <div class="price-row"><span class="price-sub">${p.date} · ${p.readMin}분 읽기</span></div>
@@ -1560,6 +1560,8 @@ function blogCard(p) {
 }
 
 function blogIndexPage(posts) {
+  const hubs = posts.filter((p) => p.hub);
+  const rest = posts.filter((p) => !p.hub);
   return head({
     title: '블로그 — 미국 한인 비즈니스 마케팅 가이드 | BizHigher',
     description: '구글 등록, 리뷰 관리, AI 검색 노출까지 — 미국에서 가게 운영하는 한인 사장님을 위한 실전 마케팅 가이드.',
@@ -1573,7 +1575,11 @@ function blogIndexPage(posts) {
 </header>
 <section class="section">
   <div class="container">
-    <div class="grid3">${posts.map(blogCard).join('')}</div>
+    ${hubs.length ? `<h2 class="h2-left" style="margin-top:0;">🧭 핵심 가이드</h2>
+    <p class="body-sm" style="margin:-8px 0 24px;">주제별 글을 한 번에 정리한 완전 가이드입니다.</p>
+    <div class="grid3" style="margin-bottom:56px;">${hubs.map(blogCard).join('')}</div>
+    <h2 class="h2-left">전체 글</h2>` : ''}
+    <div class="grid3">${rest.map(blogCard).join('')}</div>
   </div>
 </section>
 ` + FOOTER;
@@ -1596,7 +1602,9 @@ function blogPostPage(p, posts) {
       mainEntity: p.faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) });
   }
   const relSvc = p.related ? DATA.services.find((s) => s.slug === p.related) : null;
-  const others = posts.filter((x) => x.slug !== p.slug).slice(0, 3);
+  const hub = !p.hub ? posts.find((x) => x.hub && x.category === p.category) : null;
+  const sameCategory = posts.filter((x) => x.slug !== p.slug && x.category === p.category && !x.hub);
+  const others = [...sameCategory, ...posts.filter((x) => x.slug !== p.slug && x.category !== p.category)].slice(0, 3);
   return head({
     title: `${p.title} | BizHigher 블로그`,
     description: p.description,
@@ -1608,9 +1616,10 @@ function blogPostPage(p, posts) {
 <header class="page-head">
   <div class="container-narrow">
     <a href="/blog/" class="back-link">← 블로그</a>
-    <span class="badge">${p.category}</span>
+    <span class="badge${p.hub ? ' badge-hub' : ''}">${p.hub ? '🧭 가이드 · ' : ''}${p.category}</span>
     <h1 class="page-title" style="font-size:36px;line-height:1.25;">${p.title}</h1>
     <p class="page-sub">${p.date} · ${p.readMin}분 읽기 · BizHigher</p>
+    ${hub ? `<a href="/blog/${hub.slug}/" class="hub-callout">🧭 이 글은 <b>${hub.title}</b> 가이드의 일부입니다 →</a>` : ''}
   </div>
 </header>
 <section class="detail-body" style="padding-top:4px;">
