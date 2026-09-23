@@ -1,0 +1,178 @@
+[
+  {
+    "slug": "progressive-lenses",
+    "icon": "progressive",
+    "title": "Progressive Lenses",
+    "h1": "Progressive lenses in Garden Grove",
+    "short": "One pair for distance, computer and reading — no visible line.",
+    "meta": "Progressive (no-line multifocal) lenses fitted in Garden Grove. Measured by our opticians, made with Varilux, ZEISS and HOYA designs. Most vision plans accepted.",
+    "lead": "Progressive lenses let you see far, at arm's length and up close through one pair of glasses, without the visible line of old-style bifocals. How comfortable they feel depends less on the brand name and more on how precisely they are measured and fitted — which is the part we take personally.",
+    "offer": [
+      "Precise pupil distance and fitting-height measurements taken in the frame you choose",
+      "Standard, premium and wide-corridor designs (Essilor Varilux, ZEISS, HOYA)",
+      "Computer / office progressives for long days at a screen",
+      "Thinner high-index materials for stronger prescriptions",
+      "Free follow-up adjustments while you get used to them"
+    ],
+    "honest": "Most people adapt to progressives within one to two weeks. If you still struggle after that, come back — a small change to the frame fit often solves it, and we will check the measurements again before anything else.",
+    "faqs": [
+      { "q": "How long does it take to get progressive lenses?", "a": "Many progressives are finished in our in-store lab in about 3 business days. Some premium designs are made by the lens manufacturer and can take longer; we give you the expected date when you order." },
+      { "q": "Can I use my vision insurance for progressives?", "a": "Usually yes. Most vision plans cover a standard progressive and apply a set amount toward premium designs. Bring your insurance information and we will show you exactly what is covered before you decide." },
+      { "q": "Do I need a new prescription?", "a": "You need a current prescription that includes an ADD (reading) power. Prescriptions from any eye doctor are welcome." }
+    ]
+  },
+  {
+    "slug": "blue-light-photochromic-lenses",
+    "icon": "lens",
+    "title": "Blue Light & Transitions Lenses",
+    "h1": "Blue light filtering and light-adaptive lenses",
+    "short": "Screen-friendly coatings and lenses that darken in the sun.",
+    "meta": "Blue light filtering and Transitions light-adaptive lenses in Garden Grove. Anti-glare coatings, photochromic lenses and honest advice on what each one does.",
+    "lead": "Lens options can be confusing. We explain what each one actually does so you only pay for what helps your day — whether that is less glare at the computer, lenses that darken outdoors, or both.",
+    "offer": [
+      "Blue light filtering coatings and lens materials",
+      "Transitions and other light-adaptive (photochromic) lenses in grey, brown and style colors",
+      "Premium anti-glare coatings such as Crizal for night driving and screens",
+      "Scratch-resistant and easy-clean coatings",
+      "Combinations for single vision, progressives and reading glasses"
+    ],
+    "honest": "Blue light filters can make screens feel more comfortable for some people, but the American Academy of Ophthalmology does not consider them necessary for eye health. We'll tell you straight whether an anti-glare coating alone would do the job. Also note that most light-adaptive lenses darken less inside a car, because windshields block much of the UV that triggers them.",
+    "faqs": [
+      { "q": "Are blue light glasses worth it?", "a": "They are a comfort choice, not a medical one. If you spend long hours at screens and like how they feel, they are a reasonable option. A good anti-glare coating is often just as helpful." },
+      { "q": "Can I add Transitions to progressive lenses?", "a": "Yes. Light-adaptive options are available for most single vision and progressive lens designs." },
+      { "q": "Do Transitions lenses work in the car?", "a": "Most darken only partly behind a windshield. If you drive a lot in bright sun, we'll show you options designed for that, or prescription sunglasses." }
+    ]
+  },
+  {
+    "slug": "prescription-sunglasses",
+    "icon": "sun",
+    "title": "Prescription Sunglasses",
+    "h1": "Prescription sunglasses in Garden Grove",
+    "short": "Polarized and tinted lenses made to your prescription.",
+    "meta": "Prescription sunglasses in Garden Grove — polarized, tinted and mirrored lenses in Ray-Ban, Oakley, Maui Jim, Costa and more. Progressive sunglasses available.",
+    "lead": "Southern California sun is bright year-round. Prescription sunglasses let you see clearly outdoors without juggling contacts and store-bought shades.",
+    "offer": [
+      "Polarized lenses to cut glare from roads, water and windshields",
+      "Solid and gradient tints, mirror finishes",
+      "Single vision and progressive sunglasses",
+      "Sun frames from brands such as Ray-Ban, Oakley, Maui Jim and Costa",
+      "Prescription lenses for many sunglasses you already own (frame permitting)"
+    ],
+    "honest": "Strongly curved (wraparound) sport frames can't hold every prescription. We check your prescription against the frame before you order so there are no surprises.",
+    "faqs": [
+      { "q": "Does vision insurance cover prescription sunglasses?", "a": "Some plans do, often as your frame and lens benefit instead of clear glasses. Others offer a discount on a second pair. We'll check your plan for you." },
+      { "q": "Polarized or regular tint?", "a": "Polarized lenses reduce reflected glare and are great for driving and the beach. They can make some phone and dashboard screens look dim, so we'll let you try both." },
+      { "q": "Can you put my prescription in my own sunglasses?", "a": "Often yes, if the frame is in good condition and its curve suits your prescription. See our lens replacement page for details." }
+    ]
+  },
+  {
+    "slug": "contact-lenses",
+    "icon": "contact",
+    "title": "Contact Lenses",
+    "h1": "Contact lenses in Garden Grove",
+    "short": "Daily, monthly, toric and multifocal lenses from your current prescription.",
+    "meta": "Buy contact lenses in Garden Grove — daily, bi-weekly, monthly, toric (astigmatism) and multifocal lenses. Bring a current contact lens prescription. Vision plans accepted.",
+    "lead": "Pick up your contact lenses where you get your glasses. We carry popular daily, bi-weekly and monthly lenses and can order toric lenses for astigmatism and multifocals for reading.",
+    "offer": [
+      "Daily disposable, bi-weekly and monthly lenses",
+      "Toric lenses for astigmatism",
+      "Multifocal lenses",
+      "Annual supplies — often the best value with rebates and insurance",
+      "Solutions and lens cases"
+    ],
+    "honest": "By federal law we need a valid contact lens prescription, which is different from a glasses prescription — it lists the exact lens brand, curve and diameter. It comes from a contact lens exam and fitting by an eye doctor. If yours has expired, you'll need a new exam first.",
+    "faqs": [
+      { "q": "Can I buy contacts with my glasses prescription?", "a": "No. Contact lenses need their own prescription from a contact lens fitting. We're happy to fill a current contact lens prescription from any eye doctor." },
+      { "q": "Does my vision insurance cover contacts?", "a": "Most plans give a contact lens allowance in place of glasses for that benefit period. We'll check which option gives you more value." },
+      { "q": "Do you keep lenses in stock?", "a": "We keep popular lenses on hand and order the rest. Most orders arrive within a few business days." }
+    ]
+  },
+  {
+    "slug": "kids-glasses",
+    "icon": "kids",
+    "title": "Kids' Glasses",
+    "h1": "Kids' glasses in Garden Grove",
+    "short": "Durable, comfortable frames that kids actually want to wear.",
+    "meta": "Children's eyeglasses in Garden Grove — flexible, durable frames, impact-resistant lenses and careful fitting. Ray-Ban Junior, Nike Kids, Miraflex. Vision plans accepted.",
+    "lead": "Children's glasses have to survive recess, sports and being dropped on the floor — and they only help if kids are willing to wear them. We take extra time with fit and let kids choose a frame they like.",
+    "offer": [
+      "Flexible and rubberized frames for toddlers and young children",
+      "Impact-resistant polycarbonate or Trivex lenses as standard",
+      "Frames from Ray-Ban Junior, Nike Kids, Miraflex and more",
+      "Sport straps and sport goggles for active kids",
+      "Free adjustments as they grow"
+    ],
+    "honest": "Kids grow fast. A frame that fits perfectly now may need adjusting within months, and a new size within a year or two. Stop by any time for a free adjustment — a loose frame is the most common reason kids stop wearing their glasses.",
+    "faqs": [
+      { "q": "At what age can a child get glasses?", "a": "Children of any age, including infants, can wear glasses when an eye doctor prescribes them. We carry frames sized for small faces." },
+      { "q": "What lenses are safest for kids?", "a": "Polycarbonate or Trivex lenses, which are much more impact-resistant than standard plastic. We use them for children by default." },
+      { "q": "Does insurance cover kids' glasses?", "a": "Most vision plans cover children, and many offer a new pair every year. We'll check the benefit for you." }
+    ]
+  },
+  {
+    "slug": "sports-goggles",
+    "icon": "sport",
+    "title": "Sports Goggles",
+    "h1": "Prescription sports goggles",
+    "short": "Protective eyewear with your prescription for basketball, racquet sports and more.",
+    "meta": "Prescription sports goggles and protective eyewear in Garden Grove for basketball, soccer, pickleball, racquetball and swimming. Kids and adult sizes.",
+    "lead": "Regular glasses aren't made for a ball to the face. Prescription sports goggles protect your eyes and keep your vision sharp while you play.",
+    "offer": [
+      "Prescription goggles for basketball, soccer, racquet sports and pickleball",
+      "Impact-resistant polycarbonate lenses",
+      "Kids' and adult sizes with adjustable straps",
+      "Prescription swim goggles (availability depends on prescription)",
+      "Sport sunglasses for cycling, running and golf"
+    ],
+    "honest": "Street glasses and sunglasses are not rated for sports impact — even with polycarbonate lenses, the frame itself can break. For ball and racquet sports, purpose-made goggles are the safer choice.",
+    "faqs": [
+      { "q": "Which sports need protective goggles?", "a": "Any sport with a fast ball, racquet, stick or elbows nearby — basketball, racquetball, squash, pickleball, soccer and baseball are common examples." },
+      { "q": "Can goggles hold a strong prescription?", "a": "Most prescriptions work. Very strong prescriptions or high astigmatism can limit frame choices; we'll check before you order." },
+      { "q": "Does insurance cover sports goggles?", "a": "Some plans allow them as your frame benefit or offer a discount. We'll check your plan." }
+    ]
+  },
+  {
+    "slug": "eyeglass-repair-adjustments",
+    "icon": "tools",
+    "title": "Repairs & Adjustments",
+    "h1": "Eyeglass repair and adjustments",
+    "short": "Loose, crooked or slipping? Walk in for adjustments, screws and nose pads.",
+    "meta": "Eyeglass repair and adjustments in Garden Grove — tightening, straightening, screw and nose pad replacement. Walk in during business hours.",
+    "lead": "Glasses that slide down your nose, pinch behind your ears or sit crooked are uncomfortable and can blur your vision. Most fixes take just a few minutes.",
+    "offer": [
+      "Frame adjustments and re-alignment",
+      "Screw tightening and replacement",
+      "Nose pad replacement",
+      "Temple tip replacement (for many frames)",
+      "Advice on whether a damaged frame can be repaired safely"
+    ],
+    "honest": "Some damage, such as a snapped hinge on a thin metal frame or a crack in the front, can't be repaired reliably. We'll tell you honestly and show you options — including putting new lenses in a replacement frame.",
+    "faqs": [
+      { "q": "Do I need an appointment for an adjustment?", "a": "No. Walk in any time during business hours. If we're busy with fittings, the wait is usually short." },
+      { "q": "Do you adjust glasses bought somewhere else?", "a": "Yes. Bring them in." },
+      { "q": "How much do repairs cost?", "a": "Simple adjustments are usually free. Parts such as nose pads and screws are low cost; we'll tell you the price before we start." }
+    ]
+  },
+  {
+    "slug": "lens-replacement",
+    "icon": "frame",
+    "title": "Lens Replacement in Your Frame",
+    "h1": "New lenses in your own frame",
+    "short": "Love your frame? Keep it — we'll put new lenses in it, even if you bought it elsewhere.",
+    "meta": "Lens replacement in your existing frame in Garden Grove — new prescription lenses for glasses and sunglasses bought anywhere. Most jobs done in our in-store lab.",
+    "lead": "If you already love your frame, there's no need to buy a new one. Bring it in — even if it came from another store or online — and we'll fit new prescription lenses.",
+    "offer": [
+      "New prescription lenses in frames bought anywhere",
+      "Upgrade to progressives, blue light filtering or light-adaptive lenses",
+      "Turn a favorite frame into prescription sunglasses",
+      "Lenses cut and fitted in our in-store lab",
+      "Frame inspection before we start"
+    ],
+    "honest": "Every frame is inspected first. Older frames, especially rimless and thin metal ones, can be weakened by age, and there is a small risk that they break during lens fitting. We'll point out any concerns before you decide.",
+    "faqs": [
+      { "q": "Can you replace lenses in frames I bought online?", "a": "Usually yes, as long as the frame is in good condition and suits your prescription." },
+      { "q": "How long does lens replacement take?", "a": "Most jobs are ready in about 3 business days. You may need to leave the frame with us while the lenses are made, so bring a backup pair if you have one." },
+      { "q": "Will my insurance cover lenses only?", "a": "Most vision plans cover lenses separately from frames, so yes in most cases." }
+    ]
+  }
+]
