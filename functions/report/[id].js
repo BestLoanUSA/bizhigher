@@ -52,6 +52,8 @@ export function renderReportHtml(report, id) {
     )
     .join('');
 
+  const webcheckSection = renderWebcheckSection(b.webcheck);
+
   const compRows = (report.competitors || [])
     .map(
       (c) =>
@@ -103,6 +105,12 @@ export function renderReportHtml(report, id) {
   .comp-row{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line);font-size:14.5px;color:var(--ink-600);}
   .comp-row:last-child{border-bottom:none;}
   .comp-me{font-weight:800;color:var(--ink-900);}
+  .wc-badge{font-weight:700;font-size:14px;color:var(--ink-400);}
+  .wc-row{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:flex-start;}
+  .wc-row:last-child{border-bottom:none;}
+  .wc-ico{font-size:15px;flex-shrink:0;margin-top:1px;}
+  .wc-h{font-size:14.5px;font-weight:700;color:var(--ink-900);}
+  .wc-note{font-size:13px;color:var(--ink-400);margin-top:2px;line-height:1.55;}
   .next-step{font-size:15px;line-height:1.7;color:var(--ink-600);}
   .share-band{background:var(--blue-50);border:1px solid #CDD9FF;border-radius:18px;padding:24px;text-align:center;margin-bottom:18px;}
   .share-band p{font-size:14px;color:var(--ink-600);margin-bottom:12px;}
@@ -143,6 +151,8 @@ export function renderReportHtml(report, id) {
 
   <div class="card"><h2 class="sec-title">종합 평가</h2><p class="summary">${esc(report.analysis.summary)}</p></div>
 
+  ${webcheckSection}
+
   <div class="card"><h2 class="sec-title">지금 가장 급한 문제</h2>${problems}</div>
 
   ${compSection}
@@ -175,4 +185,51 @@ function esc(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+/* ---------- 웹사이트 진단 섹션 ----------
+   biz.website가 있어서 webcheckSite()를 돌린 경우에만 값이 온다.
+   웹사이트가 아예 없는 업소, 또는 구글에서 업체 자체를 못 찾은 경우는
+   wc가 null이라 이 섹션 전체를 건너뛴다. */
+function renderWebcheckSection(wc) {
+  if (!wc || !wc.checked) return '';
+
+  if (!wc.reachable) {
+    const why = wc.skipped === 'robots-disallow'
+      ? '이 웹사이트가 자동 점검 접근을 막아두어 세부 항목은 확인하지 못했습니다. 사이트가 없다는 뜻은 아닙니다.'
+      : wc.challenged
+      ? '접속 시 보안 확인 페이지가 떠서 실제 내용을 읽지 못했습니다.'
+      : '점검 시점에 웹사이트에 연결하지 못했습니다. 일시적인 문제일 수 있습니다.';
+    return `<div class="card"><h2 class="sec-title">웹사이트 진단</h2><p class="summary">${esc(why)}</p></div>`;
+  }
+
+  const items = [
+    ['HTTPS 보안 연결', !!wc.finalIsHttps,
+      wc.finalIsHttps ? '정상 적용됨' : '보안 연결이 안 돼 있습니다. 브라우저가 방문자에게 경고를 띄울 수 있습니다.'],
+    ['모바일 최적화', !!wc.hasViewport,
+      wc.hasViewport ? '정상' : '스마트폰에서 화면이 깨지거나 글자가 작게 보일 수 있습니다. 방문자 대부분이 모바일입니다.'],
+    ['검색 결과 설명(meta description)', !!wc.hasMetaDesc,
+      wc.hasMetaDesc ? '정상' : '없으면 구글 검색 결과에 업소 소개 대신 페이지의 임의 문장이 노출될 수 있습니다.'],
+    ['SNS 공유 미리보기(OG 태그)', !!wc.hasOg,
+      wc.hasOg ? '정상' : '카카오톡·페이스북에 링크를 공유해도 미리보기 카드가 안 뜰 수 있습니다.'],
+    ['구조화 데이터', !!wc.hasSchema,
+      wc.hasSchema
+        ? (wc.hasLocalBusinessSchema ? '업소 정보 형식까지 갖춤' : '있지만 업소 정보 형식은 아님')
+        : '없습니다 — 검색·AI 엔진이 이 페이지를 하나의 업소로 구조적으로 인식하기 어렵습니다.'],
+    ['AI 검색 노출', !wc.blocksAnyAI,
+      wc.blocksAnyAI
+        ? `ChatGPT·Perplexity 등 AI가 이 사이트를 읽지 못하도록 막혀 있습니다 (${esc((wc.aiBlocked || []).join(', '))}).`
+        : 'AI 크롤러를 막고 있지 않습니다.'],
+    ['영업시간 표기', !!wc.showsHours,
+      wc.showsHours ? '정상' : '사이트 본문에서 영업시간을 찾지 못했습니다.'],
+    ['SNS 연결', (wc.socialVia || []).length > 0,
+      (wc.socialVia || []).length ? `연결됨 (${esc(wc.socialVia.join(', '))})` : '연결된 SNS 링크를 찾지 못했습니다.'],
+  ];
+  const okCount = items.filter((i) => i[1]).length;
+  const rows = items.map(([label, ok, note]) => `
+    <div class="wc-row"><span class="wc-ico">${ok ? '✅' : '⚠️'}</span><div><div class="wc-h">${esc(label)}</div><div class="wc-note">${note}</div></div></div>`
+  ).join('');
+  const bonus = wc.hasLlmsTxt ? `<div class="wc-note" style="margin-top:10px;">✨ llms.txt까지 갖추고 있어 AI 검색엔진 대응이 앞서 있습니다.</div>` : '';
+
+  return `<div class="card"><h2 class="sec-title">웹사이트 진단 <span class="wc-badge">${okCount}/${items.length}</span></h2>${rows}${bonus}</div>`;
 }

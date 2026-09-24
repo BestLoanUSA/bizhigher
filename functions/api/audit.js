@@ -10,6 +10,7 @@
  */
 import { computeScores, templateAnalysis, buildClaudePrompt } from './_engine.js';
 import { notify, esc } from './_notify.js';
+import { webcheckSite } from './_webcheck.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -84,19 +85,17 @@ async function generateReport(business, location, env) {
     biz.primaryType = koTypeLabel(biz.primaryTypeId) || biz.primaryType;
   }
 
-  // B. 웹사이트 접근 확인 (5초 제한)
-  if (biz.found && biz.websiteUri) {
-    biz.websiteReachable = await checkReachable(biz.websiteUri);
+  // B. 웹사이트 진단 + C. 동네 경쟁 업체 — 서로 독립적이라 동시에 돌린다
+  //    (경쟁사 업종 타입 정보가 없으면 경쟁 비교는 생략. 엉뚱한 비교보다 생략이 낫다)
+  const [webcheck, competitorsRaw] = await Promise.all([
+    biz.found && biz.websiteUri ? webcheckSite(biz.websiteUri).catch(() => null) : Promise.resolve(null),
+    biz.found ? competitorsNearby(biz, env, key).catch(() => []) : Promise.resolve([]),
+  ]);
+  if (webcheck) {
+    biz.webcheck = webcheck;
+    biz.websiteReachable = !!webcheck.reachable;
   }
-
-  // C. 동네 경쟁 업체 — 같은 업종 타입만 (안경점↔안경점, 식당↔식당)
-  //    업종 타입 정보가 없으면 경쟁 비교를 아예 생략 (엉뚱한 비교보다 생략이 낫다)
-  let competitors = [];
-  if (biz.found) {
-    competitors = (await competitorsNearby(biz, env, key).catch(() => []))
-      .sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0))
-      .slice(0, 3);
-  }
+  const competitors = competitorsRaw.sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0)).slice(0, 3);
 
   // D. 룰 채점 (결정적)
   const scores = computeScores(biz, competitors);
@@ -121,6 +120,7 @@ async function generateReport(business, location, env) {
       categoryGeneric: !!biz.categoryGeneric,
       inferredIndustry: biz.inferredIndustry || null,
       found: biz.found,
+      webcheck: biz.webcheck || null,
     },
     location,
     scores,
@@ -416,18 +416,6 @@ async function searchByKeywordNear(biz, keyword, radius, key) {
     // (예: LA 서독안경)가 섞여 들어온다 → 실제 좌표 거리로 하드 필터.
     .filter((p) => p.distanceKm != null && p.distanceKm <= maxKm);
   return candidates;
-}
-
-async function checkReachable(url) {
-  try {
-    const res = await Promise.race([
-      fetch(url, { method: 'GET', redirect: 'follow' }),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000)),
-    ]);
-    return res.ok;
-  } catch {
-    return false;
-  }
 }
 
 /* ---------- Claude API 해석 ---------- */
