@@ -1,19 +1,16 @@
 {
   "_readme": "New Optix 사이트의 모든 사실 정보. 이 파일만 고치고 `node build.js`를 다시 돌리면 전 페이지에 반영된다. _assumed 목록에 있는 항목은 아직 업주 확인 전 가정값이다.",
   "_assumed": [
-    "draft (true인 동안 noindex + 상단 초안 배너)",
-    "domain",
+    "domain (www.newoptix.com을 대표 주소로 가정 — apex를 대표로 쓰면 수정)",
     "yearsServing",
     "familyOwned",
     "languages",
-    "brands 전체",
+    "brands 중 최초 가정분 (Tom Ford, Prada, Saint Laurent, Burberry, Charmant, Masunaga, Flexon, Ray-Ban, Coach, Kate Spade, Calvin Klein, Oakley, Maui Jim)",
     "lensBrands 전체",
-    "insurance 전체",
     "payments 세부 항목",
     "neighbor.name / neighbor.url (Amy 검안 진료소 사이트 미정)",
     "email"
   ],
-
   "draft": true,
   "domain": "https://www.newoptix.com",
   "name": "New Optix",
@@ -34,44 +31,155 @@
   "reviewCount": 14,
   "yearsServing": 20,
   "familyOwned": true,
-  "languages": ["English", "Korean"],
+  "languages": [
+    "English",
+    "Korean"
+  ],
   "turnaround": "about 3 business days",
   "turnaroundNote": "Most glasses are ready in about 3 business days because we cut and fit lenses in our own in-store lab. Specialty lenses (high prescriptions, some progressives, certain coatings) are made by the lens manufacturer and can take longer — we'll tell you the expected date when you order.",
-  "serviceArea": ["Garden Grove", "Westminster", "Stanton", "Anaheim", "Buena Park", "Cypress", "Fountain Valley", "Santa Ana"],
-
-  "hours": [
-    { "day": "Monday", "open": "10:00", "close": "16:00" },
-    { "day": "Tuesday", "open": "10:00", "close": "18:00" },
-    { "day": "Wednesday", "open": "10:00", "close": "18:00" },
-    { "day": "Thursday", "open": "10:00", "close": "16:00" },
-    { "day": "Friday", "open": "10:00", "close": "18:00" },
-    { "day": "Saturday", "open": "10:00", "close": "18:00" },
-    { "day": "Sunday", "open": null, "close": null }
+  "serviceArea": [
+    "Garden Grove",
+    "Westminster",
+    "Stanton",
+    "Anaheim",
+    "Buena Park",
+    "Cypress",
+    "Fountain Valley",
+    "Santa Ana"
   ],
-
+  "hours": [
+    {
+      "day": "Monday",
+      "open": "10:00",
+      "close": "16:00"
+    },
+    {
+      "day": "Tuesday",
+      "open": "10:00",
+      "close": "18:00"
+    },
+    {
+      "day": "Wednesday",
+      "open": "10:00",
+      "close": "18:00"
+    },
+    {
+      "day": "Thursday",
+      "open": "10:00",
+      "close": "16:00"
+    },
+    {
+      "day": "Friday",
+      "open": "10:00",
+      "close": "18:00"
+    },
+    {
+      "day": "Saturday",
+      "open": "10:00",
+      "close": "18:00"
+    },
+    {
+      "day": "Sunday",
+      "open": null,
+      "close": null
+    }
+  ],
   "neighbor": {
     "name": "Dr. Amy [Last Name], OD",
     "url": "",
     "disclosure": "The optometry practice next door is an independently owned and operated business. New Optix does not provide eye examinations. You are free to have your eyes examined, and your prescription filled, wherever you choose."
   },
-
   "brands": [
-    { "group": "Designer & luxury", "items": ["Lindberg", "Gucci", "Tom Ford", "Prada", "Saint Laurent", "Burberry"] },
-    { "group": "Titanium & lightweight", "items": ["Silhouette", "Charmant", "Masunaga", "Flexon"] },
-    { "group": "Everyday favorites", "items": ["Ray-Ban", "Coach", "Kate Spade", "Calvin Klein"] },
-    { "group": "Sport & sun", "items": ["Oakley", "Maui Jim", "Costa", "Rec Specs"] },
-    { "group": "Kids", "items": ["Ray-Ban Junior", "Nike Kids", "Miraflex"] }
+    {
+      "group": "Designer & luxury",
+      "items": [
+        "Burberry",
+        "Cartier",
+        "Celine",
+        "Fendi",
+        "Gucci",
+        "Miu Miu",
+        "Prada",
+        "Saint Laurent",
+        "Tiffany & Co.",
+        "Tom Ford"
+      ]
+    },
+    {
+      "group": "Titanium & lightweight",
+      "items": [
+        "Lindberg",
+        "Charmant",
+        "Masunaga",
+        "Flexon"
+      ]
+    },
+    {
+      "group": "Everyday favorites",
+      "items": [
+        "Ray-Ban",
+        "Coach",
+        "Kate Spade",
+        "Calvin Klein"
+      ]
+    },
+    {
+      "group": "Sport & sun",
+      "items": [
+        "Oakley",
+        "Maui Jim"
+      ],
+      "note": "Rx available"
+    },
+    {
+      "group": "Kids",
+      "features": true,
+      "items": [
+        "Myopia control lenses",
+        "MiSight® 1 day contact lenses"
+      ]
+    }
   ],
-  "lensBrands": ["Essilor Varilux", "ZEISS", "HOYA", "Transitions", "Crizal"],
-
+  "lensBrands": [
+    "Essilor Varilux",
+    "ZEISS",
+    "HOYA",
+    "Transitions",
+    "Crizal"
+  ],
   "insurance": [
-    { "name": "VSP", "note": "" },
-    { "name": "EyeMed", "note": "" },
-    { "name": "Davis Vision", "note": "" },
-    { "name": "Spectera (UnitedHealthcare)", "note": "" },
-    { "name": "MES Vision", "note": "" },
-    { "name": "Superior Vision", "note": "" },
-    { "name": "Blue View Vision (Anthem)", "note": "" }
+    {
+      "name": "Most major vision plans",
+      "note": "including EyeMed"
+    },
+    {
+      "name": "EyeMed",
+      "note": ""
+    },
+    {
+      "name": "Medicare",
+      "note": "Coverage for glasses varies — many Medicare Advantage plans include eyewear benefits"
+    },
+    {
+      "name": "HMO plans",
+      "note": "Vision benefits depend on your plan"
+    }
   ],
-  "payments": ["Cash", "Visa", "Mastercard", "American Express", "Discover", "Apple Pay", "Google Pay", "FSA / HSA cards"]
+  "payments": [
+    "Cash",
+    "Visa",
+    "Mastercard",
+    "American Express",
+    "Discover",
+    "Apple Pay",
+    "Google Pay",
+    "FSA / HSA cards"
+  ],
+  "insuranceHeadline": "We accept most major vision insurance plans, including EyeMed, as well as Medicare and HMO plans",
+  "promo": {
+    "headline": "Trendy Korean frames. Unbeatable prices.",
+    "sub": "The latest eyewear styles from Korea — lightweight, stylish and priced for everyday wear.",
+    "koHeadline": "요즘 한국 트렌드 안경테, 착한 가격으로.",
+    "koSub": "한국에서 유행하는 최신 스타일을 가볍고 부담 없는 가격에 만나보세요."
+  }
 }

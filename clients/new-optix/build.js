@@ -27,7 +27,8 @@ const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComp
 const dirUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(S.mapsQuery)}`;
 const embedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(S.mapsQuery)}&z=16&output=embed`;
 const years = `${S.yearsServing}+`;
-const allBrands = S.brands.flatMap((g) => g.items);
+// features 그룹(아동 근시 관리 등)은 브랜드가 아니므로 브랜드 목록·스키마에서 제외
+const allBrands = S.brands.filter((g) => !g.features).flatMap((g) => g.items);
 
 function fmtTime(t) {
   const [h, m] = t.split(':').map(Number);
@@ -96,7 +97,7 @@ function bizSchema() {
     '@type': ['Optician', 'Store'],
     '@id': BIZ_ID,
     name: S.name,
-    description: `Optical shop in ${A.city}, ${A.region} offering eyeglasses, progressive lenses, prescription sunglasses, contact lenses, kids' glasses, sports goggles, lens replacement and repairs, with an in-store lens lab.`,
+    description: `Optical shop in ${A.city}, ${A.region} offering eyeglasses, progressive lenses, prescription sunglasses, contact lenses, kids' glasses and myopia control, sports goggles and lens replacement, with an in-store lens lab.`,
     url: S.domain + '/',
     telephone: S.phoneHref,
     ...(S.email ? { email: S.email } : {}),
@@ -146,7 +147,7 @@ const NAV = [
 function header(active, lang) {
   const links = NAV.map(([t, h]) => `<a href="${h}"${active === h ? ' aria-current="page"' : ''}>${t}</a>`).join('');
   return `
-${S.draft ? '<div class="draft-bar">Draft preview — brands, insurance plans and some details are placeholders pending confirmation.</div>' : ''}
+${S.draft ? '<div class="draft-bar">Draft preview — some details are still being confirmed.</div>' : ''}
 <header class="site-header">
   <div class="wrap header-inner">
     <a class="logo" href="/" aria-label="${esc(S.name)} home">${LOGO_MARK}<span>New&nbsp;Optix</span></a>
@@ -342,15 +343,36 @@ const HERO_ART = `
   <div class="chip chip-c">${icon('shield')}<span><b>Vision plans</b>We handle the paperwork</span></div>
 </div>`;
 
+/* ---------- 한국 트렌드 안경테 메시지 ---------- */
+
+function promoPill(lang = 'en') {
+  return `<p class="promo-pill"><span class="dot"></span>${lang === 'ko' ? '한국 트렌드 안경테 · 착한 가격' : 'Trendy Korean frames · Unbeatable prices'}</p>`;
+}
+
+function promoBand(lang = 'en') {
+  const ko = lang === 'ko';
+  return `
+<section class="promo-band">
+  <div class="wrap promo-inner">
+    <div>
+      <p class="promo-kicker">${ko ? 'NEW OPTIX 추천' : 'Our specialty'}</p>
+      <h2 class="promo-title">${esc(ko ? S.promo.koHeadline : S.promo.headline)}</h2>
+      <p class="promo-sub">${esc(ko ? S.promo.koSub : S.promo.sub)}</p>
+    </div>
+    <a class="btn btn-accent" href="${ko ? dirUrl : '/brands/'}"${ko ? ' target="_blank" rel="noopener"' : ''}>${ko ? icon('pin') + '매장에서 써 보기' : 'See our frames ' + icon('arrow', 'ico-inline')}</a>
+  </div>
+</section>`;
+}
+
 /* ---------- 페이지: 홈 ---------- */
 
 const HOME_FAQS = [
   { q: 'Do you do eye exams?', a: `No — New Optix is an optical shop. We make and fit glasses and supply contact lenses. An independent optometrist practices next door, and we also fill prescriptions from any eye doctor.` },
   { q: 'Can I use a prescription from another eye doctor?', a: 'Yes. Bring a current prescription from any optometrist or ophthalmologist. If you only have your old glasses, we can read the lenses to help you pick a frame, but a new pair should be made from a current prescription.' },
   { q: 'How long does it take to get new glasses?', a: S.turnaroundNote },
-  { q: 'Do you take my vision insurance?', a: `We work with most major vision plans, including ${S.insurance.slice(0, 4).map((i) => i.name).join(', ')} and more. Call with your plan name and member ID and we’ll check your benefits before you come in.` },
+  { q: 'Do you take my vision insurance?', a: `${S.insuranceHeadline}. Call with your plan name and member ID and we’ll check your benefits before you come in.` },
   { q: 'Can you put new lenses in my current frame?', a: 'Yes, even if the frame was bought somewhere else, as long as it is in good condition. We inspect every frame first and tell you about any risk.' },
-  { q: 'Do I need an appointment?', a: 'Walk-ins are welcome for frame shopping, adjustments and repairs. If you want unhurried help choosing progressives or a large order, calling ahead helps us set aside time.' },
+  { q: 'Do I need an appointment?', a: 'Walk-ins are welcome for frame shopping and adjustments. If you want unhurried help choosing progressives or a large order, calling ahead helps us set aside time.' },
   { q: 'Do you speak Korean?', a: `Yes. We can help you in ${S.languages.join(' and ')}.` },
 ];
 
@@ -367,6 +389,7 @@ function homePage() {
 <section class="hero">
   <div class="wrap hero-grid">
     <div class="hero-copy">
+      ${promoPill()}
       <p class="eyebrow">Garden Grove optical shop · ${years} years</p>
       <h1 class="h1">Glasses that fit your face, your prescription <em>and</em> your budget.</h1>
       <p class="lead">From lightweight titanium to Lindberg and Gucci, fitted by opticians who take the time to get it right — and made in our own lab, usually in about 3 days.</p>
@@ -383,6 +406,7 @@ function homePage() {
     ${HERO_ART}
   </div>
 </section>
+${promoBand()}
 
 <section class="section">
   <div class="wrap">
@@ -475,8 +499,8 @@ ${ctaBand()}`;
 
   return page({
     pathName: '/',
-    title: `${S.name} | Eyeglasses & Optical Shop in Garden Grove, CA`,
-    description: `Garden Grove optical shop for ${years} years. Eyeglasses, progressives, prescription sunglasses, contacts and kids' glasses — made in our in-store lab, most in ~3 days. Most vision plans.`,
+    title: `${S.name} | Trendy Korean Frames & Eyeglasses in Garden Grove, CA`,
+    description: `Trendy Korean frames at unbeatable prices, plus Cartier, Gucci and Lindberg. Garden Grove optical shop for ${years} years — in-store lab, EyeMed, Medicare & HMO.`,
     body,
     schemas: [bizSchema(), faqSchema(HOME_FAQS)],
   });
@@ -491,7 +515,7 @@ ${crumbs([['Home', '/'], ['Services', '/services/']])}
   <div class="wrap narrow">
     <p class="eyebrow">Services</p>
     <h1 class="h1">Optical services in Garden Grove</h1>
-    <p class="lead">Frames, lenses, contacts, repairs and more — handled by opticians who fit every pair in person. ${esc(S.turnaroundNote.split('.')[0])}.</p>
+    <p class="lead">Frames, lenses, contacts and more — handled by opticians who fit every pair in person. ${esc(S.turnaroundNote.split('.')[0])}.</p>
   </div>
 </section>
 <section class="section pt0">
@@ -510,7 +534,7 @@ ${ctaBand()}`;
     pathName: '/services/',
     active: '/services/',
     title: `Optical Services in Garden Grove | ${S.name}`,
-    description: 'Progressive lenses, blue light and Transitions lenses, prescription sunglasses, contact lenses, kids’ glasses, sports goggles, repairs and lens replacement in Garden Grove, CA.',
+    description: 'Progressive lenses, blue light and Transitions lenses, prescription sunglasses, contact lenses, kids’ glasses, kids’ myopia control, sports goggles and lens replacement in Garden Grove, CA.',
     body,
     schemas: [crumbSchema([['Home', '/'], ['Services', '/services/']])],
   });
@@ -600,7 +624,7 @@ ${crumbs(trail)}
   <div class="wrap brand-groups">
     ${S.brands.map((g) => `
     <div class="brand-group">
-      <h2>${esc(g.group)}</h2>
+      <h2>${esc(g.group)}${g.note ? ` <span class="badge">${esc(g.note)}</span>` : ''}</h2>
       <ul>${g.items.map((b) => `<li>${esc(b)}</li>`).join('')}</ul>
     </div>`).join('')}
     <div class="brand-group lens">
@@ -618,8 +642,8 @@ ${crumbs(trail)}
 ${ctaBand('Looking for a specific brand or model? Call and we’ll check what’s in the shop.')}`;
   return page({
     pathName: '/brands/', active: '/brands/',
-    title: `Eyeglass Brands: Lindberg, Gucci, Silhouette & More | ${S.name} Garden Grove`,
-    description: `Frames from ${allBrands.slice(0, 6).join(', ')} and more at ${S.name} in Garden Grove. Lightweight titanium, designer, kids and sport eyewear.`,
+    title: `Eyeglass Brands: Cartier, Gucci, Lindberg & More | ${S.name} Garden Grove`,
+    description: `Frames from ${allBrands.slice(0, 6).join(', ')} and more at ${S.name} in Garden Grove. Plus trendy Korean frames, lightweight titanium and sport eyewear.`,
     body,
     schemas: [crumbSchema(trail)],
   });
@@ -630,6 +654,7 @@ ${ctaBand('Looking for a specific brand or model? Call and we’ll check what’
 const INS_FAQS = [
   { q: 'How do I know what my plan covers?', a: 'Call us with your plan name, the member’s name and date of birth (or member ID). We’ll look up your frame, lens and contact lens benefits and tell you before you visit.' },
   { q: 'What if my plan isn’t listed?', a: 'Call us anyway — our list changes. If we’re out of network for your plan, many plans still reimburse part of the cost; we’ll give you an itemized receipt to submit.' },
+  { q: 'Do you accept Medicare?', a: 'Yes. Original Medicare generally covers glasses only after cataract surgery, while many Medicare Advantage plans include yearly eyewear benefits. Call with your plan details and we’ll check your coverage.' },
   { q: 'Can I use my FSA or HSA card?', a: 'Yes. Prescription glasses, prescription sunglasses and contact lenses are generally eligible expenses. Check your plan for the exact rules.' },
   { q: 'Does my insurance cover the eye exam here?', a: 'New Optix doesn’t perform eye exams. Exam benefits are billed by the eye doctor who examines you.' },
 ];
@@ -648,7 +673,8 @@ ${crumbs(trail)}
 <section class="section pt0">
   <div class="wrap narrow">
     <div class="content-card">
-      <h2 class="h3">Vision plans we work with</h2>
+      <h2 class="h3">Insurance we accept</h2>
+      <p class="ins-lede">${esc(S.insuranceHeadline)}.</p>
       <ul class="ins-grid">${S.insurance.map((i) => `<li>${icon('shield')}<span>${esc(i.name)}${i.note ? `<small>${esc(i.note)}</small>` : ''}</span></li>`).join('')}</ul>
       <p class="fine">Plan participation can change. Please call to confirm before your visit.</p>
     </div>
@@ -670,8 +696,8 @@ ${faqBlock(INS_FAQS, 'Insurance questions')}
 ${ctaBand('Tell us your plan name and we’ll check your benefits before you come in.')}`;
   return page({
     pathName: '/insurance/', active: '/insurance/',
-    title: `Vision Insurance Accepted: VSP, EyeMed & More | ${S.name} Garden Grove`,
-    description: `${S.name} works with ${S.insurance.slice(0, 4).map((i) => i.name).join(', ')} and other vision plans. We check benefits and file claims. FSA/HSA cards accepted.`,
+    title: `Vision Insurance Accepted: EyeMed, Medicare & HMO Plans | ${S.name} Garden Grove`,
+    description: `${S.insuranceHeadline}. We check your benefits and file the claim. FSA/HSA cards accepted.`,
     body,
     schemas: [crumbSchema(trail), faqSchema(INS_FAQS)],
   });
@@ -728,7 +754,7 @@ ${crumbs(trail)}
   <div class="wrap narrow">
     <p class="eyebrow">Visit</p>
     <h1 class="h1">Hours, directions &amp; contact</h1>
-    <p class="lead">Walk-ins welcome for frame shopping, adjustments and repairs. Serving ${S.serviceArea.slice(0, -1).join(', ')} and ${S.serviceArea[S.serviceArea.length - 1]}.</p>
+    <p class="lead">Walk-ins welcome for frame shopping and adjustments. Serving ${S.serviceArea.slice(0, -1).join(', ')} and ${S.serviceArea[S.serviceArea.length - 1]}.</p>
   </div>
 </section>
 ${visitSection()}
@@ -747,7 +773,7 @@ ${ctaBand()}`;
 const KO_FAQS = [
   { q: '시력검사도 하나요?', a: 'New Optix는 안경점이라 시력검사는 하지 않습니다. 같은 건물에 독립 검안 진료소가 있고, 다른 안과·검안사의 처방전도 받습니다.' },
   { q: '안경은 며칠 걸리나요?', a: '매장 안 가공실에서 직접 만들어 대부분 영업일 기준 3일 정도면 됩니다. 고도수·일부 누진다초점·특수 코팅 렌즈는 제조사 제작이라 더 걸릴 수 있으며, 주문 시 예상 날짜를 알려드립니다.' },
-  { q: '안경 보험 되나요?', a: `${S.insurance.slice(0, 4).map((i) => i.name).join(', ')} 등 주요 안경 보험을 받습니다. 보험사 이름과 회원 정보를 전화로 알려주시면 방문 전에 혜택을 확인해 드립니다.` },
+  { q: '안경 보험 되나요?', a: `EyeMed를 비롯한 대부분의 주요 안경 보험과 Medicare, HMO 플랜을 받습니다. 보험사 이름과 회원 정보를 전화로 알려주시면 방문 전에 혜택을 확인해 드립니다.` },
   { q: '다른 곳에서 산 안경테에 렌즈만 바꿀 수 있나요?', a: '네, 테 상태가 괜찮으면 가능합니다. 작업 전에 테를 점검하고, 오래된 테는 파손 위험이 있으면 미리 말씀드립니다.' },
 ];
 
@@ -756,6 +782,7 @@ function koPage() {
 <section class="hero ko-hero">
   <div class="wrap hero-grid">
     <div class="hero-copy">
+      ${promoPill('ko')}
       <p class="eyebrow">가든그로브 안경점 · ${years}년</p>
       <h1 class="h1">얼굴에, 처방에, 예산에 맞는 안경.</h1>
       <p class="lead">가벼운 티타늄 안경테부터 Lindberg·Gucci까지. 매장 안 가공실에서 직접 만들어 대부분 3일 안에 찾아가실 수 있습니다. 한국어로 편하게 상담하세요.</p>
@@ -772,6 +799,7 @@ function koPage() {
     ${HERO_ART}
   </div>
 </section>
+${promoBand('ko')}
 
 <section class="section">
   <div class="wrap">
@@ -781,9 +809,8 @@ function koPage() {
       <div><b>블루라이트·변색 렌즈</b><span>화면 눈부심 완화, 햇빛에서 어두워지는 렌즈</span></div>
       <div><b>도수 선글라스</b><span>편광·틴트 렌즈, 누진 선글라스도 가능</span></div>
       <div><b>콘택트렌즈</b><span>원데이·월착용·난시용·다초점 (콘택트렌즈 처방전 필요)</span></div>
-      <div><b>어린이 안경</b><span>잘 휘고 튼튼한 테, 충격에 강한 렌즈</span></div>
+      <div><b>어린이 근시 관리</b><span>근시 억제 렌즈, MiSight® 콘택트렌즈 (검안사 처방 필요)</span></div>
       <div><b>스포츠 고글</b><span>농구·피클볼·라켓 운동용 도수 고글</span></div>
-      <div><b>수리·조정</b><span>코패드·나사 교체, 흘러내리는 안경 조정 — 예약 없이 방문</span></div>
       <div><b>렌즈만 교체</b><span>다른 곳에서 산 안경테에도 새 렌즈를</span></div>
     </div>
     <p class="center fine">자세한 영어 안내: <a class="text-link" href="/services/">Services</a></p>
@@ -793,7 +820,7 @@ function koPage() {
 <section class="section tint">
   <div class="wrap">
     <div class="split-head">
-      <div><p class="eyebrow">보험·결제</p><h2 class="h2">주요 안경 보험을 받습니다</h2></div>
+      <div><p class="eyebrow">보험·결제</p><h2 class="h2">EyeMed 등 주요 안경 보험, Medicare·HMO</h2></div>
     </div>
     <div class="ins-list">${S.insurance.map((i) => `<span>${esc(i.name)}</span>`).join('')}</div>
     <p class="fine">현금, 신용카드, Apple Pay·Google Pay, FSA/HSA 카드 사용 가능. 다른 안과·검안사 처방전도 받습니다.</p>
@@ -817,7 +844,7 @@ ${faqBlock(KO_FAQS, '자주 묻는 질문')}`;
 
   return page({
     pathName: '/ko/', lang: 'ko', active: '/ko/',
-    title: `가든그로브 안경점 New Optix | 한국어 상담 · 누진다초점 · 안경 보험`,
+    title: `가든그로브 안경점 New Optix | 한국 트렌드 안경테 · 누진다초점 · 안경 보험`,
     description: `가든그로브 ${years}년 안경점 New Optix. 누진다초점, 도수 선글라스, 콘택트렌즈, 어린이 안경, 렌즈 교체. 매장 가공실에서 약 3일 제작, 주요 안경 보험 가능, 한국어 상담.`,
     body,
     schemas: [faqSchema(KO_FAQS)],

@@ -112,6 +112,19 @@ body.ko .h1, body.ko .h2 { font-family: 'Noto Sans KR', var(--sans); font-weight
 .chip-b { top: 70%; right: -2%; }
 .chip-c { bottom: 3%; left: 6%; }
 
+/* ---------- 한국 트렌드 테 메시지 ---------- */
+.promo-pill { display: inline-flex; align-items: center; gap: 10px; background: var(--ink); color: #fff; font-weight: 600; font-size: 15px; padding: 9px 18px 9px 14px; border-radius: 999px; margin-bottom: 18px; }
+.promo-pill .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(201, 151, 79, .28); }
+.promo-band { background: var(--ink); color: #fff; padding: 44px 0; border-top: 4px solid var(--accent); }
+.promo-inner { display: flex; align-items: center; justify-content: space-between; gap: 32px; }
+.promo-kicker { font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+.promo-title { font-family: var(--serif); font-weight: 600; font-size: clamp(28px, 3.6vw, 44px); line-height: 1.1; letter-spacing: -0.01em; }
+body.ko .promo-title { font-family: 'Noto Sans KR', var(--sans); font-weight: 700; }
+.promo-sub { color: #c9d1d8; font-size: 17px; margin-top: 10px; max-width: 36em; }
+.promo-inner .btn { flex: none; }
+.badge { display: inline-block; vertical-align: middle; margin-left: 6px; background: var(--accent); color: var(--ink); font-size: 11px; letter-spacing: .06em; padding: 3px 9px; border-radius: 999px; }
+.ins-lede { font-size: 17px; color: var(--ink-2); margin: -4px 0 18px; }
+
 /* ---------- 서비스 카드 ---------- */
 .svc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
 .svc-card { display: flex; flex-direction: column; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 26px 22px; text-decoration: none; transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease; }
@@ -290,6 +303,7 @@ body.ko .h1, body.ko .h2 { font-family: 'Noto Sans KR', var(--sans); font-weight
   .rating-card { max-width: 340px; }
   .cta-inner { flex-direction: column; align-items: flex-start; }
   .split-head { flex-direction: column; align-items: flex-start; }
+  .promo-inner { flex-direction: column; align-items: flex-start; gap: 20px; }
   .info-strip { grid-template-columns: 1fr; }
   .mobile-bar { display: grid; grid-template-columns: 1fr 1fr; position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; background: var(--ink); padding-bottom: env(safe-area-inset-bottom); box-shadow: 0 -4px 20px rgba(0,0,0,.15); }
   .mobile-bar a { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 56px; color: #fff; text-decoration: none; font-weight: 600; }
@@ -316,4 +330,7 @@ body.ko .h1, body.ko .h2 { font-family: 'Noto Sans KR', var(--sans); font-weight
   .brand-cloud span { font-size: 17px; padding: 8px 14px; }
   .map-frame, .map-frame iframe { min-height: 300px; }
   .honest { padding: 20px; }
+  .promo-pill { font-size: 13px; padding: 8px 14px 8px 12px; gap: 8px; white-space: nowrap; }
+  .promo-band { padding: 36px 0; }
+  .promo-inner .btn { width: 100%; }
 }
