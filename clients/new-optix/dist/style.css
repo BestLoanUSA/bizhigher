@@ -169,17 +169,6 @@ body.ko .promo-title { font-family: 'Noto Sans KR', var(--sans); font-weight: 70
 .themes .ico { color: var(--accent-deep); margin-top: 3px; }
 .themes b { color: var(--ink); }
 
-/* ---------- 옆집 검안 ---------- */
-.neighbor { background: var(--ink); color: #e9edf0; }
-.neighbor-inner { display: grid; grid-template-columns: 80px 1fr; gap: 32px; max-width: 900px; }
-.neighbor-mark { width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,.07); display: grid; place-items: center; }
-.neighbor-mark .ico-lg { color: var(--accent); }
-.neighbor .eyebrow { color: var(--accent); }
-.neighbor .h2 { color: #fff; margin-bottom: 18px; }
-.neighbor p { font-size: 17px; }
-.neighbor .fine { color: #a9b3bc; font-size: 13.5px; margin-top: 22px; }
-.neighbor .text-link { color: #fff; margin-top: 16px; }
-
 /* ---------- 보험 ---------- */
 .ins-list { display: flex; flex-wrap: wrap; gap: 10px; }
 .ins-list span { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 18px; font-weight: 600; }
@@ -323,7 +312,6 @@ body.ko .promo-title { font-family: 'Noto Sans KR', var(--sans); font-weight: 70
   .chip { font-size: 12px; padding: 8px 10px; }
   .chip b { font-size: 12.5px; }
   .chip-b { right: 0; }
-  .neighbor-inner { grid-template-columns: 1fr; gap: 18px; }
   .content-card { padding: 22px 18px; }
   .svc-row { grid-template-columns: 34px 1fr; padding: 20px 18px; gap: 16px; }
   .svc-row > .ico-inline { display: none; }

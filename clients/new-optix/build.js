@@ -190,7 +190,6 @@ function footer(lang) {
     </div>
   </div>
   <div class="wrap foot-legal">
-    <p>${esc(S.neighbor.disclosure)}</p>
     <p>© ${new Date().getFullYear()} ${esc(S.name)}. All rights reserved.</p>
   </div>
 </footer>
@@ -245,24 +244,6 @@ ${footer(lang)}
 }
 
 /* ---------- 공통 섹션 ---------- */
-
-function neighborSection() {
-  const n = S.neighbor;
-  const link = n.url ? `<a class="text-link" href="${esc(n.url)}" rel="noopener">Visit ${esc(n.name)}'s website ${icon('arrow', 'ico-inline')}</a>` : '';
-  return `
-<section class="section neighbor">
-  <div class="wrap neighbor-inner">
-    <div class="neighbor-mark">${icon('rx', 'ico-lg')}</div>
-    <div>
-      <p class="eyebrow">Need an eye exam first?</p>
-      <h2 class="h2">An independent optometrist practices right next door.</h2>
-      <p>New Optix is an optical shop — we don't perform eye exams. If you need a new prescription, ${esc(n.name)} is located in the same building, so you can have your eyes examined and then choose your glasses without driving across town. Prescriptions from any eye doctor are always welcome here.</p>
-      ${link}
-      <p class="fine">${esc(n.disclosure)}</p>
-    </div>
-  </div>
-</section>`;
-}
 
 function visitSection(lang = 'en') {
   const ko = lang === 'ko';
@@ -367,7 +348,7 @@ function promoBand(lang = 'en') {
 /* ---------- 페이지: 홈 ---------- */
 
 const HOME_FAQS = [
-  { q: 'Do you do eye exams?', a: `No — New Optix is an optical shop. We make and fit glasses and supply contact lenses. An independent optometrist practices next door, and we also fill prescriptions from any eye doctor.` },
+  { q: 'Do you do eye exams?', a: `No — New Optix is an optical shop. We make and fit glasses and supply contact lenses. We fill prescriptions from any eye doctor.` },
   { q: 'Can I use a prescription from another eye doctor?', a: 'Yes. Bring a current prescription from any optometrist or ophthalmologist. If you only have your old glasses, we can read the lenses to help you pick a frame, but a new pair should be made from a current prescription.' },
   { q: 'How long does it take to get new glasses?', a: S.turnaroundNote },
   { q: 'Do you take my vision insurance?', a: `${S.insuranceHeadline}. Call with your plan name and member ID and we’ll check your benefits before you come in.` },
@@ -439,7 +420,7 @@ ${promoBand()}
       <a class="text-link" href="/brands/">See all brands ${icon('arrow', 'ico-inline')}</a>
     </div>
     <div class="brand-cloud">${allBrands.map((b) => `<span>${esc(b)}</span>`).join('')}</div>
-    <p class="fine">Lens technology from ${S.lensBrands.join(', ')}.</p>
+    <p class="fine">Lens options: ${S.lensOptions.join(', ')}.</p>
   </div>
 </section>
 
@@ -448,7 +429,7 @@ ${promoBand()}
     <p class="eyebrow center">How it works</p>
     <h2 class="h2 center">New glasses in four easy steps</h2>
     <ol class="steps">
-      <li><span class="num">1</span><h3>Bring your prescription</h3><p>From any eye doctor — or have an exam next door first.</p></li>
+      <li><span class="num">1</span><h3>Bring your prescription</h3><p>A current prescription from any eye doctor.</p></li>
       <li><span class="num">2</span><h3>Choose frame &amp; lenses</h3><p>Try on as many as you like. We explain lens options in plain language.</p></li>
       <li><span class="num">3</span><h3>We make them in-store</h3><p>Measured precisely and cut in our lab — usually about 3 business days.</p></li>
       <li><span class="num">4</span><h3>Pick up &amp; fine-tune</h3><p>We adjust the fit on your face. Come back any time for free adjustments.</p></li>
@@ -477,7 +458,6 @@ ${promoBand()}
   </div>
 </section>
 
-${neighborSection()}
 
 <section class="section ins-band">
   <div class="wrap">
@@ -528,7 +508,6 @@ ${crumbs([['Home', '/'], ['Services', '/services/']])}
     </a>`).join('')}
   </div>
 </section>
-${neighborSection()}
 ${ctaBand()}`;
   return page({
     pathName: '/services/',
@@ -629,7 +608,7 @@ ${crumbs(trail)}
     </div>`).join('')}
     <div class="brand-group lens">
       <h2>Lens technology</h2>
-      <ul>${S.lensBrands.map((b) => `<li>${esc(b)}</li>`).join('')}</ul>
+      <ul>${S.lensOptions.map((b) => `<li>${esc(b)}</li>`).join('')}</ul>
     </div>
   </div>
   <div class="wrap narrow">
@@ -729,8 +708,6 @@ ${crumbs(trail)}
       <li>Help in ${S.languages.join(' and ')}</li>
     </ul>
     <!-- TODO(owner): 사장님 이름·사진·창업 이야기 들어갈 자리 -->
-    <h2>Right next door: eye exams</h2>
-    <p>${esc(S.neighbor.disclosure)} If you need an exam, ${esc(S.neighbor.name)} practices in the same building.</p>
   </div>
 </section>
 ${visitSection()}
@@ -771,7 +748,7 @@ ${ctaBand()}`;
 /* ---------- 페이지: 한국어 ---------- */
 
 const KO_FAQS = [
-  { q: '시력검사도 하나요?', a: 'New Optix는 안경점이라 시력검사는 하지 않습니다. 같은 건물에 독립 검안 진료소가 있고, 다른 안과·검안사의 처방전도 받습니다.' },
+  { q: '시력검사도 하나요?', a: 'New Optix는 안경점이라 시력검사는 하지 않습니다. 다른 안과·검안사의 처방전으로 안경을 맞춰 드립니다.' },
   { q: '안경은 며칠 걸리나요?', a: '매장 안 가공실에서 직접 만들어 대부분 영업일 기준 3일 정도면 됩니다. 고도수·일부 누진다초점·특수 코팅 렌즈는 제조사 제작이라 더 걸릴 수 있으며, 주문 시 예상 날짜를 알려드립니다.' },
   { q: '안경 보험 되나요?', a: `EyeMed를 비롯한 대부분의 주요 안경 보험과 Medicare, HMO 플랜을 받습니다. 보험사 이름과 회원 정보를 전화로 알려주시면 방문 전에 혜택을 확인해 드립니다.` },
   { q: '다른 곳에서 산 안경테에 렌즈만 바꿀 수 있나요?', a: '네, 테 상태가 괜찮으면 가능합니다. 작업 전에 테를 점검하고, 오래된 테는 파손 위험이 있으면 미리 말씀드립니다.' },
@@ -824,18 +801,6 @@ ${promoBand('ko')}
     </div>
     <div class="ins-list">${S.insurance.map((i) => `<span>${esc(i.name)}</span>`).join('')}</div>
     <p class="fine">현금, 신용카드, Apple Pay·Google Pay, FSA/HSA 카드 사용 가능. 다른 안과·검안사 처방전도 받습니다.</p>
-  </div>
-</section>
-
-<section class="section neighbor">
-  <div class="wrap neighbor-inner">
-    <div class="neighbor-mark">${icon('rx', 'ico-lg')}</div>
-    <div>
-      <p class="eyebrow">시력검사가 먼저 필요하신가요?</p>
-      <h2 class="h2">같은 건물에 독립 검안 진료소가 있습니다.</h2>
-      <p>New Optix는 시력검사를 하지 않는 안경점입니다. 새 처방이 필요하시면 같은 건물의 ${esc(S.neighbor.name)}에서 검사를 받으신 뒤 바로 안경을 고르실 수 있습니다.</p>
-      <p class="fine">검안 진료소는 New Optix와 별개로 운영되는 독립 사업체입니다. 검사와 안경 구입은 원하시는 곳 어디서나 하실 수 있습니다.</p>
-    </div>
   </div>
 </section>
 

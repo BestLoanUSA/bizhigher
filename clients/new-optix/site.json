@@ -6,9 +6,7 @@
     "familyOwned",
     "languages",
     "brands 중 최초 가정분 (Tom Ford, Prada, Saint Laurent, Burberry, Charmant, Masunaga, Flexon, Ray-Ban, Coach, Kate Spade, Calvin Klein, Oakley, Maui Jim)",
-    "lensBrands 전체",
     "payments 세부 항목",
-    "neighbor.name / neighbor.url (Amy 검안 진료소 사이트 미정)",
     "email"
   ],
   "draft": true,
@@ -84,11 +82,6 @@
       "close": null
     }
   ],
-  "neighbor": {
-    "name": "Dr. Amy [Last Name], OD",
-    "url": "",
-    "disclosure": "The optometry practice next door is an independently owned and operated business. New Optix does not provide eye examinations. You are free to have your eyes examined, and your prescription filled, wherever you choose."
-  },
   "brands": [
     {
       "group": "Designer & luxury",
@@ -140,12 +133,11 @@
       ]
     }
   ],
-  "lensBrands": [
-    "Essilor Varilux",
-    "ZEISS",
-    "HOYA",
-    "Transitions",
-    "Crizal"
+  "lensOptions": [
+    "Digital computer lenses",
+    "Blue light blocking",
+    "Premium coatings",
+    "Transitions"
   ],
   "insurance": [
     {
