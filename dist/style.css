@@ -934,6 +934,125 @@ img { max-width: 100%; display: block; }
 .vs-note { text-align: center; font-size: 13px; color: var(--ink-400); margin-top: 22px; }
 .vs-note a { color: var(--blue-600); font-weight: 700; }
 
+/* ==========================================================
+   v23 "다크 프리미엄" — 구매 결정 페이지(서비스 상세·패키지 상세·가격) 몰입감 강화
+   히어로의 오로라 글로우·글래스 카드 언어를 구매 직전 페이지까지 확장
+   ========================================================== */
+
+/* ---------- 서비스·패키지 상세 헤더 — 다크 글래스 ---------- */
+.detail-head {
+  position: relative; overflow: hidden; color: #fff;
+  background: radial-gradient(900px 480px at 12% -10%, #10245F 0%, var(--space-900) 50%, var(--space-950) 100%);
+}
+.detail-head::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(125, 162, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125, 162, 255, 0.06) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(640px 420px at 18% 30%, #000 20%, transparent 72%);
+  mask-image: radial-gradient(640px 420px at 18% 30%, #000 20%, transparent 72%);
+}
+.detail-head::after {
+  content: ""; position: absolute; inset: -30%; pointer-events: none;
+  background:
+    radial-gradient(420px 320px at 20% 60%, rgba(10, 77, 245, 0.28), transparent 70%),
+    radial-gradient(420px 320px at 80% 30%, rgba(124, 92, 255, 0.18), transparent 70%);
+  filter: blur(40px);
+  animation: aurora 20s ease-in-out infinite alternate;
+}
+.detail-head > .container-narrow { position: relative; z-index: 1; }
+.detail-head .back-link { color: var(--mist-400); }
+.detail-head .back-link:hover { color: #fff; }
+.detail-title { color: #fff; }
+.detail-sub { color: var(--mist-300); }
+.detail-head .badge { background: rgba(125, 162, 255, 0.12); color: var(--blue-300); border: 1px solid rgba(125, 162, 255, 0.3); }
+.detail-head .badge-green { background: rgba(126, 240, 198, 0.12); color: #7EF0C6; border-color: rgba(126, 240, 198, 0.3); }
+.detail-head .badge-dark { background: rgba(255, 255, 255, 0.12); color: #fff; border: 1px solid rgba(255, 255, 255, 0.2); }
+
+/* 가격 박스 — 글래스 카드로 떠 있게 */
+.pricebox {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(125, 162, 255, 0.24);
+  -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+  box-shadow: 0 30px 80px rgba(3, 8, 30, 0.55), 0 0 0 1px rgba(34, 211, 238, 0.05) inset;
+}
+.pricebox-price { color: #fff; }
+.pricebox-sub { color: var(--mist-400); }
+.pricebox-secure { color: var(--mist-400); }
+.detail-head .btn-ghost { color: #fff; border-color: rgba(255, 255, 255, 0.26); background: rgba(255, 255, 255, 0.04); }
+.detail-head .btn-ghost:hover { border-color: rgba(255, 255, 255, 0.6); }
+
+/* 플랜 업셀 배너 — 다크 헤더 위에서도 선명하게 */
+.detail-head .plan-hint { background: rgba(34, 211, 238, 0.08); border-color: rgba(34, 211, 238, 0.28); color: var(--mist-300); }
+.detail-head .plan-hint b { color: #fff; }
+.detail-head .plan-hint-badge { box-shadow: 0 6px 16px rgba(10, 77, 245, 0.35); }
+
+/* ---------- 포함 내역 체크 — 그라디언트 배지 ---------- */
+.includes-list li, .pk-list li { padding-left: 32px; }
+.includes-list li::before, .pk-list li::before {
+  content: "✓"; left: 0; top: 50%; transform: translateY(-50%);
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--grad-btn); color: #fff; font-size: 11px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 12px rgba(10, 77, 245, 0.28);
+}
+.pk-list li::before { width: 17px; height: 17px; font-size: 9px; top: 9px; transform: none; }
+
+/* ---------- 주문 프로세스 카드 — 번호 배지 ---------- */
+.proc-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 12px; margin-bottom: 14px;
+  background: var(--grad-btn); color: #fff; font-weight: 800; font-size: 16px;
+  box-shadow: 0 8px 20px rgba(10, 77, 245, 0.3);
+}
+
+/* ---------- FAQ 아코디언 (네이티브 details/summary — JS 불필요, 콘텐츠는 항상 DOM에 존재) ---------- */
+.faq-item { border-bottom: 1px solid var(--line); }
+.faq-item summary.faq-q {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 22px 0; margin: 0; cursor: pointer; list-style: none;
+}
+.faq-item summary.faq-q::-webkit-details-marker { display: none; }
+.faq-item summary.faq-q::after {
+  content: "+"; flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--gray-50); color: var(--blue-600); font-size: 18px; font-weight: 800;
+  transition: transform .25s ease, background-color .25s ease;
+}
+.faq-item[open] summary.faq-q::after { transform: rotate(45deg); background: var(--blue-50); }
+.faq-item .faq-a { padding: 0 0 22px; }
+
+/* ---------- 가격 페이지 플랜 매트릭스 — 다크 글래스 ---------- */
+.pkg-band .h2 { color: #fff; }
+.pkg-band .eyebrow { color: var(--cyan-400); }
+.pkg-band .tier { background: rgba(255, 255, 255, 0.05); border-color: rgba(125, 162, 255, 0.18); color: #fff; }
+.pkg-band .tier:hover { border-color: rgba(125, 162, 255, 0.4); }
+.pkg-band .tier-pop {
+  background: linear-gradient(rgba(13, 22, 56, 0.92), rgba(13, 22, 56, 0.92)) padding-box, var(--grad-brand) border-box;
+  border: 2px solid transparent; box-shadow: 0 24px 64px rgba(34, 211, 238, 0.18);
+}
+.pkg-band .h3 { color: #fff; }
+.pkg-band .pk-sum, .pkg-band .pk-total { color: var(--mist-400); }
+.pkg-band .pk-sum s { color: var(--mist-400); }
+.pkg-band .pk-list li { color: var(--mist-300); }
+.pkg-band .pk-more { color: var(--blue-300); }
+.pkg-band .btn-ghost { color: #fff; border-color: rgba(255, 255, 255, 0.26); background: rgba(255, 255, 255, 0.04); }
+.pkg-band .btn-ghost:hover { border-color: rgba(255, 255, 255, 0.6); }
+.pkg-band .period-toggle { background: rgba(255, 255, 255, 0.06); border-color: rgba(125, 162, 255, 0.22); }
+.pkg-band .period-toggle button { color: var(--mist-300); }
+.pkg-band .gift-note { background: rgba(255, 255, 255, 0.05); border-color: rgba(125, 162, 255, 0.22); color: var(--mist-300); }
+.pkg-band .gift-note b { color: #fff; }
+.pkg-band .note-text { color: var(--mist-400); }
+
+@media (prefers-reduced-motion: reduce) {
+  .detail-head::after { animation: none; }
+}
+
+@media (max-width: 767px) {
+  .pkg-band .pk-grid { gap: 20px; }
+}
+
 @media (max-width: 767px) {
   .h1-hero { font-size: 28px; }
   .vs-table { grid-template-columns: 1fr 1.22fr; }

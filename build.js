@@ -305,7 +305,7 @@ function packageMatrixSection() {
       </div>`;
   }).join('');
   return `
-<section class="section" id="plans">
+<section class="section pkg-band" id="plans">
   <div class="container">
     <p class="eyebrow">PLANS</p>
     <h2 class="h2">우리 가게 마케팅, 통째로 맡기세요</h2>
@@ -433,10 +433,11 @@ function packagePage(p) {
     </div>
   </div>
 </section>
-<section class="section section-gray">
-  <div class="container-narrow">
-    <h2 class="h2">다른 플랜과 비교하기</h2>
-    <div class="hero-ctas"><a href="/pricing/#plans" class="btn btn-primary">전체 플랜 보기</a></div>
+<section class="cta-band">
+  <div class="container center">
+    <h2 class="cta-title">${p.name}, 지금 바로 시작할 수 있습니다</h2>
+    <p class="cta-sub">견적 미팅도, 영업 전화도 없습니다 — 위에서 기간만 고르면 끝입니다.</p>
+    <div class="hero-ctas"><a href="/pricing/#plans" class="btn btn-white">전체 플랜 비교하기</a></div>
   </div>
 </section>
 ` + FOOTER;
@@ -1034,7 +1035,7 @@ function homePage() {
 <section class="section">
   <div class="container-narrow">
     <h2 class="h2">자주 묻는 질문</h2>
-    ${DATA.faqs.map((f) => `<div class="faq-item"><h3 class="faq-q">${f.q}</h3><p class="faq-a">${f.a}</p></div>`).join('')}
+    ${DATA.faqs.map((f, i) => `<details class="faq-item"${i === 0 ? ' open' : ''}><summary class="faq-q">${f.q}</summary><p class="faq-a">${f.a}</p></details>`).join('')}
   </div>
 </section>
 ` + FOOTER;
@@ -1336,10 +1337,10 @@ function servicePage(s, posts) {
   <div class="container">
     <h2 class="h2">주문 후 이렇게 진행됩니다</h2>
     <div class="grid4">
-      <div class="step-card"><p class="tl-tag">STEP 1 · 5분</p><h3 class="h3">비즈니스 정보 입력</h3><p class="body-sm">결제 직후 간단한 질문지 작성 (최초 1회만)</p></div>
-      <div class="step-card"><p class="tl-tag">STEP 2</p><h3 class="h3">AI 제작</h3><p class="body-sm">AI가 브랜드 정보를 바탕으로 초안을 제작합니다</p></div>
-      <div class="step-card"><p class="tl-tag">STEP 3</p><h3 class="h3">전문가 검수</h3><p class="body-sm">마케팅 전문가가 품질·사실관계를 확인합니다</p></div>
-      <div class="step-card"><p class="tl-tag">STEP 4</p><h3 class="h3">딜리버리</h3><p class="body-sm">이메일로 결과물과 사용 가이드를 받아보세요</p></div>
+      <div class="step-card"><span class="proc-num">1</span><p class="tl-tag">5분</p><h3 class="h3">비즈니스 정보 입력</h3><p class="body-sm">결제 직후 간단한 질문지 작성 (최초 1회만)</p></div>
+      <div class="step-card"><span class="proc-num">2</span><h3 class="h3">AI 제작</h3><p class="body-sm">AI가 브랜드 정보를 바탕으로 초안을 제작합니다</p></div>
+      <div class="step-card"><span class="proc-num">3</span><h3 class="h3">전문가 검수</h3><p class="body-sm">마케팅 전문가가 품질·사실관계를 확인합니다</p></div>
+      <div class="step-card"><span class="proc-num">4</span><h3 class="h3">딜리버리</h3><p class="body-sm">이메일로 결과물과 사용 가이드를 받아보세요</p></div>
     </div>
   </div>
 </section>
@@ -1355,7 +1356,7 @@ ${s.faqs && s.faqs.length ? `
 <section class="section section-gray">
   <div class="container-narrow">
     <h2 class="h2">자주 묻는 질문</h2>
-    ${s.faqs.map((f) => `<div class="faq-item"><h3 class="faq-q">${f.q}</h3><p class="faq-a">${f.a}</p></div>`).join('')}
+    ${s.faqs.map((f, i) => `<details class="faq-item"${i === 0 ? ' open' : ''}><summary class="faq-q">${f.q}</summary><p class="faq-a">${f.a}</p></details>`).join('')}
   </div>
 </section>` : ''}
 ${relatedPosts.length ? `
