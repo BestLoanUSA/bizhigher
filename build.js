@@ -884,9 +884,9 @@ function homePage() {
     <p class="eyebrow">HOW IT WORKS</p>
     <h2 class="h2">대행사 미팅은 없습니다</h2>
     <div class="stack-zone">
-      <div class="stack-card"><span class="stack-num">01</span><h3 class="stack-title">쇼핑하듯 주문</h3><p class="stack-desc">모든 가격이 공개돼 있습니다. 견적 미팅 0번, 영업 전화 0통 — 대행사 계약에 쓰던 2주를 클릭 몇 번으로 끝내세요.</p></div>
-      <div class="stack-card stack-c2"><span class="stack-num">02</span><h3 class="stack-title">AI 제작 + 전문가 검수</h3><p class="stack-desc">AI가 몇 시간 만에 초안을 만들고, 광고 전문가가 전략과 디테일을 잡습니다. 대행사 품질은 그대로, 인건비 거품은 뺐습니다 — AI를 제대로 쓰는 회사만 낼 수 있는 가격입니다.</p></div>
-      <div class="stack-card stack-c3"><span class="stack-num">03</span><h3 class="stack-title">받고 끝이 아닙니다</h3><p class="stack-desc">영업일 3일 내 딜리버리, 수정 1회 무료. 구독이면 AI가 24시간 데이터를 지켜보며 매주 최적화 사이클이 자동으로 돕니다.</p></div>
+      <div class="stack-slot"><div class="stack-card"><span class="stack-num">01</span><h3 class="stack-title">쇼핑하듯 주문</h3><p class="stack-desc">모든 가격이 공개돼 있습니다. 견적 미팅 0번, 영업 전화 0통 — 대행사 계약에 쓰던 2주를 클릭 몇 번으로 끝내세요.</p></div></div>
+      <div class="stack-slot"><div class="stack-card stack-c2"><span class="stack-num">02</span><h3 class="stack-title">AI 제작 + 전문가 검수</h3><p class="stack-desc">AI가 몇 시간 만에 초안을 만들고, 광고 전문가가 전략과 디테일을 잡습니다. 대행사 품질은 그대로, 인건비 거품은 뺐습니다 — AI를 제대로 쓰는 회사만 낼 수 있는 가격입니다.</p></div></div>
+      <div class="stack-slot"><div class="stack-card stack-c3"><span class="stack-num">03</span><h3 class="stack-title">받고 끝이 아닙니다</h3><p class="stack-desc">영업일 3일 내 딜리버리, 수정 1회 무료. 구독이면 AI가 24시간 데이터를 지켜보며 매주 최적화 사이클이 자동으로 돕니다.</p></div></div>
     </div>
   </div>
 </section>
