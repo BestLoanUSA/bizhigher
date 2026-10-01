@@ -679,8 +679,10 @@ img { max-width: 100%; display: block; }
   box-shadow: 0 24px 60px rgba(10, 27, 77, 0.12);
   display: flex; flex-direction: column; justify-content: center;
 }
-.stack-c2 { top: 138px; background: linear-gradient(150deg, #F2F6FF, #E6EEFF); }
-.stack-c3 { top: 168px; background: linear-gradient(140deg, #0A4DF5, #2F6BFF 55%, #4338CA); border-color: transparent; color: #fff; box-shadow: 0 28px 70px rgba(10, 77, 245, 0.35); }
+/* 세 카드 모두 같은 top 값 — 완전히 같은 위치에서 포개져 이전 카드를 100% 가린다.
+   (DOM 순서상 뒤에 있는 카드가 자동으로 위에 그려진다) */
+.stack-c2 { background: linear-gradient(150deg, #F2F6FF, #E6EEFF); }
+.stack-c3 { background: linear-gradient(140deg, #0A4DF5, #2F6BFF 55%, #4338CA); border-color: transparent; color: #fff; box-shadow: 0 28px 70px rgba(10, 77, 245, 0.35); }
 .stack-num { font-size: 74px; font-weight: 900; letter-spacing: -0.04em; line-height: 1; opacity: 0.12; margin-bottom: 10px; }
 .stack-c3 .stack-num { opacity: 0.28; }
 .stack-title { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 12px; }
@@ -831,8 +833,6 @@ img { max-width: 100%; display: block; }
   .stack-slot { min-height: 62vh; }
   .stack-slot:last-child { min-height: 72vh; }
   .stack-card { top: 86px; min-height: 0; padding: 34px 24px; }
-  .stack-c2 { top: 108px; }
-  .stack-c3 { top: 130px; }
   .stack-num { font-size: 52px; }
   .stack-title { font-size: 23px; }
   .stack-desc { font-size: 15.5px; }
