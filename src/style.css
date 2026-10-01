@@ -666,25 +666,46 @@ img { max-width: 100%; display: block; }
 .hero-cine.cine-on .cine-stage2 > * { position: relative; z-index: 1; }
 
 /* ---------- 스태킹 카드 (HOW IT WORKS) ---------- */
-.stack-zone { display: flex; flex-direction: column; }
-/* 각 카드를 뷰포트보다 큰 슬롯 안에 넣어 sticky로 "붙어있는" 구간 자체를 늘린다 —
-   슬롯이 짧으면(카드 높이만큼만) 카드가 붙는 시간이 거의 없어 세 장이 거의 안 겹친 채
-   바로 다음 섹션으로 넘어가 버린다 */
-.stack-slot { position: relative; min-height: 85vh; }
-.stack-slot:last-child { min-height: 95vh; }
+/* 카드가 쌓이는 동안 약간의 추가 스크롤 여유(gap)와 마지막 카드 뒤 여백(padding-bottom)을
+   둬서 전환이 급하게 끝나거나 다음 섹션에 바로 붙어버리지 않게 한다 */
+.stack-zone { display: flex; flex-direction: column; gap: 130px; padding-bottom: 40px; }
 .stack-card {
   position: sticky; top: 108px;
   min-height: 340px; border-radius: 26px; padding: 52px 56px;
-  background: #fff; border: 1px solid var(--line);
-  box-shadow: 0 24px 60px rgba(10, 27, 77, 0.12);
+  border: 1.5px solid transparent;
+  background: linear-gradient(#fff, #fff) padding-box, linear-gradient(135deg, rgba(10, 77, 245, 0.22), rgba(34, 211, 238, 0.22)) border-box;
+  box-shadow: 0 -14px 40px -28px rgba(10, 27, 77, 0.3), 0 24px 60px rgba(10, 27, 77, 0.12);
   display: flex; flex-direction: column; justify-content: center;
+  /* --cover(0~1)는 JS가 스크롤에 따라 채운다: 다음 카드가 다가올수록 살짝 작아지고
+     어두워져 "뒤로 밀려나며 덮이는" 깊이감을 만든다. JS가 없거나 실패해도 0이라
+     카드는 정상 크기/밝기로 그대로 보인다 */
+  transform: scale(calc(1 - var(--cover, 0) * 0.05));
+  transform-origin: center top;
 }
-/* 세 카드 모두 같은 top 값 — 완전히 같은 위치에서 포개져 이전 카드를 100% 가린다.
-   (DOM 순서상 뒤에 있는 카드가 자동으로 위에 그려진다) */
-.stack-c2 { background: linear-gradient(150deg, #F2F6FF, #E6EEFF); }
-.stack-c3 { background: linear-gradient(140deg, #0A4DF5, #2F6BFF 55%, #4338CA); border-color: transparent; color: #fff; box-shadow: 0 28px 70px rgba(10, 77, 245, 0.35); }
-.stack-num { font-size: 74px; font-weight: 900; letter-spacing: -0.04em; line-height: 1; opacity: 0.12; margin-bottom: 10px; }
-.stack-c3 .stack-num { opacity: 0.28; }
+.stack-card > * { position: relative; z-index: 1; }
+.stack-card::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: #06101c; opacity: calc(var(--cover, 0) * 0.45);
+}
+/* 카드 간 겹침 폭 — 작게(14px) 둬도 위의 스케일+암전 효과 덕분에 또렷한 "쌓임"으로 보인다 */
+.stack-c2 {
+  top: 122px;
+  background: linear-gradient(150deg, #F2F6FF, #E6EEFF) padding-box, linear-gradient(135deg, rgba(124, 92, 255, 0.28), rgba(34, 211, 238, 0.24)) border-box;
+}
+.stack-c3 {
+  top: 136px; background: linear-gradient(140deg, #0A4DF5, #2F6BFF 55%, #4338CA);
+  border-color: transparent; color: #fff;
+  box-shadow: 0 -14px 40px -28px rgba(10, 27, 77, 0.3), 0 28px 70px rgba(10, 77, 245, 0.35);
+}
+.stack-num {
+  font-size: 74px; font-weight: 900; letter-spacing: -0.04em; line-height: 1; margin-bottom: 10px;
+  background: linear-gradient(120deg, var(--blue-600), var(--cyan-400));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: var(--blue-600); opacity: 0.4;
+}
+.stack-c3 .stack-num {
+  background: linear-gradient(120deg, #fff, rgba(255, 255, 255, 0.55));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: #fff; opacity: 0.55;
+}
 .stack-title { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 12px; }
 .stack-desc { font-size: 17px; line-height: 1.7; color: var(--ink-600); max-width: 560px; }
 .stack-c3 .stack-desc { color: #DCE7FF; }
@@ -830,9 +851,10 @@ img { max-width: 100%; display: block; }
   .page-head { padding-top: 118px; }
   .detail-head { padding-top: 112px; }
   .audit-hero { padding-top: 126px; }
-  .stack-slot { min-height: 62vh; }
-  .stack-slot:last-child { min-height: 72vh; }
+  .stack-zone { gap: 70px; }
   .stack-card { top: 86px; min-height: 0; padding: 34px 24px; }
+  .stack-c2 { top: 98px; }
+  .stack-c3 { top: 110px; }
   .stack-num { font-size: 52px; }
   .stack-title { font-size: 23px; }
   .stack-desc { font-size: 15.5px; }
@@ -1075,33 +1097,8 @@ img { max-width: 100%; display: block; }
 
 /* ==========================================================
    v24 "다크 프리미엄" 2단계 — 홈페이지 나머지 섹션
+   (스택 카드 스타일은 위쪽 .stack-zone 섹션에서 cover 효과와 함께 통합 관리)
    ========================================================== */
-
-/* ---------- HOW IT WORKS 스택 카드 — 그라디언트 스트로크 + 글로우 ---------- */
-.stack-card {
-  border: 1.5px solid transparent;
-  background: linear-gradient(#fff, #fff) padding-box, linear-gradient(135deg, rgba(10, 77, 245, 0.22), rgba(34, 211, 238, 0.22)) border-box;
-}
-.stack-c2 {
-  background: linear-gradient(150deg, #F2F6FF, #E6EEFF) padding-box, linear-gradient(135deg, rgba(124, 92, 255, 0.28), rgba(34, 211, 238, 0.24)) border-box;
-}
-.stack-c3 {
-  position: relative; overflow: hidden; border-color: transparent;
-  background: linear-gradient(140deg, #0A4DF5, #2F6BFF 55%, #4338CA);
-}
-.stack-c3::after {
-  content: ""; position: absolute; top: -45%; right: -15%; width: 65%; height: 150%; pointer-events: none;
-  background: radial-gradient(circle, rgba(34, 211, 238, 0.35), transparent 65%);
-}
-.stack-c3 > * { position: relative; z-index: 1; }
-.stack-num {
-  background: linear-gradient(120deg, var(--blue-600), var(--cyan-400));
-  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: var(--blue-600);
-}
-.stack-c3 .stack-num {
-  background: linear-gradient(120deg, #fff, rgba(255, 255, 255, 0.55));
-  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: #fff;
-}
 
 /* ---------- 숫자 섹션 — 통계 박스에 깊이감 ---------- */
 .stat-box { position: relative; overflow: hidden; transition: transform .2s ease, border-color .2s ease, background-color .2s ease; }
