@@ -1065,3 +1065,44 @@ img { max-width: 100%; display: block; }
   .vs-head.vs-old { border-radius: 12px 0 0 12px; }
   .vs-sub { margin-top: -16px; font-size: 14.5px; }
 }
+
+/* ==========================================================
+   v24 "다크 프리미엄" 2단계 — 홈페이지 나머지 섹션
+   ========================================================== */
+
+/* ---------- HOW IT WORKS 스택 카드 — 그라디언트 스트로크 + 글로우 ---------- */
+.stack-card {
+  border: 1.5px solid transparent;
+  background: linear-gradient(#fff, #fff) padding-box, linear-gradient(135deg, rgba(10, 77, 245, 0.22), rgba(34, 211, 238, 0.22)) border-box;
+}
+.stack-c2 {
+  background: linear-gradient(150deg, #F2F6FF, #E6EEFF) padding-box, linear-gradient(135deg, rgba(124, 92, 255, 0.28), rgba(34, 211, 238, 0.24)) border-box;
+}
+.stack-c3 { position: relative; overflow: hidden; }
+.stack-c3::after {
+  content: ""; position: absolute; top: -45%; right: -15%; width: 65%; height: 150%; pointer-events: none;
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.35), transparent 65%);
+}
+.stack-c3 > * { position: relative; z-index: 1; }
+.stack-num {
+  background: linear-gradient(120deg, var(--blue-600), var(--cyan-400));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: var(--blue-600);
+}
+.stack-c3 .stack-num {
+  background: linear-gradient(120deg, #fff, rgba(255, 255, 255, 0.55));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: #fff;
+}
+
+/* ---------- 숫자 섹션 — 통계 박스에 깊이감 ---------- */
+.stat-box { position: relative; overflow: hidden; transition: transform .2s ease, border-color .2s ease, background-color .2s ease; }
+.stat-box::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--blue-500), var(--cyan-400)); opacity: 0.65; }
+.stat-box:hover { transform: translateY(-4px); border-color: rgba(125, 162, 255, 0.36); background: rgba(255, 255, 255, 0.06); }
+
+/* ---------- 상품·블로그 카드 — 상시 은은한 액센트 ---------- */
+.prod-card { border-color: rgba(10, 77, 245, 0.1); }
+.prod-card::before { opacity: 0.32; }
+.prod-card:hover::before { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .stat-box, .prod-card { transition: none; }
+}
