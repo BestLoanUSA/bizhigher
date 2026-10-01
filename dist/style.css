@@ -1078,7 +1078,10 @@ img { max-width: 100%; display: block; }
 .stack-c2 {
   background: linear-gradient(150deg, #F2F6FF, #E6EEFF) padding-box, linear-gradient(135deg, rgba(124, 92, 255, 0.28), rgba(34, 211, 238, 0.24)) border-box;
 }
-.stack-c3 { position: relative; overflow: hidden; }
+.stack-c3 {
+  position: relative; overflow: hidden; border-color: transparent;
+  background: linear-gradient(140deg, #0A4DF5, #2F6BFF 55%, #4338CA);
+}
 .stack-c3::after {
   content: ""; position: absolute; top: -45%; right: -15%; width: 65%; height: 150%; pointer-events: none;
   background: radial-gradient(circle, rgba(34, 211, 238, 0.35), transparent 65%);
