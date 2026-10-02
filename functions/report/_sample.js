@@ -10,7 +10,7 @@
 import { computeScores } from '../api/_engine.js';
 
 const BIZ = {
-  name: '가든그로브 순두부 하우스 (예시)',
+  name: '가든그로브 순두부 하우스',
   found: true,
   rating: 4.3,
   reviewCount: 48,
@@ -18,7 +18,7 @@ const BIZ = {
   websiteUri: 'https://example.com',
   websiteReachable: true,
   hasHours: true,
-  address: 'Brookhurst St, Garden Grove, CA (예시)',
+  address: 'Brookhurst St, Garden Grove, CA',
   phone: '(714) 000-0000',
   primaryType: 'korean_restaurant',
   categoryGeneric: false,
@@ -26,9 +26,9 @@ const BIZ = {
 };
 
 const COMPETITORS = [
-  { name: '같은 동네 한식당 A (예시)', rating: 4.6, reviewCount: 312, distanceMi: 0.4 },
-  { name: '같은 동네 한식당 B (예시)', rating: 4.5, reviewCount: 190, distanceMi: 0.9 },
-  { name: '같은 동네 한식당 C (예시)', rating: 4.4, reviewCount: 141, distanceMi: 1.3 },
+  { name: '같은 동네 한식당 A', rating: 4.6, reviewCount: 312, distanceMi: 0.4 },
+  { name: '같은 동네 한식당 B', rating: 4.5, reviewCount: 190, distanceMi: 0.9 },
+  { name: '같은 동네 한식당 C', rating: 4.4, reviewCount: 141, distanceMi: 1.3 },
 ];
 
 const WEBCHECK = {

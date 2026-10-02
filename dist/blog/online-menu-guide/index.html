@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="/style.css?v=fc22d186">
+<link rel="stylesheet" href="/style.css?v=d8e882c1">
 <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"메뉴판을 온라인에 올리는 올바른 방법 (PDF 사진은 이제 그만)","description":"메뉴 PDF나 사진 한 장으로는 손님도 구글도 메뉴를 읽지 못합니다. 텍스트 메뉴 페이지를 만드는 순서와 구글 프로필 메뉴 연동, 관리 요령을 정리했습니다.","datePublished":"2026-09-29","dateModified":"2026-09-29","inLanguage":"ko","author":{"@type":"Organization","name":"BizHigher","url":"https://bizhigher.com"},"publisher":{"@type":"Organization","name":"BizHigher","url":"https://bizhigher.com"},"mainEntityOfPage":"https://bizhigher.com/blog/online-menu-guide/","keywords":"온라인 메뉴판, 식당 메뉴 웹사이트, 메뉴 PDF, 구글 프로필 메뉴, 모바일 메뉴판"},{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"PDF 메뉴는 아예 쓰면 안 되나요?","acceptedAnswer":{"@type":"Answer","text":"쓰지 말아야 하는 것은 아니지만 **유일한 메뉴**로 두면 안 됩니다. 인쇄용이나 단체 주문용으로 PDF를 따로 제공하되, 기본 메뉴는 텍스트 페이지로 두고 PDF는 \"다운로드\" 링크로 보조하는 것이 좋습니다."}},{"@type":"Question","name":"웹사이트가 없으면 메뉴를 어디에 올려야 하나요?","acceptedAnswer":{"@type":"Answer","text":"우선 구글 비즈니스 프로필에서 지원하는 메뉴·주문 링크와 사진 기능을 활용하세요. 다만 프로필 안에서는 구성과 언어 병기에 한계가 있으므로, 메뉴 항목이 많거나 자주 바뀐다면 원페이지 웹사이트를 따로 만드는 편이 관리하기 쉽습니다."}},{"@type":"Question","name":"메뉴 사진은 몇 장이 적당한가요?","acceptedAnswer":{"@type":"Answer","text":"모든 메뉴에 사진을 넣을 필요는 없습니다. 대표 메뉴 3~5개에 밝고 선명한 사진을 붙이고 나머지는 글자 설명으로 충분합니다. 사진이 많을수록 폰에서 로딩이 느려질 수 있습니다."}},{"@type":"Question","name":"한글 메뉴 옆에 영어를 꼭 써야 하나요?","acceptedAnswer":{"@type":"Answer","text":"현지 손님을 받고 싶다면 권장합니다. 번역만이 아니라 \"매운 정도\", \"주재료\", \"채식 가능 여부\" 같은 정보를 한 줄로 덧붙이면 주문 망설임이 줄어듭니다."}}]}]</script>
 
 <script type="text/javascript">
@@ -194,7 +194,7 @@
 /* 스크롤 리빌 — IO 지원 시에만 숨겼다가 나타남 (기본은 항상 보임) + 3초 강제 표시 안전장치 */
 (function () {
   if (!('IntersectionObserver' in window)) return;
-  var els = document.querySelectorAll('.prod-card, .step-card, .tier, .stat-box, .faq-item, .price-item');
+  var els = document.querySelectorAll('.prod-card, .step-card, .tier:not(.pk-card), .stat-box, .faq-item, .price-item');
   if (!els.length) return;
   var io = new IntersectionObserver(function (entries) {
     entries.forEach(function (en) {
