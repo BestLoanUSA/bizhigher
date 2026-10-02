@@ -358,7 +358,7 @@ function trustStrip(kind, opts = {}) {
   } else if (kind === 'subscription') {
     chips = ['언제든 셀프 해지', '위약금·약정 없음', '수정 1회 무료', '전문가 검수 후 전달', 'Stripe 안전결제'];
   } else if (kind === 'package') {
-    chips = ['장기 플랜 30일 만족 보장', '월간은 언제든 셀프 해지', '위약금 없음', '전문가 검수 후 전달', 'Stripe 안전결제'];
+    chips = ['장기 플랜 30일 만족 보장', '월간은 언제든 셀프 해지', '위약금 없음', '전문가 검수 후 전달', '안전 결제'];
   } else {
     chips = ['작업 시작 전 전액 환불', '장기 플랜 30일 보장', '수정 1회 무료', '언제든 셀프 해지', 'Stripe 안전결제'];
   }
@@ -791,6 +791,13 @@ function packageMatrixSection(opts = {}) {
     const g = giftsFor(p.slug);
     const href = (p.links && p.links.annual) || pkgConsultHref(p, '12개월');
     const lv = idx + 1;
+    // 바로 아래 플랜에는 없는 항목 — 호버 시 시선을 끄는 애니메이션 대상
+    const prevG = idx > 0 ? giftsFor(DATA.packages[idx - 1].slug) : null;
+    const prevGiftNames = new Set(prevG ? [...prevG.base, ...prevG.extra].map((i) => i.name) : []);
+    const shortName = p.name.replace(/^Local\s+/, '');
+    const onlyTag = `<i class="pk-only-tag">${lv === DATA.packages.length ? shortName + '만' : shortName + '부터'}</i>`;
+    const incLi = (i) => (idx > 0 && !/전체 포함/.test(i)) ? `<li class="pk-only">${i}${onlyTag}</li>` : `<li>${i}</li>`;
+    const giftLi = (i) => `<li${idx > 0 && !prevGiftNames.has(i.name) ? ' class="pk-only"' : ''}><span>${i.name}${idx > 0 && !prevGiftNames.has(i.name) ? onlyTag : ''}${i.note ? ` <small>${i.note}</small>` : ''}</span><em>$${i.value}</em></li>`;
     const badge = p.popular ? '<div class="tier-badge">가장 인기</div>' : (lv === DATA.packages.length ? `<div class="tier-badge tier-badge-top">최대 셋업 선물 ${fmtUsd(g.annualValue)}</div>` : '');
     return `
       <div class="tier pk-card pk-lv-${lv} ${p.popular ? 'tier-pop' : ''}" data-slug="${p.slug}">
@@ -801,14 +808,14 @@ function packageMatrixSection(opts = {}) {
         <div class="tier-price">$<span class="pk-price" data-val="${price}">${price}</span><span class="tier-per">/월</span></div>
         <p class="pk-total">총 ${fmtUsd(total)} · 12개월 선결제</p>
         <p class="pk-save">매달 <b class="pk-save-m">$${save}</b> 절약 · 1년이면 <b class="pk-save-y">${fmtUsd(save * 12)}</b></p>
-        <ul class="pk-list">${p.includes.map((i) => `<li>${i}</li>`).join('')}</ul>
+        <ul class="pk-list">${p.includes.map(incLi).join('')}</ul>
         <div class="pk-giftbox pk-gb-annual">
           <div class="pk-gift-h"><span>🎁 무료 셋업</span><b class="pk-gift-total" data-val="${g.annualValue}">${fmtUsd(g.annualValue)} 상당</b></div>
           <p class="pk-gift-none">월간 플랜에는 셋업 선물이 없습니다 · 6개월부터 <b>${fmtUsd(g.sixValue)}</b>, 12개월 <b>${fmtUsd(g.annualValue)}</b></p>
-          <ul class="pk-gift-base">${g.base.map((i) => `<li><span>${i.name}${i.note ? ` <small>${i.note}</small>` : ''}</span><em>$${i.value}</em></li>`).join('')}</ul>
+          <ul class="pk-gift-base">${g.base.map(giftLi).join('')}</ul>
           <div class="pk-gift-up">
             <div class="pk-gift-up-h"><span class="pk-gift-up-tag">12개월이면 추가로</span><b>+ ${fmtUsd(g.extraValue)}</b></div>
-            <ul>${g.extra.map((i) => `<li><span>${i.name}${i.note ? ` <small>${i.note}</small>` : ''}</span><em>$${i.value}</em></li>`).join('')}</ul>
+            <ul>${g.extra.map(giftLi).join('')}</ul>
             <button type="button" class="pk-gift-up-btn" data-period="annual">12개월로 바꾸고 ${fmtUsd(g.extraValue)} 더 받기 →</button>
           </div>
         </div>
@@ -834,13 +841,13 @@ function packageMatrixSection(opts = {}) {
     <div class="gift-note" id="gift-note">🎁 <b>12개월 플랜 무료 셋업</b> — 프로필 최적화·리뷰 QR·로컬 등록부터 <b>웹사이트</b>까지, 플랜에 따라 <b>${fmtUsd(r12.min)}~${fmtUsd(r12.max)} 상당</b></div>
     <div class="grid3 pk-grid" id="pk-grid">${cards}</div>
     <ol class="pk-process" aria-label="주문 후 진행 과정">
-      <li><b>1</b><span>Stripe 결제</span><small>견적 미팅 없음</small></li>
+      <li><b>1</b><span>결제</span><small>견적 미팅 없음</small></li>
       <li><b>2</b><span>5분 질문지</span><small>업소 정보·사진 전달</small></li>
       <li><b>3</b><span>1개월차 셋업 완료</span><small>프로필·QR·등록부터</small></li>
       <li><b>4</b><span>매달 초 성과 리포트</span><small>조회·전화·길찾기</small></li>
     </ol>
     ${trustStrip('package', { dark: true })}
-    <p class="note-text">장기 플랜은 시작 후 30일 내 해지 시 잔여 금액 환불 (제공된 서비스·셋업은 정가 차감) · 월간 플랜은 언제든 취소 · 결제는 Stripe 보안 페이지에서 진행됩니다</p>
+    <p class="note-text">장기 플랜은 시작 후 30일 내 해지 시 잔여 금액 환불 (제공된 서비스·셋업은 정가 차감) · 월간 플랜은 언제든 취소</p>
   </div>
 </section>
 <script>
