@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="/style.css?v=a5ddaa1e">
+<link rel="stylesheet" href="/style.css?v=01430070">
 <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"미국 한인 업소록 총정리 — 무료로 등록할 수 있는 곳 전부","description":"구글 지도 하나로는 부족합니다. 미국 전역 필수 디렉토리부터 라디오코리아·한국일보 같은 한인 업소록까지, 무료로 등록 가능한 곳을 한 번에 정리했습니다.","datePublished":"2026-09-23","dateModified":"2026-09-23","inLanguage":"ko","author":{"@type":"Organization","name":"BizHigher","url":"https://bizhigher.com"},"publisher":{"@type":"Organization","name":"BizHigher","url":"https://bizhigher.com"},"mainEntityOfPage":"https://bizhigher.com/blog/korean-business-directory-list/","keywords":"미국 한인 업소록, 비즈니스 디렉토리 등록, 무료 업체 등록, NAP 일관성, 로컬 SEO"},{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"디렉토리를 다 등록하면 구글 지도 순위가 바로 오르나요?","acceptedAnswer":{"@type":"Answer","text":"바로 오르지는 않습니다. 디렉토리 등록은 신뢰도를 쌓는 요소 중 하나일 뿐이고, 반영에도 며칠에서 몇 주가 걸립니다. 카테고리 설정, 리뷰 관리 같은 다른 기본기가 갖춰진 상태에서 디렉토리 등록이 더해질 때 효과가 명확합니다."}},{"@type":"Question","name":"유료 디렉토리(상공회의소, BBB 인증 등)도 꼭 해야 하나요?","acceptedAnswer":{"@type":"Answer","text":"필수는 아닙니다. 무료 등록만으로도 기본적인 NAP 신뢰도 신호는 충분히 쌓입니다. 유료 회원제는 신뢰도보다는 지역 네트워킹이나 배지 노출 같은 부가 효과를 보고 판단하는 게 맞습니다."}},{"@type":"Question","name":"이미 옛날에 등록했는데 주소가 바뀌었어요. 어떻게 하나요?","acceptedAnswer":{"@type":"Answer","text":"가장 먼저 구글 프로필 정보를 새 주소로 확정한 뒤, 같은 정보로 다른 등록처를 하나씩 찾아 갱신해야 합니다. 정확히 어느 사이트에 등록되어 있는지 기억이 안 난다면, 업체명으로 검색 엔진에 검색해 나오는 결과를 훑어보는 것이 가장 빠른 확인 방법입니다."}},{"@type":"Question","name":"30곳을 직접 등록하는 것과 대행을 맡기는 것 중 뭐가 나을까요?","acceptedAnswer":{"@type":"Answer","text":"시간 여유가 있다면 직접 하는 것도 충분히 가능합니다. 다만 한인 디렉토리까지 포함해 30곳을 정확한 정보로 등록하고 표기 일관성까지 확인하는 작업은 실측으로 몇 시간이 걸리는 일이라, 시간이 부족하다면 대행을 고려할 만합니다."}}]}]</script>
 
 <script type="text/javascript">
@@ -161,12 +161,51 @@
 })();
 </script>
 
-<section class="mega-cta">
-  <div class="container center">
-    <a href="/free-audit/" class="mega-link" aria-label="무료 AI 진단 시작하기"><span class="mega-text">한 단계 위로.</span></a>
-    <p class="mega-sub">내 가게 마케팅, 몇 점일까요? — 60초 무료 AI 진단으로 시작하세요 →</p>
+<section class="mega-cta mega-cta-form" id="footer-audit">
+  <div class="container">
+    <div class="fa-grid">
+      <div class="fa-copy">
+        <p class="eyebrow eyebrow-cyan">무료 · 60초 · 가입 불필요</p>
+        <h2 class="fa-title">내 가게 마케팅,<br><span class="grad">몇 점일까요?</span></h2>
+        <p class="fa-sub">구글에서 우리 가게가 어떻게 보이는지 AI가 분석합니다. 완료되면 이 화면에서 바로 리포트가 열립니다. 스팸은 보내지 않습니다.</p>
+        <p class="fa-note">📄 <a href="/report/sample">리포트가 어떻게 생겼는지 먼저 보기 →</a></p>
+      </div>
+      <form class="audit-form fa-form" id="fa-form">
+        <input type="text" name="business" placeholder="업체명 (예: 청기와 순두부)" class="input" required>
+        <input type="text" name="location" placeholder="도시 (예: Los Angeles CA) 또는 구글 프로필 링크" class="input" required>
+        <input type="email" name="email" placeholder="이메일" class="input" required>
+        <button type="submit" class="btn btn-primary btn-block">무료 진단 시작 →</button>
+        <div class="form-msg" id="fa-msg"></div>
+        <p class="fa-form-note">분석에 20~40초 정도 걸립니다 · 완료되면 리포트 화면으로 자동 이동합니다</p>
+      </form>
+    </div>
   </div>
 </section>
+<script>
+(function () {
+  var form = document.getElementById('fa-form'); if (!form) return;
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var msg = document.getElementById('fa-msg');
+    var btn = form.querySelector('button');
+    btn.disabled = true; btn.textContent = 'AI가 분석 중입니다... (최대 40초)';
+    try {
+      var body = Object.fromEntries(new FormData(form).entries());
+      var res = await fetch('/api/audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error('server');
+      var result = await res.json();
+      if (result.reportUrl) { btn.textContent = '리포트 여는 중...'; window.location.href = result.reportUrl; return; }
+      msg.className = 'form-msg success';
+      msg.textContent = '접수되었습니다! 영업일 1일 안에 진단 리포트를 이메일로 보내드릴게요.';
+      form.reset(); btn.textContent = '접수 완료 ✓';
+    } catch (err) {
+      msg.className = 'form-msg error';
+      msg.textContent = '일시적인 오류가 발생했습니다. 잠시 후 다시 시도하시거나 hello@bizhigher.com 로 보내주세요.';
+      btn.disabled = false; btn.textContent = '무료 진단 시작 →';
+    }
+  });
+})();
+</script>
 <footer class="footer">
   <div class="container">
     <div class="footer-cols">

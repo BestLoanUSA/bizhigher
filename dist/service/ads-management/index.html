@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="/style.css?v=a5ddaa1e">
+<link rel="stylesheet" href="/style.css?v=01430070">
 <script type="application/ld+json">[{"@context":"https://schema.org","@type":"Service","name":"광고 운영","description":"구글·메타·빙 광고를 전문가+AI가 매주 최적화합니다","provider":{"@type":"Organization","name":"BizHigher","url":"https://bizhigher.com"},"areaServed":{"@type":"Country","name":"United States"},"url":"https://bizhigher.com/service/ads-management/","offers":{"@type":"Offer","price":249,"priceCurrency":"USD","url":"https://bizhigher.com/service/ads-management/","availability":"https://schema.org/InStock","priceSpecification":{"@type":"UnitPriceSpecification","price":249,"priceCurrency":"USD","unitText":"MONTH"}}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"홈","item":"https://bizhigher.com/"},{"@type":"ListItem","position":2,"name":"서비스","item":"https://bizhigher.com/services/"},{"@type":"ListItem","position":3,"name":"광고 운영","item":"https://bizhigher.com/service/ads-management/"}]},{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"광고비도 BizHigher에 결제하나요?","acceptedAnswer":{"@type":"Answer","text":"아니요. 광고비는 고객님 카드로 각 플랫폼(구글·메타·빙)에 직접 결제되어 얼마가 어디에 쓰였는지 투명하게 확인하실 수 있습니다. 저희에게는 운영비만 결제하시면 됩니다."}},{"@type":"Question","name":"광고 셋업을 안 했으면 바로 시작할 수 없나요?","acceptedAnswer":{"@type":"Answer","text":"전환 추적이 있어야 정확한 최적화가 가능하므로 광고 셋업($299)을 먼저 진행한 뒤 운영을 시작합니다."}},{"@type":"Question","name":"티어는 어떻게 정해지나요?","acceptedAnswer":{"@type":"Answer","text":"월 광고비 규모에 따라 1채널(~$1,000)·2채널(~$3,000)·3채널($3,000+) 중 선택하시며, 광고비가 2개월 연속 상한을 넘으면 7일 전 안내 후 상위 티어로 조정됩니다."}}]}]</script>
 
 <script type="text/javascript">
@@ -166,12 +166,51 @@
 </section>
 
 
-<section class="mega-cta">
-  <div class="container center">
-    <a href="/free-audit/" class="mega-link" aria-label="무료 AI 진단 시작하기"><span class="mega-text">한 단계 위로.</span></a>
-    <p class="mega-sub">내 가게 마케팅, 몇 점일까요? — 60초 무료 AI 진단으로 시작하세요 →</p>
+<section class="mega-cta mega-cta-form" id="footer-audit">
+  <div class="container">
+    <div class="fa-grid">
+      <div class="fa-copy">
+        <p class="eyebrow eyebrow-cyan">무료 · 60초 · 가입 불필요</p>
+        <h2 class="fa-title">내 가게 마케팅,<br><span class="grad">몇 점일까요?</span></h2>
+        <p class="fa-sub">구글에서 우리 가게가 어떻게 보이는지 AI가 분석합니다. 완료되면 이 화면에서 바로 리포트가 열립니다. 스팸은 보내지 않습니다.</p>
+        <p class="fa-note">📄 <a href="/report/sample">리포트가 어떻게 생겼는지 먼저 보기 →</a></p>
+      </div>
+      <form class="audit-form fa-form" id="fa-form">
+        <input type="text" name="business" placeholder="업체명 (예: 청기와 순두부)" class="input" required>
+        <input type="text" name="location" placeholder="도시 (예: Los Angeles CA) 또는 구글 프로필 링크" class="input" required>
+        <input type="email" name="email" placeholder="이메일" class="input" required>
+        <button type="submit" class="btn btn-primary btn-block">무료 진단 시작 →</button>
+        <div class="form-msg" id="fa-msg"></div>
+        <p class="fa-form-note">분석에 20~40초 정도 걸립니다 · 완료되면 리포트 화면으로 자동 이동합니다</p>
+      </form>
+    </div>
   </div>
 </section>
+<script>
+(function () {
+  var form = document.getElementById('fa-form'); if (!form) return;
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var msg = document.getElementById('fa-msg');
+    var btn = form.querySelector('button');
+    btn.disabled = true; btn.textContent = 'AI가 분석 중입니다... (최대 40초)';
+    try {
+      var body = Object.fromEntries(new FormData(form).entries());
+      var res = await fetch('/api/audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error('server');
+      var result = await res.json();
+      if (result.reportUrl) { btn.textContent = '리포트 여는 중...'; window.location.href = result.reportUrl; return; }
+      msg.className = 'form-msg success';
+      msg.textContent = '접수되었습니다! 영업일 1일 안에 진단 리포트를 이메일로 보내드릴게요.';
+      form.reset(); btn.textContent = '접수 완료 ✓';
+    } catch (err) {
+      msg.className = 'form-msg error';
+      msg.textContent = '일시적인 오류가 발생했습니다. 잠시 후 다시 시도하시거나 hello@bizhigher.com 로 보내주세요.';
+      btn.disabled = false; btn.textContent = '무료 진단 시작 →';
+    }
+  });
+})();
+</script>
 <footer class="footer">
   <div class="container">
     <div class="footer-cols">

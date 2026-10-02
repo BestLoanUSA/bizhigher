@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="/style.css?v=a5ddaa1e">
+<link rel="stylesheet" href="/style.css?v=01430070">
 <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"사진 리뷰가 검색 노출에 미치는 영향 — 포토 리뷰를 늘리는 법","description":"사진이 붙은 구글 리뷰는 손님의 신뢰와 클릭에 어떤 영향을 줄까요? 순위 효과의 사실과 과장을 구분하고, 정책을 지키며 포토 리뷰를 늘리는 방법을 정리했습니다.","datePublished":"2026-09-30","dateModified":"2026-09-30","inLanguage":"ko","author":{"@type":"Organization","name":"BizHigher","url":"https://bizhigher.com"},"publisher":{"@type":"Organization","name":"BizHigher","url":"https://bizhigher.com"},"mainEntityOfPage":"https://bizhigher.com/blog/photo-reviews-guide/","keywords":"포토 리뷰, 구글 사진 리뷰, 리뷰 사진 늘리기, 구글 지도 리뷰, 리뷰 요청 방법"},{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"사진이 있는 리뷰가 더 높은 순위에 뜨나요?","acceptedAnswer":{"@type":"Answer","text":"사진 리뷰가 순위에 직접 가산점을 준다는 공식 근거는 확인되지 않았습니다. 다만 사진이 있으면 손님이 더 신뢰하고 프로필을 오래 살펴볼 가능성이 있어, 전화·길찾기 같은 행동으로 이어지는 간접 효과는 기대할 수 있습니다."}},{"@type":"Question","name":"사진 리뷰를 올려주면 작은 선물을 줘도 되나요?","acceptedAnswer":{"@type":"Answer","text":"안 됩니다. 리뷰나 사진 작성을 조건으로 한 할인·서비스·선물은 구글 정책 위반이며 리뷰 삭제나 프로필 정지 사유가 될 수 있습니다. 사진을 부탁하되 아무 조건도 붙이지 않는 것이 안전합니다."}},{"@type":"Question","name":"손님이 올린 사진이 마음에 안 들면 삭제할 수 있나요?","acceptedAnswer":{"@type":"Answer","text":"가게가 임의로 삭제할 수는 없습니다. 부적절한 내용(타인 개인정보, 무관한 사진, 욕설 등)은 구글에 신고할 수 있지만, 단순히 사진이 별로라는 이유로는 삭제되지 않습니다. 대신 우리 쪽 사진 품질을 높여 첫인상을 관리하는 것이 현실적인 대응입니다."}},{"@type":"Question","name":"사진 리뷰가 하나도 없는데 지금부터 시작해도 늦지 않았나요?","acceptedAnswer":{"@type":"Answer","text":"늦지 않았습니다. 지금부터 QR 링크와 안내 멘트만 정비해도 몇 주 안에 사진이 붙은 리뷰가 조금씩 생기기 시작합니다. 중요한 것은 한 번에 몰아서 늘리는 것이 아니라 꾸준히 쌓이는 것입니다."}}]}]</script>
 
 <script type="text/javascript">
@@ -161,12 +161,51 @@
 })();
 </script>
 
-<section class="mega-cta">
-  <div class="container center">
-    <a href="/free-audit/" class="mega-link" aria-label="무료 AI 진단 시작하기"><span class="mega-text">한 단계 위로.</span></a>
-    <p class="mega-sub">내 가게 마케팅, 몇 점일까요? — 60초 무료 AI 진단으로 시작하세요 →</p>
+<section class="mega-cta mega-cta-form" id="footer-audit">
+  <div class="container">
+    <div class="fa-grid">
+      <div class="fa-copy">
+        <p class="eyebrow eyebrow-cyan">무료 · 60초 · 가입 불필요</p>
+        <h2 class="fa-title">내 가게 마케팅,<br><span class="grad">몇 점일까요?</span></h2>
+        <p class="fa-sub">구글에서 우리 가게가 어떻게 보이는지 AI가 분석합니다. 완료되면 이 화면에서 바로 리포트가 열립니다. 스팸은 보내지 않습니다.</p>
+        <p class="fa-note">📄 <a href="/report/sample">리포트가 어떻게 생겼는지 먼저 보기 →</a></p>
+      </div>
+      <form class="audit-form fa-form" id="fa-form">
+        <input type="text" name="business" placeholder="업체명 (예: 청기와 순두부)" class="input" required>
+        <input type="text" name="location" placeholder="도시 (예: Los Angeles CA) 또는 구글 프로필 링크" class="input" required>
+        <input type="email" name="email" placeholder="이메일" class="input" required>
+        <button type="submit" class="btn btn-primary btn-block">무료 진단 시작 →</button>
+        <div class="form-msg" id="fa-msg"></div>
+        <p class="fa-form-note">분석에 20~40초 정도 걸립니다 · 완료되면 리포트 화면으로 자동 이동합니다</p>
+      </form>
+    </div>
   </div>
 </section>
+<script>
+(function () {
+  var form = document.getElementById('fa-form'); if (!form) return;
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var msg = document.getElementById('fa-msg');
+    var btn = form.querySelector('button');
+    btn.disabled = true; btn.textContent = 'AI가 분석 중입니다... (최대 40초)';
+    try {
+      var body = Object.fromEntries(new FormData(form).entries());
+      var res = await fetch('/api/audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error('server');
+      var result = await res.json();
+      if (result.reportUrl) { btn.textContent = '리포트 여는 중...'; window.location.href = result.reportUrl; return; }
+      msg.className = 'form-msg success';
+      msg.textContent = '접수되었습니다! 영업일 1일 안에 진단 리포트를 이메일로 보내드릴게요.';
+      form.reset(); btn.textContent = '접수 완료 ✓';
+    } catch (err) {
+      msg.className = 'form-msg error';
+      msg.textContent = '일시적인 오류가 발생했습니다. 잠시 후 다시 시도하시거나 hello@bizhigher.com 로 보내주세요.';
+      btn.disabled = false; btn.textContent = '무료 진단 시작 →';
+    }
+  });
+})();
+</script>
 <footer class="footer">
   <div class="container">
     <div class="footer-cols">

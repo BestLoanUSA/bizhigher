@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="/style.css?v=a5ddaa1e">
+<link rel="stylesheet" href="/style.css?v=01430070">
 <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"나쁜 리뷰 하나가 달렸을 때 사장님이 할 일 — 별점별 답글 예문 5개","description":"별 1개짜리 리뷰가 달렸을 때 당황하지 않는 법. 진짜 손님인지 판별하는 기준부터 별점별 답글 예문 5개, 절대 하면 안 되는 실수까지 한인 사장님용 실전 정리.","datePublished":"2026-09-22","dateModified":"2026-09-22","inLanguage":"ko","author":{"@type":"Organization","name":"BizHigher","url":"https://bizhigher.com"},"publisher":{"@type":"Organization","name":"BizHigher","url":"https://bizhigher.com"},"mainEntityOfPage":"https://bizhigher.com/blog/negative-review-response-guide/","keywords":"나쁜 리뷰 대응, 리뷰 답글 예문, 별점 답글, 구글 리뷰 대응"},{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"나쁜 리뷰에 답글을 꼭 달아야 하나요?","acceptedAnswer":{"@type":"Answer","text":"의무는 아니지만 다는 것이 좋습니다. 답글이 없는 낮은 별점 리뷰는 그대로 방치된 것처럼 보이고, 이후 방문을 고민하는 손님에게 부정적인 인상을 줍니다. 반대로 차분한 답글은 \"이 가게는 문제가 생기면 책임지고 대응하는구나\"라는 신호가 됩니다."}},{"@type":"Question","name":"사실이 아닌 내용이 적힌 리뷰는 어떻게 하나요?","acceptedAnswer":{"@type":"Answer","text":"먼저 방문 기록을 확인해 실제 손님인지 판단합니다. 실제 손님이지만 일부 사실관계가 다르다면, 공개 답글에서 논쟁하지 말고 정중하게 사실을 짚어준 뒤 전화로 연결을 유도하세요. 방문 기록이 없는 허위 리뷰라면 신고 절차를 이용합니다."}},{"@type":"Question","name":"답글에 보상(할인, 서비스)을 언급해도 되나요?","acceptedAnswer":{"@type":"Answer","text":"공개 댓글에는 적지 않는 것이 안전합니다. 대신 \"연락 주시면 도와드리겠습니다\"로 개인 연락을 유도한 뒤, 전화나 문자로 개별 안내하세요. 공개적으로 보상을 약속하면 의도적으로 낮은 별점을 남기고 보상을 요구하는 사례가 생길 수 있습니다."}},{"@type":"Question","name":"리뷰 답글을 매번 직접 쓰기가 버거운데, 자동화해도 되나요?","acceptedAnswer":{"@type":"Answer","text":"별 4~5개의 정형화된 긍정 리뷰는 템플릿 답글로 자동화해도 무리가 없습니다. 하지만 별 1~3개, 환불·위생·법적 문제, 직원 실명이 언급된 리뷰는 반드시 사람이 직접 읽고 판단해서 답글을 달아야 합니다. 자동화와 사람 검토를 나누는 기준을 미리 정해두면 시간과 리스크를 둘 다 줄일 수 있습니다."}}]}]</script>
 
 <script type="text/javascript">
@@ -166,12 +166,51 @@
 })();
 </script>
 
-<section class="mega-cta">
-  <div class="container center">
-    <a href="/free-audit/" class="mega-link" aria-label="무료 AI 진단 시작하기"><span class="mega-text">한 단계 위로.</span></a>
-    <p class="mega-sub">내 가게 마케팅, 몇 점일까요? — 60초 무료 AI 진단으로 시작하세요 →</p>
+<section class="mega-cta mega-cta-form" id="footer-audit">
+  <div class="container">
+    <div class="fa-grid">
+      <div class="fa-copy">
+        <p class="eyebrow eyebrow-cyan">무료 · 60초 · 가입 불필요</p>
+        <h2 class="fa-title">내 가게 마케팅,<br><span class="grad">몇 점일까요?</span></h2>
+        <p class="fa-sub">구글에서 우리 가게가 어떻게 보이는지 AI가 분석합니다. 완료되면 이 화면에서 바로 리포트가 열립니다. 스팸은 보내지 않습니다.</p>
+        <p class="fa-note">📄 <a href="/report/sample">리포트가 어떻게 생겼는지 먼저 보기 →</a></p>
+      </div>
+      <form class="audit-form fa-form" id="fa-form">
+        <input type="text" name="business" placeholder="업체명 (예: 청기와 순두부)" class="input" required>
+        <input type="text" name="location" placeholder="도시 (예: Los Angeles CA) 또는 구글 프로필 링크" class="input" required>
+        <input type="email" name="email" placeholder="이메일" class="input" required>
+        <button type="submit" class="btn btn-primary btn-block">무료 진단 시작 →</button>
+        <div class="form-msg" id="fa-msg"></div>
+        <p class="fa-form-note">분석에 20~40초 정도 걸립니다 · 완료되면 리포트 화면으로 자동 이동합니다</p>
+      </form>
+    </div>
   </div>
 </section>
+<script>
+(function () {
+  var form = document.getElementById('fa-form'); if (!form) return;
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var msg = document.getElementById('fa-msg');
+    var btn = form.querySelector('button');
+    btn.disabled = true; btn.textContent = 'AI가 분석 중입니다... (최대 40초)';
+    try {
+      var body = Object.fromEntries(new FormData(form).entries());
+      var res = await fetch('/api/audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error('server');
+      var result = await res.json();
+      if (result.reportUrl) { btn.textContent = '리포트 여는 중...'; window.location.href = result.reportUrl; return; }
+      msg.className = 'form-msg success';
+      msg.textContent = '접수되었습니다! 영업일 1일 안에 진단 리포트를 이메일로 보내드릴게요.';
+      form.reset(); btn.textContent = '접수 완료 ✓';
+    } catch (err) {
+      msg.className = 'form-msg error';
+      msg.textContent = '일시적인 오류가 발생했습니다. 잠시 후 다시 시도하시거나 hello@bizhigher.com 로 보내주세요.';
+      btn.disabled = false; btn.textContent = '무료 진단 시작 →';
+    }
+  });
+})();
+</script>
 <footer class="footer">
   <div class="container">
     <div class="footer-cols">

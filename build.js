@@ -105,13 +105,62 @@ function nav(active) {
 </nav>`;
 }
 
-const FOOTER = `
+/* 푸터 직전 CTA 두 가지: 기본은 그 자리에서 바로 제출하는 무료 진단 폼, 무료 진단 페이지만 "한 단계 위로" 타이포 */
+const MEGA_CTA = `
 <section class="mega-cta">
   <div class="container center">
     <a href="/free-audit/" class="mega-link" aria-label="무료 AI 진단 시작하기"><span class="mega-text">한 단계 위로.</span></a>
     <p class="mega-sub">내 가게 마케팅, 몇 점일까요? — 60초 무료 AI 진단으로 시작하세요 →</p>
   </div>
+</section>`;
+const AUDIT_PLACEHOLDER_LOCATION = '도시 (예: Los Angeles CA) 또는 구글 프로필 링크';
+const FOOTER_AUDIT = `
+<section class="mega-cta mega-cta-form" id="footer-audit">
+  <div class="container">
+    <div class="fa-grid">
+      <div class="fa-copy">
+        <p class="eyebrow eyebrow-cyan">무료 · 60초 · 가입 불필요</p>
+        <h2 class="fa-title">내 가게 마케팅,<br><span class="grad">몇 점일까요?</span></h2>
+        <p class="fa-sub">구글에서 우리 가게가 어떻게 보이는지 AI가 분석합니다. 완료되면 이 화면에서 바로 리포트가 열립니다. 스팸은 보내지 않습니다.</p>
+        <p class="fa-note">📄 <a href="/report/sample">리포트가 어떻게 생겼는지 먼저 보기 →</a></p>
+      </div>
+      <form class="audit-form fa-form" id="fa-form">
+        <input type="text" name="business" placeholder="업체명 (예: 청기와 순두부)" class="input" required>
+        <input type="text" name="location" placeholder="${AUDIT_PLACEHOLDER_LOCATION}" class="input" required>
+        <input type="email" name="email" placeholder="이메일" class="input" required>
+        <button type="submit" class="btn btn-primary btn-block">무료 진단 시작 →</button>
+        <div class="form-msg" id="fa-msg"></div>
+        <p class="fa-form-note">분석에 20~40초 정도 걸립니다 · 완료되면 리포트 화면으로 자동 이동합니다</p>
+      </form>
+    </div>
+  </div>
 </section>
+<script>
+(function () {
+  var form = document.getElementById('fa-form'); if (!form) return;
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var msg = document.getElementById('fa-msg');
+    var btn = form.querySelector('button');
+    btn.disabled = true; btn.textContent = 'AI가 분석 중입니다... (최대 40초)';
+    try {
+      var body = Object.fromEntries(new FormData(form).entries());
+      var res = await fetch('/api/audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error('server');
+      var result = await res.json();
+      if (result.reportUrl) { btn.textContent = '리포트 여는 중...'; window.location.href = result.reportUrl; return; }
+      msg.className = 'form-msg success';
+      msg.textContent = '접수되었습니다! 영업일 1일 안에 진단 리포트를 이메일로 보내드릴게요.';
+      form.reset(); btn.textContent = '접수 완료 ✓';
+    } catch (err) {
+      msg.className = 'form-msg error';
+      msg.textContent = '일시적인 오류가 발생했습니다. 잠시 후 다시 시도하시거나 ${SITE.email} 로 보내주세요.';
+      btn.disabled = false; btn.textContent = '무료 진단 시작 →';
+    }
+  });
+})();
+</script>`;
+const FOOTER_BASE = `
 <footer class="footer">
   <div class="container">
     <div class="footer-cols">
@@ -238,6 +287,8 @@ const FOOTER = `
 </script>
 </body>
 </html>`;
+const FOOTER = FOOTER_AUDIT + FOOTER_BASE;
+const FOOTER_MEGA = MEGA_CTA + FOOTER_BASE;
 
 function badgeHtml(s) {
   if (!s.badge) return '';
@@ -610,6 +661,7 @@ function showcaseSection() {
         <a class="sc-link" href="/service/${s.service}/">이 결과물이 포함된 서비스 보기 →</a>
       </div>`).join('');
   return `
+<div class="showcase-pin" id="showcase-pin">
 <section class="section showcase" id="showcase">
   <div class="container">
     <p class="eyebrow">WHAT YOU GET</p>
@@ -622,51 +674,72 @@ function showcaseSection() {
     <p class="note-text">위 화면은 가상의 예시 업체 "순두부 하우스"로 구성했습니다 · <a href="/report/sample" style="color:var(--blue-600);font-weight:700;">실제 진단 리포트 샘플 보기 →</a></p>
   </div>
 </section>
+</div>
 <script>
-/* 쇼케이스 — 탭 전환 + 6초 자동 넘김 + 스크롤로 빨리감기.
-   화면에 보이는 동안 페이지를 스크롤하면 그만큼 시계가 빨리 가서 오른쪽 장면이 더 빨리 바뀐다.
-   스크롤을 가로채지 않는다(preventDefault 없음). JS 실패 시 첫 장면이 그대로 보인다 */
+/* 쇼케이스 — 데스크탑에서는 화면에 고정(sticky)된 채 스크롤로 01→05를 훑고 나서 풀린다.
+   시간 T = 시계(보이는 동안 흐름) + 스크롤 거리. 고정 구간에서는 스크롤 위치가 곧 진행도라 위로 올리면 되감긴다.
+   모바일(991px 이하)은 고정 없이 자동 넘김 + 스크롤 빨리감기. 스크롤을 가로채지 않고, JS 실패 시 첫 장면이 그대로 보인다 */
 (function () {
-  var wrap = document.getElementById('sc-wrap'); if (!wrap) return;
+  var wrap = document.getElementById('sc-wrap'), pin = document.getElementById('showcase-pin'); if (!wrap || !pin) return;
   var tabs = Array.prototype.slice.call(wrap.querySelectorAll('.sc-tab'));
   var scenes = Array.prototype.slice.call(wrap.querySelectorAll('.sc-scene'));
   var progs = tabs.map(function (t) { return t.querySelector('.sc-prog'); });
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var idx = 0, elapsed = 0, DUR = 6000, FF = 14; /* 스크롤 1px = 14ms 빨리감기 (약 430px에 한 장면) */
-  var paused = false, visible = false, lastTs = null, lastY = window.scrollY, raf = null;
-  function go(i, user) {
-    idx = (i + tabs.length) % tabs.length; elapsed = 0;
-    tabs.forEach(function (t, k) { t.classList.toggle('on', k === idx); t.setAttribute('aria-selected', k === idx ? 'true' : 'false'); });
-    scenes.forEach(function (s, k) { s.classList.toggle('on', k === idx); });
-    progs.forEach(function (p, k) { if (p) p.style.width = k === idx ? '0%' : '0%'; });
-    if (user && window.matchMedia('(max-width: 991px)').matches) {
-      var t = tabs[idx]; if (t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+  var N = tabs.length, DUR = 6000, TOTAL = N * DUR, SCENE_PX = 520, FF = 14;
+  var idx = 0, clock = 0, scrollT = 0, paused = false, visible = false, active = false, lastTs = null, raf = null, lastY = window.scrollY;
+  var pinMQ = window.matchMedia('(min-width: 992px)');
+  function pinMode() { return pinMQ.matches; }
+  function applyPin() {
+    var on = pinMode();
+    pin.classList.toggle('pinned', on);
+    pin.style.height = on ? 'calc(100vh + ' + (N * SCENE_PX) + 'px)' : '';
+  }
+  function T() { return Math.max(0, Math.min(TOTAL - 1, clock + scrollT)); }
+  function apply() {
+    var t = T(), i = Math.floor(t / DUR);
+    if (i !== idx) {
+      idx = i;
+      tabs.forEach(function (tb, k) { tb.classList.toggle('on', k === idx); tb.setAttribute('aria-selected', k === idx ? 'true' : 'false'); });
+      scenes.forEach(function (sc, k) { sc.classList.toggle('on', k === idx); });
     }
+    progs.forEach(function (p, k) { if (p) p.style.width = k === idx ? ((t - idx * DUR) / DUR * 100) + '%' : '0%'; });
   }
   function tick(ts) {
     raf = null;
-    if (lastTs !== null && visible && !paused) elapsed += Math.min(ts - lastTs, 100);
+    var running = visible && !paused && (!pinMode() || active);
+    if (lastTs !== null && running) clock += Math.min(ts - lastTs, 100);
     lastTs = ts;
-    if (elapsed >= DUR) { go(idx + 1); elapsed = 0; }
-    var p = progs[idx]; if (p) p.style.width = Math.min(100, (elapsed / DUR) * 100) + '%';
+    apply();
     if (visible && !reduced) raf = requestAnimationFrame(tick);
   }
   function start() { if (raf === null && !reduced) { lastTs = null; raf = requestAnimationFrame(tick); } }
-  tabs.forEach(function (t, k) { t.addEventListener('click', function () { go(k, true); }); });
+  function onScroll() {
+    var y = window.scrollY, d = y - lastY; lastY = y;
+    if (pinMode()) {
+      var top = pin.getBoundingClientRect().top;
+      var dist = Math.max(0, Math.min(N * SCENE_PX, -top));
+      active = top <= 0 && dist < N * SCENE_PX;
+      if (top > 0) clock = 0; /* 고정 구간 위로 올라가면 처음부터 */
+      scrollT = dist / (N * SCENE_PX) * TOTAL;
+    } else if (visible && d > 0 && !reduced) {
+      scrollT = Math.min(TOTAL - 1, scrollT + Math.min(d * FF, DUR));
+    }
+    if (visible) apply();
+  }
+  tabs.forEach(function (tb, k) { tb.addEventListener('click', function () {
+    clock = k * DUR - scrollT; apply();
+    if (!pinMode() && tb.scrollIntoView) tb.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+  }); });
   wrap.addEventListener('mouseenter', function () { paused = true; });
   wrap.addEventListener('mouseleave', function () { paused = false; });
-  /* 스크롤 빨리감기 — 보이는 동안만, 한 번에 최대 한 장면 */
-  window.addEventListener('scroll', function () {
-    var y = window.scrollY, d = y - lastY; lastY = y;
-    if (!visible || reduced || d <= 0) return;
-    elapsed += Math.min(d * FF, DUR);
-    if (elapsed >= DUR) { var rem = elapsed - DUR; go(idx + 1); elapsed = Math.max(0, Math.min(rem, DUR * 0.5)); }
-    var p = progs[idx]; if (p) p.style.width = Math.min(100, (elapsed / DUR) * 100) + '%';
-  }, { passive: true });
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', applyPin);
+  if (pinMQ.addEventListener) pinMQ.addEventListener('change', applyPin);
+  applyPin(); onScroll();
   if ('IntersectionObserver' in window) {
     var io = new IntersectionObserver(function (en) {
       en.forEach(function (e) { visible = e.isIntersecting; if (visible) start(); });
-    }, { threshold: 0.2 });
+    }, { threshold: 0.1 });
     io.observe(wrap);
   } else { visible = true; start(); }
 })();
@@ -1763,7 +1836,7 @@ function auditPage() {
     <p class="hero-sub">구글에서 우리 가게가 어떻게 보이는지 AI가 분석해 드립니다. 60초 안에 이 화면에서 바로 리포트가 열립니다.</p>
     <form class="audit-form" id="audit-form">
       <input type="text" name="business" placeholder="업체명 (예: 청기와 순두부)" class="input" required>
-      <input type="text" name="location" placeholder="도시 또는 구글 프로필 링크" class="input" required>
+      <input type="text" name="location" placeholder="${AUDIT_PLACEHOLDER_LOCATION}" class="input" required>
       <input type="email" name="email" placeholder="이메일" class="input" required>
       <button type="submit" class="btn btn-primary btn-block">무료 진단 시작 →</button>
       <div class="form-msg" id="form-msg"></div>
@@ -1814,7 +1887,7 @@ document.getElementById('audit-form').addEventListener('submit', async function 
   }
 });
 </script>
-` + FOOTER;
+` + FOOTER_MEGA;
 }
 
 /* ---------- 페이지: 서비스 상세 ---------- */

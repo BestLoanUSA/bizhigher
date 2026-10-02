@@ -1725,3 +1725,37 @@ img { max-width: 100%; display: block; }
   .blog-strip .prod-card { flex-basis: 282px; }
   .blog-strip-wrap::after { width: 20px; }
 }
+
+/* ==========================================================
+   v30 — 푸터 직전 인라인 무료 진단 폼 · 쇼케이스 화면 고정(sticky) 스크럽
+   ========================================================== */
+.mega-cta-form { padding: 96px 24px 40px; text-align: left; position: relative; overflow: hidden; }
+.mega-cta-form::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(700px 420px at 15% 20%, rgba(10, 77, 245, 0.28), transparent 70%), radial-gradient(520px 360px at 90% 80%, rgba(34, 211, 238, 0.14), transparent 70%); }
+.mega-cta-form .container { position: relative; z-index: 1; }
+.fa-grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 48px; align-items: center; }
+.fa-copy .eyebrow { text-align: left; }
+.fa-title { font-size: 44px; font-weight: 900; letter-spacing: -0.03em; line-height: 1.12; color: #fff; margin-bottom: 16px; }
+.fa-sub { font-size: 16px; line-height: 1.7; color: var(--mist-300); max-width: 480px; }
+.fa-note { margin-top: 18px; font-size: 14px; }
+.fa-note a { color: var(--blue-300); font-weight: 700; }
+.fa-note a:hover { color: #fff; }
+.fa-form { margin: 0; max-width: 520px; justify-self: end; width: 100%; }
+.fa-form-note { font-size: 12.5px; color: var(--ink-400); text-align: center; margin-top: 2px; }
+/* 쇼케이스 고정 */
+.showcase-pin.pinned { position: relative; }
+.showcase-pin.pinned .showcase { position: sticky; top: 64px; padding: 18px 0 16px; }
+.showcase-pin.pinned .showcase .h2 { font-size: 30px; margin-bottom: 14px; }
+.showcase-pin.pinned .mk-section-sub { display: none; }
+.showcase-pin.pinned .sc-stage { min-height: clamp(440px, calc(100vh - 270px), 620px); }
+.showcase-pin.pinned .note-text { margin-top: 10px; font-size: 12.5px; }
+.showcase-pin.pinned .sc-tab { padding: 13px 18px; }
+.sc-prog { transition: width .08s linear; }
+@media (max-width: 991px) {
+  .fa-grid { grid-template-columns: 1fr; gap: 28px; }
+  .fa-form { justify-self: stretch; max-width: none; }
+}
+@media (max-width: 767px) {
+  .mega-cta-form { padding: 64px 20px 28px; }
+  .fa-title { font-size: 32px; }
+  .fa-sub { font-size: 15px; }
+}
