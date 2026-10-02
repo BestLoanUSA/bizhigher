@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="/style.css?v=a5ddaa1e">
+<link rel="stylesheet" href="/style.css?v=01430070">
 <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"우리 가게 상권, 구글 지도로 5분 만에 분석하는 법","description":"유료 툴 없이 구글 지도만으로 경쟁 가게 수, 리뷰 격차, 한인 손님 밀집 지역을 파악하는 5분 상권 분석법을 표와 체크리스트로 정리했습니다.","datePublished":"2026-10-01","dateModified":"2026-10-01","inLanguage":"ko","author":{"@type":"Organization","name":"BizHigher","url":"https://bizhigher.com"},"publisher":{"@type":"Organization","name":"BizHigher","url":"https://bizhigher.com"},"mainEntityOfPage":"https://bizhigher.com/blog/trade-area-analysis-google-maps/","keywords":"상권 분석, 구글 지도 경쟁사 분석, 로컬 마케팅, 한인 가게 상권, 경쟁 업체 조사"},{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"구글 지도 말고 다른 도구도 필요한가요?","acceptedAnswer":{"@type":"Answer","text":"시작 단계에서는 구글 지도만으로 충분합니다. 검색량이나 방문자 수 추정이 필요하면 유료 툴이 있지만, 소상공인에게 먼저 필요한 것은 \"내 주변에서 누가 어떤 숫자로 앞서 있는가\"를 보는 일이고, 그건 구글 지도에 다 나와 있습니다."}},{"@type":"Question","name":"경쟁 가게가 너무 많은데 어떻게 이기나요?","acceptedAnswer":{"@type":"Answer","text":"일반 검색어에서 전부 이기려 하지 마세요. \"한인\", \"주말 영업\", \"소아 전문\"처럼 우리만 해당되는 조건으로 검색 범위를 좁혀 보고, 그 좁은 검색에서 상위에 오르도록 프로필 설명과 사진, 리뷰를 맞추는 편이 훨씬 현실적입니다."}},{"@type":"Question","name":"분석 결과 리뷰 수 차이가 너무 커서 따라잡기 어려워 보입니다.","acceptedAnswer":{"@type":"Answer","text":"리뷰 수는 단기간에 따라잡을 수 없는 지표라서, 절대 수보다 **최근 한 달 새로 달리는 리뷰 수**를 목표로 삼으세요. 월 몇 개라도 꾸준히 쌓이면 최신성 신호가 좋아집니다. 단, 대가를 주고 리뷰를 받거나 만족한 손님에게만 요청하는 방식은 구글 정책 위반이니 피해야 합니다."}},{"@type":"Question","name":"얼마나 자주 다시 분석해야 하나요?","acceptedAnswer":{"@type":"Answer","text":"분기에 한 번, 연말이나 성수기 직전에 한 번 정도가 적당합니다. 새 경쟁 가게가 문을 열었거나 상위권 순위가 바뀌었는지 확인하는 정도면 충분합니다."}}]}]</script>
 
 <script type="text/javascript">
@@ -167,12 +167,51 @@
 })();
 </script>
 
-<section class="mega-cta">
-  <div class="container center">
-    <a href="/free-audit/" class="mega-link" aria-label="무료 AI 진단 시작하기"><span class="mega-text">한 단계 위로.</span></a>
-    <p class="mega-sub">내 가게 마케팅, 몇 점일까요? — 60초 무료 AI 진단으로 시작하세요 →</p>
+<section class="mega-cta mega-cta-form" id="footer-audit">
+  <div class="container">
+    <div class="fa-grid">
+      <div class="fa-copy">
+        <p class="eyebrow eyebrow-cyan">무료 · 60초 · 가입 불필요</p>
+        <h2 class="fa-title">내 가게 마케팅,<br><span class="grad">몇 점일까요?</span></h2>
+        <p class="fa-sub">구글에서 우리 가게가 어떻게 보이는지 AI가 분석합니다. 완료되면 이 화면에서 바로 리포트가 열립니다. 스팸은 보내지 않습니다.</p>
+        <p class="fa-note">📄 <a href="/report/sample">리포트가 어떻게 생겼는지 먼저 보기 →</a></p>
+      </div>
+      <form class="audit-form fa-form" id="fa-form">
+        <input type="text" name="business" placeholder="업체명 (예: 청기와 순두부)" class="input" required>
+        <input type="text" name="location" placeholder="도시 (예: Los Angeles CA) 또는 구글 프로필 링크" class="input" required>
+        <input type="email" name="email" placeholder="이메일" class="input" required>
+        <button type="submit" class="btn btn-primary btn-block">무료 진단 시작 →</button>
+        <div class="form-msg" id="fa-msg"></div>
+        <p class="fa-form-note">분석에 20~40초 정도 걸립니다 · 완료되면 리포트 화면으로 자동 이동합니다</p>
+      </form>
+    </div>
   </div>
 </section>
+<script>
+(function () {
+  var form = document.getElementById('fa-form'); if (!form) return;
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var msg = document.getElementById('fa-msg');
+    var btn = form.querySelector('button');
+    btn.disabled = true; btn.textContent = 'AI가 분석 중입니다... (최대 40초)';
+    try {
+      var body = Object.fromEntries(new FormData(form).entries());
+      var res = await fetch('/api/audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error('server');
+      var result = await res.json();
+      if (result.reportUrl) { btn.textContent = '리포트 여는 중...'; window.location.href = result.reportUrl; return; }
+      msg.className = 'form-msg success';
+      msg.textContent = '접수되었습니다! 영업일 1일 안에 진단 리포트를 이메일로 보내드릴게요.';
+      form.reset(); btn.textContent = '접수 완료 ✓';
+    } catch (err) {
+      msg.className = 'form-msg error';
+      msg.textContent = '일시적인 오류가 발생했습니다. 잠시 후 다시 시도하시거나 hello@bizhigher.com 로 보내주세요.';
+      btn.disabled = false; btn.textContent = '무료 진단 시작 →';
+    }
+  });
+})();
+</script>
 <footer class="footer">
   <div class="container">
     <div class="footer-cols">

@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="/style.css?v=a5ddaa1e">
+<link rel="stylesheet" href="/style.css?v=01430070">
 <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"손님이 ChatGPT에게 맛집을 물어보는 시대 — 내 가게가 AI의 추천을 받는 법 (AIO 입문)","description":"구글 다음의 전장은 AI 검색입니다. ChatGPT·Perplexity가 가게를 추천하는 원리와, 오늘 시작할 수 있는 AI 검색 최적화(AIO) 7가지를 정리했습니다.","datePublished":"2026-09-13","dateModified":"2026-09-13","inLanguage":"ko","author":{"@type":"Organization","name":"BizHigher","url":"https://bizhigher.com"},"publisher":{"@type":"Organization","name":"BizHigher","url":"https://bizhigher.com"},"mainEntityOfPage":"https://bizhigher.com/blog/ai-search-optimization-aio/","keywords":"AI 검색 최적화, AIO, ChatGPT 가게 추천, AI 검색 노출, AEO"},{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"AIO를 하면 기존 구글 SEO는 안 해도 되나요?","acceptedAnswer":{"@type":"Answer","text":"반대입니다. AI 검색의 로컬 추천은 구글 프로필·리뷰·웹사이트 데이터를 재료로 쓰기 때문에, 전통 로컬 SEO가 잘 된 가게가 AI 추천도 잘 받습니다. AIO는 SEO의 대체재가 아니라 확장판입니다."}},{"@type":"Question","name":"효과가 나타나는 데 얼마나 걸리나요?","acceptedAnswer":{"@type":"Answer","text":"프로필·웹사이트 정비의 효과는 몇 주 안에 AI 답변에 반영되기도 하지만, 리뷰와 언급이 쌓여 추천 빈도가 올라가는 것은 몇 달 단위의 작업입니다. 매달 같은 질문으로 측정하며 추세를 보는 것이 정확합니다."}},{"@type":"Question","name":"작은 가게도 AI 추천을 받을 수 있나요?","acceptedAnswer":{"@type":"Answer","text":"오히려 유리할 수 있습니다. AI는 \"가장 큰 가게\"가 아니라 \"질문에 가장 잘 맞는 가게\"를 답합니다. \"한국어 상담 가능한\", \"당일 수선 되는\", \"새벽까지 하는\" 같은 구체적 강점이 명확히 적혀 있는 작은 가게가, 정보가 애매한 큰 가게를 이기는 일이 실제로 일어납니다."}},{"@type":"Question","name":"ChatGPT에 우리 가게 정보를 직접 등록할 수는 없나요?","acceptedAnswer":{"@type":"Answer","text":"현재 일반 로컬 비즈니스가 AI 챗봇에 직접 등록하는 공식 창구는 없습니다. AI가 참조하는 원천(구글 프로필, 웹사이트, 디렉토리, 리뷰)을 정비하는 것이 곧 등록 행위인 셈입니다."}}]}]</script>
 
 <script type="text/javascript">
@@ -167,12 +167,51 @@
 })();
 </script>
 
-<section class="mega-cta">
-  <div class="container center">
-    <a href="/free-audit/" class="mega-link" aria-label="무료 AI 진단 시작하기"><span class="mega-text">한 단계 위로.</span></a>
-    <p class="mega-sub">내 가게 마케팅, 몇 점일까요? — 60초 무료 AI 진단으로 시작하세요 →</p>
+<section class="mega-cta mega-cta-form" id="footer-audit">
+  <div class="container">
+    <div class="fa-grid">
+      <div class="fa-copy">
+        <p class="eyebrow eyebrow-cyan">무료 · 60초 · 가입 불필요</p>
+        <h2 class="fa-title">내 가게 마케팅,<br><span class="grad">몇 점일까요?</span></h2>
+        <p class="fa-sub">구글에서 우리 가게가 어떻게 보이는지 AI가 분석합니다. 완료되면 이 화면에서 바로 리포트가 열립니다. 스팸은 보내지 않습니다.</p>
+        <p class="fa-note">📄 <a href="/report/sample">리포트가 어떻게 생겼는지 먼저 보기 →</a></p>
+      </div>
+      <form class="audit-form fa-form" id="fa-form">
+        <input type="text" name="business" placeholder="업체명 (예: 청기와 순두부)" class="input" required>
+        <input type="text" name="location" placeholder="도시 (예: Los Angeles CA) 또는 구글 프로필 링크" class="input" required>
+        <input type="email" name="email" placeholder="이메일" class="input" required>
+        <button type="submit" class="btn btn-primary btn-block">무료 진단 시작 →</button>
+        <div class="form-msg" id="fa-msg"></div>
+        <p class="fa-form-note">분석에 20~40초 정도 걸립니다 · 완료되면 리포트 화면으로 자동 이동합니다</p>
+      </form>
+    </div>
   </div>
 </section>
+<script>
+(function () {
+  var form = document.getElementById('fa-form'); if (!form) return;
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var msg = document.getElementById('fa-msg');
+    var btn = form.querySelector('button');
+    btn.disabled = true; btn.textContent = 'AI가 분석 중입니다... (최대 40초)';
+    try {
+      var body = Object.fromEntries(new FormData(form).entries());
+      var res = await fetch('/api/audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error('server');
+      var result = await res.json();
+      if (result.reportUrl) { btn.textContent = '리포트 여는 중...'; window.location.href = result.reportUrl; return; }
+      msg.className = 'form-msg success';
+      msg.textContent = '접수되었습니다! 영업일 1일 안에 진단 리포트를 이메일로 보내드릴게요.';
+      form.reset(); btn.textContent = '접수 완료 ✓';
+    } catch (err) {
+      msg.className = 'form-msg error';
+      msg.textContent = '일시적인 오류가 발생했습니다. 잠시 후 다시 시도하시거나 hello@bizhigher.com 로 보내주세요.';
+      btn.disabled = false; btn.textContent = '무료 진단 시작 →';
+    }
+  });
+})();
+</script>
 <footer class="footer">
   <div class="container">
     <div class="footer-cols">

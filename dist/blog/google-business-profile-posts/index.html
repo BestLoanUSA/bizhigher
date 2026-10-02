@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="/style.css?v=a5ddaa1e">
+<link rel="stylesheet" href="/style.css?v=01430070">
 <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"구글 프로필 '게시물' 기능 — 아무도 안 써서 기회인 무료 광고판","description":"구글 비즈니스 프로필의 게시물 기능은 완전 무료인데 대부분 가게가 안 씁니다. 종류별 활용법과 올리는 법, 효과를 확인하는 기준까지 정리했습니다.","datePublished":"2026-09-21","dateModified":"2026-09-21","inLanguage":"ko","author":{"@type":"Organization","name":"BizHigher","url":"https://bizhigher.com"},"publisher":{"@type":"Organization","name":"BizHigher","url":"https://bizhigher.com"},"mainEntityOfPage":"https://bizhigher.com/blog/google-business-profile-posts/","keywords":"구글 비즈니스 프로필 게시물, GBP posts, 구글 프로필 홍보, 구글 지도 게시물"},{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"게시물을 올리면 지도 순위가 바로 오르나요?","acceptedAnswer":{"@type":"Answer","text":"직접적인 순위 요인이라는 공식 발표는 없습니다. 다만 활동성이 높은 프로필이 유리하게 평가된다는 점, 그리고 검색 결과 카드에서 게시물이 있는 가게가 더 눈에 띈다는 점에서 간접적인 도움이 됩니다. 리뷰·카테고리 같은 핵심 요인을 먼저 챙긴 뒤 보조 수단으로 쓰는 게 맞습니다."}},{"@type":"Question","name":"인스타그램에 올린 사진을 그대로 써도 되나요?","acceptedAnswer":{"@type":"Answer","text":"네, 문제없습니다. 다만 인스타그램용 세로 사진보다는 가로 사진이 지도 카드에서 더 잘 보입니다. 여러 장 찍어뒀다면 그중 가로 구도를 골라 쓰세요."}},{"@type":"Question","name":"이벤트 게시물은 언제까지 노출되나요?","acceptedAnswer":{"@type":"Answer","text":"설정한 종료일까지 노출되고, 그 이후엔 프로필에서 자동으로 사라집니다(과거 게시물로는 남아있지 않는 경우가 많습니다). 행사가 끝난 뒤에도 계속 보이길 원하면 최신 소식 유형으로 별도로 올리는 걸 권합니다."}},{"@type":"Question","name":"여러 장 한꺼번에 올릴 수 있나요?","acceptedAnswer":{"@type":"Answer","text":"게시물 하나당 사진 1장, 동영상은 30초 이내 1개까지 첨부할 수 있습니다. 여러 장을 보여주고 싶다면 게시물을 여러 개로 나눠 올리거나, 프로필의 일반 \"사진\" 탭에 별도로 업로드하세요."}}]}]</script>
 
 <script type="text/javascript">
@@ -160,12 +160,51 @@
 })();
 </script>
 
-<section class="mega-cta">
-  <div class="container center">
-    <a href="/free-audit/" class="mega-link" aria-label="무료 AI 진단 시작하기"><span class="mega-text">한 단계 위로.</span></a>
-    <p class="mega-sub">내 가게 마케팅, 몇 점일까요? — 60초 무료 AI 진단으로 시작하세요 →</p>
+<section class="mega-cta mega-cta-form" id="footer-audit">
+  <div class="container">
+    <div class="fa-grid">
+      <div class="fa-copy">
+        <p class="eyebrow eyebrow-cyan">무료 · 60초 · 가입 불필요</p>
+        <h2 class="fa-title">내 가게 마케팅,<br><span class="grad">몇 점일까요?</span></h2>
+        <p class="fa-sub">구글에서 우리 가게가 어떻게 보이는지 AI가 분석합니다. 완료되면 이 화면에서 바로 리포트가 열립니다. 스팸은 보내지 않습니다.</p>
+        <p class="fa-note">📄 <a href="/report/sample">리포트가 어떻게 생겼는지 먼저 보기 →</a></p>
+      </div>
+      <form class="audit-form fa-form" id="fa-form">
+        <input type="text" name="business" placeholder="업체명 (예: 청기와 순두부)" class="input" required>
+        <input type="text" name="location" placeholder="도시 (예: Los Angeles CA) 또는 구글 프로필 링크" class="input" required>
+        <input type="email" name="email" placeholder="이메일" class="input" required>
+        <button type="submit" class="btn btn-primary btn-block">무료 진단 시작 →</button>
+        <div class="form-msg" id="fa-msg"></div>
+        <p class="fa-form-note">분석에 20~40초 정도 걸립니다 · 완료되면 리포트 화면으로 자동 이동합니다</p>
+      </form>
+    </div>
   </div>
 </section>
+<script>
+(function () {
+  var form = document.getElementById('fa-form'); if (!form) return;
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var msg = document.getElementById('fa-msg');
+    var btn = form.querySelector('button');
+    btn.disabled = true; btn.textContent = 'AI가 분석 중입니다... (최대 40초)';
+    try {
+      var body = Object.fromEntries(new FormData(form).entries());
+      var res = await fetch('/api/audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error('server');
+      var result = await res.json();
+      if (result.reportUrl) { btn.textContent = '리포트 여는 중...'; window.location.href = result.reportUrl; return; }
+      msg.className = 'form-msg success';
+      msg.textContent = '접수되었습니다! 영업일 1일 안에 진단 리포트를 이메일로 보내드릴게요.';
+      form.reset(); btn.textContent = '접수 완료 ✓';
+    } catch (err) {
+      msg.className = 'form-msg error';
+      msg.textContent = '일시적인 오류가 발생했습니다. 잠시 후 다시 시도하시거나 hello@bizhigher.com 로 보내주세요.';
+      btn.disabled = false; btn.textContent = '무료 진단 시작 →';
+    }
+  });
+})();
+</script>
 <footer class="footer">
   <div class="container">
     <div class="footer-cols">

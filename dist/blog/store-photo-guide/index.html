@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="/style.css?v=a5ddaa1e">
+<link rel="stylesheet" href="/style.css?v=01430070">
 <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"손님을 부르는 가게 사진 찍는 법 — 폰 카메라로 충분합니다","description":"구글 프로필 사진, 전문 스튜디오 없이 폰 카메라로도 충분합니다. 어떤 사진을 몇 장, 어떤 순서로 올려야 하는지 기준과 촬영 요령을 정리했습니다.","datePublished":"2026-09-18","dateModified":"2026-09-18","inLanguage":"ko","author":{"@type":"Organization","name":"BizHigher","url":"https://bizhigher.com"},"publisher":{"@type":"Organization","name":"BizHigher","url":"https://bizhigher.com"},"mainEntityOfPage":"https://bizhigher.com/blog/store-photo-guide/","keywords":"구글 비즈니스 프로필 사진, 가게 사진 찍는 법, 매장 사진, 구글 지도 사진, 프로필 사진 최적화"},{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"전문 사진작가를 꼭 고용해야 하나요?","acceptedAnswer":{"@type":"Answer","text":"필수는 아닙니다. 앞서 안내한 최소 기준(밝기, 초점, 해상도)만 지키면 폰 카메라로도 충분합니다. 다만 메뉴판 대표 사진이나 시그니처 상품처럼 매출에 직접 연결되는 몇 장은 전문가에게 맡기는 것을 고려해볼 수 있습니다."}},{"@type":"Question","name":"사진은 얼마나 자주 올려야 하나요?","acceptedAnswer":{"@type":"Answer","text":"한 번에 몰아서 50장을 올리는 것보다, 매주 1~2장씩 꾸준히 추가하는 편이 낫습니다. 구글이 최근 업로드 사진을 우선 노출하기 때문에, 꾸준한 업데이트가 프로필이 \"살아있다\"는 신호로 작동합니다."}},{"@type":"Question","name":"손님이 올린 사진도 관리해야 하나요?","acceptedAnswer":{"@type":"Answer","text":"손님이 올린 사진은 사장님이 직접 삭제할 수 없고, 부적절한 사진(다른 업체 사진, 광고성 이미지 등)만 신고 절차를 통해 삭제 요청이 가능합니다. 대신 사장님이 올리는 사진의 비중과 최신성을 높여, 프로필 전체 인상을 원하는 방향으로 이끌어가는 것이 현실적인 전략입니다."}},{"@type":"Question","name":"세로 사진과 가로 사진 중 뭐가 더 유리한가요?","acceptedAnswer":{"@type":"Answer","text":"플랫폼별 우위는 명확하지 않지만, 대표 사진(커버 사진)은 지도·검색 결과에서 가로로 노출되는 경우가 많아 가로 비율을 권장합니다. 상세 사진은 가로·세로를 섞어 다양하게 올리는 것이 자연스럽습니다."}}]}]</script>
 
 <script type="text/javascript">
@@ -159,12 +159,51 @@
 })();
 </script>
 
-<section class="mega-cta">
-  <div class="container center">
-    <a href="/free-audit/" class="mega-link" aria-label="무료 AI 진단 시작하기"><span class="mega-text">한 단계 위로.</span></a>
-    <p class="mega-sub">내 가게 마케팅, 몇 점일까요? — 60초 무료 AI 진단으로 시작하세요 →</p>
+<section class="mega-cta mega-cta-form" id="footer-audit">
+  <div class="container">
+    <div class="fa-grid">
+      <div class="fa-copy">
+        <p class="eyebrow eyebrow-cyan">무료 · 60초 · 가입 불필요</p>
+        <h2 class="fa-title">내 가게 마케팅,<br><span class="grad">몇 점일까요?</span></h2>
+        <p class="fa-sub">구글에서 우리 가게가 어떻게 보이는지 AI가 분석합니다. 완료되면 이 화면에서 바로 리포트가 열립니다. 스팸은 보내지 않습니다.</p>
+        <p class="fa-note">📄 <a href="/report/sample">리포트가 어떻게 생겼는지 먼저 보기 →</a></p>
+      </div>
+      <form class="audit-form fa-form" id="fa-form">
+        <input type="text" name="business" placeholder="업체명 (예: 청기와 순두부)" class="input" required>
+        <input type="text" name="location" placeholder="도시 (예: Los Angeles CA) 또는 구글 프로필 링크" class="input" required>
+        <input type="email" name="email" placeholder="이메일" class="input" required>
+        <button type="submit" class="btn btn-primary btn-block">무료 진단 시작 →</button>
+        <div class="form-msg" id="fa-msg"></div>
+        <p class="fa-form-note">분석에 20~40초 정도 걸립니다 · 완료되면 리포트 화면으로 자동 이동합니다</p>
+      </form>
+    </div>
   </div>
 </section>
+<script>
+(function () {
+  var form = document.getElementById('fa-form'); if (!form) return;
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var msg = document.getElementById('fa-msg');
+    var btn = form.querySelector('button');
+    btn.disabled = true; btn.textContent = 'AI가 분석 중입니다... (최대 40초)';
+    try {
+      var body = Object.fromEntries(new FormData(form).entries());
+      var res = await fetch('/api/audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error('server');
+      var result = await res.json();
+      if (result.reportUrl) { btn.textContent = '리포트 여는 중...'; window.location.href = result.reportUrl; return; }
+      msg.className = 'form-msg success';
+      msg.textContent = '접수되었습니다! 영업일 1일 안에 진단 리포트를 이메일로 보내드릴게요.';
+      form.reset(); btn.textContent = '접수 완료 ✓';
+    } catch (err) {
+      msg.className = 'form-msg error';
+      msg.textContent = '일시적인 오류가 발생했습니다. 잠시 후 다시 시도하시거나 hello@bizhigher.com 로 보내주세요.';
+      btn.disabled = false; btn.textContent = '무료 진단 시작 →';
+    }
+  });
+})();
+</script>
 <footer class="footer">
   <div class="container">
     <div class="footer-cols">
