@@ -816,7 +816,7 @@ function packageMatrixSection(opts = {}) {
           <ul class="pk-gift-base">${g.base.map(giftLi).join('')}</ul>
           <div class="pk-gift-up">
             <div class="pk-gift-up-h"><span class="pk-gift-up-tag">12개월이면 추가로</span><b>+ ${fmtUsd(g.extraValue)}</b></div>
-            <p class="pk-gift-up-note">월 분납은 7회차 납부 후 제작 · 선결제는 2개월차에 제작</p>
+            <p class="pk-gift-up-note">월 분납은 2회차 납부 후 제작 · 선결제는 2개월차에 제작</p>
             <ul>${g.extra.map(giftLi).join('')}</ul>
             <button type="button" class="pk-gift-up-btn" data-period="annual">12개월로 바꾸고 ${fmtUsd(g.extraValue)} 더 받기 →</button>
           </div>
@@ -907,14 +907,14 @@ function packageMatrixSection(opts = {}) {
       var up = card.querySelector('.pk-gift-up');
       if ((period === 'annual' || period === 'installment') && prev !== 'annual' && prev !== 'installment' && !reduced) { up.classList.remove('pk-pop'); void up.offsetWidth; up.classList.add('pk-pop'); }
       var upTag = card.querySelector('.pk-gift-up-tag');
-      if (upTag) upTag.textContent = period === 'installment' ? '7회차 납부 후 추가로' : '12개월이면 추가로';
+      if (upTag) upTag.textContent = period === 'installment' ? '2회차 납부 후 추가로' : '12개월이면 추가로';
       var cta = card.querySelector('.pk-cta');
       cta.href = (p.links && p.links[period]) || CONSULT[p.slug][period];
       cta.querySelector('.pk-cta-price').textContent = '$' + price + '/월';
     });
     if (noteEl) {
       if (period === 'annual') noteEl.innerHTML = '🎁 <b>12개월 플랜 무료 셋업</b> — 프로필 최적화·리뷰 QR·로컬 등록부터 <b>웹사이트</b>까지, 플랜에 따라 <b>' + fmt(R12.min) + '~' + fmt(R12.max) + ' 상당</b>';
-      else if (period === 'installment') noteEl.innerHTML = '💳 <b>목돈 없이 12개월 플랜</b> — 매달 나눠 내고 셋업 선물은 12개월 선결제와 <b>동일</b>(' + fmt(R12.min) + '~' + fmt(R12.max) + ' 상당). 웹사이트·랜딩페이지는 <b>7회차 납부 후</b> 제작됩니다';
+      else if (period === 'installment') noteEl.innerHTML = '💳 <b>목돈 없이 12개월 플랜</b> — 매달 나눠 내고 셋업 선물은 12개월 선결제와 <b>동일</b>(' + fmt(R12.min) + '~' + fmt(R12.max) + ' 상당). 웹사이트·랜딩페이지는 <b>2회차 납부 후</b> 제작됩니다';
       else if (period === 'six') noteEl.innerHTML = '🎁 <b>6개월 플랜 무료 셋업</b> — 프로필 최적화·리뷰 QR·로컬 등록, 플랜에 따라 <b>' + fmt(R6.min) + '~' + fmt(R6.max) + ' 상당</b> · 12개월로 바꾸면 <b>웹사이트와 랜딩페이지</b>가 추가됩니다';
       else noteEl.innerHTML = '💡 월간 플랜에는 셋업 선물이 없습니다 — 6개월부터 <b>' + fmt(R6.min) + '~</b>, 12개월이면 <b>' + fmt(R12.min) + '~' + fmt(R12.max) + '</b> 상당이 무료입니다';
     }
@@ -2093,8 +2093,8 @@ var params = new URLSearchParams(location.search);
 var svc = params.get('service') || '';
 document.getElementById('service-field').value = svc;
 // 웹사이트 제작 주문이면 전용 질문지 표시
-// 웹사이트 제작 주문 또는 웹사이트가 포함된 12개월 플랜이면 전용 질문지 표시
-if (svc.indexOf('website') === 0 || (svc.indexOf('local-') === 0 && svc.indexOf('annual') > -1)) {
+// 웹사이트 제작 주문 또는 웹사이트가 포함된 12개월 플랜(선결제·월 분납)이면 전용 질문지 표시
+if (svc.indexOf('website') === 0 || (svc.indexOf('local-') === 0 && (svc.indexOf('annual') > -1 || svc.indexOf('installment') > -1))) {
   document.getElementById('website-extra').style.display = 'block';
 }
 document.getElementById('intake-form').addEventListener('submit', async function (e) {
@@ -2844,7 +2844,7 @@ const TERMS_HTML = `
 <h2 class="h2-left">4. 환불</h2>
 <p>• 원타임 서비스: 작업 시작(질문지 제출) 전 전액 환불됩니다.<br>
 • 월간 구독: 해지 시 다음 결제부터 청구가 중단되며, 이미 결제된 월은 환불되지 않습니다.<br>
-• 12개월 약정 월 분납 플랜: 12회 결제를 약정하며 매달 청구됩니다. 셋업 서비스는 12개월 선결제와 동일하게 제공되되, 웹사이트·지역 랜딩페이지는 7회차 납부 후 제작됩니다. 약정 기간 중 해지 시 이후 청구는 중단되며, 이미 제공된 셋업 서비스는 개별 정가 기준으로 정산합니다(시작 후 30일 이내 해지 시에는 30일 보장이 우선 적용됩니다).<br>
+• 12개월 약정 월 분납 플랜: 12회 결제를 약정하며 매달 청구됩니다. 셋업 서비스는 12개월 선결제와 동일하게 제공되되, 웹사이트·지역 랜딩페이지는 2회차 납부 후 제작됩니다. 약정 기간 중 해지 시 이후 청구는 중단되며, 이미 제공된 셋업 서비스는 개별 정가 기준으로 정산합니다(시작 후 30일 이내 해지 시에는 30일 보장이 우선 적용됩니다).<br>
 • 6·12개월 플랜: 시작 후 30일 이내 해지 시 잔여 금액을 환불하며, 이미 제공된 서비스와 셋업은 개별 정가 기준으로 차감 후 정산합니다. 30일 경과 후에는 환불되지 않으나 남은 기간의 서비스는 계속 제공됩니다.</p>
 <h2 class="h2-left">5. 결과물과 지식재산권</h2>
 <p>대금이 완납된 결과물의 사용 권리는 고객에게 있습니다. 회사는 고객이 별도로 거부 의사를 밝히지 않는 한, 완성된 결과물을 포트폴리오로 소개할 수 있습니다. 고객이 제공한 자료(로고, 사진 등)에 대한 권리와 책임은 고객에게 있습니다.</p>

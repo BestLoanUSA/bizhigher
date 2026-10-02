@@ -33,6 +33,8 @@
 
 Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhigher-site`)이 보여도 연결은 정상**이다.
 
+**PR 프리뷰**: 브랜치를 push할 때마다 Cloudflare Pages가 프리뷰를 배포한다. 주소는 `https://<브랜치이름>.bizhigher-site.pages.dev` (프로젝트 이름이 옛 이름이라 `bizhigher.pages.dev`로는 열리지 않는다). PR의 "Cloudflare Pages" 체크 Details에서도 찾을 수 있다. 프리뷰 환경에는 Production의 D1·환경변수가 묶여 있지 않으므로 진단 폼·`/report/*`는 프리뷰에서 동작하지 않을 수 있다 — 디자인·문구 확인용
+
 ### ⚠️ 배포 설정이 두 벌 들어 있다 — 하나는 죽은 코드다
 
 | 파일 | 방식 | 상태 |
@@ -83,10 +85,10 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 ## 4. 카탈로그와 가격
 
 - **서비스 16개** (구독 중심) + **패키지 3종 × 기간 3종**
-- Local Starter / Growth / Premium — 월간 **$219 / $439 / $759**, 6개월 **$179 / $359 / $619**, 12개월 선결제 **$139 / $279 / $479**, 12개월 약정 월 분납 **$159 / $299 / $519**(2026-10-02 추가. Stripe 월 반복 결제 링크를 `links.installment`에 넣기 전까지는 이메일 신청으로 폴백. 셋업 선물은 선결제와 동일하되 웹사이트·랜딩은 7회차 납부 후 제작)
+- Local Starter / Growth / Premium — 월간 **$219 / $439 / $759**, 6개월 **$179 / $359 / $619**, 12개월 선결제 **$139 / $279 / $479**, 12개월 약정 월 분납 **$159 / $299 / $519**(2026-10-02 추가. Stripe 월 반복 결제 링크를 `links.installment`에 넣기 전까지는 이메일 신청으로 폴백. 셋업 선물은 선결제와 동일하되 웹사이트·랜딩은 2회차 납부 후 제작)
 - 셋업 무료 선물로 장기 플랜 유도 — 플랜별·기간별로 커진다(`data/services.json`의 `setupGifts.tiers`). 6개월 $367~$1,202, 12개월 $715~$2,350 상당. 수치는 빌드가 합산하므로 손으로 적지 않는다
 - Stripe Payment Link는 `data/services.json`에 슬러그별로 매핑되어 있고 **16개 전부 실링크가 연결되어 있다**(2026-09-18 확인). 새 구독 상품은 월간·6개월·연간 **링크 3종**을 만들어 연결해야 한다
-- 결제 후 리다이렉트는 `/thanks/?service={slug}` — `website`와 `local-*-annual` 슬러그일 때만 질문지가 노출된다
+- 결제 후 리다이렉트는 `/thanks/?service={slug}` — `website`, `local-*-annual`, `local-*-installment` 슬러그일 때만 웹사이트 질문지가 노출된다. 월 분납 링크의 리다이렉트는 `https://bizhigher.com/thanks/?service=local-{starter|growth|premium}-installment`
 
 ### 할인·보장
 
