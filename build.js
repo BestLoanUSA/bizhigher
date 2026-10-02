@@ -144,7 +144,7 @@ const FOOTER = `
 /* 스크롤 리빌 — IO 지원 시에만 숨겼다가 나타남 (기본은 항상 보임) + 3초 강제 표시 안전장치 */
 (function () {
   if (!('IntersectionObserver' in window)) return;
-  var els = document.querySelectorAll('.prod-card, .step-card, .tier, .stat-box, .faq-item, .price-item');
+  var els = document.querySelectorAll('.prod-card, .step-card, .tier:not(.pk-card), .stat-box, .faq-item, .price-item');
   if (!els.length) return;
   var io = new IntersectionObserver(function (entries) {
     entries.forEach(function (en) {
@@ -245,14 +245,40 @@ function badgeHtml(s) {
   return `<span class="${cls}">${s.badge}</span>`;
 }
 
-function productCard(s) {
+/* ---------- 서비스 카드 ----------
+   카테고리별 색 포인트 + 아이콘 타일 + 딜리버리 칩. 호버 시 그라디언트 테두리와 화살표 슬라이드. */
+const SVC_ICON = {
+  'ai-marketing-report': '<path d="M4 19V5a2 2 0 0 1 2-2h8l6 6v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M14 3v6h6"/><path d="M8 15l2.5-3 2 2 3.5-4"/>',
+  'review-qr-kit': '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM20 14v1M17 20h4M14 20v1"/>',
+  'google-profile-optimization': '<path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.6"/>',
+  'local-listing-setup': '<path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6l1 1 2-2M3 12l1 1 2-2M3 18l1 1 2-2"/>',
+  'local-listing-care': '<path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/>',
+  'website': '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>',
+  'local-landing-pack': '<path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/><path d="M3 17l9 5 9-5"/>',
+  'seo-blog-pack': '<path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 6.5l3 3"/>',
+  'seo-aio': '<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/><path d="M11 8v6M8 11h6"/>',
+  'ad-creative-pack': '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/>',
+  'shortform-video': '<rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M10.5 9v6l5-3-5-3z"/>',
+  'ads-setup': '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/>',
+  'ads-management': '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+  'review-reply': '<path d="M21 12a8 8 0 0 1-8 8H8l-5 3 1.5-4.5A8 8 0 1 1 21 12z"/><path d="M8.5 12h7M8.5 9h4"/>',
+  'gbp-posting': '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 15h4"/>',
+  'care-plan': '<path d="M12 3l8 3v6c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/>',
+};
+const SVC_CAT_LABEL = { expose: '검색·지도·AI', content: '콘텐츠·리뷰', ads: '광고', web: '웹사이트' };
+function svcIcon(slug) {
+  const d = SVC_ICON[slug] || '<circle cx="12" cy="12" r="8"/>';
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+}
+function productCard(s, opts = {}) {
+  const pick = opts.pick ? ' data-pick="1"' : '';
   return `
-<a href="/service/${s.slug}/" class="prod-card">
-  ${badgeHtml(s)}
+<a href="/service/${s.slug}/" class="prod-card prod-cat-${s.cat}" data-cat="${s.cat}"${pick}>
+  <div class="prod-top"><span class="prod-ico">${svcIcon(s.slug)}</span>${badgeHtml(s)}</div>
   <h3 class="h3">${s.name}</h3>
   <p class="body-sm">${s.shortDescription}</p>
   <div class="price-row"><span class="price">${s.price}</span><span class="price-sub">${s.priceSub}</span></div>
-  <span class="card-cta">자세히 보기 →</span>
+  <div class="prod-foot"><span class="prod-chip">${s.delivery}</span><span class="card-cta">자세히 보기 <i>→</i></span></div>
 </a>`;
 }
 
@@ -307,16 +333,16 @@ function dataBandSection() {
   }
   const headline = (s.editorial && s.editorial.headline) || s.title;
   return `
-<section class="section section-navy data-band">
+<section class="section section-gray data-band data-band-quiet">
   <div class="container">
-    <p class="eyebrow eyebrow-cyan">OUR OWN DATA</p>
+    <p class="eyebrow">OUR OWN DATA</p>
     <h2 class="h2">추정이 아니라, 직접 센 숫자입니다</h2>
     <p class="data-band-sub">한인 업소의 온라인 실태를 한 곳씩 확인해 분기마다 공개합니다. 원자료 CSV까지 엽니다 — 출처만 남기면 인용은 자유입니다.</p>
     <div class="grid3">
       ${stats.map((x) => `<div class="stat-box"><div class="stat" data-count="${x.n}" data-suffix="곳">${x.n}곳</div><p class="stat-label">${x.label}</p></div>`).join('')}
     </div>
     <div class="data-band-links">
-      <a class="btn btn-white" href="/data/${s.slug}/">${headline} →</a>
+      <a class="btn btn-ghost" href="/data/${s.slug}/">${headline} →</a>
       <a class="data-band-more" href="/data/">전체 데이터 리포트 →</a>
     </div>
     <p class="data-band-note">${s.asOf} 기준 · ${s.method && s.method.noGooglePlaces ? s.method.noGooglePlaces : '원자료 CSV 제공'}</p>
@@ -325,7 +351,7 @@ function dataBandSection() {
 }
 
 /* ---------- 신뢰 조각: 결과물 미리보기 목업 ----------
-   실제 고객 결과물이 아니라 HTML/CSS로 그린 "이렇게 생긴 것을 받는다" 예시다. 업체명은 가상("순두부 하우스 (예시)").
+   실제 고객 결과물이 아니라 HTML/CSS로 그린 "이렇게 생긴 것을 받는다" 예시다. 업체명은 가상("순두부 하우스").
    David가 실제 스크린샷을 보내면 같은 자리에 <img>로 교체하면 된다. */
 function qrSvg(seed) {
   // 장식용 유사 QR — 실제 스캔되지 않는다. 결정적 난수로 빌드마다 같은 모양.
@@ -352,8 +378,8 @@ const MOCKUPS = {
   'gbp-post': {
     title: '구글 프로필 게시물', sub: '매주 1~2건 · 이미지 + 한/영 캡션', for: ['gbp-posting', 'google-profile-optimization'],
     html: `<div class="mk mk-gbp">
-  <div class="mk-row"><span class="mk-avatar">순</span><div class="mk-who"><b>순두부 하우스 (예시)</b><small>구글 비즈니스 프로필 · 2일 전</small></div></div>
-  <div class="mk-gbp-img"><span>가을 신메뉴<br>갈비 순두부</span></div>
+  <div class="mk-row"><span class="mk-avatar">순</span><div class="mk-who"><b>순두부 하우스</b><small>구글 비즈니스 프로필 · 2일 전</small></div></div>
+  <div class="mk-gbp-img" style="background-image:url('/showcase/galbi-sundubu.jpg')"><span>가을 신메뉴<br>갈비 순두부</span></div>
   <p class="mk-gbp-cap">찬바람 불 때 딱 — 갈비를 넣고 끓인 갈비 순두부가 나왔습니다. 매일 11시~9시, 가든그로브 Brookhurst St.</p>
   <span class="mk-pill">자세히 알아보기</span>
 </div>` },
@@ -370,12 +396,12 @@ const MOCKUPS = {
   <p class="mk-tent-h">오늘 식사, 어떠셨나요?</p>
   <p class="mk-tent-s">30초 구글 리뷰로 알려주세요</p>
   ${qrSvg(20260918)}
-  <p class="mk-tent-f">순두부 하우스 (예시) · 솔직한 후기면 충분합니다</p>
+  <p class="mk-tent-f">순두부 하우스 · 솔직한 후기면 충분합니다</p>
 </div>` },
   website: {
     title: '원페이지 웹사이트', sub: '모바일 우선 · 전화·길찾기·메뉴 · 호스팅비 $0', for: ['website', 'care-plan'],
     html: `<div class="mk mk-phone">
-  <div class="mk-web-hero"><b>순두부 하우스</b><small>가든그로브 · 한식 · 예시</small></div>
+  <div class="mk-web-hero" style="background-image:url('/showcase/interior.jpg')"><b>순두부 하우스</b><small>가든그로브 · 한식</small></div>
   <div class="mk-web-btns"><span>📞 전화</span><span>🗺 길찾기</span><span>📋 메뉴</span></div>
   <div class="mk-web-hours"><b>영업시간</b> 매일 11:00 – 21:00</div>
   <div class="mk-web-menu"><div><span>갈비 순두부</span><span>$16.95</span></div><div><span>해물 순두부</span><span>$14.95</span></div><div><span>돌솥비빔밥</span><span>$15.95</span></div></div>
@@ -383,7 +409,7 @@ const MOCKUPS = {
   report: {
     title: '월간 성과 리포트', sub: '매달 초 · 조회·전화·길찾기 · 이번 달 한 일', for: ['seo-aio', 'ads-management', 'local-listing-care', 'gbp-posting'],
     html: `<div class="mk mk-rep">
-  <div class="mk-rep-head"><b>9월 성과 리포트</b><small>순두부 하우스 (예시) · 구글 프로필</small></div>
+  <div class="mk-rep-head"><b>9월 성과 리포트</b><small>순두부 하우스 · 구글 프로필</small></div>
   <div class="mk-kpis">
     <div><small>프로필 조회</small><b>2,314</b><i>▲ 18%</i></div>
     <div><small>전화 클릭</small><b>96</b><i>▲ 31%</i></div>
@@ -395,12 +421,12 @@ const MOCKUPS = {
   ad: {
     title: '광고 소재', sub: '1080×1080 · 인스타·페북·구글 · 매달 10장', for: ['ad-creative-pack', 'ads-setup', 'ads-management'],
     html: `<div class="mk mk-ad">
-  <div class="mk-ad-sq"><span class="mk-ad-k">LUNCH SPECIAL</span><b>점심 순두부 세트<br>$12.95</b><small>평일 11시–3시 · 가든그로브</small><span class="mk-ad-logo">순두부 하우스 · 예시</span></div>
+  <div class="mk-ad-sq" style="background-image:url('/showcase/galbi-sundubu.jpg')"><span class="mk-ad-k">LUNCH SPECIAL</span><b>점심 순두부 세트<br>$12.95</b><small>평일 11시–3시 · 가든그로브</small><span class="mk-ad-logo">순두부 하우스</span></div>
 </div>` },
   listings: {
     title: '로컬 등록 현황표', sub: '30곳 등록 · 인증 진행 상황 공유', for: ['local-listing-setup', 'local-listing-care'],
     html: `<div class="mk mk-list">
-  <div class="mk-rep-head"><b>로컬 등록 현황</b><small>순두부 하우스 (예시) · 30곳 중 23곳 완료</small></div>
+  <div class="mk-rep-head"><b>로컬 등록 현황</b><small>순두부 하우스 · 30곳 중 23곳 완료</small></div>
   <ul>
     <li><span>Yelp</span><i class="ok">등록 완료</i></li>
     <li><span>Apple Business Connect</span><i class="ok">등록 완료</i></li>
@@ -415,7 +441,7 @@ const MOCKUPS = {
     html: `<div class="mk mk-blog">
   <span class="mk-tag">블로그 · 1,900자 · FAQ 스키마</span>
   <b class="mk-blog-t">가든그로브에서 순두부 맛집 고르는 법: 국물·두부·반찬 3가지 기준</b>
-  <small>2026-09-22 · 순두부 하우스 (예시)</small>
+  <small>2026-09-22 · 순두부 하우스</small>
   <div class="mk-lines" aria-hidden="true"><i style="width:94%"></i><i style="width:88%"></i><i style="width:62%"></i></div>
   <p class="mk-blog-h">1. 국물 — 사골인지 멸치인지부터</p>
   <div class="mk-lines" aria-hidden="true"><i style="width:90%"></i><i style="width:76%"></i></div>
@@ -423,12 +449,12 @@ const MOCKUPS = {
   video: {
     title: '숏폼 영상', sub: '세로형 15~30초 · 릴스·틱톡·쇼츠 · 자막 포함', for: ['shortform-video'],
     html: `<div class="mk mk-video">
-  <div class="mk-vframe"><span class="mk-vplay">▶</span><div class="mk-vcap"><b>갈비 순두부 끓는 15초</b><small>순두부 하우스 (예시) · 한/영 자막</small></div></div>
+  <div class="mk-vframe" style="background-image:url('/showcase/seafood-sundubu.jpg')"><span class="mk-vplay">▶</span><div class="mk-vcap"><b>갈비 순두부 끓는 15초</b><small>순두부 하우스 · 한/영 자막</small></div></div>
 </div>` },
   profile: {
     title: '프로필 최적화 체크리스트', sub: '카테고리·설명·사진·영업시간 A부터 Z까지', for: ['google-profile-optimization'],
     html: `<div class="mk mk-prof">
-  <div class="mk-rep-head"><b>프로필 최적화 완료 보고</b><small>순두부 하우스 (예시)</small></div>
+  <div class="mk-rep-head"><b>프로필 최적화 완료 보고</b><small>순두부 하우스</small></div>
   <ul class="mk-check">
     <li class="done">기본 카테고리: 일반 음식점 → <b>한식당</b></li>
     <li class="done">보조 카테고리 3개 추가 (두부 전문 · 아시아 음식 · 테이크아웃)</li>
@@ -474,21 +500,163 @@ function gallerySectionFor(s) {
     <div class="mk-grid mk-grid-${keys.length}">${keys.map((k) => mockupCard(k)).join('')}</div>`;
 }
 
-/* 홈용: 가로 스크롤 띠 */
-function galleryStripSection() {
-  const picks = ['gbp-post', 'review-reply', 'website', 'qr-kit', 'report', 'ad', 'video'];
+/* ---------- 결과물 쇼케이스 (홈) ----------
+   큰 무대 하나 + 탭 5개. 각 탭은 실물 크기 장면 하나(폰·브라우저 프레임 + 실제 사진)와 "한 일" 칩 3개.
+   사진은 src/showcase/ (가상 업체 "순두부 하우스"용 생성 이미지). 자동 넘김 6초, 호버·터치 시 정지. */
+const SC_IMG = {
+  galbi: '/showcase/galbi-sundubu.jpg', seafood: '/showcase/seafood-sundubu.jpg',
+  bibimbap: '/showcase/dolsot-bibimbap.jpg', interior: '/showcase/interior.jpg',
+};
+const SC_SCENES = [
+  {
+    key: 'profile', tab: '구글 프로필', tabSub: '사진 · 게시물 · 카테고리', service: 'google-profile-optimization',
+    chips: ['사진 12장 추가 · 대표 사진 교체', '게시물 주 2회 자동 게시', '카테고리 "한식당"으로 교정'],
+    html: `
+<div class="sc-phone">
+  <div class="sc-cover" style="background-image:url('${SC_IMG.interior}')"></div>
+  <div class="sc-pbody">
+    <div class="sc-pname">순두부 하우스</div>
+    <div class="sc-prow"><b>4.6</b><span class="sc-stars">★★★★★</span><span class="sc-muted">(203)</span><span class="sc-dot">·</span><span class="sc-muted">한식당</span></div>
+    <div class="sc-pmeta"><span class="sc-open">영업 중</span> · 오후 9:00에 영업 종료 · Garden Grove</div>
+    <div class="sc-pbtns"><span>📞 전화</span><span>🧭 길찾기</span><span>🌐 웹사이트</span><span>🔖 저장</span></div>
+    <div class="sc-pgrid">
+      <i style="background-image:url('${SC_IMG.galbi}')"></i><i style="background-image:url('${SC_IMG.seafood}')"></i><i style="background-image:url('${SC_IMG.bibimbap}')"></i>
+    </div>
+    <div class="sc-post">
+      <i style="background-image:url('${SC_IMG.galbi}')"></i>
+      <div><b>가을 신메뉴 · 갈비 순두부</b><p>찬바람 불 때 딱 — 갈비를 넣고 끓인 갈비 순두부가 나왔습니다. 매일 11시~9시.</p><small>2일 전 · 게시물</small></div>
+    </div>
+  </div>
+</div>` },
+  {
+    key: 'reviews', tab: '리뷰 관리', tabSub: '답글 · QR 요청 · 24시간', service: 'review-reply',
+    chips: ['새 리뷰 24시간 내 답글', '별 1~3개는 사람이 먼저 검토', '테이블 QR로 자연스럽게 요청'],
+    html: `
+<div class="sc-phone sc-phone-rv">
+  <div class="sc-pbody">
+    <div class="sc-rvhead"><b>리뷰</b><span class="sc-muted">최신순</span></div>
+    <div class="sc-rv">
+      <div class="sc-rvtop"><span class="sc-av" style="background:#34A853">J</span><div><b>Jenny K.</b><small>리뷰 3개 · 사진 1장</small></div><span class="sc-stars">★★★★★</span></div>
+      <p>순두부가 진짜 부드럽고 반찬이 매일 바뀌어요. 주차가 좀 어려운 게 유일한 단점.</p>
+      <div class="sc-reply"><b>사장님 답글</b><p>Jenny님, 반찬 칭찬 감사합니다! 주차는 건물 뒤편 공용 주차장이 저녁 6시 이후 무료이니 다음엔 그쪽을 이용해 보세요 😊</p></div>
+    </div>
+    <div class="sc-rv">
+      <div class="sc-rvtop"><span class="sc-av" style="background:#EA4335">M</span><div><b>Michael P.</b><small>리뷰 12개</small></div><span class="sc-stars">★★★★<i>★</i></span></div>
+      <p>Seafood sundubu was excellent. Wait was ~15 min on Saturday night.</p>
+      <div class="sc-reply"><b>사장님 답글</b><p>Thank you, Michael! Weekend evenings get busy — calling ahead gets you on the list. See you again soon.</p></div>
+    </div>
+  </div>
+</div>
+<div class="sc-side sc-tent">
+  <p class="sc-tent-h">오늘 식사, 어떠셨나요?</p>
+  <p class="sc-tent-s">30초 구글 리뷰로 알려주세요</p>
+  ${qrSvg(20260918)}
+  <p class="sc-tent-f">순두부 하우스 · 솔직한 후기면 충분합니다</p>
+</div>` },
+  {
+    key: 'website', tab: '웹사이트', tabSub: '원페이지 · 모바일 우선 · 호스팅 $0', service: 'website',
+    chips: ['영업일 3~7일 완성', '전화·길찾기·메뉴 한 화면', '호스팅비 $0 · 도메인만 부담'],
+    html: `
+<div class="sc-browser">
+  <div class="sc-bbar"><i></i><i></i><i></i><span>sundubuhouse.com</span></div>
+  <div class="sc-site">
+    <div class="sc-shero" style="background-image:url('${SC_IMG.interior}')"><div><small>GARDEN GROVE · SINCE 2014</small><b>순두부 하우스</b><p>매일 끓이는 사골 육수, 매일 바뀌는 반찬</p><span class="sc-sbtn">📞 (714) 000-0000</span><span class="sc-sbtn sc-sbtn-g">🧭 길찾기</span></div></div>
+    <div class="sc-smenu">
+      <div><i style="background-image:url('${SC_IMG.galbi}')"></i><b>갈비 순두부</b><span>$16.95</span></div>
+      <div><i style="background-image:url('${SC_IMG.seafood}')"></i><b>해물 순두부</b><span>$14.95</span></div>
+      <div><i style="background-image:url('${SC_IMG.bibimbap}')"></i><b>돌솥비빔밥</b><span>$15.95</span></div>
+    </div>
+    <div class="sc-shours"><b>영업시간</b> 매일 11:00 – 21:00 <span class="sc-muted">· 12901 Brookhurst St, Garden Grove</span></div>
+  </div>
+</div>` },
+  {
+    key: 'ads', tab: '광고 소재 · 숏폼', tabSub: '매달 10장 · 영상 4편', service: 'ad-creative-pack',
+    chips: ['인스타·페북·구글 규격 동시 납품', '세로형 15~30초 · 한/영 자막', '월초 기획안 승인 후 제작'],
+    html: `
+<div class="sc-ad" style="background-image:url('${SC_IMG.galbi}')">
+  <div class="sc-adtxt"><small>LUNCH SPECIAL · 평일 11–3시</small><b>점심 순두부 세트<br>$12.95</b><span>순두부 하우스 · 가든그로브</span></div>
+</div>
+<div class="sc-video" style="background-image:url('${SC_IMG.seafood}')">
+  <span class="sc-play">▶</span>
+  <div class="sc-vcap"><b>해물 순두부 끓는 15초</b><small>릴스 · 틱톡 · 쇼츠</small></div>
+  <div class="sc-vbar"><i></i></div>
+</div>` },
+  {
+    key: 'report', tab: '월간 리포트', tabSub: '조회 · 전화 · 길찾기 · 한 일', service: 'seo-aio',
+    chips: ['매달 초 이메일로 도착', '숫자로 보는 전월 대비', '다음 달 계획까지 한 장에'],
+    html: `
+<div class="sc-rep">
+  <div class="sc-rephead"><div><small>BIZHIGHER 월간 성과 리포트</small><b>2026년 9월 · 순두부 하우스</b></div><span class="sc-repbadge">전월 대비 ▲</span></div>
+  <div class="sc-kpis">
+    <div><small>프로필 조회</small><b>2,314</b><i>▲ 18%</i></div>
+    <div><small>전화 클릭</small><b>96</b><i>▲ 31%</i></div>
+    <div><small>길찾기</small><b>187</b><i>▲ 22%</i></div>
+    <div><small>새 리뷰</small><b>14</b><i>▲ 9</i></div>
+  </div>
+  <div class="sc-chart"><div class="sc-bars">${[38, 44, 41, 52, 58, 55, 66, 72, 69, 80, 86, 92].map((h, i) => `<i style="height:${h}%" class="${i >= 9 ? 'hi' : ''}"></i>`).join('')}</div><div class="sc-axis"><span>10월</span><span>12월</span><span>2월</span><span>4월</span><span>6월</span><span>9월</span></div></div>
+  <div class="sc-done"><b>이번 달 한 일</b><ul><li>게시물 8건 · 사진 12장</li><li>리뷰 답글 11건 (평균 6시간 내)</li><li>로컬 등록 +5곳 (누적 23곳)</li><li>웹사이트 메뉴·영업시간 갱신</li></ul></div>
+</div>` },
+];
+
+function showcaseSection() {
+  const tabs = SC_SCENES.map((s, i) => `
+      <button type="button" class="sc-tab${i === 0 ? ' on' : ''}" data-key="${s.key}" role="tab" aria-selected="${i === 0 ? 'true' : 'false'}">
+        <span class="sc-tab-n">0${i + 1}</span><span class="sc-tab-t"><b>${s.tab}</b><small>${s.tabSub}</small></span><i class="sc-prog"></i>
+      </button>`).join('');
+  const scenes = SC_SCENES.map((s, i) => `
+      <div class="sc-scene sc-${s.key}${i === 0 ? ' on' : ''}" data-key="${s.key}">
+        <div class="sc-stage-in">${s.html}</div>
+        <ul class="sc-chips">${s.chips.map((c) => `<li class="sc-chip">${c}</li>`).join('')}</ul>
+        <a class="sc-link" href="/service/${s.service}/">이 결과물이 포함된 서비스 보기 →</a>
+      </div>`).join('');
   return `
-<section class="section mk-section">
+<section class="section showcase" id="showcase">
   <div class="container">
     <p class="eyebrow">WHAT YOU GET</p>
     <h2 class="h2">이렇게 생긴 것을 받습니다</h2>
     <p class="mk-section-sub">설명 대신 결과물로 보여드립니다. 전부 사장님 업소의 정보와 사진으로 제작되고, 전문가 검수 후 전달됩니다.</p>
+    <div class="sc-wrap" id="sc-wrap">
+      <div class="sc-tabs" role="tablist" aria-label="결과물 종류">${tabs}</div>
+      <div class="sc-stage"><span class="sc-ex">예시 · 가상의 업체</span>${scenes}</div>
+    </div>
+    <p class="note-text">위 화면은 가상의 예시 업체 "순두부 하우스"로 구성했습니다 · <a href="/report/sample" style="color:var(--blue-600);font-weight:700;">실제 진단 리포트 샘플 보기 →</a></p>
   </div>
-  <div class="mk-strip-wrap">
-    <div class="mk-strip" id="mk-strip">${picks.map((k) => mockupCard(k, { linkService: MOCKUPS[k].for[0] })).join('')}</div>
-  </div>
-  <p class="note-text">위 화면은 가상의 예시 업체("순두부 하우스")로 구성했습니다 · <a href="/report/sample" style="color:var(--blue-600);font-weight:700;">실제 진단 리포트 샘플 보기 →</a></p>
-</section>`;
+</section>
+<script>
+/* 쇼케이스 — 탭 전환 + 6초 자동 넘김(호버·터치 시 정지). JS 실패 시 첫 장면이 그대로 보인다 */
+(function () {
+  var wrap = document.getElementById('sc-wrap'); if (!wrap) return;
+  var tabs = Array.prototype.slice.call(wrap.querySelectorAll('.sc-tab'));
+  var scenes = Array.prototype.slice.call(wrap.querySelectorAll('.sc-scene'));
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var idx = 0, timer = null, paused = false, DUR = 6000;
+  function go(i, user) {
+    idx = (i + tabs.length) % tabs.length;
+    tabs.forEach(function (t, k) { t.classList.toggle('on', k === idx); t.setAttribute('aria-selected', k === idx ? 'true' : 'false'); t.classList.remove('run'); });
+    scenes.forEach(function (s, k) { s.classList.toggle('on', k === idx); });
+    if (!reduced) { void tabs[idx].offsetWidth; if (!paused) tabs[idx].classList.add('run'); }
+    if (user && window.matchMedia('(max-width: 991px)').matches) {
+      var t = tabs[idx]; if (t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+    }
+    restart();
+  }
+  function restart() {
+    clearTimeout(timer);
+    if (reduced || paused) return;
+    timer = setTimeout(function () { go(idx + 1); }, DUR);
+  }
+  tabs.forEach(function (t, k) { t.addEventListener('click', function () { go(k, true); }); });
+  wrap.addEventListener('mouseenter', function () { paused = true; clearTimeout(timer); tabs[idx].classList.remove('run'); });
+  wrap.addEventListener('mouseleave', function () { paused = false; go(idx); });
+  /* 화면 밖이면 멈춤 */
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (en) {
+      en.forEach(function (e) { if (e.isIntersecting) { if (!paused) go(idx); } else { clearTimeout(timer); } });
+    }, { threshold: 0.2 });
+    io.observe(wrap);
+  } else { go(0); }
+})();
+</script>`;
 }
 
 const PERIODS = [
@@ -501,42 +669,76 @@ function pkgConsultHref(pkg, periodLabel) {
   return `mailto:${SITE.email}?subject=${encodeURIComponent(`[플랜 신청] ${pkg.name} — ${periodLabel}`)}&body=${encodeURIComponent('업체명:\n연락처:\n웹사이트/구글 프로필 링크:\n궁금한 점:')}`;
 }
 
-function packageMatrixSection() {
-  // 서버 렌더는 12개월(기본) 기준 — JS가 토글 시 갱신
+/* ---------- 패키지 매트릭스 (홈 + 가격 페이지 공용) ----------
+   주 버튼은 Stripe 결제 직결, 보조 링크로 상세 페이지. 카드가 결제 판단에 필요한 정보를 다 담는다.
+   모션: 스크롤 진입 시 부채꼴 리빌, 인기 카드 회전 그라디언트 테두리, 기간 토글 시 가격 모핑. */
+const PKG_WHO = {
+  'local-starter': '처음 마케팅을 시작하는 가게 · 직원 없이 사장님이 직접 운영',
+  'local-growth': '검색 유입을 본격적으로 늘리고 싶은 가게 · 가장 많이 선택',
+  'local-premium': '광고까지 통째로 맡기고 매출 성장에 집중하고 싶은 가게',
+};
+function giftTextFor(slug, period) {
+  const g = DATA.setupGifts;
+  const strip = (i) => i.replace(/\s*\(.*?\)/g, '');
+  if (period === 'annual') {
+    const items = [...g.six.items, ...g.annual.items.slice(1)].map(strip);
+    const value = g.annual.value + (slug === 'local-premium' ? 299 : 0);
+    if (slug === 'local-premium') items.push('광고 셋업');
+    return { value, text: `셋업 <b>$${value.toLocaleString('en-US')} 무료</b> — ${items.join(' · ')}` };
+  }
+  if (period === 'six') {
+    return { value: g.six.value, text: `셋업 <b>$${g.six.value} 무료</b> — ${g.six.items.map(strip).join(' · ')}` };
+  }
+  return { value: 0, text: `6개월부터 셋업 선물 무료 (최대 $${(g.annual.value + 299).toLocaleString('en-US')} 상당)` };
+}
+function packageMatrixSection(opts = {}) {
   const pkgsJson = JSON.stringify(DATA.packages.map((p) => ({
     slug: p.slug, name: p.name, sum: p.sum, prices: p.prices, links: p.links || {},
+    gifts: { monthly: giftTextFor(p.slug, 'monthly'), six: giftTextFor(p.slug, 'six'), annual: giftTextFor(p.slug, 'annual') },
   })));
   const gifts = DATA.setupGifts;
   const cards = DATA.packages.map((p) => {
     const price = p.prices.annual;
     const total = price * 12;
     const disc = Math.round((1 - price / p.sum) * 100);
+    const save = p.sum - price;
+    const gift = giftTextFor(p.slug, 'annual');
+    const href = (p.links && p.links.annual) || pkgConsultHref(p, '12개월');
     return `
       <div class="tier pk-card ${p.popular ? 'tier-pop' : ''}" data-slug="${p.slug}">
         ${p.popular ? '<div class="tier-badge">가장 인기</div>' : ''}
         <h3 class="h3">${p.name}</h3>
+        <p class="pk-who">${PKG_WHO[p.slug] || p.tagline}</p>
         <p class="pk-sum">개별 합계 <s>$${p.sum}/월</s> <span class="pk-disc">${disc}% 할인</span></p>
-        <div class="tier-price">$<span class="pk-price">${price}</span><span class="tier-per">/월</span></div>
+        <div class="tier-price">$<span class="pk-price" data-val="${price}">${price}</span><span class="tier-per">/월</span></div>
         <p class="pk-total">총 $${total.toLocaleString('en-US')} · 12개월 선결제</p>
+        <p class="pk-save">매달 <b class="pk-save-m">$${save}</b> 절약 · 1년이면 <b class="pk-save-y">$${(save * 12).toLocaleString('en-US')}</b></p>
         <ul class="pk-list">${p.includes.map((i) => `<li>${i}</li>`).join('')}</ul>
-        <a class="btn ${p.popular ? 'btn-primary' : 'btn-ghost'} btn-block pk-cta" href="${pkgConsultHref(p, '12개월')}">플랜 시작하기</a>
-        <a class="pk-more" href="/package/${p.slug}/">자세히 보기 →</a>
+        <p class="pk-gift"><span class="pk-gift-ico" aria-hidden="true">🎁</span><span class="pk-gift-txt">${gift.text}</span></p>
+        <a class="btn ${p.popular ? 'btn-primary' : 'btn-ghost'} btn-block pk-cta" href="${href}">지금 시작하기 · <span class="pk-cta-price">$${price}/월</span></a>
+        <p class="pk-after">결제 → 5분 질문지 → 1개월차 셋업 완료 → 매달 초 성과 리포트</p>
+        <a class="pk-more" href="/package/${p.slug}/">플랜 자세히 보기 →</a>
       </div>`;
   }).join('');
+  const title = opts.home ? '통째로 맡기면 훨씬 저렴합니다' : '우리 가게 마케팅, 통째로 맡기세요';
+  const sub = opts.home
+    ? '개별 구독을 합친 것보다 최대 58% 저렴하고, 장기 플랜은 셋업까지 무료입니다. 견적 미팅 없이 지금 결제하면 오늘 시작됩니다.'
+    : '';
   return `
-<section class="section pkg-band" id="plans">
+<section class="section pkg-band plans-hero" id="plans">
   <div class="container">
     <p class="eyebrow">PLANS</p>
-    <h2 class="h2">우리 가게 마케팅, 통째로 맡기세요</h2>
-    <div class="period-toggle" id="period-toggle" role="tablist">
+    <h2 class="h2">${title}</h2>
+    ${sub ? `<p class="pkg-band-sub">${sub}</p>` : ''}
+    <div class="period-toggle" id="period-toggle" role="tablist" aria-label="결제 주기">
       <button type="button" data-period="monthly">월간</button>
       <button type="button" data-period="six">6개월</button>
       <button type="button" data-period="annual" class="on">12개월 <span class="pt-save">최대 혜택</span></button>
     </div>
     <div class="gift-note" id="gift-note">🎁 <b>12개월 플랜 셋업 무료</b> — ${gifts.annual.items.join(' + ')} <b>($${gifts.annual.value} 상당${gifts.premiumAnnualExtra ? ` · Premium은 ${gifts.premiumAnnualExtra}` : ''})</b></div>
-    <div class="grid3 pk-grid">${cards}</div>
+    <div class="grid3 pk-grid" id="pk-grid">${cards}</div>
     ${trustStrip('package', { dark: true })}
-    <p class="note-text">장기 플랜은 시작 후 30일 내 해지 시 잔여 금액 환불 (제공된 서비스·셋업은 정가 차감) · 월간 플랜은 언제든 취소</p>
+    <p class="note-text">장기 플랜은 시작 후 30일 내 해지 시 잔여 금액 환불 (제공된 서비스·셋업은 정가 차감) · 월간 플랜은 언제든 취소 · 결제는 Stripe 보안 페이지에서 진행됩니다</p>
   </div>
 </section>
 <script>
@@ -544,24 +746,48 @@ function packageMatrixSection() {
   var PKGS = ${pkgsJson};
   var GIFTS = ${JSON.stringify(gifts)};
   var CONSULT = ${JSON.stringify(Object.fromEntries(DATA.packages.map((p) => [p.slug, { monthly: pkgConsultHref(p, '월간'), six: pkgConsultHref(p, '6개월'), annual: pkgConsultHref(p, '12개월') }])))};
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var toggle = document.getElementById('period-toggle');
-  if (!toggle) return;
+  var grid = document.getElementById('pk-grid');
+  if (!toggle || !grid) return;
   var noteEl = document.getElementById('gift-note');
   function fmt(n) { return n.toLocaleString('en-US'); }
+  /* 숫자 모핑 — 이전 값에서 새 값으로 350ms */
+  function morph(el, to, prefix) {
+    var from = parseInt(el.getAttribute('data-val') || el.textContent.replace(/[^0-9]/g, ''), 10) || 0;
+    el.setAttribute('data-val', to);
+    if (reduced || from === to) { el.textContent = (prefix || '') + fmt(to); return; }
+    var start = null;
+    function step(ts) {
+      if (!start) start = ts;
+      var p = Math.min((ts - start) / 350, 1);
+      var v = Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3)));
+      el.textContent = (prefix || '') + fmt(v);
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
   function render(period) {
     PKGS.forEach(function (p) {
-      var card = document.querySelector('.pk-card[data-slug="' + p.slug + '"]');
+      var card = grid.querySelector('.pk-card[data-slug="' + p.slug + '"]');
       if (!card) return;
       var price = p.prices[period];
       var disc = Math.round((1 - price / p.sum) * 100);
-      card.querySelector('.pk-price').textContent = price;
+      var save = p.sum - price;
+      morph(card.querySelector('.pk-price'), price);
       card.querySelector('.pk-disc').textContent = disc + '% 할인';
       var months = period === 'six' ? 6 : period === 'annual' ? 12 : 0;
       card.querySelector('.pk-total').textContent = months
         ? '총 $' + fmt(price * months) + ' · ' + (months === 6 ? '6개월' : '12개월') + ' 선결제'
         : '매월 결제 · 언제든 취소';
+      morph(card.querySelector('.pk-save-m'), save, '$');
+      morph(card.querySelector('.pk-save-y'), save * 12, '$');
+      card.querySelector('.pk-gift-txt').innerHTML = p.gifts[period].text;
+      card.querySelector('.pk-gift').classList.toggle('pk-gift-none', !p.gifts[period].value);
       var cta = card.querySelector('.pk-cta');
       cta.href = (p.links && p.links[period]) || CONSULT[p.slug][period];
+      cta.querySelector('.pk-cta-price').textContent = '$' + price + '/월';
+      card.classList.remove('pk-flash'); void card.offsetWidth; card.classList.add('pk-flash');
     });
     if (noteEl) {
       if (period === 'annual') noteEl.innerHTML = '🎁 <b>12개월 플랜 셋업 무료</b> — ' + GIFTS.annual.items.join(' + ') + ' <b>($' + GIFTS.annual.value + ' 상당' + (GIFTS.premiumAnnualExtra ? ' · Premium은 ' + GIFTS.premiumAnnualExtra : '') + ')</b>';
@@ -575,6 +801,19 @@ function packageMatrixSection() {
     toggle.querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b === btn); });
     render(btn.getAttribute('data-period'));
   });
+  /* 부채꼴 리빌 — IO 지원 시에만 숨겼다가 등장, 3초 강제 표시 폴백 */
+  if (!reduced && 'IntersectionObserver' in window) {
+    var cards = grid.querySelectorAll('.pk-card');
+    cards.forEach(function (c) { c.classList.add('pk-pre'); });
+    var done = false;
+    function show() { if (done) return; done = true; cards.forEach(function (c) { c.classList.remove('pk-pre'); c.classList.add('pk-in'); }); }
+    /* 카드 하나라도 화면에 들어오면 세 장 모두 등장 (모바일처럼 그리드가 뷰포트보다 길어도 동작) */
+    var io = new IntersectionObserver(function (entries) {
+      if (entries.some(function (en) { return en.isIntersecting; })) { show(); io.disconnect(); }
+    }, { threshold: 0, rootMargin: '0px 0px -60px 0px' });
+    cards.forEach(function (c) { io.observe(c); });
+    setTimeout(show, 3000);
+  }
 })();
 </script>`;
 }
@@ -732,7 +971,7 @@ function homePage() {
     <div class="hero-demo">
       <div class="demo-card" id="demo-card" aria-hidden="true">
         <div class="demo-top"><span class="demo-dot"></span>AI 마케팅 진단 리포트<span class="demo-live">시연 예시</span></div>
-        <div class="demo-name"><span id="dm-type"></span><span class="demo-caret"></span></div>
+        <div class="demo-name"><span id="dm-type"></span><span class="demo-caret"></span><span class="demo-ex">예시</span></div>
         <div class="demo-score-row">
           <div class="demo-ring" id="dm-ring"><div class="demo-ring-in"><b id="dm-score">0</b><small>/100</small></div></div>
           <div class="demo-bars">
@@ -983,17 +1222,17 @@ function homePage() {
   var planTxt = document.getElementById('dm-plan-txt');
   // 비포/애프터 스토리 — 형편없는 진단 → 플랜 시작 버튼 클릭 → 180일 뒤 극적 반전
   var BIZ = [
-    // 업체명은 전부 가상의 예시 — 실존 업소처럼 보이지 않도록 "예시" 표기를 유지한다 (§신뢰 원칙)
-    { name: '예시 안경점 · 가든그로브', s0: 41, s1: 94, b0: [48, 34, 45, 22, 39], b1: [96, 91, 88, 82, 95],
+    // 업체명은 전부 가상 — 카드 라벨 "시연 예시"와 이름 옆 .demo-ex 태그가 가상임을 알린다
+    { name: '가든그로브 안경점', s0: 41, s1: 94, b0: [48, 34, 45, 22, 39], b1: [96, 91, 88, 82, 95],
       prob: ['🔎 경쟁사 대비 리뷰 32개 부족', '📸 프로필 사진 6개월째 업데이트 없음'],
       win:  ['⭐ 리뷰 수 동네 안경점 중 1위', '📸 매주 새 사진·게시물 자동 업로드'] },
-    { name: '예시 수학학원 · 애틀랜타', s0: 29, s1: 92, b0: [31, 42, 25, 12, 33], b1: [93, 89, 86, 90, 88],
+    { name: '애틀랜타 수학학원', s0: 29, s1: 92, b0: [31, 42, 25, 12, 33], b1: [93, 89, 86, 90, 88],
       prob: ['🏷️ 구글 카테고리 "일반 학교"로 잘못 분류', '📱 SNS 계정 없음 — 학부모 접점 부재'],
       win:  ['🏷️ "수학학원" 지도 검색 최상단 노출', '📱 인스타 학부모 팔로워 꾸준히 증가'] },
-    { name: '예시 한식당 · 달라스', s0: 37, s1: 95, b0: [44, 51, 18, 35, 40], b1: [97, 94, 90, 87, 93],
+    { name: '달라스 한식당', s0: 37, s1: 95, b0: [44, 51, 18, 35, 40], b1: [97, 94, 90, 87, 93],
       prob: ['🌐 웹사이트 없음 — 메뉴·영업시간 못 찾음', '🔎 "korean bbq near me" 순위권 밖'],
       win:  ['🌐 예약되는 웹사이트 — 메뉴·영업시간 한눈에', '🔎 "korean bbq near me" 첫 화면 노출'] },
-    { name: '예시 네일살롱 · LA', s0: 33, s1: 91, b0: [38, 29, 30, 41, 35], b1: [92, 90, 85, 94, 89],
+    { name: 'LA 네일살롱', s0: 33, s1: 91, b0: [38, 29, 30, 41, 35], b1: [92, 90, 85, 94, 89],
       prob: ['💬 미답글 리뷰 9개 — 신뢰도 하락 요인', '📉 신규 손님 문의가 뜸함'],
       win:  ['💬 모든 리뷰 24시간 내 답글', '📈 신규 문의 매달 꾸준히 증가'] },
   ];
@@ -1029,6 +1268,7 @@ function homePage() {
   function setFinal() {
     var b = BIZ[0];
     typeEl.textContent = b.name;
+    if (typeEl.parentNode) typeEl.parentNode.classList.add('named');
     scoreEl.textContent = b.s1;
     if (ring) ring.style.setProperty('--p', b.s1);
     setBars(b.b1, true);
@@ -1041,6 +1281,7 @@ function homePage() {
   function reset() {
     timers.forEach(clearTimeout); timers = [];
     typeEl.textContent = ''; scoreEl.textContent = '0';
+    if (typeEl.parentNode) typeEl.parentNode.classList.remove('named');
     if (ring) ring.style.setProperty('--p', 0);
     fills.forEach(function (f) { f.style.width = '0%'; });
     chips.forEach(function (c) { c.classList.remove('show'); });
@@ -1059,6 +1300,7 @@ function homePage() {
     var i = 0;
     (function type() {
       if (i <= b.name.length) { typeEl.textContent = b.name.slice(0, i); i++; timers.push(setTimeout(type, 85)); }
+      else if (typeEl.parentNode) typeEl.parentNode.classList.add('named');
     })();
     fills.forEach(function (f, idx) {
       t(function () { f.style.width = b.b0[idx] + '%'; }, 1300 + idx * 180);
@@ -1141,7 +1383,7 @@ function homePage() {
 })();
 </script>
 
-${galleryStripSection()}
+${showcaseSection()}
 
 <section class="section vs-section">
   <div class="container">
@@ -1243,38 +1485,46 @@ ${galleryStripSection()}
   <div class="container">
     <p class="eyebrow">SERVICES</p>
     <h2 class="h2">지금 필요한 게 뭐예요?</h2>
-    <div class="grid3">
-      ${DATA.services.slice(0, 8).map(productCard).join('')}
-      <a href="/services/" class="prod-card prod-card-more">
+    <div class="svc-tabs" id="svc-tabs" role="tablist" aria-label="서비스 분류">
+      <button type="button" class="on" data-cat="pick">추천</button>
+      ${Object.entries(SVC_CAT_LABEL).map(([k, v]) => `<button type="button" data-cat="${k}">${v}</button>`).join('')}
+    </div>
+    <div class="grid3 svc-grid" id="svc-grid" data-cat="pick">
+      ${DATA.services.map((s, i) => productCard(s, { pick: i < 8 })).join('')}
+      <a href="/services/" class="prod-card prod-card-more" data-pick="1" data-cat="all">
         <h3 class="h3">전체 ${DATA.services.length}개 서비스 보기 →</h3>
         <p class="body-sm">원타임부터 월 구독까지 — 필요한 것만 골라 담으세요.</p>
       </a>
     </div>
+    <p class="note-text">뭘 골라야 할지 모르겠다면 <a href="/free-audit/" style="color:var(--blue-600);font-weight:700;">60초 무료 진단</a>이 지금 가장 급한 것부터 골라 드립니다.</p>
   </div>
 </section>
+<script>
+/* 서비스 탭 — 카테고리 필터. JS 실패 시 전부 보이는 것이 기본 */
+(function () {
+  var tabs = document.getElementById('svc-tabs'), grid = document.getElementById('svc-grid');
+  if (!tabs || !grid) return;
+  var cards = Array.prototype.slice.call(grid.querySelectorAll('.prod-card'));
+  function apply(cat) {
+    grid.setAttribute('data-cat', cat);
+    cards.forEach(function (c) {
+      var show = cat === 'pick' ? c.getAttribute('data-pick') === '1' : (c.getAttribute('data-cat') === cat || c.getAttribute('data-cat') === 'all');
+      c.classList.toggle('svc-hide', !show);
+      if (show) { c.classList.remove('svc-pop'); void c.offsetWidth; c.classList.add('svc-pop'); }
+    });
+  }
+  apply('pick');
+  tabs.addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-cat]'); if (!b) return;
+    tabs.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+    apply(b.getAttribute('data-cat'));
+  });
+})();
+</script>
+
+${packageMatrixSection({ home: true })}
 
 ${dataBandSection()}
-
-<section class="section">
-  <div class="container">
-    <p class="eyebrow">PLANS</p>
-    <h2 class="h2">통째로 맡기면 훨씬 저렴합니다</h2>
-    <div class="grid3">
-      ${DATA.packages.map((p) => `
-      <div class="tier ${p.popular ? 'tier-pop' : ''}">
-        ${p.popular ? '<div class="tier-badge">가장 인기</div>' : ''}
-        <h3 class="h3">${p.name}</h3>
-        <p class="pk-sum">개별 합계 <s>$${p.sum}/월</s></p>
-        <div class="tier-price">$${p.prices.annual}<span class="tier-per">/월</span></div>
-        <p class="body-sm">${p.tagline}</p>
-        <p class="pk-total">12개월 기준 · 월간 $${p.prices.monthly}</p>
-        <a href="/package/${p.slug}/" class="btn ${p.popular ? 'btn-primary' : 'btn-ghost'} btn-block">플랜 보기</a>
-      </div>`).join('')}
-    </div>
-    ${trustStrip('package', { compact: true })}
-    <p class="note-text">🎁 12개월 플랜은 프로필 최적화 · 로컬 등록 · 웹사이트까지 셋업 무료 (최대 $1,014 상당) · <a href="/pricing/#plans" style="color:var(--blue-600);font-weight:700;">전체 비교 →</a></p>
-  </div>
-</section>
 
 <section class="section">
   <div class="container-narrow">
@@ -2584,6 +2834,12 @@ ${loadPosts().map((p) => `- ${p.title}: https://bizhigher.com/blog/${p.slug}/`).
 - 구글 검색뿐 아니라 ChatGPT 등 AI 검색 노출 최적화(AIO) 서비스 제공
 - 한국어 상담 가능
 `);
+const SHOWDIR = path.join(__dirname, 'src', 'showcase');
+if (fs.existsSync(SHOWDIR)) {
+  fs.mkdirSync(path.join(DIST, 'showcase'), { recursive: true });
+  fs.readdirSync(SHOWDIR).forEach((f) => fs.copyFileSync(path.join(SHOWDIR, f), path.join(DIST, 'showcase', f)));
+  console.log('  \u2713 showcase/');
+}
 write('style.css', fs.readFileSync(path.join(__dirname, 'src', 'style.css'), 'utf8'));
 
 console.log(`Done — ${DATA.services.length} services, ${DATA.faqs.length} FAQs.`);

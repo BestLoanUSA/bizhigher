@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="/style.css?v=fc22d186">
+<link rel="stylesheet" href="/style.css?v=d8e882c1">
 
 
 <script type="text/javascript">
@@ -133,7 +133,7 @@
 /* 스크롤 리빌 — IO 지원 시에만 숨겼다가 나타남 (기본은 항상 보임) + 3초 강제 표시 안전장치 */
 (function () {
   if (!('IntersectionObserver' in window)) return;
-  var els = document.querySelectorAll('.prod-card, .step-card, .tier, .stat-box, .faq-item, .price-item');
+  var els = document.querySelectorAll('.prod-card, .step-card, .tier:not(.pk-card), .stat-box, .faq-item, .price-item');
   if (!els.length) return;
   var io = new IntersectionObserver(function (entries) {
     entries.forEach(function (en) {
