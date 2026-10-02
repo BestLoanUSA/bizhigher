@@ -1759,3 +1759,43 @@ img { max-width: 100%; display: block; }
   .fa-title { font-size: 32px; }
   .fa-sub { font-size: 15px; }
 }
+
+/* ==========================================================
+   v31 — 플랜 카드 호버: 버튼 채우기 · 상위 플랜 전용 항목 강조
+   ========================================================== */
+/* 고스트 버튼이 왼쪽에서 오른쪽으로 파랗게 채워진다 */
+.plans-hero .pk-cta.btn-ghost {
+  background-image: linear-gradient(135deg, #0A4DF5 0%, #2F6BFF 100%);
+  background-repeat: no-repeat; background-size: 0% 100%; background-position: left center;
+  transition: background-size .5s cubic-bezier(.22, 1, .36, 1), color .25s ease, border-color .25s ease, box-shadow .3s ease, transform .18s ease;
+}
+.plans-hero .pk-card:hover .pk-cta.btn-ghost, .plans-hero .pk-cta.btn-ghost:focus-visible { background-size: 100% 100%; color: #fff; border-color: transparent; box-shadow: var(--glow-blue); }
+/* 전용 항목 태그 — 평소엔 숨김 */
+.pk-only { position: relative; }
+.pk-only-tag { display: none; margin-left: 7px; vertical-align: 1px; font-style: normal; font-size: 10px; font-weight: 800; letter-spacing: 0.04em; line-height: 1; color: #0A1230; background: var(--cyan-400); border-radius: 999px; padding: 3px 7px; }
+@keyframes pk-tag-in { from { opacity: 0; transform: translateX(-6px) scale(.9); } to { opacity: 1; transform: none; } }
+.pk-lv-3 .pk-only-tag { background: #F5C76A; }
+.pk-giftbox .pk-only-tag { margin-left: 5px; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .pk-card:hover .pk-only { color: #fff; animation: pk-only-lift 1.8s ease-in-out infinite; }
+  .pk-card:hover .pk-only::after {
+    content: ""; position: absolute; left: -8px; right: -8px; top: 0; bottom: 0; border-radius: 8px; pointer-events: none;
+    background: linear-gradient(100deg, transparent 20%, rgba(34, 211, 238, 0.22) 50%, transparent 80%); background-size: 220% 100%;
+    animation: pk-only-sweep 1.8s linear infinite;
+  }
+  .pk-lv-3:hover .pk-only::after { background-image: linear-gradient(100deg, transparent 20%, rgba(245, 199, 106, 0.26) 50%, transparent 80%); }
+  .pk-card:hover .pk-only-tag { display: inline-block; animation: pk-tag-in .3s ease both .1s; }
+  .pk-card:hover .pk-list .pk-only::before { background: var(--cyan-400); color: #0A1230; transform: scale(1.18); }
+  .pk-card:hover .pk-giftbox .pk-only::before { color: var(--cyan-400); transform: scale(1.3); }
+  .pk-lv-3:hover .pk-list .pk-only::before { background: #F5C76A; }
+  .pk-lv-3:hover .pk-giftbox .pk-only::before { color: #F5C76A; }
+  /* 위에서 아래로 순서대로 */
+  .pk-card:hover .pk-only:nth-child(1), .pk-card:hover .pk-only:nth-child(1)::after { animation-delay: 0s; }
+  .pk-card:hover .pk-only:nth-child(2), .pk-card:hover .pk-only:nth-child(2)::after { animation-delay: .15s; }
+  .pk-card:hover .pk-only:nth-child(3), .pk-card:hover .pk-only:nth-child(3)::after { animation-delay: .3s; }
+  .pk-card:hover .pk-only:nth-child(4), .pk-card:hover .pk-only:nth-child(4)::after { animation-delay: .45s; }
+  .pk-card:hover .pk-only:nth-child(5), .pk-card:hover .pk-only:nth-child(5)::after { animation-delay: .6s; }
+}
+.pk-list li::before, .pk-giftbox li::before { transition: transform .25s ease, background-color .25s ease, color .25s ease; }
+@keyframes pk-only-lift { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
+@keyframes pk-only-sweep { from { background-position: 120% 0; } to { background-position: -120% 0; } }
