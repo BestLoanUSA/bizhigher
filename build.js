@@ -623,38 +623,52 @@ function showcaseSection() {
   </div>
 </section>
 <script>
-/* 쇼케이스 — 탭 전환 + 6초 자동 넘김(호버·터치 시 정지). JS 실패 시 첫 장면이 그대로 보인다 */
+/* 쇼케이스 — 탭 전환 + 6초 자동 넘김 + 스크롤로 빨리감기.
+   화면에 보이는 동안 페이지를 스크롤하면 그만큼 시계가 빨리 가서 오른쪽 장면이 더 빨리 바뀐다.
+   스크롤을 가로채지 않는다(preventDefault 없음). JS 실패 시 첫 장면이 그대로 보인다 */
 (function () {
   var wrap = document.getElementById('sc-wrap'); if (!wrap) return;
   var tabs = Array.prototype.slice.call(wrap.querySelectorAll('.sc-tab'));
   var scenes = Array.prototype.slice.call(wrap.querySelectorAll('.sc-scene'));
+  var progs = tabs.map(function (t) { return t.querySelector('.sc-prog'); });
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var idx = 0, timer = null, paused = false, DUR = 6000;
+  var idx = 0, elapsed = 0, DUR = 6000, FF = 14; /* 스크롤 1px = 14ms 빨리감기 (약 430px에 한 장면) */
+  var paused = false, visible = false, lastTs = null, lastY = window.scrollY, raf = null;
   function go(i, user) {
-    idx = (i + tabs.length) % tabs.length;
-    tabs.forEach(function (t, k) { t.classList.toggle('on', k === idx); t.setAttribute('aria-selected', k === idx ? 'true' : 'false'); t.classList.remove('run'); });
+    idx = (i + tabs.length) % tabs.length; elapsed = 0;
+    tabs.forEach(function (t, k) { t.classList.toggle('on', k === idx); t.setAttribute('aria-selected', k === idx ? 'true' : 'false'); });
     scenes.forEach(function (s, k) { s.classList.toggle('on', k === idx); });
-    if (!reduced) { void tabs[idx].offsetWidth; if (!paused) tabs[idx].classList.add('run'); }
+    progs.forEach(function (p, k) { if (p) p.style.width = k === idx ? '0%' : '0%'; });
     if (user && window.matchMedia('(max-width: 991px)').matches) {
       var t = tabs[idx]; if (t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
     }
-    restart();
   }
-  function restart() {
-    clearTimeout(timer);
-    if (reduced || paused) return;
-    timer = setTimeout(function () { go(idx + 1); }, DUR);
+  function tick(ts) {
+    raf = null;
+    if (lastTs !== null && visible && !paused) elapsed += Math.min(ts - lastTs, 100);
+    lastTs = ts;
+    if (elapsed >= DUR) { go(idx + 1); elapsed = 0; }
+    var p = progs[idx]; if (p) p.style.width = Math.min(100, (elapsed / DUR) * 100) + '%';
+    if (visible && !reduced) raf = requestAnimationFrame(tick);
   }
+  function start() { if (raf === null && !reduced) { lastTs = null; raf = requestAnimationFrame(tick); } }
   tabs.forEach(function (t, k) { t.addEventListener('click', function () { go(k, true); }); });
-  wrap.addEventListener('mouseenter', function () { paused = true; clearTimeout(timer); tabs[idx].classList.remove('run'); });
-  wrap.addEventListener('mouseleave', function () { paused = false; go(idx); });
-  /* 화면 밖이면 멈춤 */
+  wrap.addEventListener('mouseenter', function () { paused = true; });
+  wrap.addEventListener('mouseleave', function () { paused = false; });
+  /* 스크롤 빨리감기 — 보이는 동안만, 한 번에 최대 한 장면 */
+  window.addEventListener('scroll', function () {
+    var y = window.scrollY, d = y - lastY; lastY = y;
+    if (!visible || reduced || d <= 0) return;
+    elapsed += Math.min(d * FF, DUR);
+    if (elapsed >= DUR) { var rem = elapsed - DUR; go(idx + 1); elapsed = Math.max(0, Math.min(rem, DUR * 0.5)); }
+    var p = progs[idx]; if (p) p.style.width = Math.min(100, (elapsed / DUR) * 100) + '%';
+  }, { passive: true });
   if ('IntersectionObserver' in window) {
     var io = new IntersectionObserver(function (en) {
-      en.forEach(function (e) { if (e.isIntersecting) { if (!paused) go(idx); } else { clearTimeout(timer); } });
+      en.forEach(function (e) { visible = e.isIntersecting; if (visible) start(); });
     }, { threshold: 0.2 });
     io.observe(wrap);
-  } else { go(0); }
+  } else { visible = true; start(); }
 })();
 </script>`;
 }
@@ -935,7 +949,7 @@ function packagePage(p) {
 
 /* ---------- 페이지: 홈 ---------- */
 
-function homePage() {
+function homePage(posts) {
   const jsonLd = [
     {
       '@context': 'https://schema.org',
@@ -1556,6 +1570,8 @@ ${packageMatrixSection({ home: true })}
 
 ${dataBandSection()}
 
+${blogStripSection(posts)}
+
 <section class="section">
   <div class="container-narrow">
     <h2 class="h2">자주 묻는 질문</h2>
@@ -1563,6 +1579,46 @@ ${dataBandSection()}
   </div>
 </section>
 ` + FOOTER;
+}
+
+/* ---------- 홈: 최신 블로그 가로 스크롤 띠 ---------- */
+function blogStripSection(posts) {
+  const list = (posts || []).slice(0, 9);
+  if (!list.length) return '';
+  return `
+<section class="section section-gray blog-strip-sec">
+  <div class="container blog-strip-head">
+    <div>
+      <p class="eyebrow" style="text-align:left;">BLOG</p>
+      <h2 class="h2" style="text-align:left;margin-bottom:8px;">사장님을 위한 실전 가이드</h2>
+      <p class="blog-strip-sub">구글 노출·리뷰·광고·AI 검색 — 주 3편, 미국 한인 사장님 눈높이로 씁니다. 옆으로 넘겨 보세요.</p>
+    </div>
+    <div class="blog-strip-ctl">
+      <button type="button" class="bs-btn" data-dir="-1" aria-label="이전">←</button>
+      <button type="button" class="bs-btn" data-dir="1" aria-label="다음">→</button>
+      <a class="blog-strip-all" href="/blog/">전체 글 보기 →</a>
+    </div>
+  </div>
+  <div class="blog-strip-wrap">
+    <div class="blog-strip" id="blog-strip">
+      ${list.map(blogCard).join('')}
+      <a href="/blog/" class="prod-card prod-card-more blog-more"><h3 class="h3">블로그 전체 보기 →</h3><p class="body-sm">${(posts || []).length}편의 가이드가 더 있습니다.</p></a>
+    </div>
+  </div>
+</section>
+<script>
+(function () {
+  var strip = document.getElementById('blog-strip'); if (!strip) return;
+  var btns = document.querySelectorAll('.blog-strip-ctl .bs-btn');
+  btns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      var card = strip.querySelector('.prod-card');
+      var step = card ? card.getBoundingClientRect().width + 18 : 320;
+      strip.scrollBy({ left: step * parseInt(b.getAttribute('data-dir'), 10), behavior: 'smooth' });
+    });
+  });
+})();
+</script>`;
 }
 
 /* ---------- 페이지: 서비스 목록 ---------- */
@@ -2782,12 +2838,12 @@ function write(rel, content) {
 fs.rmSync(DIST, { recursive: true, force: true });
 console.log('Building BizHigher →', DIST);
 
-write('index.html', homePage());
+const POSTS = loadPosts();
+write('index.html', homePage(POSTS));
 write('services/index.html', servicesPage());
 write('pricing/index.html', pricingPage());
 write('free-audit/index.html', auditPage());
 write('thanks/index.html', thanksPage());
-const POSTS = loadPosts();
 DATA.services.forEach((s) => write(`service/${s.slug}/index.html`, servicePage(s, POSTS)));
 DATA.packages.forEach((p) => write(`package/${p.slug}/index.html`, packagePage(p)));
 write('404.html', notFoundPage());
