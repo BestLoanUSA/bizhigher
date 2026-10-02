@@ -613,12 +613,14 @@
       "prices": {
         "monthly": 219,
         "six": 179,
-        "annual": 139
+        "annual": 139,
+        "installment": 159
       },
       "links": {
         "monthly": "https://buy.stripe.com/eVq5kFgrc5QndhaaSd4Rq0C",
         "six": "https://buy.stripe.com/00w5kF2Am4Mjb925xT4Rq0D",
-        "annual": "https://buy.stripe.com/6oU7sN5Mygv14KE5xT4Rq0E"
+        "annual": "https://buy.stripe.com/6oU7sN5Mygv14KE5xT4Rq0E",
+        "installment": ""
       }
     },
     {
@@ -635,12 +637,14 @@
       "prices": {
         "monthly": 439,
         "six": 359,
-        "annual": 279
+        "annual": 279,
+        "installment": 299
       },
       "links": {
         "monthly": "https://buy.stripe.com/5kQfZjb6S4Mjcd6gcx4Rq0F",
         "six": "https://buy.stripe.com/aFa3cxdf0baHfpif8t4Rq0G",
-        "annual": "https://buy.stripe.com/5kQbJ30se6Ureled0l4Rq0H"
+        "annual": "https://buy.stripe.com/5kQbJ30se6Ureled0l4Rq0H",
+        "installment": ""
       }
     },
     {
@@ -657,12 +661,14 @@
       "prices": {
         "monthly": 759,
         "six": 619,
-        "annual": 479
+        "annual": 479,
+        "installment": 519
       },
       "links": {
         "monthly": "https://buy.stripe.com/6oU4gB8YKbaHa4Y6BX4Rq0I",
         "six": "https://buy.stripe.com/3cIaEZdf0baHele1hD4Rq0J",
-        "annual": "https://buy.stripe.com/6oU4gB5MybaH1yse4p4Rq0K"
+        "annual": "https://buy.stripe.com/6oU4gB5MybaH1yse4p4Rq0K",
+        "installment": ""
       }
     }
   ],

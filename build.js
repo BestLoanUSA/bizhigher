@@ -750,6 +750,7 @@ const PERIODS = [
   { key: 'monthly', label: '월간', per: '/월', note: '매월 결제 · 언제든 취소' },
   { key: 'six', label: '6개월', per: '/월', months: 6, note: '6개월 선결제' },
   { key: 'annual', label: '12개월', per: '/월', months: 12, note: '12개월 선결제' },
+  { key: 'installment', label: '12개월 약정 · 월 분납', per: '/월', months: 12, installment: true, note: '매달 결제 · 12개월 약정' },
 ];
 
 function pkgConsultHref(pkg, periodLabel) {
@@ -815,6 +816,7 @@ function packageMatrixSection(opts = {}) {
           <ul class="pk-gift-base">${g.base.map(giftLi).join('')}</ul>
           <div class="pk-gift-up">
             <div class="pk-gift-up-h"><span class="pk-gift-up-tag">12개월이면 추가로</span><b>+ ${fmtUsd(g.extraValue)}</b></div>
+            <p class="pk-gift-up-note">월 분납은 7회차 납부 후 제작 · 선결제는 2개월차에 제작</p>
             <ul>${g.extra.map(giftLi).join('')}</ul>
             <button type="button" class="pk-gift-up-btn" data-period="annual">12개월로 바꾸고 ${fmtUsd(g.extraValue)} 더 받기 →</button>
           </div>
@@ -836,7 +838,8 @@ function packageMatrixSection(opts = {}) {
     <div class="period-toggle period-toggle-lg" id="period-toggle" role="tablist" aria-label="결제 주기">
       <button type="button" data-period="monthly"><b>월간</b><small>셋업 선물 없음</small></button>
       <button type="button" data-period="six"><b>6개월</b><small>셋업 ${fmtUsd(r6.min)}~${fmtUsd(r6.max)} 무료</small></button>
-      <button type="button" data-period="annual" class="on"><b>12개월</b><small>셋업 ${fmtUsd(r12.min)}~${fmtUsd(r12.max)} 무료</small><i class="pt-best">최대 혜택</i></button>
+      <button type="button" data-period="annual" class="on"><b>12개월 선결제</b><small>셋업 ${fmtUsd(r12.min)}~${fmtUsd(r12.max)} 무료</small><i class="pt-best">최대 혜택</i></button>
+      <button type="button" data-period="installment"><b>12개월 약정 · 월 분납</b><small>목돈 없이 · 셋업 동일</small></button>
     </div>
     <div class="gift-note" id="gift-note">🎁 <b>12개월 플랜 무료 셋업</b> — 프로필 최적화·리뷰 QR·로컬 등록부터 <b>웹사이트</b>까지, 플랜에 따라 <b>${fmtUsd(r12.min)}~${fmtUsd(r12.max)} 상당</b></div>
     <div class="grid3 pk-grid" id="pk-grid">${cards}</div>
@@ -847,14 +850,14 @@ function packageMatrixSection(opts = {}) {
       <li><b>4</b><span>매달 초 성과 리포트</span><small>조회·전화·길찾기</small></li>
     </ol>
     ${trustStrip('package', { dark: true })}
-    <p class="note-text">장기 플랜은 시작 후 30일 내 해지 시 잔여 금액 환불 (제공된 서비스·셋업은 정가 차감) · 월간 플랜은 언제든 취소</p>
+    <p class="note-text">장기 플랜은 시작 후 30일 내 해지 시 잔여 금액 환불 (제공된 서비스·셋업은 정가 차감) · 월 분납은 12개월 약정 · 월간 플랜은 언제든 취소</p>
   </div>
 </section>
 <script>
 (function () {
   var PKGS = ${pkgsJson};
   var R6 = ${JSON.stringify(r6)}, R12 = ${JSON.stringify(r12)};
-  var CONSULT = ${JSON.stringify(Object.fromEntries(DATA.packages.map((p) => [p.slug, { monthly: pkgConsultHref(p, '월간'), six: pkgConsultHref(p, '6개월'), annual: pkgConsultHref(p, '12개월') }])))};
+  var CONSULT = ${JSON.stringify(Object.fromEntries(DATA.packages.map((p) => [p.slug, { monthly: pkgConsultHref(p, '월간'), six: pkgConsultHref(p, '6개월'), annual: pkgConsultHref(p, '12개월'), installment: pkgConsultHref(p, '12개월 약정 · 월 분납') }])))};
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var toggle = document.getElementById('period-toggle');
   var grid = document.getElementById('pk-grid');
@@ -888,26 +891,30 @@ function packageMatrixSection(opts = {}) {
       pe.setAttribute('data-val', pe.textContent.replace(/[^0-9]/g, ''));
       (function (el, to) { var from = parseInt(el.getAttribute('data-val'), 10) || 0; if (reduced || from === to) { el.textContent = to; return; } var s0 = null; function st(ts) { if (!s0) s0 = ts; var q = Math.min((ts - s0) / 350, 1); el.textContent = Math.round(from + (to - from) * (1 - Math.pow(1 - q, 3))); if (q < 1) requestAnimationFrame(st); } requestAnimationFrame(st); })(pe, price);
       card.querySelector('.pk-disc').textContent = disc + '% 할인';
-      var months = period === 'six' ? 6 : period === 'annual' ? 12 : 0;
-      card.querySelector('.pk-total').textContent = months
-        ? '총 ' + fmt(price * months) + ' · ' + (months === 6 ? '6개월' : '12개월') + ' 선결제'
+      var months = period === 'six' ? 6 : (period === 'annual' || period === 'installment') ? 12 : 0;
+      card.querySelector('.pk-total').textContent = period === 'installment'
+        ? '매달 $' + price + ' × 12회 · 12개월 약정 (총 ' + fmt(price * 12) + ')'
+        : months ? '총 ' + fmt(price * months) + ' · ' + (months === 6 ? '6개월' : '12개월') + ' 선결제'
         : '매월 결제 · 언제든 취소';
       card.querySelector('.pk-save-m').textContent = '$' + save;
       card.querySelector('.pk-save-y').textContent = fmt(save * 12);
       var gb = card.querySelector('.pk-giftbox');
-      gb.classList.remove('pk-gb-monthly', 'pk-gb-six', 'pk-gb-annual');
+      gb.classList.remove('pk-gb-monthly', 'pk-gb-six', 'pk-gb-annual', 'pk-gb-installment');
       gb.classList.add('pk-gb-' + period);
       var tot = card.querySelector('.pk-gift-total');
-      var val = period === 'annual' ? p.gift.annual : period === 'six' ? p.gift.six : 0;
+      var val = (period === 'annual' || period === 'installment') ? p.gift.annual : period === 'six' ? p.gift.six : 0;
       morph(tot, val, ' 상당');
       var up = card.querySelector('.pk-gift-up');
-      if (period === 'annual' && prev !== 'annual' && !reduced) { up.classList.remove('pk-pop'); void up.offsetWidth; up.classList.add('pk-pop'); }
+      if ((period === 'annual' || period === 'installment') && prev !== 'annual' && prev !== 'installment' && !reduced) { up.classList.remove('pk-pop'); void up.offsetWidth; up.classList.add('pk-pop'); }
+      var upTag = card.querySelector('.pk-gift-up-tag');
+      if (upTag) upTag.textContent = period === 'installment' ? '7회차 납부 후 추가로' : '12개월이면 추가로';
       var cta = card.querySelector('.pk-cta');
       cta.href = (p.links && p.links[period]) || CONSULT[p.slug][period];
       cta.querySelector('.pk-cta-price').textContent = '$' + price + '/월';
     });
     if (noteEl) {
       if (period === 'annual') noteEl.innerHTML = '🎁 <b>12개월 플랜 무료 셋업</b> — 프로필 최적화·리뷰 QR·로컬 등록부터 <b>웹사이트</b>까지, 플랜에 따라 <b>' + fmt(R12.min) + '~' + fmt(R12.max) + ' 상당</b>';
+      else if (period === 'installment') noteEl.innerHTML = '💳 <b>목돈 없이 12개월 플랜</b> — 매달 나눠 내고 셋업 선물은 12개월 선결제와 <b>동일</b>(' + fmt(R12.min) + '~' + fmt(R12.max) + ' 상당). 웹사이트·랜딩페이지는 <b>7회차 납부 후</b> 제작됩니다';
       else if (period === 'six') noteEl.innerHTML = '🎁 <b>6개월 플랜 무료 셋업</b> — 프로필 최적화·리뷰 QR·로컬 등록, 플랜에 따라 <b>' + fmt(R6.min) + '~' + fmt(R6.max) + ' 상당</b> · 12개월로 바꾸면 <b>웹사이트와 랜딩페이지</b>가 추가됩니다';
       else noteEl.innerHTML = '💡 월간 플랜에는 셋업 선물이 없습니다 — 6개월부터 <b>' + fmt(R6.min) + '~</b>, 12개월이면 <b>' + fmt(R12.min) + '~' + fmt(R12.max) + '</b> 상당이 무료입니다';
     }
@@ -976,7 +983,7 @@ function packagePage(p) {
   const rows = PERIODS.map((per) => {
     const price = p.prices[per.key];
     const months = per.months || 0;
-    const totalTxt = months ? `총 $${(price * months).toLocaleString('en-US')} 선결제` : '매월 결제 · 언제든 취소';
+    const totalTxt = per.installment ? `매달 $${price} × 12회 · 약정` : months ? `총 $${(price * months).toLocaleString('en-US')} 선결제` : '매월 결제 · 언제든 취소';
     const disc = Math.round((1 - price / p.sum) * 100);
     const href = (p.links && p.links[per.key]) || pkgConsultHref(p, per.label);
     const primary = per.key === 'annual';
@@ -2837,6 +2844,7 @@ const TERMS_HTML = `
 <h2 class="h2-left">4. 환불</h2>
 <p>• 원타임 서비스: 작업 시작(질문지 제출) 전 전액 환불됩니다.<br>
 • 월간 구독: 해지 시 다음 결제부터 청구가 중단되며, 이미 결제된 월은 환불되지 않습니다.<br>
+• 12개월 약정 월 분납 플랜: 12회 결제를 약정하며 매달 청구됩니다. 셋업 서비스는 12개월 선결제와 동일하게 제공되되, 웹사이트·지역 랜딩페이지는 7회차 납부 후 제작됩니다. 약정 기간 중 해지 시 이후 청구는 중단되며, 이미 제공된 셋업 서비스는 개별 정가 기준으로 정산합니다(시작 후 30일 이내 해지 시에는 30일 보장이 우선 적용됩니다).<br>
 • 6·12개월 플랜: 시작 후 30일 이내 해지 시 잔여 금액을 환불하며, 이미 제공된 서비스와 셋업은 개별 정가 기준으로 차감 후 정산합니다. 30일 경과 후에는 환불되지 않으나 남은 기간의 서비스는 계속 제공됩니다.</p>
 <h2 class="h2-left">5. 결과물과 지식재산권</h2>
 <p>대금이 완납된 결과물의 사용 권리는 고객에게 있습니다. 회사는 고객이 별도로 거부 의사를 밝히지 않는 한, 완성된 결과물을 포트폴리오로 소개할 수 있습니다. 고객이 제공한 자료(로고, 사진 등)에 대한 권리와 책임은 고객에게 있습니다.</p>
