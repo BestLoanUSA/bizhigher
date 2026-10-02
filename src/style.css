@@ -1799,3 +1799,18 @@ img { max-width: 100%; display: block; }
 .pk-list li::before, .pk-giftbox li::before { transition: transform .25s ease, background-color .25s ease, color .25s ease; }
 @keyframes pk-only-lift { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
 @keyframes pk-only-sweep { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+
+/* ==========================================================
+   v32 — 12개월 약정 · 월 분납 옵션
+   ========================================================== */
+.pk-gift-up-note { display: none; font-size: 11px; color: var(--mist-400); margin: -2px 0 6px; }
+.pk-gb-installment .pk-gift-up-note { display: block; }
+.pk-gb-installment .pk-gift-up { border-style: solid; border-color: rgba(34, 211, 238, 0.5); background: rgba(34, 211, 238, 0.08); }
+.pk-gb-installment .pk-gift-up-btn { display: none; }
+.period-toggle-lg { flex-wrap: wrap; }
+@media (max-width: 767px) {
+  .period-toggle-lg { display: grid; grid-template-columns: 1fr 1fr; width: 100%; max-width: 420px; border-radius: 22px; }
+  .period-toggle-lg button { padding: 9px 6px; }
+  .period-toggle-lg button b { font-size: 13px; }
+  .period-toggle-lg button small { white-space: normal; text-align: center; line-height: 1.25; }
+}
