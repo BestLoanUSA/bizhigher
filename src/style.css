@@ -1463,7 +1463,8 @@ img { max-width: 100%; display: block; }
 .sc-tab-t small { font-size: 12.5px; color: var(--ink-400); }
 .sc-tab.on .sc-tab-t small { color: var(--mist-300); }
 .sc-prog { position: absolute; left: 0; bottom: 0; height: 3px; width: 0; background: linear-gradient(90deg, var(--blue-500), var(--cyan-400)); }
-.sc-tab.on.run .sc-prog { animation: sc-prog 6s linear forwards; }
+.sc-prog { transition: width .12s linear; }
+.sc-tab:not(.on) .sc-prog { width: 0 !important; }
 @keyframes sc-prog { from { width: 0; } to { width: 100%; } }
 /* 무대 */
 .sc-stage { position: relative; min-height: 560px; border-radius: 24px; background: radial-gradient(120% 90% at 20% 0%, #EEF3FF 0%, #F6F8FC 55%, #E9EEFB 100%); border: 1px solid var(--line); overflow: hidden; }
@@ -1588,7 +1589,7 @@ img { max-width: 100%; display: block; }
 .mk-gbp-img > *, .mk-web-hero > *, .mk-ad-sq > *, .mk-vframe > * { position: relative; }
 
 @media (prefers-reduced-motion: reduce) {
-  .sc-tab.on.run .sc-prog, .sc-scene.on .sc-vbar i, .sc-scene.on .sc-bars i { animation: none; }
+  .sc-scene.on .sc-vbar i, .sc-scene.on .sc-bars i { animation: none; }
   .sc-scene.on .sc-chip { animation: none; opacity: 1; transform: none; }
 }
 @media (max-width: 991px) {
@@ -1700,4 +1701,27 @@ img { max-width: 100%; display: block; }
   .pk-process { grid-template-columns: 1fr 1fr; gap: 12px 10px; padding: 14px; }
   .pk-process li + li::before { display: none; }
   .h2-sub { display: block; margin: 4px 0 0; }
+}
+
+/* ==========================================================
+   v29 — 홈 최신 블로그 가로 띠 · 쇼케이스 진행 바(스크롤 빨리감기)
+   ========================================================== */
+.blog-strip-sec { overflow: hidden; padding-bottom: 72px; }
+.blog-strip-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 26px; }
+.blog-strip-sub { font-size: 15.5px; color: var(--ink-600); line-height: 1.65; max-width: 560px; }
+.blog-strip-ctl { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.bs-btn { width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--line); background: #fff; font-size: 16px; cursor: pointer; color: var(--ink-900); font-family: inherit; transition: border-color .2s ease, transform .2s ease, background-color .2s ease; }
+.bs-btn:hover { border-color: var(--blue-300); background: var(--blue-50); transform: translateY(-1px); }
+.blog-strip-all { margin-left: 10px; font-size: 14px; font-weight: 700; color: var(--blue-600); white-space: nowrap; }
+.blog-strip-wrap { position: relative; }
+.blog-strip-wrap::after { content: ""; position: absolute; top: 0; bottom: 0; right: 0; width: 48px; pointer-events: none; background: linear-gradient(270deg, var(--gray-50), rgba(246, 248, 252, 0)); }
+.blog-strip { display: flex; gap: 18px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding: 8px max(24px, calc((100vw - 1120px) / 2 + 24px)) 22px; scroll-padding-left: max(24px, calc((100vw - 1120px) / 2 + 24px)); scrollbar-width: thin; scrollbar-color: var(--blue-300) transparent; }
+.blog-strip .prod-card { flex: 0 0 320px; scroll-snap-align: start; }
+.blog-strip .blog-more { flex-basis: 240px; }
+@media (max-width: 767px) {
+  .blog-strip-sec { padding-bottom: 48px; }
+  .blog-strip-head { flex-direction: column; align-items: flex-start; gap: 14px; margin-bottom: 16px; }
+  .blog-strip { padding: 6px 20px 18px; gap: 14px; scroll-padding-left: 20px; }
+  .blog-strip .prod-card { flex-basis: 282px; }
+  .blog-strip-wrap::after { width: 20px; }
 }
