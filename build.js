@@ -677,52 +677,61 @@ const PKG_WHO = {
   'local-growth': '검색 유입을 본격적으로 늘리고 싶은 가게 · 가장 많이 선택',
   'local-premium': '광고까지 통째로 맡기고 매출 성장에 집중하고 싶은 가게',
 };
-function giftTextFor(slug, period) {
-  const g = DATA.setupGifts;
-  const strip = (i) => i.replace(/\s*\(.*?\)/g, '');
-  if (period === 'annual') {
-    const items = [...g.six.items, ...g.annual.items.slice(1)].map(strip);
-    const value = g.annual.value + (slug === 'local-premium' ? 299 : 0);
-    if (slug === 'local-premium') items.push('광고 셋업');
-    return { value, text: `셋업 <b>$${value.toLocaleString('en-US')} 무료</b> — ${items.join(' · ')}` };
-  }
-  if (period === 'six') {
-    return { value: g.six.value, text: `셋업 <b>$${g.six.value} 무료</b> — ${g.six.items.map(strip).join(' · ')}` };
-  }
-  return { value: 0, text: `6개월부터 셋업 선물 무료 (최대 $${(g.annual.value + 299).toLocaleString('en-US')} 상당)` };
+/* 플랜별·기간별 무료 셋업 — data/services.json의 setupGifts.tiers에서 계산 */
+function giftsFor(slug) {
+  const t = (DATA.setupGifts.tiers || {})[slug] || { six: [], annualExtra: [] };
+  const sum = (arr) => arr.reduce((s, i) => s + (i.value || 0), 0);
+  const sixValue = sum(t.six), extraValue = sum(t.annualExtra);
+  return { base: t.six, extra: t.annualExtra, sixValue, extraValue, annualValue: sixValue + extraValue };
 }
+function giftRange(period) {
+  const vals = DATA.packages.map((p) => giftsFor(p.slug)[period === 'six' ? 'sixValue' : 'annualValue']);
+  return { min: Math.min(...vals), max: Math.max(...vals) };
+}
+const fmtUsd = (n) => '$' + n.toLocaleString('en-US');
+
 function packageMatrixSection(opts = {}) {
-  const pkgsJson = JSON.stringify(DATA.packages.map((p) => ({
-    slug: p.slug, name: p.name, sum: p.sum, prices: p.prices, links: p.links || {},
-    gifts: { monthly: giftTextFor(p.slug, 'monthly'), six: giftTextFor(p.slug, 'six'), annual: giftTextFor(p.slug, 'annual') },
-  })));
-  const gifts = DATA.setupGifts;
-  const cards = DATA.packages.map((p) => {
+  const pkgsJson = JSON.stringify(DATA.packages.map((p) => {
+    const g = giftsFor(p.slug);
+    return { slug: p.slug, name: p.name, sum: p.sum, prices: p.prices, links: p.links || {}, gift: { six: g.sixValue, extra: g.extraValue, annual: g.annualValue } };
+  }));
+  const r6 = giftRange('six'), r12 = giftRange('annual');
+  const cards = DATA.packages.map((p, idx) => {
     const price = p.prices.annual;
     const total = price * 12;
     const disc = Math.round((1 - price / p.sum) * 100);
     const save = p.sum - price;
-    const gift = giftTextFor(p.slug, 'annual');
+    const g = giftsFor(p.slug);
     const href = (p.links && p.links.annual) || pkgConsultHref(p, '12개월');
+    const lv = idx + 1;
+    const badge = p.popular ? '<div class="tier-badge">가장 인기</div>' : (lv === DATA.packages.length ? `<div class="tier-badge tier-badge-top">최대 셋업 선물 ${fmtUsd(g.annualValue)}</div>` : '');
     return `
-      <div class="tier pk-card ${p.popular ? 'tier-pop' : ''}" data-slug="${p.slug}">
-        ${p.popular ? '<div class="tier-badge">가장 인기</div>' : ''}
-        <h3 class="h3">${p.name}</h3>
+      <div class="tier pk-card pk-lv-${lv} ${p.popular ? 'tier-pop' : ''}" data-slug="${p.slug}">
+        ${badge}
+        <div class="pk-head"><h3 class="h3">${p.name}</h3>${lv > 1 ? `<span class="pk-incl">${DATA.packages[idx - 1].name} 전체 포함</span>` : ''}</div>
         <p class="pk-who">${PKG_WHO[p.slug] || p.tagline}</p>
         <p class="pk-sum">개별 합계 <s>$${p.sum}/월</s> <span class="pk-disc">${disc}% 할인</span></p>
         <div class="tier-price">$<span class="pk-price" data-val="${price}">${price}</span><span class="tier-per">/월</span></div>
-        <p class="pk-total">총 $${total.toLocaleString('en-US')} · 12개월 선결제</p>
-        <p class="pk-save">매달 <b class="pk-save-m">$${save}</b> 절약 · 1년이면 <b class="pk-save-y">$${(save * 12).toLocaleString('en-US')}</b></p>
+        <p class="pk-total">총 ${fmtUsd(total)} · 12개월 선결제</p>
+        <p class="pk-save">매달 <b class="pk-save-m">$${save}</b> 절약 · 1년이면 <b class="pk-save-y">${fmtUsd(save * 12)}</b></p>
         <ul class="pk-list">${p.includes.map((i) => `<li>${i}</li>`).join('')}</ul>
-        <p class="pk-gift"><span class="pk-gift-ico" aria-hidden="true">🎁</span><span class="pk-gift-txt">${gift.text}</span></p>
+        <div class="pk-giftbox pk-gb-annual">
+          <div class="pk-gift-h"><span>🎁 무료 셋업</span><b class="pk-gift-total" data-val="${g.annualValue}">${fmtUsd(g.annualValue)} 상당</b></div>
+          <p class="pk-gift-none">월간 플랜에는 셋업 선물이 없습니다 · 6개월부터 <b>${fmtUsd(g.sixValue)}</b>, 12개월 <b>${fmtUsd(g.annualValue)}</b></p>
+          <ul class="pk-gift-base">${g.base.map((i) => `<li><span>${i.name}${i.note ? ` <small>${i.note}</small>` : ''}</span><em>$${i.value}</em></li>`).join('')}</ul>
+          <div class="pk-gift-up">
+            <div class="pk-gift-up-h"><span class="pk-gift-up-tag">12개월이면 추가로</span><b>+ ${fmtUsd(g.extraValue)}</b></div>
+            <ul>${g.extra.map((i) => `<li><span>${i.name}${i.note ? ` <small>${i.note}</small>` : ''}</span><em>$${i.value}</em></li>`).join('')}</ul>
+            <button type="button" class="pk-gift-up-btn" data-period="annual">12개월로 바꾸고 ${fmtUsd(g.extraValue)} 더 받기 →</button>
+          </div>
+        </div>
         <a class="btn ${p.popular ? 'btn-primary' : 'btn-ghost'} btn-block pk-cta" href="${href}">지금 시작하기 · <span class="pk-cta-price">$${price}/월</span></a>
-        <p class="pk-after">결제 → 5분 질문지 → 1개월차 셋업 완료 → 매달 초 성과 리포트</p>
         <a class="pk-more" href="/package/${p.slug}/">플랜 자세히 보기 →</a>
       </div>`;
   }).join('');
   const title = opts.home ? '통째로 맡기면 훨씬 저렴합니다' : '우리 가게 마케팅, 통째로 맡기세요';
   const sub = opts.home
-    ? '개별 구독을 합친 것보다 최대 58% 저렴하고, 장기 플랜은 셋업까지 무료입니다. 견적 미팅 없이 지금 결제하면 오늘 시작됩니다.'
+    ? '개별 구독을 합친 것보다 최대 58% 저렴하고, 플랜이 높을수록·기간이 길수록 무료 셋업이 커집니다. 견적 미팅 없이 지금 결제하면 오늘 시작됩니다.'
     : '';
   return `
 <section class="section pkg-band plans-hero" id="plans">
@@ -730,13 +739,19 @@ function packageMatrixSection(opts = {}) {
     <p class="eyebrow">PLANS</p>
     <h2 class="h2">${title}</h2>
     ${sub ? `<p class="pkg-band-sub">${sub}</p>` : ''}
-    <div class="period-toggle" id="period-toggle" role="tablist" aria-label="결제 주기">
-      <button type="button" data-period="monthly">월간</button>
-      <button type="button" data-period="six">6개월</button>
-      <button type="button" data-period="annual" class="on">12개월 <span class="pt-save">최대 혜택</span></button>
+    <div class="period-toggle period-toggle-lg" id="period-toggle" role="tablist" aria-label="결제 주기">
+      <button type="button" data-period="monthly"><b>월간</b><small>셋업 선물 없음</small></button>
+      <button type="button" data-period="six"><b>6개월</b><small>셋업 ${fmtUsd(r6.min)}~${fmtUsd(r6.max)} 무료</small></button>
+      <button type="button" data-period="annual" class="on"><b>12개월</b><small>셋업 ${fmtUsd(r12.min)}~${fmtUsd(r12.max)} 무료</small><i class="pt-best">최대 혜택</i></button>
     </div>
-    <div class="gift-note" id="gift-note">🎁 <b>12개월 플랜 셋업 무료</b> — ${gifts.annual.items.join(' + ')} <b>($${gifts.annual.value} 상당${gifts.premiumAnnualExtra ? ` · Premium은 ${gifts.premiumAnnualExtra}` : ''})</b></div>
+    <div class="gift-note" id="gift-note">🎁 <b>12개월 플랜 무료 셋업</b> — 프로필 최적화·리뷰 QR·로컬 등록부터 <b>웹사이트</b>까지, 플랜에 따라 <b>${fmtUsd(r12.min)}~${fmtUsd(r12.max)} 상당</b></div>
     <div class="grid3 pk-grid" id="pk-grid">${cards}</div>
+    <ol class="pk-process" aria-label="주문 후 진행 과정">
+      <li><b>1</b><span>Stripe 결제</span><small>견적 미팅 없음</small></li>
+      <li><b>2</b><span>5분 질문지</span><small>업소 정보·사진 전달</small></li>
+      <li><b>3</b><span>1개월차 셋업 완료</span><small>프로필·QR·등록부터</small></li>
+      <li><b>4</b><span>매달 초 성과 리포트</span><small>조회·전화·길찾기</small></li>
+    </ol>
     ${trustStrip('package', { dark: true })}
     <p class="note-text">장기 플랜은 시작 후 30일 내 해지 시 잔여 금액 환불 (제공된 서비스·셋업은 정가 차감) · 월간 플랜은 언제든 취소 · 결제는 Stripe 보안 페이지에서 진행됩니다</p>
   </div>
@@ -744,62 +759,79 @@ function packageMatrixSection(opts = {}) {
 <script>
 (function () {
   var PKGS = ${pkgsJson};
-  var GIFTS = ${JSON.stringify(gifts)};
+  var R6 = ${JSON.stringify(r6)}, R12 = ${JSON.stringify(r12)};
   var CONSULT = ${JSON.stringify(Object.fromEntries(DATA.packages.map((p) => [p.slug, { monthly: pkgConsultHref(p, '월간'), six: pkgConsultHref(p, '6개월'), annual: pkgConsultHref(p, '12개월') }])))};
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var toggle = document.getElementById('period-toggle');
   var grid = document.getElementById('pk-grid');
   if (!toggle || !grid) return;
   var noteEl = document.getElementById('gift-note');
-  function fmt(n) { return n.toLocaleString('en-US'); }
-  /* 숫자 모핑 — 이전 값에서 새 값으로 350ms */
-  function morph(el, to, prefix) {
-    var from = parseInt(el.getAttribute('data-val') || el.textContent.replace(/[^0-9]/g, ''), 10) || 0;
+  var current = 'annual';
+  function fmt(n) { return '$' + n.toLocaleString('en-US'); }
+  function morph(el, to, suffix) {
+    var from = parseInt(el.getAttribute('data-val') || '0', 10) || 0;
     el.setAttribute('data-val', to);
-    if (reduced || from === to) { el.textContent = (prefix || '') + fmt(to); return; }
+    suffix = suffix || '';
+    if (reduced || from === to) { el.textContent = fmt(to) + suffix; return; }
     var start = null;
     function step(ts) {
       if (!start) start = ts;
-      var p = Math.min((ts - start) / 350, 1);
-      var v = Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3)));
-      el.textContent = (prefix || '') + fmt(v);
+      var p = Math.min((ts - start) / 400, 1);
+      el.textContent = fmt(Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3)))) + suffix;
       if (p < 1) requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
   }
   function render(period) {
+    var prev = current; current = period;
     PKGS.forEach(function (p) {
       var card = grid.querySelector('.pk-card[data-slug="' + p.slug + '"]');
       if (!card) return;
       var price = p.prices[period];
       var disc = Math.round((1 - price / p.sum) * 100);
       var save = p.sum - price;
-      morph(card.querySelector('.pk-price'), price);
+      var pe = card.querySelector('.pk-price');
+      pe.setAttribute('data-val', pe.textContent.replace(/[^0-9]/g, ''));
+      (function (el, to) { var from = parseInt(el.getAttribute('data-val'), 10) || 0; if (reduced || from === to) { el.textContent = to; return; } var s0 = null; function st(ts) { if (!s0) s0 = ts; var q = Math.min((ts - s0) / 350, 1); el.textContent = Math.round(from + (to - from) * (1 - Math.pow(1 - q, 3))); if (q < 1) requestAnimationFrame(st); } requestAnimationFrame(st); })(pe, price);
       card.querySelector('.pk-disc').textContent = disc + '% 할인';
       var months = period === 'six' ? 6 : period === 'annual' ? 12 : 0;
       card.querySelector('.pk-total').textContent = months
-        ? '총 $' + fmt(price * months) + ' · ' + (months === 6 ? '6개월' : '12개월') + ' 선결제'
+        ? '총 ' + fmt(price * months) + ' · ' + (months === 6 ? '6개월' : '12개월') + ' 선결제'
         : '매월 결제 · 언제든 취소';
-      morph(card.querySelector('.pk-save-m'), save, '$');
-      morph(card.querySelector('.pk-save-y'), save * 12, '$');
-      card.querySelector('.pk-gift-txt').innerHTML = p.gifts[period].text;
-      card.querySelector('.pk-gift').classList.toggle('pk-gift-none', !p.gifts[period].value);
+      card.querySelector('.pk-save-m').textContent = '$' + save;
+      card.querySelector('.pk-save-y').textContent = fmt(save * 12);
+      var gb = card.querySelector('.pk-giftbox');
+      gb.classList.remove('pk-gb-monthly', 'pk-gb-six', 'pk-gb-annual');
+      gb.classList.add('pk-gb-' + period);
+      var tot = card.querySelector('.pk-gift-total');
+      var val = period === 'annual' ? p.gift.annual : period === 'six' ? p.gift.six : 0;
+      morph(tot, val, ' 상당');
+      var up = card.querySelector('.pk-gift-up');
+      if (period === 'annual' && prev !== 'annual' && !reduced) { up.classList.remove('pk-pop'); void up.offsetWidth; up.classList.add('pk-pop'); }
       var cta = card.querySelector('.pk-cta');
       cta.href = (p.links && p.links[period]) || CONSULT[p.slug][period];
       cta.querySelector('.pk-cta-price').textContent = '$' + price + '/월';
-      card.classList.remove('pk-flash'); void card.offsetWidth; card.classList.add('pk-flash');
     });
     if (noteEl) {
-      if (period === 'annual') noteEl.innerHTML = '🎁 <b>12개월 플랜 셋업 무료</b> — ' + GIFTS.annual.items.join(' + ') + ' <b>($' + GIFTS.annual.value + ' 상당' + (GIFTS.premiumAnnualExtra ? ' · Premium은 ' + GIFTS.premiumAnnualExtra : '') + ')</b>';
-      else if (period === 'six') noteEl.innerHTML = '🎁 <b>6개월 플랜 셋업 무료</b> — ' + GIFTS.six.items.join(' + ') + ' <b>($' + GIFTS.six.value + ' 상당)</b>';
-      else noteEl.innerHTML = '💡 6·12개월 플랜을 선택하면 셋업 서비스(최대 $' + GIFTS.annual.value + ' 상당)가 무료입니다';
+      if (period === 'annual') noteEl.innerHTML = '🎁 <b>12개월 플랜 무료 셋업</b> — 프로필 최적화·리뷰 QR·로컬 등록부터 <b>웹사이트</b>까지, 플랜에 따라 <b>' + fmt(R12.min) + '~' + fmt(R12.max) + ' 상당</b>';
+      else if (period === 'six') noteEl.innerHTML = '🎁 <b>6개월 플랜 무료 셋업</b> — 프로필 최적화·리뷰 QR·로컬 등록, 플랜에 따라 <b>' + fmt(R6.min) + '~' + fmt(R6.max) + ' 상당</b> · 12개월로 바꾸면 <b>웹사이트와 랜딩페이지</b>가 추가됩니다';
+      else noteEl.innerHTML = '💡 월간 플랜에는 셋업 선물이 없습니다 — 6개월부터 <b>' + fmt(R6.min) + '~</b>, 12개월이면 <b>' + fmt(R12.min) + '~' + fmt(R12.max) + '</b> 상당이 무료입니다';
     }
+  }
+  function setPeriod(period) {
+    toggle.querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-period') === period); });
+    render(period);
   }
   toggle.addEventListener('click', function (e) {
     var btn = e.target.closest('button[data-period]');
     if (!btn) return;
-    toggle.querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b === btn); });
-    render(btn.getAttribute('data-period'));
+    setPeriod(btn.getAttribute('data-period'));
+  });
+  grid.addEventListener('click', function (e) {
+    var b = e.target.closest('.pk-gift-up-btn');
+    if (!b) return;
+    setPeriod(b.getAttribute('data-period'));
+    if (toggle.scrollIntoView) toggle.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' });
   });
   /* 부채꼴 리빌 — IO 지원 시에만 숨겼다가 등장, 3초 강제 표시 폴백 */
   if (!reduced && 'IntersectionObserver' in window) {
@@ -807,7 +839,6 @@ function packageMatrixSection(opts = {}) {
     cards.forEach(function (c) { c.classList.add('pk-pre'); });
     var done = false;
     function show() { if (done) return; done = true; cards.forEach(function (c) { c.classList.remove('pk-pre'); c.classList.add('pk-in'); }); }
-    /* 카드 하나라도 화면에 들어오면 세 장 모두 등장 (모바일처럼 그리드가 뷰포트보다 길어도 동작) */
     var io = new IntersectionObserver(function (entries) {
       if (entries.some(function (en) { return en.isIntersecting; })) { show(); io.disconnect(); }
     }, { threshold: 0, rootMargin: '0px 0px -60px 0px' });
@@ -821,7 +852,7 @@ function packageMatrixSection(opts = {}) {
 /* ---------- 페이지: 패키지 상세 ---------- */
 
 function packagePage(p) {
-  const gifts = DATA.setupGifts;
+  const g = giftsFor(p.slug);
   const url = `${SITE.domain}/package/${p.slug}/`;
   const jsonLd = [
     {
@@ -873,7 +904,7 @@ function packagePage(p) {
       <div class="pricebox-row"><span class="pricebox-price">$${p.prices.annual}<span style="font-size:18px;font-weight:600;color:var(--ink-400);">/월</span></span><span class="pricebox-sub">12개월 기준 · 개별 합계 <s>$${p.sum}/월</s></span></div>
       ${rows}
       ${trustStrip('package', { dark: true })}
-      <p class="pricebox-secure">🎁 6개월: 셋업 $${gifts.six.value} 무료 · 12개월: 셋업 $${gifts.annual.value} 무료${p.slug === 'local-premium' ? ` (${gifts.premiumAnnualExtra})` : ''}<br>장기 플랜 30일 만족 보장 — 해지 시 잔여 환불(제공분 정가 차감)</p>
+      <p class="pricebox-secure">🎁 6개월: 셋업 ${fmtUsd(g.sixValue)} 무료 · 12개월: 셋업 ${fmtUsd(g.annualValue)} 무료<br>장기 플랜 30일 만족 보장 — 해지 시 잔여 환불(제공분 정가 차감)</p>
     </div>
   </div>
 </header>
@@ -881,11 +912,10 @@ function packagePage(p) {
   <div class="container-narrow">
     <h2 class="h2-left">플랜에 포함된 것</h2>
     <ul class="includes-list">${p.includes.map((i) => `<li>${i}</li>`).join('')}</ul>
-    <h2 class="h2-left">장기 플랜 무료 셋업</h2>
+    <h2 class="h2-left">장기 플랜 무료 셋업 <span class="h2-sub">6개월 ${fmtUsd(g.sixValue)} · 12개월 ${fmtUsd(g.annualValue)} 상당</span></h2>
     <ul class="includes-list">
-      ${gifts.six.items.map((i) => `<li><b>6개월+</b> ${i}</li>`).join('')}
-      ${gifts.annual.items.slice(1).map((i) => `<li><b>12개월</b> ${i}</li>`).join('')}
-      ${p.slug === 'local-premium' ? `<li><b>12개월</b> ${gifts.premiumAnnualExtra}</li>` : ''}
+      ${g.base.map((i) => `<li><b>6개월+</b> ${i.name} <span class="incl-val">$${i.value}</span>${i.note ? ` <small class="incl-note">${i.note}</small>` : ''}</li>`).join('')}
+      ${g.extra.map((i) => `<li><b>12개월</b> ${i.name} <span class="incl-val">$${i.value}</span>${i.note ? ` <small class="incl-note">${i.note}</small>` : ''}</li>`).join('')}
     </ul>
     <div class="detail-desc">
       <p>온보딩 순서: 1개월차에 프로필 최적화·리뷰 QR·로컬 등록을 마치고, 2개월차에 웹사이트·지역 페이지를 제작합니다. 월간 서비스(포스팅·리뷰·소재 등)는 결제 직후 질문지 제출과 함께 바로 시작됩니다.</p>
@@ -1567,7 +1597,7 @@ function servicesPage() {
   <div class="container">
     <h1 class="page-title">서비스</h1>
     <p class="page-sub">모든 가격은 정찰제입니다. 견적 문의가 필요 없습니다.</p>
-    <div class="banner"><span class="badge">🎁 장기 플랜</span><span class="banner-text">6·12개월 플랜 선택 시 셋업 서비스 무료 — 최대 $1,014 상당 <a href="/pricing/#plans" style="color:var(--blue-600);">플랜 비교 →</a></span></div>
+    <div class="banner"><span class="badge">🎁 장기 플랜</span><span class="banner-text">6·12개월 플랜 선택 시 셋업 서비스 무료 — 최대 ${fmtUsd(giftRange('annual').max)} 상당 <a href="/pricing/#plans" style="color:var(--blue-600);">플랜 비교 →</a></span></div>
   </div>
 </header>
 ${[
@@ -1590,7 +1620,7 @@ ${[
   <div class="container center">
     <p class="eyebrow" style="color:var(--cyan-400);">PLANS</p>
     <h2 class="h2" style="color:#fff;">필요한 게 5개 이상이라면,<br>통째로가 답입니다</h2>
-    <p class="pkg-band-sub">패키지 플랜은 개별 구독 대비 <b>최대 58% 저렴</b>하고, 12개월 플랜은 프로필 최적화부터 웹사이트까지 <b>셋업 $1,014 상당이 무료</b>입니다.</p>
+    <p class="pkg-band-sub">패키지 플랜은 개별 구독 대비 <b>최대 58% 저렴</b>하고, 12개월 플랜은 프로필 최적화부터 웹사이트까지 <b>셋업 최대 ${fmtUsd(giftRange('annual').max)} 상당이 무료</b>입니다.</p>
     <div class="pkg-mini-row">
       ${DATA.packages.map((p) => `
       <a href="/package/${p.slug}/" class="pkg-mini ${p.popular ? 'pkg-mini-pop' : ''}">

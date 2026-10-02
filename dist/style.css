@@ -1624,3 +1624,80 @@ img { max-width: 100%; display: block; }
 @media (max-width: 991px) {
   .sc-stage-in { overflow: visible; -webkit-mask-image: none; mask-image: none; align-items: center; }
 }
+
+/* ==========================================================
+   v28 — 플랜 사다리: 플랜·기간이 올라갈수록 커지는 무료 셋업
+   ========================================================== */
+.pk-head { display: flex; flex-direction: column; gap: 6px; }
+.pk-incl { align-self: flex-start; font-size: 11.5px; font-weight: 800; letter-spacing: 0.02em; color: #7EF0C6; background: rgba(126, 240, 198, 0.1); border: 1px solid rgba(126, 240, 198, 0.3); border-radius: 999px; padding: 3px 9px; }
+.tier-badge-top { background: linear-gradient(135deg, #F5C76A, #F08A4B); color: #2B1700; box-shadow: 0 6px 16px rgba(245, 199, 106, 0.35); }
+/* 레벨별 상단 액센트 — 높을수록 진하고 넓게 */
+.plans-hero .pk-card::before { content: ""; position: absolute; top: 0; left: 24px; right: 24px; height: 3px; border-radius: 0 0 4px 4px; opacity: 0.55; background: linear-gradient(90deg, var(--blue-500), var(--cyan-400)); }
+.plans-hero .pk-lv-1::before { opacity: 0.35; }
+.plans-hero .pk-lv-3::before { opacity: 1; background: linear-gradient(90deg, #F5C76A, #22D3EE, #7C5CFF); height: 4px; }
+.plans-hero .pk-lv-3 { background: linear-gradient(180deg, rgba(245, 199, 106, 0.06), rgba(255, 255, 255, 0.04) 40%); border-color: rgba(245, 199, 106, 0.28); }
+.plans-hero .pk-lv-3:hover { border-color: rgba(245, 199, 106, 0.55); }
+.plans-hero .tier-pop::before { display: none; }
+/* 선물 박스 */
+.pk-giftbox { margin: 8px 0 6px; border-radius: 14px; background: rgba(125, 162, 255, 0.07); border: 1px solid rgba(125, 162, 255, 0.2); padding: 12px 12px 10px; font-size: 12.5px; color: var(--mist-300); }
+.pk-gift-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.pk-gift-h span { font-weight: 800; color: #fff; }
+.pk-gift-total { font-size: 15px; font-weight: 800; color: #7EF0C6; white-space: nowrap; }
+.pk-lv-3 .pk-gift-total { color: #F5C76A; }
+.pk-giftbox ul { list-style: none; margin: 0; padding: 0; }
+.pk-giftbox li { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 4px 0 4px 18px; position: relative; line-height: 1.45; }
+.pk-giftbox li::before { content: "✓"; position: absolute; left: 2px; top: 4px; font-weight: 800; color: #7EF0C6; }
+.pk-giftbox li small { display: block; font-size: 11px; color: var(--mist-400); }
+.pk-giftbox li em { font-style: normal; font-weight: 700; color: var(--mist-400); white-space: nowrap; }
+.pk-gift-none { display: none; font-size: 12px; color: var(--mist-400); line-height: 1.55; }
+.pk-gift-none b { color: #fff; }
+/* 12개월 추가분 — 기간별 상태 */
+.pk-gift-up { margin-top: 10px; border-radius: 12px; padding: 10px 10px 4px; border: 1px dashed rgba(34, 211, 238, 0.45); background: rgba(34, 211, 238, 0.06); position: relative; }
+.pk-gift-up-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }
+.pk-gift-up-tag { font-size: 11px; font-weight: 800; letter-spacing: 0.04em; color: #0A1230; background: var(--cyan-400); border-radius: 999px; padding: 3px 9px; }
+.pk-gift-up-h b { font-size: 14px; font-weight: 800; color: var(--cyan-400); }
+.pk-gift-up-btn { display: none; width: 100%; margin: 8px 0 6px; font-family: inherit; font-size: 12.5px; font-weight: 800; color: #0A1230; background: var(--cyan-400); border: none; border-radius: 10px; padding: 9px 10px; cursor: pointer; box-shadow: 0 8px 20px rgba(34, 211, 238, 0.3); transition: transform .2s ease, box-shadow .2s ease; }
+.pk-gift-up-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(34, 211, 238, 0.42); }
+/* 12개월: 추가분 켜짐 (실선 + 밝게) */
+.pk-gb-annual .pk-gift-up { border-style: solid; border-color: rgba(34, 211, 238, 0.7); background: rgba(34, 211, 238, 0.12); box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.08), 0 12px 30px rgba(34, 211, 238, 0.14); }
+/* 6개월: 추가분은 "바꾸면 받는 것" 티저 (흐리게 + 버튼) */
+.pk-gb-six .pk-gift-up li { opacity: 0.55; }
+.pk-gb-six .pk-gift-up li::before { content: "+"; color: var(--cyan-400); }
+.pk-gb-six .pk-gift-up-tag { background: transparent; color: var(--cyan-400); border: 1px solid rgba(34, 211, 238, 0.5); }
+.pk-gb-six .pk-gift-up-btn { display: block; }
+/* 월간: 기본 목록 흐리게, 안내 문구, 추가분 숨김 */
+.pk-gb-monthly .pk-gift-none { display: block; }
+.pk-gb-monthly .pk-gift-base { opacity: 0.35; }
+.pk-gb-monthly .pk-gift-base li::before { content: "○"; color: var(--mist-400); }
+.pk-gb-monthly .pk-gift-up { display: none; }
+.pk-gb-monthly .pk-gift-total { color: var(--mist-400); }
+@keyframes pk-pop { 0% { transform: scale(.96); box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.5); } 60% { transform: scale(1.02); } 100% { transform: none; box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.08), 0 12px 30px rgba(34, 211, 238, 0.14); } }
+.pk-gift-up.pk-pop { animation: pk-pop .6s cubic-bezier(.22, 1, .36, 1); }
+/* 기간 토글 — 부제 포함 */
+.period-toggle-lg button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 9px 18px; position: relative; }
+.period-toggle-lg button b { font-size: 14.5px; font-weight: 800; }
+.period-toggle-lg button small { font-size: 10.5px; font-weight: 600; opacity: 0.75; white-space: nowrap; }
+.period-toggle-lg button.on small { opacity: 0.95; }
+.pt-best { position: absolute; top: -11px; right: 10px; font-style: normal; font-size: 10px; font-weight: 800; letter-spacing: 0.04em; color: #0A1230; background: var(--cyan-400); border-radius: 999px; padding: 2px 8px; box-shadow: 0 4px 12px rgba(34, 211, 238, 0.4); }
+/* 공통 진행 과정 */
+.pk-process { list-style: none; margin: 30px auto 0; padding: 14px 18px; max-width: 980px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(125, 162, 255, 0.16); border-radius: 16px; }
+.pk-process li { position: relative; display: flex; align-items: center; gap: 10px; color: #fff; }
+.pk-process li b { width: 28px; height: 28px; border-radius: 50%; background: var(--grad-btn); color: #fff; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 6px 14px rgba(10, 77, 245, 0.35); }
+.pk-process li span { font-size: 13.5px; font-weight: 800; display: block; }
+.pk-process li small { font-size: 11.5px; color: var(--mist-400); display: block; }
+.pk-process li + li::before { content: "→"; position: absolute; left: -12px; top: 50%; transform: translateY(-50%); color: var(--mist-400); font-size: 13px; }
+/* 패키지 상세 */
+.h2-sub { font-size: 14px; font-weight: 700; color: var(--ink-400); margin-left: 10px; }
+.incl-val { font-size: 12.5px; font-weight: 700; color: var(--blue-600); background: var(--blue-50); border-radius: 999px; padding: 2px 8px; margin-left: 4px; }
+.incl-note { color: var(--ink-400); font-size: 12.5px; }
+@media (prefers-reduced-motion: reduce) { .pk-gift-up.pk-pop { animation: none; } }
+@media (max-width: 767px) {
+  .period-toggle-lg { gap: 4px; padding: 4px; }
+  .period-toggle-lg button { padding: 8px 10px; }
+  .period-toggle-lg button b { font-size: 13.5px; }
+  .period-toggle-lg button small { font-size: 9.5px; }
+  .pt-best { right: 4px; top: -10px; font-size: 9px; }
+  .pk-process { grid-template-columns: 1fr 1fr; gap: 12px 10px; padding: 14px; }
+  .pk-process li + li::before { display: none; }
+  .h2-sub { display: block; margin: 4px 0 0; }
+}
