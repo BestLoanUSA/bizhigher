@@ -107,8 +107,8 @@ var params = new URLSearchParams(location.search);
 var svc = params.get('service') || '';
 document.getElementById('service-field').value = svc;
 // 웹사이트 제작 주문이면 전용 질문지 표시
-// 웹사이트 제작 주문 또는 웹사이트가 포함된 12개월 플랜이면 전용 질문지 표시
-if (svc.indexOf('website') === 0 || (svc.indexOf('local-') === 0 && svc.indexOf('annual') > -1)) {
+// 웹사이트 제작 주문 또는 웹사이트가 포함된 12개월 플랜(선결제·월 분납)이면 전용 질문지 표시
+if (svc.indexOf('website') === 0 || (svc.indexOf('local-') === 0 && (svc.indexOf('annual') > -1 || svc.indexOf('installment') > -1))) {
   document.getElementById('website-extra').style.display = 'block';
 }
 document.getElementById('intake-form').addEventListener('submit', async function (e) {

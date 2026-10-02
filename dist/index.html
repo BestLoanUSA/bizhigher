@@ -982,7 +982,7 @@
           <ul class="pk-gift-base"><li><span>구글 프로필 최적화</span><em>$199</em></li><li><span>리뷰 QR 키트</span><em>$39</em></li><li><span>로컬 등록 셋업 30곳</span><em>$129</em></li></ul>
           <div class="pk-gift-up">
             <div class="pk-gift-up-h"><span class="pk-gift-up-tag">12개월이면 추가로</span><b>+ $348</b></div>
-            <p class="pk-gift-up-note">월 분납은 7회차 납부 후 제작 · 선결제는 2개월차에 제작</p>
+            <p class="pk-gift-up-note">월 분납은 2회차 납부 후 제작 · 선결제는 2개월차에 제작</p>
             <ul><li><span>지역 랜딩페이지 5개</span><em>$149</em></li><li><span>원페이지 웹사이트 <small>보유 시 지역 페이지 10개로 대체</small></span><em>$199</em></li></ul>
             <button type="button" class="pk-gift-up-btn" data-period="annual">12개월로 바꾸고 $348 더 받기 →</button>
           </div>
@@ -1005,7 +1005,7 @@
           <ul class="pk-gift-base"><li><span>구글 프로필 최적화</span><em>$199</em></li><li><span>리뷰 QR 키트</span><em>$39</em></li><li class="pk-only"><span>로컬 등록 셋업 60곳<i class="pk-only-tag">Growth부터</i></span><em>$258</em></li><li class="pk-only"><span>판매 추적·애널리틱스 셋업<i class="pk-only-tag">Growth부터</i> <small>GA4 + 전환 추적</small></span><em>$149</em></li></ul>
           <div class="pk-gift-up">
             <div class="pk-gift-up-h"><span class="pk-gift-up-tag">12개월이면 추가로</span><b>+ $648</b></div>
-            <p class="pk-gift-up-note">월 분납은 7회차 납부 후 제작 · 선결제는 2개월차에 제작</p>
+            <p class="pk-gift-up-note">월 분납은 2회차 납부 후 제작 · 선결제는 2개월차에 제작</p>
             <ul><li><span>지역 랜딩페이지 5개</span><em>$149</em></li><li class="pk-only"><span>비즈니스 웹사이트<i class="pk-only-tag">Growth부터</i> <small>5페이지 · 블로그 · 문의 폼</small></span><em>$499</em></li></ul>
             <button type="button" class="pk-gift-up-btn" data-period="annual">12개월로 바꾸고 $648 더 받기 →</button>
           </div>
@@ -1028,7 +1028,7 @@
           <ul class="pk-gift-base"><li><span>구글 프로필 최적화</span><em>$199</em></li><li><span>리뷰 QR 키트</span><em>$39</em></li><li class="pk-only"><span>로컬 등록 셋업 120곳<i class="pk-only-tag">Premium만</i></span><em>$516</em></li><li><span>판매 추적·애널리틱스 셋업 <small>GA4 + 전환 추적</small></span><em>$149</em></li><li class="pk-only"><span>광고 셋업<i class="pk-only-tag">Premium만</i> <small>구글·메타 계정 구조 + 전환 연결</small></span><em>$299</em></li></ul>
           <div class="pk-gift-up">
             <div class="pk-gift-up-h"><span class="pk-gift-up-tag">12개월이면 추가로</span><b>+ $1,148</b></div>
-            <p class="pk-gift-up-note">월 분납은 7회차 납부 후 제작 · 선결제는 2개월차에 제작</p>
+            <p class="pk-gift-up-note">월 분납은 2회차 납부 후 제작 · 선결제는 2개월차에 제작</p>
             <ul><li><span>지역 랜딩페이지 5개</span><em>$149</em></li><li class="pk-only"><span>맞춤 제작 웹사이트<i class="pk-only-tag">Premium만</i> <small>예약·주문·다국어 등 기능형</small></span><em>$999</em></li></ul>
             <button type="button" class="pk-gift-up-btn" data-period="annual">12개월로 바꾸고 $1,148 더 받기 →</button>
           </div>
@@ -1100,14 +1100,14 @@
       var up = card.querySelector('.pk-gift-up');
       if ((period === 'annual' || period === 'installment') && prev !== 'annual' && prev !== 'installment' && !reduced) { up.classList.remove('pk-pop'); void up.offsetWidth; up.classList.add('pk-pop'); }
       var upTag = card.querySelector('.pk-gift-up-tag');
-      if (upTag) upTag.textContent = period === 'installment' ? '7회차 납부 후 추가로' : '12개월이면 추가로';
+      if (upTag) upTag.textContent = period === 'installment' ? '2회차 납부 후 추가로' : '12개월이면 추가로';
       var cta = card.querySelector('.pk-cta');
       cta.href = (p.links && p.links[period]) || CONSULT[p.slug][period];
       cta.querySelector('.pk-cta-price').textContent = '$' + price + '/월';
     });
     if (noteEl) {
       if (period === 'annual') noteEl.innerHTML = '🎁 <b>12개월 플랜 무료 셋업</b> — 프로필 최적화·리뷰 QR·로컬 등록부터 <b>웹사이트</b>까지, 플랜에 따라 <b>' + fmt(R12.min) + '~' + fmt(R12.max) + ' 상당</b>';
-      else if (period === 'installment') noteEl.innerHTML = '💳 <b>목돈 없이 12개월 플랜</b> — 매달 나눠 내고 셋업 선물은 12개월 선결제와 <b>동일</b>(' + fmt(R12.min) + '~' + fmt(R12.max) + ' 상당). 웹사이트·랜딩페이지는 <b>7회차 납부 후</b> 제작됩니다';
+      else if (period === 'installment') noteEl.innerHTML = '💳 <b>목돈 없이 12개월 플랜</b> — 매달 나눠 내고 셋업 선물은 12개월 선결제와 <b>동일</b>(' + fmt(R12.min) + '~' + fmt(R12.max) + ' 상당). 웹사이트·랜딩페이지는 <b>2회차 납부 후</b> 제작됩니다';
       else if (period === 'six') noteEl.innerHTML = '🎁 <b>6개월 플랜 무료 셋업</b> — 프로필 최적화·리뷰 QR·로컬 등록, 플랜에 따라 <b>' + fmt(R6.min) + '~' + fmt(R6.max) + ' 상당</b> · 12개월로 바꾸면 <b>웹사이트와 랜딩페이지</b>가 추가됩니다';
       else noteEl.innerHTML = '💡 월간 플랜에는 셋업 선물이 없습니다 — 6개월부터 <b>' + fmt(R6.min) + '~</b>, 12개월이면 <b>' + fmt(R12.min) + '~' + fmt(R12.max) + '</b> 상당이 무료입니다';
     }
