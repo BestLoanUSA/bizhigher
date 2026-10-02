@@ -2,12 +2,21 @@
  * 진단 리포트 페이지 — GET /report/{id}
  * D1의 reports 테이블에서 리포트를 읽어 브랜드 스타일 HTML로 렌더링합니다.
  * 공유 가능한 고유 URL — 하단에 "우리 가게도 진단하기" 바이럴 CTA 포함.
+ * /report/sample 은 가상의 예시 업체로 만든 공개 샘플이다 (_sample.js).
  */
+import { buildSampleReport } from './_sample.js';
 
 export async function onRequestGet(context) {
   const { params, env } = context;
   const id = String(params.id || '').replace(/[^a-z0-9]/gi, '').slice(0, 20);
   if (!id) return Response.redirect(new URL('/free-audit/', context.request.url).toString(), 302);
+
+  // 공개 샘플 — 가상의 예시 업체를 같은 엔진으로 채점해 보여준다 (D1 조회 없음)
+  if (id === 'sample') {
+    return new Response(renderReportHtml(buildSampleReport(), id), {
+      headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=86400' },
+    });
+  }
 
   const row = await env.DB.prepare('SELECT report_json FROM reports WHERE id = ?').bind(id).first();
   if (!row) return Response.redirect(new URL('/free-audit/', context.request.url).toString(), 302);
@@ -66,15 +75,24 @@ export function renderReportHtml(report, id) {
        ${compRows}</div>`
     : '';
 
+  const isSample = !!report.sample;
+  const sampleBanner = isSample
+    ? `<div class="sample-banner"><b>샘플 리포트</b> 가상의 예시 업체로 만든 화면입니다. 실제 리포트는 구글에서 우리 가게와 경쟁 3곳의 데이터를 가져와 같은 기준으로 채점합니다. <a href="/free-audit/">내 가게로 진단받기 →</a></div>`
+    : '';
+  const pageTitle = isSample
+    ? `진단 리포트 샘플 — 이런 리포트를 받습니다 | BizHigher`
+    : `${esc(b.name)} 마케팅 진단 리포트 — ${s.total}점 | BizHigher`;
+
   return `<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${esc(b.name)} 마케팅 진단 리포트 — ${s.total}점 | BizHigher</title>
-<meta name="description" content="${esc(b.name)}의 온라인 마케팅 진단 결과 — 100점 만점에 ${s.total}점. BizHigher 무료 AI 진단.">
+<title>${pageTitle}</title>
+<meta name="description" content="${isSample ? 'BizHigher 무료 AI 진단 리포트가 어떻게 생겼는지 가상의 예시 업체로 보여드립니다. 5개 영역 점수, 가장 급한 문제 2가지, 경쟁 업체 비교, 웹사이트 점검.' : esc(b.name) + '의 온라인 마케팅 진단 결과 — 100점 만점에 ' + s.total + '점. BizHigher 무료 AI 진단.'}">
 <meta name="robots" content="noindex">
-<meta property="og:title" content="${esc(b.name)} 마케팅 진단 — ${s.total}점 / 100점">
+${isSample ? '<link rel="canonical" href="https://bizhigher.com/report/sample">' : ''}
+<meta property="og:title" content="${isSample ? '진단 리포트 샘플 — 이런 리포트를 받습니다' : esc(b.name) + ' 마케팅 진단 — ' + s.total + '점 / 100점'}">
 <meta property="og:description" content="BizHigher 무료 AI 진단 결과입니다. 우리 가게도 60초 만에 진단받아 보세요.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%230A4DF5'/%3E%3Cpath d='M15 44 h9 v-9 h9 v-9 h6.5' stroke='white' stroke-width='6.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M38.5 15.5 h10 v10' stroke='white' stroke-width='6.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
@@ -117,6 +135,9 @@ export function renderReportHtml(report, id) {
   .viral{background:var(--navy-900);border-radius:18px;padding:36px 24px;text-align:center;}
   .viral h2{color:#fff;font-size:24px;font-weight:800;margin-bottom:8px;letter-spacing:-.01em;}
   .viral p{color:#7DA2FF;font-size:14.5px;margin-bottom:20px;}
+  .sample-banner{background:#FFF4D6;border:1px solid #F3D48A;color:#5C3D00;border-radius:14px;padding:14px 18px;font-size:14px;line-height:1.6;margin-bottom:24px;}
+  .sample-banner b{display:inline-block;font-size:11px;letter-spacing:.08em;background:#5C3D00;color:#fff;border-radius:999px;padding:2px 9px;margin-right:8px;vertical-align:1px;}
+  .sample-banner a{color:#0A4DF5;font-weight:700;white-space:nowrap;}
   @media(max-width:600px){.score-flex{flex-direction:column;gap:20px;}.report-title{font-size:24px;}}
 </style>
 <script type="text/javascript">
@@ -136,6 +157,7 @@ export function renderReportHtml(report, id) {
 </head>
 <body>
 <div class="report-wrap">
+  ${sampleBanner}
   <div class="report-head">
     <div class="report-kicker">BIZHIGHER 무료 AI 마케팅 진단</div>
     <h1 class="report-title">${esc(b.name)}</h1>
@@ -164,15 +186,15 @@ export function renderReportHtml(report, id) {
     </div>
   </div>
 
-  <div class="share-band">
+  ${isSample ? '' : `<div class="share-band">
     <p>이 리포트는 고유 링크로 저장됩니다. 동업자나 가족에게 공유해보세요.</p>
     <button class="btn btn-ghost btn-small" onclick="navigator.clipboard.writeText(location.href).then(()=>{this.textContent='링크 복사됨 ✓'})">📤 리포트 링크 복사</button>
-  </div>
+  </div>`}
 
   <div class="viral">
     <h2>내 가게는 몇 점일까?</h2>
-    <p>60초 만에 무료로 진단받아 보세요. 가입도 필요 없습니다.</p>
-    <a href="/free-audit/" class="btn btn-white">우리 가게도 진단하기 →</a>
+    <p>${isSample ? '같은 기준으로 60초 만에 무료 진단받아 보세요. 가입도 필요 없고, 리포트는 바로 열립니다.' : '60초 만에 무료로 진단받아 보세요. 가입도 필요 없습니다.'}</p>
+    <a href="/free-audit/" class="btn btn-white">${isSample ? '내 가게 진단받기 →' : '우리 가게도 진단하기 →'}</a>
   </div>
 </div>
 </body>

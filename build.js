@@ -272,6 +272,225 @@ function breadcrumbList(items) {
 
 /* ---------- 패키지 공통 ---------- */
 
+/* ---------- 신뢰 조각: 보장 스트립 ----------
+   결제 버튼 바로 아래와 가격 페이지 상단에 붙는 보장 칩. 문구는 이용약관(§3·§4·§5)과 일치해야 한다. */
+function trustStrip(kind, opts = {}) {
+  let chips;
+  if (kind === 'one-time') {
+    chips = ['작업 시작 전 전액 환불', '수정 1회 무료', opts.delivery ? `${opts.delivery} 딜리버리` : '영업일 기준 딜리버리', '결과물 소유권은 사장님', 'Stripe 안전결제'];
+  } else if (kind === 'subscription') {
+    chips = ['언제든 셀프 해지', '위약금·약정 없음', '수정 1회 무료', '전문가 검수 후 전달', 'Stripe 안전결제'];
+  } else if (kind === 'package') {
+    chips = ['장기 플랜 30일 만족 보장', '월간은 언제든 셀프 해지', '위약금 없음', '전문가 검수 후 전달', 'Stripe 안전결제'];
+  } else {
+    chips = ['작업 시작 전 전액 환불', '장기 플랜 30일 보장', '수정 1회 무료', '언제든 셀프 해지', 'Stripe 안전결제'];
+  }
+  return `<ul class="trust-strip${opts.dark ? ' trust-strip-dark' : ''}${opts.compact ? ' trust-strip-compact' : ''}" aria-label="구매 보장">${chips.map((c) => `<li class="trust-chip">${c}</li>`).join('')}</ul>`;
+}
+
+/* ---------- 신뢰 조각: 직접 센 데이터 밴드 ----------
+   data/surveys·data/reports에서 최신 수치를 읽어 홈에 노출한다. 숫자를 손으로 적지 않는다. */
+function dataBandSection() {
+  const surveys = loadSurveys().sort((a, b) => (a.asOf < b.asOf ? 1 : -1));
+  if (!surveys.length) return '';
+  const s = surveys[0];
+  const reports = loadReports().sort((a, b) => (a.asOf < b.asOf ? 1 : -1));
+  const r = reports[0];
+  const stats = [
+    { n: s.totals.businesses, label: '직접 한 곳씩 확인한 LA·OC 한인 업소' },
+    { n: s.totals.noWebsite, label: '그중 검색으로 찾을 수 있는 자기 웹사이트가 없는 곳' },
+  ];
+  if (r && r.stats && r.stats.length) {
+    const last = r.stats[r.stats.length - 1];
+    const n = parseInt(String(last.value).replace(/[^0-9]/g, ''), 10);
+    if (!Number.isNaN(n)) stats.push({ n, label: last.label });
+  }
+  const headline = (s.editorial && s.editorial.headline) || s.title;
+  return `
+<section class="section section-navy data-band">
+  <div class="container">
+    <p class="eyebrow eyebrow-cyan">OUR OWN DATA</p>
+    <h2 class="h2">추정이 아니라, 직접 센 숫자입니다</h2>
+    <p class="data-band-sub">한인 업소의 온라인 실태를 한 곳씩 확인해 분기마다 공개합니다. 원자료 CSV까지 엽니다 — 출처만 남기면 인용은 자유입니다.</p>
+    <div class="grid3">
+      ${stats.map((x) => `<div class="stat-box"><div class="stat" data-count="${x.n}" data-suffix="곳">${x.n}곳</div><p class="stat-label">${x.label}</p></div>`).join('')}
+    </div>
+    <div class="data-band-links">
+      <a class="btn btn-white" href="/data/${s.slug}/">${headline} →</a>
+      <a class="data-band-more" href="/data/">전체 데이터 리포트 →</a>
+    </div>
+    <p class="data-band-note">${s.asOf} 기준 · ${s.method && s.method.noGooglePlaces ? s.method.noGooglePlaces : '원자료 CSV 제공'}</p>
+  </div>
+</section>`;
+}
+
+/* ---------- 신뢰 조각: 결과물 미리보기 목업 ----------
+   실제 고객 결과물이 아니라 HTML/CSS로 그린 "이렇게 생긴 것을 받는다" 예시다. 업체명은 가상("순두부 하우스 (예시)").
+   David가 실제 스크린샷을 보내면 같은 자리에 <img>로 교체하면 된다. */
+function qrSvg(seed) {
+  // 장식용 유사 QR — 실제 스캔되지 않는다. 결정적 난수로 빌드마다 같은 모양.
+  const N = 21;
+  let x = seed;
+  const rnd = () => { x = (x * 1103515245 + 12345) & 0x7fffffff; return x / 0x7fffffff; };
+  const cells = [];
+  const finder = (ox, oy) => {
+    for (let i = 0; i < 7; i++) for (let j = 0; j < 7; j++) {
+      const edge = i === 0 || i === 6 || j === 0 || j === 6;
+      const core = i >= 2 && i <= 4 && j >= 2 && j <= 4;
+      if (edge || core) cells.push(`<rect x="${ox + j}" y="${oy + i}" width="1" height="1"/>`);
+    }
+  };
+  finder(0, 0); finder(N - 7, 0); finder(0, N - 7);
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+    const inF = (i < 8 && j < 8) || (i < 8 && j >= N - 8) || (i >= N - 8 && j < 8);
+    if (!inF && rnd() < 0.42) cells.push(`<rect x="${j}" y="${i}" width="1" height="1"/>`);
+  }
+  return `<svg class="mk-qrsvg" viewBox="0 0 ${N} ${N}" aria-hidden="true" shape-rendering="crispEdges"><g fill="#0A1B4D">${cells.join('')}</g></svg>`;
+}
+
+const MOCKUPS = {
+  'gbp-post': {
+    title: '구글 프로필 게시물', sub: '매주 1~2건 · 이미지 + 한/영 캡션', for: ['gbp-posting', 'google-profile-optimization'],
+    html: `<div class="mk mk-gbp">
+  <div class="mk-row"><span class="mk-avatar">순</span><div class="mk-who"><b>순두부 하우스 (예시)</b><small>구글 비즈니스 프로필 · 2일 전</small></div></div>
+  <div class="mk-gbp-img"><span>가을 신메뉴<br>갈비 순두부</span></div>
+  <p class="mk-gbp-cap">찬바람 불 때 딱 — 갈비를 넣고 끓인 갈비 순두부가 나왔습니다. 매일 11시~9시, 가든그로브 Brookhurst St.</p>
+  <span class="mk-pill">자세히 알아보기</span>
+</div>` },
+  'review-reply': {
+    title: '리뷰 답글', sub: 'AI 초안 → 검수 → 24시간 내 게시', for: ['review-reply'],
+    html: `<div class="mk mk-rv">
+  <div class="mk-row"><span class="mk-avatar mk-avatar-g">J</span><div class="mk-who"><b>Jenny K.</b><small>리뷰 3개 · 사진 1장</small></div><span class="mk-stars">★★★★★</span></div>
+  <p class="mk-rv-txt">순두부가 진짜 부드럽고 반찬이 매일 바뀌어요. 주차가 좀 어려운 게 유일한 단점.</p>
+  <div class="mk-rv-reply"><b>사장님 답글</b><p>Jenny님, 반찬 칭찬 감사합니다! 주차는 건물 뒤편 공용 주차장이 저녁 6시 이후 무료이니 다음엔 그쪽을 이용해 보세요. 또 뵙겠습니다 😊</p></div>
+</div>` },
+  'qr-kit': {
+    title: '리뷰 QR 테이블텐트', sub: '인쇄용 PDF · 포스터 · 카운터 스탠드', for: ['review-qr-kit'],
+    html: `<div class="mk mk-tent">
+  <p class="mk-tent-h">오늘 식사, 어떠셨나요?</p>
+  <p class="mk-tent-s">30초 구글 리뷰로 알려주세요</p>
+  ${qrSvg(20260918)}
+  <p class="mk-tent-f">순두부 하우스 (예시) · 솔직한 후기면 충분합니다</p>
+</div>` },
+  website: {
+    title: '원페이지 웹사이트', sub: '모바일 우선 · 전화·길찾기·메뉴 · 호스팅비 $0', for: ['website', 'care-plan'],
+    html: `<div class="mk mk-phone">
+  <div class="mk-web-hero"><b>순두부 하우스</b><small>가든그로브 · 한식 · 예시</small></div>
+  <div class="mk-web-btns"><span>📞 전화</span><span>🗺 길찾기</span><span>📋 메뉴</span></div>
+  <div class="mk-web-hours"><b>영업시간</b> 매일 11:00 – 21:00</div>
+  <div class="mk-web-menu"><div><span>갈비 순두부</span><span>$16.95</span></div><div><span>해물 순두부</span><span>$14.95</span></div><div><span>돌솥비빔밥</span><span>$15.95</span></div></div>
+</div>` },
+  report: {
+    title: '월간 성과 리포트', sub: '매달 초 · 조회·전화·길찾기 · 이번 달 한 일', for: ['seo-aio', 'ads-management', 'local-listing-care', 'gbp-posting'],
+    html: `<div class="mk mk-rep">
+  <div class="mk-rep-head"><b>9월 성과 리포트</b><small>순두부 하우스 (예시) · 구글 프로필</small></div>
+  <div class="mk-kpis">
+    <div><small>프로필 조회</small><b>2,314</b><i>▲ 18%</i></div>
+    <div><small>전화 클릭</small><b>96</b><i>▲ 31%</i></div>
+    <div><small>길찾기</small><b>187</b><i>▲ 22%</i></div>
+  </div>
+  <div class="mk-spark" aria-hidden="true">${[38, 44, 41, 52, 58, 55, 66, 72, 69, 80, 86, 92].map((h) => `<i style="height:${h}%"></i>`).join('')}</div>
+  <p class="mk-rep-note">이번 달 한 일 — 게시물 8건 · 리뷰 답글 11건 · 사진 12장 · 등록 +5곳</p>
+</div>` },
+  ad: {
+    title: '광고 소재', sub: '1080×1080 · 인스타·페북·구글 · 매달 10장', for: ['ad-creative-pack', 'ads-setup', 'ads-management'],
+    html: `<div class="mk mk-ad">
+  <div class="mk-ad-sq"><span class="mk-ad-k">LUNCH SPECIAL</span><b>점심 순두부 세트<br>$12.95</b><small>평일 11시–3시 · 가든그로브</small><span class="mk-ad-logo">순두부 하우스 · 예시</span></div>
+</div>` },
+  listings: {
+    title: '로컬 등록 현황표', sub: '30곳 등록 · 인증 진행 상황 공유', for: ['local-listing-setup', 'local-listing-care'],
+    html: `<div class="mk mk-list">
+  <div class="mk-rep-head"><b>로컬 등록 현황</b><small>순두부 하우스 (예시) · 30곳 중 23곳 완료</small></div>
+  <ul>
+    <li><span>Yelp</span><i class="ok">등록 완료</i></li>
+    <li><span>Apple Business Connect</span><i class="ok">등록 완료</i></li>
+    <li><span>Bing Places</span><i class="ok">등록 완료</i></li>
+    <li><span>Nextdoor</span><i class="ok">등록 완료</i></li>
+    <li><span>한인 업소록 2곳</span><i class="ok">등록 완료</i></li>
+    <li><span>Yellow Pages</span><i class="wait">엽서 인증 대기</i></li>
+  </ul>
+</div>` },
+  blog: {
+    title: 'SEO 블로그 글', sub: '1,800자 이상 · 지역·업종 키워드 · 주 1편', for: ['seo-blog-pack', 'seo-aio', 'local-landing-pack'],
+    html: `<div class="mk mk-blog">
+  <span class="mk-tag">블로그 · 1,900자 · FAQ 스키마</span>
+  <b class="mk-blog-t">가든그로브에서 순두부 맛집 고르는 법: 국물·두부·반찬 3가지 기준</b>
+  <small>2026-09-22 · 순두부 하우스 (예시)</small>
+  <div class="mk-lines" aria-hidden="true"><i style="width:94%"></i><i style="width:88%"></i><i style="width:62%"></i></div>
+  <p class="mk-blog-h">1. 국물 — 사골인지 멸치인지부터</p>
+  <div class="mk-lines" aria-hidden="true"><i style="width:90%"></i><i style="width:76%"></i></div>
+</div>` },
+  video: {
+    title: '숏폼 영상', sub: '세로형 15~30초 · 릴스·틱톡·쇼츠 · 자막 포함', for: ['shortform-video'],
+    html: `<div class="mk mk-video">
+  <div class="mk-vframe"><span class="mk-vplay">▶</span><div class="mk-vcap"><b>갈비 순두부 끓는 15초</b><small>순두부 하우스 (예시) · 한/영 자막</small></div></div>
+</div>` },
+  profile: {
+    title: '프로필 최적화 체크리스트', sub: '카테고리·설명·사진·영업시간 A부터 Z까지', for: ['google-profile-optimization'],
+    html: `<div class="mk mk-prof">
+  <div class="mk-rep-head"><b>프로필 최적화 완료 보고</b><small>순두부 하우스 (예시)</small></div>
+  <ul class="mk-check">
+    <li class="done">기본 카테고리: 일반 음식점 → <b>한식당</b></li>
+    <li class="done">보조 카테고리 3개 추가 (두부 전문 · 아시아 음식 · 테이크아웃)</li>
+    <li class="done">설명 750자 · 지역·메뉴 키워드 7개 자연 삽입</li>
+    <li class="done">사진 12장 업로드 · 대표 사진 교체</li>
+    <li class="done">영업시간 · 공휴일 시간 설정</li>
+    <li class="todo">Q&amp;A 자주 묻는 질문 5개 등록 (사장님 확인 후)</li>
+  </ul>
+</div>` },
+  'sample-report': {
+    title: 'AI 마케팅 진단 리포트', sub: '실제 리포트 화면을 그대로 열어볼 수 있습니다', for: ['ai-marketing-report'], href: '/report/sample', cta: '샘플 리포트 열기 →',
+    html: `<div class="mk mk-srep">
+  <div class="mk-gauge"><b>65</b><small>/100</small></div>
+  <div class="mk-srep-bars">
+    <div><span>구글 노출</span><i><em style="width:80%"></em></i></div>
+    <div><span>리뷰·평판</span><i><em style="width:40%"></em></i></div>
+    <div><span>웹사이트</span><i><em style="width:100%"></em></i></div>
+    <div><span>정보 완성도</span><i><em style="width:75%"></em></i></div>
+    <div><span>경쟁사 대비</span><i><em style="width:30%"></em></i></div>
+  </div>
+</div>` },
+};
+
+function mockupCard(key, opts = {}) {
+  const m = MOCKUPS[key];
+  if (!m) return '';
+  const href = m.href || (opts.linkService ? `/service/${opts.linkService}/` : '');
+  const cta = m.cta || '서비스 보기 →';
+  return `
+<figure class="mk-card">
+  <div class="mk-frame"><span class="mk-ex">예시</span>${m.html}</div>
+  <figcaption class="mk-cap"><b>${m.title}</b><span>${m.sub}</span>${href ? `<a href="${href}">${cta}</a>` : ''}</figcaption>
+</figure>`;
+}
+
+/* 서비스 상세용: 해당 서비스에 매핑된 목업 1~3개 */
+function gallerySectionFor(s) {
+  const keys = Object.keys(MOCKUPS).filter((k) => MOCKUPS[k].for.includes(s.slug)).slice(0, 3);
+  if (!keys.length) return '';
+  return `
+    <h2 class="h2-left">결과물 미리보기</h2>
+    <p class="mk-note">실제 결과물은 사장님 업소의 정보·사진·톤으로 제작됩니다. 아래는 형식과 완성도를 보여드리기 위한 예시입니다.</p>
+    <div class="mk-grid mk-grid-${keys.length}">${keys.map((k) => mockupCard(k)).join('')}</div>`;
+}
+
+/* 홈용: 가로 스크롤 띠 */
+function galleryStripSection() {
+  const picks = ['gbp-post', 'review-reply', 'website', 'qr-kit', 'report', 'ad', 'video'];
+  return `
+<section class="section mk-section">
+  <div class="container">
+    <p class="eyebrow">WHAT YOU GET</p>
+    <h2 class="h2">이렇게 생긴 것을 받습니다</h2>
+    <p class="mk-section-sub">설명 대신 결과물로 보여드립니다. 전부 사장님 업소의 정보와 사진으로 제작되고, 전문가 검수 후 전달됩니다.</p>
+  </div>
+  <div class="mk-strip-wrap">
+    <div class="mk-strip" id="mk-strip">${picks.map((k) => mockupCard(k, { linkService: MOCKUPS[k].for[0] })).join('')}</div>
+  </div>
+  <p class="note-text">위 화면은 가상의 예시 업체("순두부 하우스")로 구성했습니다 · <a href="/report/sample" style="color:var(--blue-600);font-weight:700;">실제 진단 리포트 샘플 보기 →</a></p>
+</section>`;
+}
+
 const PERIODS = [
   { key: 'monthly', label: '월간', per: '/월', note: '매월 결제 · 언제든 취소' },
   { key: 'six', label: '6개월', per: '/월', months: 6, note: '6개월 선결제' },
@@ -316,6 +535,7 @@ function packageMatrixSection() {
     </div>
     <div class="gift-note" id="gift-note">🎁 <b>12개월 플랜 셋업 무료</b> — ${gifts.annual.items.join(' + ')} <b>($${gifts.annual.value} 상당${gifts.premiumAnnualExtra ? ` · Premium은 ${gifts.premiumAnnualExtra}` : ''})</b></div>
     <div class="grid3 pk-grid">${cards}</div>
+    ${trustStrip('package', { dark: true })}
     <p class="note-text">장기 플랜은 시작 후 30일 내 해지 시 잔여 금액 환불 (제공된 서비스·셋업은 정가 차감) · 월간 플랜은 언제든 취소</p>
   </div>
 </section>
@@ -413,6 +633,7 @@ function packagePage(p) {
     <div class="pricebox">
       <div class="pricebox-row"><span class="pricebox-price">$${p.prices.annual}<span style="font-size:18px;font-weight:600;color:var(--ink-400);">/월</span></span><span class="pricebox-sub">12개월 기준 · 개별 합계 <s>$${p.sum}/월</s></span></div>
       ${rows}
+      ${trustStrip('package', { dark: true })}
       <p class="pricebox-secure">🎁 6개월: 셋업 $${gifts.six.value} 무료 · 12개월: 셋업 $${gifts.annual.value} 무료${p.slug === 'local-premium' ? ` (${gifts.premiumAnnualExtra})` : ''}<br>장기 플랜 30일 만족 보장 — 해지 시 잔여 환불(제공분 정가 차감)</p>
     </div>
   </div>
@@ -508,9 +729,9 @@ function homePage() {
         <a href="/services/" class="btn btn-ghost">서비스 둘러보기</a>
       </div>
     </div>
-    <div class="hero-demo" aria-hidden="true">
-      <div class="demo-card" id="demo-card">
-        <div class="demo-top"><span class="demo-dot"></span>AI 마케팅 진단 리포트<span class="demo-live">LIVE</span></div>
+    <div class="hero-demo">
+      <div class="demo-card" id="demo-card" aria-hidden="true">
+        <div class="demo-top"><span class="demo-dot"></span>AI 마케팅 진단 리포트<span class="demo-live">시연 예시</span></div>
         <div class="demo-name"><span id="dm-type"></span><span class="demo-caret"></span></div>
         <div class="demo-score-row">
           <div class="demo-ring" id="dm-ring"><div class="demo-ring-in"><b id="dm-score">0</b><small>/100</small></div></div>
@@ -528,6 +749,7 @@ function homePage() {
         </div>
         <div class="demo-plan" id="dm-plan"><span id="dm-plan-txt">🚀 180일 실행 플랜 시작</span></div>
       </div>
+      <p class="demo-note">가상의 예시 업체로 구성한 시연 화면입니다 · <a href="/report/sample">실제 리포트 샘플 보기 →</a></p>
     </div>
   </div>
   <div class="marquee"><div class="marquee-track" id="mq-track">
@@ -761,18 +983,19 @@ function homePage() {
   var planTxt = document.getElementById('dm-plan-txt');
   // 비포/애프터 스토리 — 형편없는 진단 → 플랜 시작 버튼 클릭 → 180일 뒤 극적 반전
   var BIZ = [
-    { name: '가든그로브 안경점', s0: 41, s1: 94, b0: [48, 34, 45, 22, 39], b1: [96, 91, 88, 82, 95],
+    // 업체명은 전부 가상의 예시 — 실존 업소처럼 보이지 않도록 "예시" 표기를 유지한다 (§신뢰 원칙)
+    { name: '예시 안경점 · 가든그로브', s0: 41, s1: 94, b0: [48, 34, 45, 22, 39], b1: [96, 91, 88, 82, 95],
       prob: ['🔎 경쟁사 대비 리뷰 32개 부족', '📸 프로필 사진 6개월째 업데이트 없음'],
-      win:  ['⭐ 리뷰 187개 — 동네 안경점 1위', '📸 매주 새 사진·게시물 자동 업로드'] },
-    { name: '애틀랜타 수학학원', s0: 29, s1: 92, b0: [31, 42, 25, 12, 33], b1: [93, 89, 86, 90, 88],
+      win:  ['⭐ 리뷰 수 동네 안경점 중 1위', '📸 매주 새 사진·게시물 자동 업로드'] },
+    { name: '예시 수학학원 · 애틀랜타', s0: 29, s1: 92, b0: [31, 42, 25, 12, 33], b1: [93, 89, 86, 90, 88],
       prob: ['🏷️ 구글 카테고리 "일반 학교"로 잘못 분류', '📱 SNS 계정 없음 — 학부모 접점 부재'],
-      win:  ['🏷️ "수학학원" 지도 검색 최상단 노출', '📱 인스타 학부모 팔로워 1,200+'] },
-    { name: '달라스 한식당', s0: 37, s1: 95, b0: [44, 51, 18, 35, 40], b1: [97, 94, 90, 87, 93],
+      win:  ['🏷️ "수학학원" 지도 검색 최상단 노출', '📱 인스타 학부모 팔로워 꾸준히 증가'] },
+    { name: '예시 한식당 · 달라스', s0: 37, s1: 95, b0: [44, 51, 18, 35, 40], b1: [97, 94, 90, 87, 93],
       prob: ['🌐 웹사이트 없음 — 메뉴·영업시간 못 찾음', '🔎 "korean bbq near me" 순위권 밖'],
-      win:  ['🌐 예약되는 웹사이트 — 월 방문 2,400', '🔎 "korean bbq near me" 첫 화면 노출'] },
-    { name: 'LA 네일살롱', s0: 33, s1: 91, b0: [38, 29, 30, 41, 35], b1: [92, 90, 85, 94, 89],
-      prob: ['💬 미답글 리뷰 9개 — 신뢰도 하락 요인', '📉 신규 손님 문의 월 6건'],
-      win:  ['💬 모든 리뷰 24시간 내 답글 자동화', '📈 신규 문의 월 31건 — 5배 증가'] },
+      win:  ['🌐 예약되는 웹사이트 — 메뉴·영업시간 한눈에', '🔎 "korean bbq near me" 첫 화면 노출'] },
+    { name: '예시 네일살롱 · LA', s0: 33, s1: 91, b0: [38, 29, 30, 41, 35], b1: [92, 90, 85, 94, 89],
+      prob: ['💬 미답글 리뷰 9개 — 신뢰도 하락 요인', '📉 신규 손님 문의가 뜸함'],
+      win:  ['💬 모든 리뷰 24시간 내 답글', '📈 신규 문의 매달 꾸준히 증가'] },
   ];
   var bi = 0;
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -918,6 +1141,8 @@ function homePage() {
 })();
 </script>
 
+${galleryStripSection()}
+
 <section class="section vs-section">
   <div class="container">
     <p class="eyebrow">WHY AI AGENCY</p>
@@ -1028,16 +1253,7 @@ function homePage() {
   </div>
 </section>
 
-<section class="section section-navy">
-  <div class="container">
-    <h2 class="h2">AI 광고회사의 숫자</h2>
-    <div class="grid3">
-      <div class="stat-box"><div class="stat" data-count="3" data-suffix="일">3일</div><p class="stat-label">대행사 평균 2~4주 걸리는 결과물을 영업일 3일에</p></div>
-      <div class="stat-box"><div class="stat" data-count="24" data-suffix="시간">24시간</div><p class="stat-label">AI는 퇴근하지 않습니다 — 데이터 모니터링·자동화 상시 가동</p></div>
-      <div class="stat-box"><div class="stat" data-count="58" data-suffix="%">58%</div><p class="stat-label">개별 구매 대비 12개월 플랜 절감률 — 정찰제라 계산이 됩니다</p></div>
-    </div>
-  </div>
-</section>
+${dataBandSection()}
 
 <section class="section">
   <div class="container">
@@ -1055,6 +1271,7 @@ function homePage() {
         <a href="/package/${p.slug}/" class="btn ${p.popular ? 'btn-primary' : 'btn-ghost'} btn-block">플랜 보기</a>
       </div>`).join('')}
     </div>
+    ${trustStrip('package', { compact: true })}
     <p class="note-text">🎁 12개월 플랜은 프로필 최적화 · 로컬 등록 · 웹사이트까지 셋업 무료 (최대 $1,014 상당) · <a href="/pricing/#plans" style="color:var(--blue-600);font-weight:700;">전체 비교 →</a></p>
   </div>
 </section>
@@ -1170,6 +1387,7 @@ function pricingPage() {
   <div class="container">
     <h1 class="page-title">투명한 정찰제</h1>
     <p class="page-sub">숨은 비용도, 견적 미팅도 없습니다. 모든 가격이 여기 있습니다.</p>
+    ${trustStrip('all')}
   </div>
 </header>
 ${packageMatrixSection()}
@@ -1215,6 +1433,7 @@ function auditPage() {
       <div class="form-msg" id="form-msg"></div>
     </form>
     <p class="note-text">분석에 20~40초 정도 걸립니다. 완료되면 리포트 화면으로 자동 이동합니다. 스팸은 보내지 않습니다.</p>
+    <p class="audit-sample"><a href="/report/sample">📄 제출 전에 리포트가 어떻게 생겼는지 먼저 보기 →</a></p>
   </div>
 </section>
 <section class="section section-gray">
@@ -1225,6 +1444,7 @@ function auditPage() {
       <div class="step-card"><h3 class="h3">가장 급한 문제 2가지</h3><p class="body-sm">왜 문제인지, 방치하면 어떻게 되는지, 무엇부터 고치면 되는지 설명합니다</p></div>
       <div class="step-card"><h3 class="h3">다음 단계 추천</h3><p class="body-sm">지금 상황에서 가장 효과적인 서비스를 추천해 드립니다 — 강요는 없습니다</p></div>
     </div>
+    <div class="hero-ctas" style="margin-top:28px;justify-content:center;"><a href="/report/sample" class="btn btn-ghost">샘플 리포트 열어보기 →</a></div>
   </div>
 </section>
 <script>
@@ -1347,13 +1567,16 @@ function servicePage(s, posts) {
       ${optionA}
       ${optionB}
       ${optionC}
-      <p class="pricebox-secure">${s.stripeLinkA ? '🔒 Stripe 안전결제 · 수정 1회 무료 · ' + (s.type === 'subscription' ? '언제든 해지' : '작업 시작 전 전액 환불') : '📩 상담 신청 시 1영업일 내 회신드립니다 · 부담 없이 문의하세요'}</p>
+      ${s.stripeLinkA
+        ? trustStrip(s.type === 'subscription' ? 'subscription' : 'one-time', { dark: true, delivery: s.delivery })
+        : '<p class="pricebox-secure">📩 상담 신청 시 1영업일 내 회신드립니다 · 부담 없이 문의하세요</p>'}
     </div>
     ${planHint(s)}
   </div>
 </header>
 <section class="detail-body">
   <div class="container-narrow">
+    ${gallerySectionFor(s)}
     <h2 class="h2-left">포함 내역</h2>
     <ul class="includes-list">${s.includes.map((i) => `<li>${i}</li>`).join('')}</ul>
     <h2 class="h2-left">${s.descriptionTitle}</h2>
