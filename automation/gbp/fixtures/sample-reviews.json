@@ -1,0 +1,51 @@
+[
+  {
+    "name": "accounts/000/locations/000/reviews/r1",
+    "reviewer": { "displayName": "Jenny K." },
+    "starRating": "FIVE",
+    "comment": "사장님이 친절하게 얼굴형에 맞는 프레임을 골라주셨어요. 한국어로 설명해주셔서 편했습니다. 가든그로브에서 안경 맞출 거면 여기 추천!",
+    "createTime": "2026-09-28T18:10:00Z",
+    "updateTime": "2026-09-28T18:10:00Z"
+  },
+  {
+    "name": "accounts/000/locations/000/reviews/r2",
+    "reviewer": { "displayName": "Michael P." },
+    "starRating": "FOUR",
+    "comment": "Good selection and fair prices. Took about a week for my lenses to come in, a bit longer than expected but the fit is perfect.",
+    "createTime": "2026-09-30T01:22:00Z",
+    "updateTime": "2026-09-30T01:22:00Z"
+  },
+  {
+    "name": "accounts/000/locations/000/reviews/r3",
+    "reviewer": { "displayName": "Soo L." },
+    "starRating": "FIVE",
+    "comment": "검안 받고 처방대로 렌즈 맞췄는데 어지럼증이 없어졌어요. 의사 선생님도 꼼꼼하세요.",
+    "createTime": "2026-10-01T20:05:00Z",
+    "updateTime": "2026-10-01T20:05:00Z"
+  },
+  {
+    "name": "accounts/000/locations/000/reviews/r4",
+    "reviewer": { "displayName": "Daniel R." },
+    "starRating": "TWO",
+    "comment": "Was quoted one price and charged another at pickup. Asked for a refund on the coating and was told no. Not coming back.",
+    "createTime": "2026-10-02T03:40:00Z",
+    "updateTime": "2026-10-02T03:40:00Z"
+  },
+  {
+    "name": "accounts/000/locations/000/reviews/r5",
+    "reviewer": { "displayName": "Grace H." },
+    "starRating": "FIVE",
+    "comment": "",
+    "createTime": "2026-10-02T16:00:00Z",
+    "updateTime": "2026-10-02T16:00:00Z"
+  },
+  {
+    "name": "accounts/000/locations/000/reviews/r6",
+    "reviewer": { "displayName": "Tom W." },
+    "starRating": "FIVE",
+    "comment": "Great place, already replied.",
+    "reviewReply": { "comment": "Thank you Tom!", "updateTime": "2026-09-20T00:00:00Z" },
+    "createTime": "2026-09-19T00:00:00Z",
+    "updateTime": "2026-09-20T00:00:00Z"
+  }
+]
