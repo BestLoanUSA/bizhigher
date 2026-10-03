@@ -23,9 +23,17 @@ node automation/gbp/posts.js plan --month 2026-10 --dry-run   # 한 달치 게�
 
 `automation/gbp/biz/new-optix.json`을 실제 값(전화·웹사이트·영업시간·서비스·직원 이름)으로 채우면 초안 품질이 올라간다.
 
+## 계정 구조 (2026-10-03 결정)
+
+- **BizHigher 대행사 계정 = `hello@bizhigher.com`** (Workspace 없이 만든 무료 구글 계정. 메일은 Cloudflare Email Routing → maxinchoi@gmail.com). Business Profile Manager에 **조직 "BizHigher"** 를 이 계정으로 만들어 두었다.
+- 고객 프로필 접근은 **고객(소유자)이 hello@bizhigher.com을 "관리자"로 초대**하는 방식. 관리자는 다른 관리자를 추가할 수 없으므로(구글 정책) 기존 maxinchoi@gmail.com 관리자 권한으로는 옮길 수 없다. 사장님께 보여드릴 안내: [`docs/owner-invite-ko.md`](docs/owner-invite-ko.md)
+- 새 계정이 동작하는 것을 확인한 뒤 maxinchoi@gmail.com 관리자는 제거한다. 그 전엔 둘 다 유지.
+- GBP API 신청·Cloud 프로젝트·OAuth 토큰 전부 hello@bizhigher.com으로. 신청 자격(60일+ 프로필의 오너/매니저)은 **David가 소유한 BestLoanUSA 프로필에 hello@bizhigher.com을 관리자로 추가**해 충족한다(§15 폴백). 고객 프로필 초대를 기다릴 필요가 없다.
+- 나중에 bizhigher.com으로 Workspace를 열면 같은 주소의 무료 계정이 "충돌 계정"이 되어 이름 변경을 요구받는다 → 그때 조직·Cloud 프로젝트 소유권을 Workspace 계정으로 이전.
+
 ## 1. API 접근 신청 (David가 할 일, 지금 시작)
 
-자격(§15): 인증 후 **60일 이상** 지난 활성 프로필 + 프로필에 웹사이트 등록 + 신청 이메일이 오너/매니저. BizHigher 프로필이 60일 미만이면 BestLoanUSA 프로필로 신청한다.
+자격(§15): 인증 후 **60일 이상** 지난 활성 프로필 + 프로필에 웹사이트 등록 + 신청 이메일이 오너/매니저. BizHigher 프로필이 아직 없으므로 **BestLoanUSA 프로필에 hello@bizhigher.com을 관리자로 추가**한 뒤 신청한다. 모든 단계는 hello@bizhigher.com으로 로그인해서 진행.
 
 1. [Google Cloud Console](https://console.cloud.google.com/) → 새 프로젝트 `bizhigher-gbp`
 2. API 라이브러리에서 사용 설정: **My Business Account Management API**, **My Business Business Information API**, **Google My Business API**
