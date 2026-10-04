@@ -1,0 +1,4 @@
+# GBP 자동화 — OAuth 토큰과 작업 큐는 커밋하지 않는다
+automation/gbp/.token.json
+automation/gbp/queue.json
+automation/gbp/calendar-*.json

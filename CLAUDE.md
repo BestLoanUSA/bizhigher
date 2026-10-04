@@ -79,6 +79,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | 블로그 주제 큐 | `content/blog-calendar.md` |
 | 진단 채점 로직 | `functions/api/_engine.js` |
 | 리포트 디자인 | `functions/report/[id].js` |
+| GBP 리뷰 답글·게시물 자동화 실험 | `automation/gbp/` (README 참고. API 승인 전엔 `--dry-run`만) |
 
 ---
 
@@ -279,6 +280,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 - 고객별 전용 인증 이메일 발급(`고객명@listings.bizhigher.com`, Cloudflare Email Routing) — 인증 메일이 David에게 직접 오게 해 고객 왕복 제거
 - 도입 순서: 리뷰 자동화 → GBP 포스팅 → FB/IG 포스팅 → 등록 반자동화 → 월간 리포트 자동화
 - **GBP API는 지금 즉시 신청**(승인 소요 불확실). Meta는 비즈니스 인증부터 착수하고 그동안은 예약 발행 툴 또는 Meta Business Suite 파트너 권한으로 대체
+- **GBP 대행사 계정(2026-10-03 확정)**: `hello@bizhigher.com` — Workspace 없이 만든 무료 구글 계정, Business Profile Manager 조직 "BizHigher". 고객 프로필은 **소유자가 이 계정을 관리자로 초대**(관리자는 관리자를 추가 못 함 — 구글 정책). 안내문 `automation/gbp/docs/owner-invite-ko.md`. API 신청 자격은 BestLoanUSA 프로필에 이 계정을 관리자로 넣어 충족. david@bestloanusa.com과 maxinchoi@gmail.com은 BizHigher 용도로 쓰지 않는다. Workspace 전환 시 충돌 계정 이름 변경 + 소유권 이전 필요
 
 ### 이 영역의 기술적 함정
 

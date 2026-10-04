@@ -1,0 +1,18 @@
+{
+  "_note": "실험용 업소 마스터. 실제 값은 David가 채운다. location 은 `node automation/gbp/reviews.js locations` 로 확인한 accounts/…/locations/… 경로.",
+  "name": "New Optix",
+  "industry": "안경점 · 검안",
+  "city": "Garden Grove, CA",
+  "location": "",
+  "website": "",
+  "phone": "(714) 000-0000",
+  "hours": "",
+  "oneLiner": "한국어 상담이 편한 가든그로브 안경점",
+  "services": ["안경 · 선글라스", "콘택트렌즈", "검안 예약", "렌즈 교체"],
+  "highlights": [],
+  "postTopics": ["이달의 프레임", "영업시간·주차 안내", "콘택트렌즈 관리 팁", "자외선과 선글라스", "검안 예약 안내", "렌즈 선택 가이드", "손님 후기 감사", "시즌 인사"],
+  "tone": "정중하고 간결한 존댓말, 과장 없이",
+  "bannedPhrases": ["최저가", "100% 보장", "무조건"],
+  "staffNames": [],
+  "language": "ko+en"
+}
