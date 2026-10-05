@@ -2,3 +2,6 @@
 automation/gbp/.token.json
 automation/gbp/queue.json
 automation/gbp/calendar-*.json
+
+# wrangler 로컬 상태
+.wrangler/

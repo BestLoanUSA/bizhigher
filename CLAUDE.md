@@ -80,6 +80,8 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | 진단 채점 로직 | `functions/api/_engine.js` |
 | 리포트 디자인 | `functions/report/[id].js` |
 | GBP 리뷰 답글·게시물 자동화 실험 | `automation/gbp/` (README 참고. API 승인 전엔 `--dry-run`만) |
+| 관리자 페이지 `/admin/` | `functions/admin/` (화면 `_ui.js`, API `[[path]].js`, 인증 `_auth.js`). 설정 안내 `docs/admin-setup-ko.md` |
+| Stripe 결제 → 주문·작업 기록 | `functions/api/stripe-webhook.js` + 공용 `functions/api/_orders.js` |
 
 ---
 
@@ -136,6 +138,11 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | `reports` | 발급된 진단 리포트 JSON | `/report/{id}` |
 | `intakes` | **유료 주문 인테이크** | `functions/api/intake.js` |
 | `customer_profiles` | 고객 정보 (fulfillment에서 재사용) | fulfillment 스킬 |
+| `orders` · `payments` | Stripe 결제·구독 1건 = 주문 1건, 입금 내역 | `functions/api/stripe-webhook.js` |
+| `jobs` · `job_events` · `deliverables` | 주문당 작업 1건, 상태 타임라인, 결과물 링크 | `/admin/` · 웹훅 · `intake.js` |
+| `stripe_events` | 처리한 Stripe 이벤트 id (중복 방지) | 웹훅 |
+
+`orders` 이하 6개 테이블은 `functions/api/_orders.js`의 `ensureSchema()`가 **없으면 자동 생성**한다(`CREATE TABLE IF NOT EXISTS`). 손으로 SQL을 돌릴 필요 없다. 기존 3개 테이블은 이 코드가 만들지 않았으므로 관리자 API는 `PRAGMA table_info`로 컬럼 유무를 확인하고 쓴다.
 
 ---
 
@@ -149,6 +156,10 @@ Cloudflare 프로젝트 → Settings → Environment variables (Production).
 | `ANTHROPIC_API_KEY` | 선택 | 템플릿 해석으로 대체 |
 | `CLAUDE_MODEL` | 선택 | 기본 `claude-haiku-4-5` |
 | `RESEND_API_KEY` · `NOTIFY_EMAIL` · `NOTIFY_FROM` | 선택 | 이메일 알림이 안 간다 |
+| `ADMIN_PASSWORD` | 관리자 페이지 필수 | `/admin/`이 503으로 잠긴다 |
+| `ADMIN_ACCESS_TEAM` · `ADMIN_ACCESS_AUD` | 선택 | Cloudflare Access로 바꿀 때. 둘 다 있으면 Access 토큰 검증 |
+| `STRIPE_WEBHOOK_SECRET` | 주문 기록 필수 | 웹훅이 503, 결제가 관리자 페이지에 안 뜬다 |
+| `STRIPE_SECRET_KEY` | 선택 (Restricted key, Payment Links·Checkout Sessions 읽기) | 상품명 매핑이 안 돼 "미확인"으로 들어온다 |
 
 **변수를 바꾸면 재배포 1회가 필요하다.**
 
@@ -228,7 +239,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 
 ## 12. 주문 처리 (fulfillment)
 
-유료 주문은 `/api/intake` → D1 `intakes`로 들어온다. 처리는 `bizhigher-fulfillment` 스킬이 담당한다: D1에서 신규 인테이크 조회 → 서비스별 플레이북대로 결과물 제작 → Google Drive 저장 → 고객 발송용 Gmail 초안 준비 → **David가 검토·수정·발송 승인.**
+유료 주문은 Stripe 웹훅 → D1 `orders`+`jobs`, 질문지는 `/api/intake` → D1 `intakes`로 들어오고 같은 이메일의 작업에 자동 연결된다. 진행 상태·결과물 링크·메모는 `/admin/`에서 관리한다(§12-1). 처리는 `bizhigher-fulfillment` 스킬이 담당한다: D1에서 신규 인테이크 조회 → 서비스별 플레이북대로 결과물 제작 → Google Drive 저장 → 고객 발송용 Gmail 초안 준비 → **David가 검토·수정·발송 승인.**
 
 **규칙 (예외 없음)**
 
@@ -238,6 +249,16 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 - 고객 정보는 D1 `customer_profiles`를 재사용한다
 - 웹 산출물은 **360px 실측 후** 전달한다
 - **리뷰 대가 제공·리뷰 게이팅·가짜 리뷰 금지** — 구글 정책 위반. 서비스 결과물과 블로그 콘텐츠 양쪽에서 원칙으로 명시한다
+
+### 12-1. 관리자 페이지 `/admin/` (2026-10-05 1단계)
+
+- 폰 우선(360px). 탭: 대시보드 · 작업 · 주문 · 질문지 · 리드 · 리포트. 설정 절차는 `docs/admin-setup-ko.md`
+- 작업 상태 파이프라인(고정): **신규 → 정보 확인 → 제작 중 → QA 대기 → 발송 대기 → 완료**, 별도로 **보류**. 바꾸는 쪽은 `JOB_STATUSES`(`_orders.js`) 하나
+- 결제(`checkout.session.completed`) → 주문 + 작업(신규). 질문지 제출 → 같은 이메일(30일 내)의 작업에 연결하고 **정보 확인**으로, 마감일은 `data/services.json`의 `delivery`(영업일)로 계산. 질문지가 먼저 오면 질문지만으로 작업을 만들고 결제가 오면 합친다
+- 상품 매핑은 빌드가 쓰는 `dist/data/stripe-links.json`(Payment Link URL → slug)을 웹훅이 `env.ASSETS`로 읽는다. **새 Stripe 링크를 `services.json`에 넣으면 자동 반영**, 손으로 매핑하지 않는다
+- 월 분납 2회차 `invoice.paid`가 오면 타임라인에 "웹사이트 제작 시작 가능" 메모가 자동으로 붙는다(§4)
+- 결과물은 이 페이지가 만들지 않는다 — fulfillment 스킬이 만들고 Drive 링크를 여기 붙인다. 고객 자동 발송 금지는 그대로
+- 2단계 예정: GBP 리뷰·게시물 승인 큐(§15), 월간 리포트, 매출 통계
 
 ---
 
@@ -260,6 +281,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 - **로컬 크론(CronCreate 류)으로 정기 작업을 만들지 말 것** — 세션 종료 시 소멸한다. 스케줄 작업은 반드시 claude.ai 루틴으로
 - **스킬(fulfillment 등) 수정은 파일을 고쳐도 무효**다. `propose_skills` 제안 카드를 David가 저장해야 반영된다
 - 클라우드 세션에서 bizhigher.com을 **curl로 못 연다**(egress 차단). 라이브 확인은 WebFetch 또는 브라우저 도구로
+- **Functions 로컬 테스트**는 `npx wrangler pages dev dist --d1 DB=<id> --binding ADMIN_PASSWORD=x --binding STRIPE_WEBHOOK_SECRET=x --persist-to <스크래치 경로>`(루트 `wrangler.toml`은 Worker용이라 `--config`로 못 넘긴다). 로컬 에뮬레이터는 브라우저 navigate 요청에 Functions 대신 404.html을 주는 버그가 있다 — 프로덕션은 Functions 우선이므로 curl이나 Playwright `route.fetch`로 `sec-fetch-mode`를 바꿔 확인한다. 생성되는 `.wrangler/`는 커밋하지 말 것
 - **Google Places는 진단용 실시간 조회에만 쓴다.** 조회 결과를 저장해 재게시하지 않는다 — [[marketingkorean]]과의 경계에서 특히 중요(§16)
 
 ---

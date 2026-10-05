@@ -2876,6 +2876,30 @@ function notFoundPage() {
 ` + FOOTER;
 }
 
+/* ---------- Stripe 링크 카탈로그 (functions/api/stripe-webhook.js 가 읽는다) ----------
+   Payment Link URL → 상품 slug·이름·기간·납기(영업일). 웹훅이 결제 세션의 링크를 이 표로 매핑해 주문 상품을 확정한다. */
+function stripeLinksCatalog() {
+  const byUrl = {}, bySlug = {};
+  const days = (s) => { const m = /(\d+)/.exec(s || ''); return m ? Number(m[1]) : null; };
+  for (const s of DATA.services) {
+    const d = days(s.delivery) || (s.type === 'subscription' ? 7 : 3);
+    const base = { slug: s.slug, name: s.name, type: s.type, deliveryDays: d, interval: s.type === 'subscription' ? 'month' : null };
+    bySlug[s.slug] = base;
+    if (s.stripeLinkA) byUrl[s.stripeLinkA] = { ...base, option: s.optionALabel || 'A' };
+    if (s.stripeLinkB) byUrl[s.stripeLinkB] = { ...base, option: s.optionBLabel || 'B' };
+  }
+  for (const p of DATA.packages) {
+    for (const per of PERIODS) {
+      const url = p.links && p.links[per.key];
+      const item = { slug: `${p.slug}-${per.key}`, name: `${p.name} · ${per.label}`, type: 'package', period: per.key, deliveryDays: 7, interval: per.key === 'monthly' || per.installment ? 'month' : null };
+      bySlug[item.slug] = item;
+      if (url) byUrl[url] = item;
+    }
+    bySlug[p.slug] = { slug: p.slug, name: p.name, type: 'package', deliveryDays: 7 };
+  }
+  return { byUrl, bySlug };
+}
+
 /* ---------- sitemap & robots ---------- */
 
 /* lastmod는 "내용이 실제로 바뀐 날"일 때만 의미가 있다.
@@ -2911,6 +2935,7 @@ ${urls.map((x) => `  <url><loc>${SITE.domain}${x.u}</loc>${x.d ? `<lastmod>${x.d
 
 const ROBOTS = `User-agent: *
 Allow: /
+Disallow: /admin/
 
 Sitemap: ${SITE.domain}/sitemap.xml`;
 
@@ -2956,6 +2981,7 @@ REPORTS.forEach((x) => {
 const SURVEYS = loadSurveys();
 if (SURVEYS.length || REPORTS.length) {
   write('data/index.html', dataIndexPage(SURVEYS));
+  write('data/stripe-links.json', JSON.stringify(stripeLinksCatalog()));
   SURVEYS.forEach((x) => {
     write(`data/${x.slug}/index.html`, dataReportPage(x));
     write(`data/${x.slug}/data.csv`, surveyCsv(x));
