@@ -3,6 +3,7 @@
  * D1 intakes 테이블에 저장. David가 확인 후 작업 시작.
  */
 import { notify, esc } from './_notify.js';
+import { ensureSchema, attachIntake, loadCatalog, catalogLookup } from './_orders.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -24,12 +25,24 @@ export async function onRequestPost(context) {
     return json({ ok: false, error: 'invalid' }, 400);
   }
 
+  let intakeId = null;
   try {
-    await env.DB.prepare(
+    const r = await env.DB.prepare(
       'INSERT INTO intakes (service, business, contact_name, phone, email, links, notes) VALUES (?, ?, ?, ?, ?, ?, ?)'
     ).bind(service, business, contactName, phone, email, links, notes).run();
+    intakeId = r.meta && r.meta.last_row_id;
   } catch {
     return json({ ok: false, error: 'server' }, 500);
+  }
+
+  // 작업(jobs)에 연결 — Stripe 주문이 있으면 그 작업에, 없으면 질문지만으로 작업 생성. 실패해도 질문지 저장은 유효.
+  try {
+    await ensureSchema(env.DB);
+    const catalog = await loadCatalog(env, request.url);
+    const item = catalogLookup(catalog, { slug: service });
+    await attachIntake(env.DB, { id: intakeId, service, service_name: item && item.name, business, email }, { deliveryDays: item && item.deliveryDays });
+  } catch {
+    // 관리자 페이지 연결 실패는 조용히 무시
   }
 
   // David에게 주문 알림 (비동기)
