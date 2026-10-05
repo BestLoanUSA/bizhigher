@@ -28,6 +28,7 @@
 
 | 상태 | 제목 | slug |
 |---|---|---|
+| ✅ 2026-10-05 | 홈페이지 방문자는 있는데 전화가 안 오는 이유 | website-visitors-no-calls |
 | ✅ 2026-10-02 | 한인 손님 vs 현지 손님 — 두 마리 토끼 잡는 이중 언어 마케팅 | bilingual-marketing-korean-local-customers |
 | ✅ 2026-10-01 | 우리 가게 상권, 구글 지도로 5분 만에 분석하는 법 | trade-area-analysis-google-maps |
 | ✅ 2026-09-30 | 사진 리뷰가 검색 노출에 미치는 영향 — 포토 리뷰를 늘리는 법 | photo-reviews-guide |
@@ -50,7 +51,6 @@
 
 | 상태 | 제목 | 카테고리 | related |
 |---|---|---|---|
-| ⬜ | 홈페이지 방문자는 있는데 전화가 안 오는 이유 | 웹사이트 | website |
 | ⬜ | 숏폼 영상, 우리 가게도 해야 할까? — 릴스·틱톡 현실적인 시작법 | 콘텐츠·SNS | shortform-video |
 | ⬜ | 식당·학원·뷰티샵의 시즌 마케팅 캘린더 — 연중 놓치면 아까운 시기들 | 광고 | ad-creative-pack |
 | ⬜ | 구글 AI 요약(AI Overviews)에 내 가게가 나오게 하려면 | AI 검색 | seo-aio |
