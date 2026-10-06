@@ -1760,11 +1760,14 @@ function servicesPage() {
       '@context': 'https://schema.org',
       '@type': 'CollectionPage',
       name: '마케팅 서비스',
+      isPartOf: { '@id': WEBSITE_ID },
+      publisher: ORG_REF,
       url: `${SITE.domain}/services/`,
       inLanguage: 'ko',
       hasPart: DATA.services.map((s) => ({
         '@type': 'Service',
         name: s.name,
+        provider: ORG_REF,
         url: `${SITE.domain}/service/${s.slug}/`,
         offers: { '@type': 'Offer', price: priceToNumber(s.price), priceCurrency: 'USD' },
       })),
@@ -1830,11 +1833,14 @@ function pricingPage() {
       '@context': 'https://schema.org',
       '@type': 'CollectionPage',
       name: '가격 안내',
+      isPartOf: { '@id': WEBSITE_ID },
+      publisher: ORG_REF,
       url: `${SITE.domain}/pricing/`,
       inLanguage: 'ko',
       hasPart: DATA.packages.map((p) => ({
         '@type': 'Service',
         name: `${p.name} 플랜`,
+        provider: ORG_REF,
         url: `${SITE.domain}/package/${p.slug}/`,
         offers: { '@type': 'Offer', price: p.prices.annual, priceCurrency: 'USD' },
       })),
@@ -1845,16 +1851,15 @@ function pricingPage() {
     ]),
   ];
   return head({
-    title: '가격 안내 | BizHigher — 투명한 정찰제 마케팅',
-    description: '숨은 비용도 견적 미팅도 없습니다. 원타임 $49부터 월 구독까지, 미국 한인 비즈니스 마케팅 전 상품 가격표.',
+    title: '마케팅 대행 비용, 견적 없이 바로 확인 — 월 $139부터 | BizHigher',
+    description: '미국 한인 비즈니스 마케팅 대행 비용을 전부 공개합니다. 견적 미팅과 숨은 비용 없이 패키지 월 $139부터, 개별 서비스 $19부터. 대행사 절반 이하 가격, 장기 플랜 30일 만족 보장.',
     pathName: '/pricing/',
     jsonLd,
   }) + nav('pricing') + `
 <header class="page-head">
   <div class="container">
-    <h1 class="page-title">투명한 정찰제</h1>
-    <p class="page-sub">숨은 비용도, 견적 미팅도 없습니다. 모든 가격이 여기 있습니다.</p>
-    ${trustStrip('all')}
+    <h1 class="page-title">미팅은 없애고, AI 에이전트는 동시에.<br>그래서 대행사 절반 이하입니다.</h1>
+    <p class="page-sub" style="max-width:760px;line-height:1.7;">일반 대행사는 미팅을 잡고, 견적서를 보내고, 담당자 한 명이 작업을 하나씩 처리합니다. 그 시간과 인건비가 그대로 청구서에 붙습니다. BizHigher는 리서치·제작·광고 최적화를 AI 에이전트들이 동시에 처리하고, 전문가는 전략과 검수에만 집중합니다. 견적을 기다릴 필요 없이 가격을 보고, 고르고, 오늘 시작하세요.</p>
   </div>
 </header>
 ${packageMatrixSection()}
@@ -1862,7 +1867,7 @@ ${packageMatrixSection()}
   <div class="container-narrow">
     <h2 class="h2">개별 구독</h2>
     <div class="price-list">
-      ${DATA.services.filter((s) => s.type === 'subscription').map((s) => `<a href="/service/${s.slug}/" class="price-item"><span><span class="price-item-name">${s.name}</span><span class="price-item-meta">${s.delivery} · 언제든 해지</span></span><span class="price-item-price">${s.price}</span></a>`).join('')}
+      ${DATA.services.filter((s) => s.type === 'subscription').map((s) => `<a href="/service/${s.slug}/" class="price-item"><span><span class="price-item-name">${s.name}</span><span class="price-item-meta">${s.shortDescription}</span></span><span class="price-item-price">${s.price}</span></a>`).join('')}
     </div>
     <p class="note-text">모든 구독은 Stripe 고객 포털에서 직접 해지할 수 있습니다 · 구독 고객 전원 월간 성과 리포트 무료</p>
   </div>
@@ -1871,7 +1876,7 @@ ${packageMatrixSection()}
   <div class="container-narrow">
     <h2 class="h2">원타임 서비스</h2>
     <div class="price-list">
-      ${DATA.services.filter((s) => s.type !== 'subscription').map((s) => `<a href="/service/${s.slug}/" class="price-item"><span><span class="price-item-name">${s.name}</span><span class="price-item-meta">${s.delivery}</span></span><span class="price-item-price">${s.price === '$149~' ? '$149 / $249' : s.price}</span></a>`).join('')}
+      ${DATA.services.filter((s) => s.type !== 'subscription').map((s) => `<a href="/service/${s.slug}/" class="price-item"><span><span class="price-item-name">${s.name}</span><span class="price-item-meta">${s.shortDescription}</span></span><span class="price-item-price">${s.price === '$149~' ? '$149 / $249' : s.price}</span></a>`).join('')}
     </div>
     <p class="note-text">모든 원타임 상품에 수정 1회 무료 포함 · 작업 시작 전 전액 환불</p>
   </div>
@@ -1991,6 +1996,15 @@ function planHint(s) {
 </div>`;
 }
 
+/* 함께 보면 좋은 서비스 — 같은 카테고리 먼저, 나머지는 자기 위치에서 돌려가며 채운다.
+   예전엔 항상 앞의 3개만 노출돼 뒤쪽 서비스로 가는 내부 링크가 거의 없었다. */
+function relatedServices(s, n = 3) {
+  const all = DATA.services;
+  const i = all.findIndex((x) => x.slug === s.slug);
+  const rotated = all.slice(i + 1).concat(all.slice(0, i));
+  return [...rotated.filter((x) => x.cat === s.cat), ...rotated.filter((x) => x.cat !== s.cat)].slice(0, n);
+}
+
 function servicePage(s, posts) {
   const url = `${SITE.domain}/service/${s.slug}/`;
   const crumbs = [
@@ -2021,11 +2035,13 @@ function servicePage(s, posts) {
     },
     breadcrumbList(crumbs),
   ];
-  if (s.faqs && s.faqs.length) {
+  const guide = loadServiceGuide(s.slug);
+  const faqs = [...(s.faqs || []), ...(guide ? guide.faqs : [])];
+  if (faqs.length) {
     jsonLd.push({
       '@context': 'https://schema.org',
       '@type': 'FAQPage',
-      mainEntity: s.faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+      mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
     });
   }
   const relatedPosts = (posts || []).filter((x) => x.related === s.slug).slice(0, 3);
@@ -2073,6 +2089,12 @@ function servicePage(s, posts) {
     <div class="detail-desc">${s.description.map((p) => `<p>${p}</p>`).join('')}</div>
   </div>
 </section>
+${guide && guide.guide ? `
+<section class="section svc-guide">
+  <div class="container-narrow">
+    <article class="post-body">${mdToHtml(guide.guide).html}</article>
+  </div>
+</section>` : ''}
 <section class="section section-gray">
   <div class="container">
     <h2 class="h2">주문 후 이렇게 진행됩니다</h2>
@@ -2088,15 +2110,15 @@ function servicePage(s, posts) {
   <div class="container">
     <h2 class="h2">함께 보면 좋은 서비스</h2>
     <div class="grid3">
-      ${DATA.services.filter((x) => x.slug !== s.slug).slice(0, 3).map(productCard).join('')}
+      ${relatedServices(s).map(productCard).join('')}
     </div>
   </div>
 </section>
-${s.faqs && s.faqs.length ? `
+${faqs.length ? `
 <section class="section section-gray">
   <div class="container-narrow">
     <h2 class="h2">자주 묻는 질문</h2>
-    ${s.faqs.map((f, i) => `<details class="faq-item"${i === 0 ? ' open' : ''}><summary class="faq-q">${f.q}</summary><p class="faq-a">${f.a}</p></details>`).join('')}
+    ${faqs.map((f, i) => `<details class="faq-item"${i === 0 ? ' open' : ''}><summary class="faq-q">${f.q}</summary><p class="faq-a">${f.a}</p></details>`).join('')}
   </div>
 </section>` : ''}
 ${relatedPosts.length ? `
@@ -2260,6 +2282,37 @@ function mdToHtml(md) {
   return { html: out.join('\n'), toc: hIds };
 }
 
+/* 본문 끝 "## 자주 묻는 질문" 섹션에서 FAQ 추출 (### 질문 / 문단 답변) — 블로그·서비스 가이드 공용.
+   이 제목 문자열을 바꾸면 FAQPage 스키마가 사라진다. */
+function extractFaqs(body) {
+  const faqs = [];
+  const fm = body.match(/## 자주 묻는 질문\n([\s\S]*)$/);
+  if (fm) {
+    fm[1].split(/^### /m).filter((x) => x.trim()).forEach((p) => {
+      const nl = p.indexOf('\n');
+      faqs.push({ q: p.slice(0, nl).trim(), a: p.slice(nl).trim().replace(/\n+/g, ' ') });
+    });
+  }
+  return faqs;
+}
+
+/* 서비스 페이지 검색용 가이드 — content/services/{slug}.md
+   front matter(keywords) + 질문형 ## 섹션 + "## 자주 묻는 질문". 가격 파일(services.json)과 분리해 둔다. */
+function loadServiceGuide(slug) {
+  const f = path.join(__dirname, 'content', 'services', `${slug}.md`);
+  if (!fs.existsSync(f)) return null;
+  const raw = fs.readFileSync(f, 'utf8');
+  const m = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!m) return null;
+  const meta = {};
+  m[1].split('\n').forEach((l) => {
+    const idx = l.indexOf(':');
+    if (idx > 0) meta[l.slice(0, idx).trim()] = l.slice(idx + 1).trim();
+  });
+  const body = m[2].trim();
+  return { keywords: meta.keywords || '', guide: body.replace(/## 자주 묻는 질문\n[\s\S]*$/, '').trim(), faqs: extractFaqs(body) };
+}
+
 function loadPosts() {
   const dir = path.join(__dirname, 'content', 'blog');
   if (!fs.existsSync(dir)) return [];
@@ -2272,20 +2325,13 @@ function loadPosts() {
       if (idx > 0) meta[l.slice(0, idx).trim()] = l.slice(idx + 1).trim();
     });
     const body = m[2].trim();
-    // faq는 본문 끝 "## 자주 묻는 질문" 섹션에서 추출 (### 질문 / 문단 답변)
-    const faqs = [];
-    const fm = body.match(/## 자주 묻는 질문\n([\s\S]*)$/);
-    if (fm) {
-      const parts = fm[1].split(/^### /m).filter((x) => x.trim());
-      parts.forEach((p) => {
-        const nl = p.indexOf('\n');
-        faqs.push({ q: p.slice(0, nl).trim(), a: p.slice(nl).trim().replace(/\n+/g, ' ') });
-      });
-    }
+    const faqs = extractFaqs(body);
     const words = body.replace(/[#>*|\-]/g, '').length;
     return { slug: meta.slug || f.replace(/\.md$/, ''), title: meta.title, description: meta.description,
       date: meta.date, updated: meta.updated || '', category: meta.category || '가이드', keywords: meta.keywords || '',
-      related: meta.related || '', hub: meta.hub === 'true', body, faqs, readMin: Math.max(3, Math.round(words / 600)) };
+      related: meta.related || '', hub: meta.hub === 'true', body, faqs,
+      // summary: 문장1 | 문장2 | 문장3 — 글 맨 위 "핵심 요약" 박스 + BlogPosting.abstract
+      summary: (meta.summary || '').split('|').map((x) => x.trim()).filter(Boolean), readMin: Math.max(3, Math.round(words / 600)) };
   }).sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
@@ -2309,6 +2355,7 @@ function blogIndexPage(posts) {
       '@type': 'Blog',
       '@id': `${SITE.domain}/blog/#blog`,
       name: 'BizHigher 블로그 — 미국 한인 비즈니스 마케팅 가이드',
+      isPartOf: { '@id': WEBSITE_ID },
       url: `${SITE.domain}/blog/`,
       inLanguage: 'ko',
       publisher: ORG_MIN,
@@ -2369,6 +2416,7 @@ function blogPostPage(p, posts) {
       author: ORG_MIN,
       publisher: ORG_MIN,
       articleSection: p.category,
+      ...(p.summary.length ? { abstract: p.summary.join(' ') } : {}),
       isPartOf: { '@type': 'Blog', '@id': `${SITE.domain}/blog/#blog` },
       mainEntityOfPage: { '@type': 'WebPage', '@id': url }, keywords: p.keywords,
     },
@@ -2380,7 +2428,14 @@ function blogPostPage(p, posts) {
   }
   const relSvc = p.related ? DATA.services.find((s) => s.slug === p.related) : null;
   const sameCategory = posts.filter((x) => x.slug !== p.slug && x.category === p.category && !x.hub);
-  const others = [...sameCategory, ...posts.filter((x) => x.slug !== p.slug && x.category !== p.category)].slice(0, 3);
+  const idx = posts.findIndex((x) => x.slug === p.slug);
+  const rotated = posts.slice(idx + 1).concat(posts.slice(0, idx));
+  // 같은 카테고리는 2개까지 — 마지막 한 칸은 다른 카테고리 글로 돌려 써서 오래된 글에도 링크가 가게 한다
+  const others = [...sameCategory.slice(0, 2), ...rotated.filter((x) => x.category !== p.category)].slice(0, 3);
+  // 웹사이트·AI 검색·구글 노출 글에는 실측 데이터 리포트로 가는 링크를 붙인다 (인용 가치가 가장 높은 페이지)
+  const dataLinks = ['웹사이트', 'AI 검색', '구글 노출'].includes(p.category)
+    ? loadSurveys().concat(loadReports()).sort((a, b) => (a.asOf < b.asOf ? 1 : -1)).slice(0, 2)
+    : [];
   return head({
     title: `${p.title} | BizHigher 블로그`,
     description: p.description,
@@ -2402,6 +2457,7 @@ function blogPostPage(p, posts) {
   <div class="container post-layout">
     ${toc.length > 2 ? `<aside class="toc toc-side" id="toc"><b>목차</b><ol>${toc.map((h) => `<li><a href="#${h.id}" data-h="${h.id}">${h.t}</a></li>`).join('')}</ol></aside>` : '<div></div>'}
     <div class="post-main">
+    ${p.summary.length ? `<div class="post-summary"><b>핵심 요약</b><ul>${p.summary.map((x) => `<li>${x}</li>`).join('')}</ul></div>` : ''}
     <article class="post-body">${html}</article>
     <div class="post-cta">
       <b>우리 가게는 지금 몇 점일까요?</b>
@@ -2409,6 +2465,7 @@ function blogPostPage(p, posts) {
       <a href="/free-audit/" class="btn btn-primary">무료 AI 진단 받기 →</a>
       ${relSvc ? `<a href="/service/${relSvc.slug}/" class="btn btn-ghost">맡기고 싶다면: ${relSvc.name} (${relSvc.price})</a>` : ''}
     </div>
+    ${dataLinks.map((d) => `<a href="/data/${d.slug}/" class="hub-callout" style="margin-top:16px;">📊 실측 데이터: <b>${d.title}</b> →</a>`).join('')}
     ${others.length ? `<h2 class="h2-left" style="margin-top:48px;">함께 읽으면 좋은 글</h2><div class="grid3">${others.map(blogCard).join('')}</div>` : ''}
     </div><!-- /post-main -->
   </div>
@@ -2641,6 +2698,7 @@ function dataIndexPage(surveys) {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: 'BizHigher 데이터 리포트',
+    isPartOf: { '@id': WEBSITE_ID },
     publisher: ORG_MIN,
     url: `${SITE.domain}/data/`,
     inLanguage: 'ko',
@@ -3108,6 +3166,12 @@ console.log('  \u2713 og-image.png');
   fs.copyFileSync(path.join(__dirname, 'src', f), path.join(DIST, f));
 });
 console.log('  \u2713 favicon.ico, favicon.svg, favicon-48x48.png, apple-touch-icon.png');
+/* IndexNow 소유 확인 키 — https://bizhigher.com/{key}.txt 로 공개돼야 한다. 전송은 scripts/indexnow.js(GitHub Actions) */
+{
+  const key = fs.readFileSync(path.join(__dirname, 'src', 'indexnow-key.txt'), 'utf8').trim();
+  fs.writeFileSync(path.join(DIST, `${key}.txt`), key);
+  console.log('  \u2713 IndexNow key file');
+}
 const OGDIR = path.join(__dirname, 'src', 'og');
 if (fs.existsSync(OGDIR)) {
   const pngs = fs.readdirSync(OGDIR).filter((f) => f.endsWith('.png'));

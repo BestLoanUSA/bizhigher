@@ -993,6 +993,11 @@ img { max-width: 100%; display: block; }
 .detail-head > .container-narrow { position: relative; z-index: 1; }
 .detail-head .back-link { color: var(--mist-400); }
 .detail-head .back-link:hover { color: #fff; }
+/* 블로그 글 맨 위 핵심 요약 — AI 검색이 인용하기 좋은 단정 문장 3개 */
+.post-summary { background: var(--blue-50); border: 1px solid rgba(10,77,245,.15); border-left: 4px solid var(--blue-600); border-radius: 12px; padding: 18px 20px; margin: 8px 0 28px; }
+.post-summary b { display: block; font-size: 14px; color: var(--blue-600); margin-bottom: 8px; letter-spacing: .02em; }
+.post-summary ul { margin: 0; padding-left: 18px; }
+.post-summary li { font-size: 16px; line-height: 1.65; margin: 4px 0; color: var(--ink-900); }
 .crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; line-height: 1.5; max-width: 100%; }
 .crumbs.back-link:hover { color: var(--ink-400); }
 .detail-head .crumbs.back-link:hover { color: var(--mist-400); }

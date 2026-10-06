@@ -63,7 +63,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | Cowork 클라우드 세션 | ❌ | 프록시가 차단. 유효한 PAT여도 403 — 시도하지 말 것 |
 | 수동 zip 업로드 | ⚠️ | 더 이상 기본 경로가 아니다 |
 
-**저장소에 `.github/workflows`가 없다.** marketingkorean과 달리 `claude/*` 자동 병합이 없으므로 Claude Code 작업은 PR로 도착하고 사람이 병합한다(§11).
+**`.github/workflows`에는 자동화 2개만 있다** — `og.yml`(블로그·리포트 추가 시 OG 이미지 생성 후 재빌드 커밋), `indexnow.yml`(main push마다 바뀐 페이지를 IndexNow로 Bing 등에 알림, §13). marketingkorean과 달리 `claude/*` 자동 병합은 없으므로 Claude Code 작업은 PR로 도착하고 사람이 병합한다(§11).
 
 ---
 
@@ -77,6 +77,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | 히어로 데모 업체 4곳 | `build.js` 안의 `BIZ` 배열 |
 | 블로그 글 | `content/blog/*.md` |
 | 블로그 주제 큐 | `content/blog-calendar.md` |
+| 서비스 페이지 검색용 가이드·추가 FAQ | `content/services/{slug}.md` — 질문형 `##` 섹션 + `## 자주 묻는 질문`. 가격은 여기 쓰지 않는다(`services.json`이 원본) |
 | 진단 채점 로직 | `functions/api/_engine.js` |
 | 리포트 디자인 | `functions/report/[id].js` |
 | GBP 리뷰 답글·게시물 자동화 실험 | `automation/gbp/` (README 참고. API 승인 전엔 `--dry-run`만) |
@@ -190,6 +191,7 @@ related: 서비스 slug
 
 - 본문 1,800자 이상 · `##` 섹션 4~7개 · 표 또는 체크리스트 1개 이상
 - 마지막에 **`## 자주 묻는 질문`** 섹션 + `### 질문` 3~4개 → FAQPage 스키마로 자동 추출된다. **이 제목 문자열을 바꾸면 스키마가 사라진다**
+- front matter **`summary: 문장1 | 문장2 | 문장3`** — 글 맨 위 "핵심 요약" 박스 + BlogPosting `abstract`. AI 검색이 그대로 인용할 단정문 3개(규칙은 캘린더 스타일 가이드)
 - 톤: 존댓말, 미국 한인 사장님 눈높이, 과장 금지, 솔직한 주의사항 1개 이상
 - **본문에 판매 문구 금지** — CTA는 빌드가 자동 부착한다(무료 진단 + related 서비스)
 - 이미지는 `content/blog/img/`에 두고 `![캡션](/blog-img/파일명.png)`
@@ -270,6 +272,10 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 - `ProfessionalService` + `FAQPage` 스키마, `llms.txt`, 블로그 글마다 `BlogPosting` + FAQ 스키마 자동
 
 `llms.txt`는 서비스·패키지·블로그 목록을 자동으로 담으므로 `data/services.json`을 고치면 함께 갱신된다.
+
+**IndexNow** (2026-10-06): 키는 `src/indexnow-key.txt` → 빌드가 `dist/{key}.txt`로 공개. `.github/workflows/indexnow.yml`이 main push마다 `scripts/indexnow.js`로 바뀐 URL만 골라(전역 변경이면 사이트맵 전체) Cloudflare 배포 완료를 기다린 뒤 전송한다. 키를 바꾸면 이전 키 파일은 자동으로 사라지므로 따로 할 일 없음. 수동 확인: `node scripts/indexnow.js <before> <after> --dry-run`
+
+**구조화 데이터 규칙**: 회사는 `@id: https://bizhigher.com/#organization` 하나(`ORG_ENTITY`, 홈에서 정의). 다른 페이지는 `ORG_MIN`/`ORG_REF`로 참조만 한다. 화면 브레드크럼은 `crumbsHtml(items)`, 스키마는 `breadcrumbList(items)` — 같은 items를 넘겨 항상 일치시킨다. `founder`·`sameAs`는 정보 확정 시 `ORG_ENTITY`에 추가
 
 ---
 

@@ -1,0 +1,39 @@
+name: IndexNow 알림
+
+# main에 push되면(병합·블로그 자동 발행) 바뀐 페이지를 Bing 등에 즉시 알린다.
+# Cloudflare Pages 배포가 끝날 때까지 스크립트가 기다린 뒤 전송한다.
+# GITHUB_TOKEN으로 만든 커밋(OG 이미지 봇)은 워크플로를 다시 트리거하지 않으므로 중복 전송이 없다.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '.github/**'
+      - 'docs/**'
+      - 'automation/**'
+      - 'functions/**'
+      - 'CLAUDE.md'
+      - 'README.md'
+  workflow_dispatch:
+
+concurrency:
+  group: indexnow
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # 수동 실행(workflow_dispatch)이면 before가 없어 사이트맵 전체를 보낸다
+      - name: 바뀐 페이지 알리기
+        run: node scripts/indexnow.js "${{ github.event.before }}" "${{ github.sha }}"
