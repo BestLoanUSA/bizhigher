@@ -46,7 +46,34 @@ function ogFor(slug) {
   return fs.existsSync(path.join(__dirname, 'src', 'og', `${slug}.png`)) ? `/og/${slug}.png` : null;
 }
 
+/* <head> 안 속성값·제목에 들어가는 문자열 이스케이프 — 설명문이 따옴표로 시작하면 content=""로 잘리던 버그 방지 */
+function escAttr(str) {
+  return String(str == null ? '' : str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* ---------- 구조화 데이터: 회사 엔티티 ----------
+   모든 페이지의 provider·author·publisher가 같은 @id를 가리키게 해서 구글이 "한 회사"로 묶도록 한다.
+   정의 본문은 홈에만 둔다. 대표자(founder)·외부 프로필(sameAs)은 정보가 확정되면 ORG_ENTITY에 추가한다. */
+const ORG_ID = `${SITE.domain}/#organization`;
+const WEBSITE_ID = `${SITE.domain}/#website`;
+const ORG_REF = { '@id': ORG_ID };
+const ORG_LOGO = { '@type': 'ImageObject', url: `${SITE.domain}/apple-touch-icon.png`, width: 180, height: 180 };
+const ORG_ENTITY = {
+  '@id': ORG_ID,
+  name: 'BizHigher',
+  alternateName: '비즈하이어',
+  url: `${SITE.domain}/`,
+  email: SITE.email,
+  logo: ORG_LOGO,
+  image: `${SITE.domain}/og-image.png`,
+  contactPoint: { '@type': 'ContactPoint', contactType: 'customer service', email: SITE.email, availableLanguage: ['Korean', 'English'] },
+};
+/* 다른 페이지에서 회사를 언급할 때 — @id 참조 + 최소 식별 정보 (단독 페이지만 읽는 파서 대비) */
+const ORG_MIN = { '@type': 'Organization', '@id': ORG_ID, name: 'BizHigher', url: `${SITE.domain}/`, logo: ORG_LOGO };
+
 function head({ title, description, pathName, jsonLd, noindex, ogImage, ogType }) {
+  title = escAttr(title);
+  description = escAttr(description);
   return `<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -345,6 +372,15 @@ function breadcrumbList(items) {
     '@type': 'BreadcrumbList',
     itemListElement: items.map((it, i) => ({ '@type': 'ListItem', position: i + 1, name: it.name, item: it.url })),
   };
+}
+
+/* 화면에 보이는 브레드크럼 — breadcrumbList와 같은 items를 받아 스키마와 화면이 항상 일치하게 한다.
+   기존 "← 목록" 링크 자리를 대신하므로 back-link 스타일을 그대로 물려받는다. */
+function crumbsHtml(items) {
+  const parts = items.map((it, i) => (i === items.length - 1
+    ? `<span aria-current="page">${it.name}</span>`
+    : `<a href="${it.url.replace(SITE.domain, '')}">${it.name}</a>`));
+  return `<nav class="back-link crumbs" aria-label="현재 위치">${parts.join('<span class="crumbs-sep" aria-hidden="true">›</span>')}</nav>`;
 }
 
 /* ---------- 패키지 공통 ---------- */
@@ -955,13 +991,18 @@ function packageMatrixSection(opts = {}) {
 function packagePage(p) {
   const g = giftsFor(p.slug);
   const url = `${SITE.domain}/package/${p.slug}/`;
+  const crumbs = [
+    { name: '홈', url: `${SITE.domain}/` },
+    { name: '가격', url: `${SITE.domain}/pricing/` },
+    { name: `${p.name} 플랜`, url },
+  ];
   const jsonLd = [
     {
       '@context': 'https://schema.org',
       '@type': 'Service',
       name: `${p.name} 플랜`,
       description: p.tagline,
-      provider: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
+      provider: ORG_MIN,
       areaServed: { '@type': 'Country', name: 'United States' },
       url,
       offers: PERIODS.map((per) => ({
@@ -974,11 +1015,7 @@ function packagePage(p) {
         eligibleDuration: per.months ? { '@type': 'QuantitativeValue', value: per.months, unitCode: 'MON' } : undefined,
       })),
     },
-    breadcrumbList([
-      { name: '홈', url: `${SITE.domain}/` },
-      { name: '가격', url: `${SITE.domain}/pricing/` },
-      { name: p.name, url },
-    ]),
+    breadcrumbList(crumbs),
   ];
   const rows = PERIODS.map((per) => {
     const price = p.prices[per.key];
@@ -990,14 +1027,14 @@ function packagePage(p) {
     return `<a href="${href}" class="btn ${primary ? 'btn-primary' : 'btn-ghost'} btn-block">${per.label} — $${price}/월 <span class="pk-btn-sub">(${totalTxt} · ${disc}%↓)</span></a>`;
   }).join('');
   return head({
-    title: `${p.name} 플랜 — 월 $${p.prices.annual}부터 | BizHigher`,
-    description: p.tagline,
+    title: `${p.name} 플랜 월 $${p.prices.annual}부터 — 한인 비즈니스 마케팅 패키지 | BizHigher`,
+    description: `${p.tagline}. 월간 $${p.prices.monthly} · 6개월 $${p.prices.six}/월 · 12개월 $${p.prices.annual}/월, 장기 플랜은 셋업 무료 선물. 미국 한인 비즈니스를 위한 AI 광고회사의 정찰제 패키지.`,
     pathName: `/package/${p.slug}/`,
     jsonLd,
   }) + nav('pricing') + `
 <header class="detail-head">
   <div class="container-narrow">
-    <a href="/pricing/#plans" class="back-link">← 전체 플랜</a>
+    ${crumbsHtml(crumbs)}
     ${p.popular ? '<span class="badge">가장 인기</span>' : '<span class="badge">플랜</span>'}
     <h1 class="detail-title">${p.name}</h1>
     <p class="detail-sub">${p.tagline}</p>
@@ -1040,17 +1077,24 @@ function homePage(posts) {
   const jsonLd = [
     {
       '@context': 'https://schema.org',
-      '@type': 'ProfessionalService',
-      name: 'BizHigher',
-      alternateName: '비즈하이어',
-      url: SITE.domain,
-      email: SITE.email,
+      '@type': ['Organization', 'ProfessionalService'],
+      ...ORG_ENTITY,
       description: '미국 한인 비즈니스를 위한 AI 광고회사 — 구글 지도 노출, 리뷰 관리, SNS 포스팅, 웹사이트 제작, 광고 운영을 AI 자동화와 전문가 검수로 대행사 절반 이하 가격에 정찰제로 제공합니다.',
       slogan: SITE.tagline,
       areaServed: { '@type': 'Country', name: 'United States' },
       availableLanguage: ['Korean', 'English'],
       priceRange: '$19 - $999',
       knowsAbout: ['로컬 SEO', '구글 비즈니스 프로필 최적화', 'AI 검색 최적화(AIO)', '리뷰 관리', '웹사이트 제작', 'Google Ads', '한인 비즈니스 마케팅'],
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      '@id': WEBSITE_ID,
+      name: 'BizHigher',
+      alternateName: ['비즈하이어', 'bizhigher.com'],
+      url: `${SITE.domain}/`,
+      inLanguage: 'ko',
+      publisher: ORG_REF,
     },
     {
       '@context': 'https://schema.org',
@@ -1842,6 +1886,25 @@ function auditPage() {
     title: '무료 AI 마케팅 진단 — 내 가게 마케팅 점수 확인 | BizHigher',
     description: '60초 만에 우리 가게가 구글에서 어떻게 보이는지 AI가 분석해 드립니다. 가입 없이 무료로 진단받으세요.',
     pathName: '/free-audit/',
+    jsonLd: [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        name: '무료 AI 마케팅 진단',
+        url: `${SITE.domain}/free-audit/`,
+        description: '업체명과 지역만 입력하면 구글 프로필·리뷰·웹사이트·경쟁 업체 3곳을 AI가 분석해 100점 만점 진단 리포트를 60초 안에 발급합니다.',
+        applicationCategory: 'BusinessApplication',
+        operatingSystem: 'Web',
+        inLanguage: 'ko',
+        isAccessibleForFree: true,
+        offers: { '@type': 'Offer', price: 0, priceCurrency: 'USD' },
+        provider: ORG_MIN,
+      },
+      breadcrumbList([
+        { name: '홈', url: `${SITE.domain}/` },
+        { name: '무료 진단', url: `${SITE.domain}/free-audit/` },
+      ]),
+    ],
   }) + nav('audit') + `
 <section class="audit-hero">
   <div class="container-narrow">
@@ -1930,13 +1993,21 @@ function planHint(s) {
 
 function servicePage(s, posts) {
   const url = `${SITE.domain}/service/${s.slug}/`;
+  const crumbs = [
+    { name: '홈', url: `${SITE.domain}/` },
+    { name: '서비스', url: `${SITE.domain}/services/` },
+    { name: s.name, url },
+  ];
+  // 검색 결과용 설명 — shortDescription(30자 안팎)만으로는 짧아서 가격·대상·구매 방식을 붙인다
+  const priceTxt = s.priceSub.includes('$') ? s.priceSub : `${s.price} · ${s.priceSub}`;
+  const metaDesc = `${s.shortDescription.replace(/[.。]$/, '')}. ${s.name} ${priceTxt}. 미국 한인 비즈니스를 위한 AI 광고회사의 정찰제 — 견적 미팅 없이 바로 주문하세요.`;
   const jsonLd = [
     {
       '@context': 'https://schema.org',
       '@type': 'Service',
       name: s.name,
       description: s.shortDescription,
-      provider: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
+      provider: ORG_MIN,
       areaServed: { '@type': 'Country', name: 'United States' },
       url,
       offers: {
@@ -1948,11 +2019,7 @@ function servicePage(s, posts) {
         ...(s.type === 'subscription' ? { priceSpecification: { '@type': 'UnitPriceSpecification', price: priceToNumber(s.price), priceCurrency: 'USD', unitText: 'MONTH' } } : {}),
       },
     },
-    breadcrumbList([
-      { name: '홈', url: `${SITE.domain}/` },
-      { name: '서비스', url: `${SITE.domain}/services/` },
-      { name: s.name, url },
-    ]),
+    breadcrumbList(crumbs),
   ];
   if (s.faqs && s.faqs.length) {
     jsonLd.push({
@@ -1974,14 +2041,14 @@ function servicePage(s, posts) {
     ? `<a href="${s.stripeLinkC}" class="btn btn-ghost btn-block">${s.optionCLabel}</a>`
     : (s.optionCLabel ? `<a href="${consultHref}" class="btn btn-ghost btn-block">${s.optionCLabel}</a>` : '');
   return head({
-    title: `${s.name} — ${s.price} | BizHigher`,
-    description: s.shortDescription,
+    title: `${s.name} ${s.price} — 한인 비즈니스 AI 광고회사 | BizHigher`,
+    description: metaDesc,
     pathName: `/service/${s.slug}/`,
     jsonLd,
   }) + nav('services') + `
 <header class="detail-head">
   <div class="container-narrow">
-    <a href="/services/" class="back-link">← 전체 서비스</a>
+    ${crumbsHtml(crumbs)}
     ${badgeHtml(s)}
     <h1 class="detail-title">${s.name}</h1>
     <p class="detail-sub">${s.shortDescription}</p>
@@ -2236,10 +2303,33 @@ function blogCard(p) {
 function blogIndexPage(posts) {
   const hubs = posts.filter((p) => p.hub);
   const rest = posts.filter((p) => !p.hub);
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Blog',
+      '@id': `${SITE.domain}/blog/#blog`,
+      name: 'BizHigher 블로그 — 미국 한인 비즈니스 마케팅 가이드',
+      url: `${SITE.domain}/blog/`,
+      inLanguage: 'ko',
+      publisher: ORG_MIN,
+      blogPost: posts.map((p) => ({
+        '@type': 'BlogPosting',
+        headline: p.title,
+        url: `${SITE.domain}/blog/${p.slug}/`,
+        datePublished: p.date,
+        dateModified: p.updated || p.date,
+      })),
+    },
+    breadcrumbList([
+      { name: '홈', url: `${SITE.domain}/` },
+      { name: '블로그', url: `${SITE.domain}/blog/` },
+    ]),
+  ];
   return head({
     title: '블로그 — 미국 한인 비즈니스 마케팅 가이드 | BizHigher',
     description: '구글 등록, 리뷰 관리, AI 검색 노출까지 — 미국에서 가게 운영하는 한인 사장님을 위한 실전 마케팅 가이드.',
     pathName: '/blog/',
+    jsonLd,
   }) + nav('blog') + `
 <header class="page-head">
   <div class="container">
@@ -2261,22 +2351,34 @@ function blogIndexPage(posts) {
 
 function blogPostPage(p, posts) {
   const { html, toc } = mdToHtml(p.body);
+  const url = `${SITE.domain}/blog/${p.slug}/`;
+  const hub = !p.hub ? posts.find((x) => x.hub && x.category === p.category) : null;
+  // 카테고리 전용 페이지가 없으므로 같은 카테고리의 허브 글을 중간 단계로 쓴다
+  const crumbs = [
+    { name: '홈', url: `${SITE.domain}/` },
+    { name: '블로그', url: `${SITE.domain}/blog/` },
+    ...(hub ? [{ name: p.category, url: `${SITE.domain}/blog/${hub.slug}/` }] : []),
+    { name: p.title, url },
+  ];
   const jsonLd = [
     {
       '@context': 'https://schema.org', '@type': 'BlogPosting',
       headline: p.title, description: p.description,
+      image: `${SITE.domain}${ogFor(p.slug) || '/og-image.png'}`,
       datePublished: p.date, dateModified: p.updated || p.date, inLanguage: 'ko',
-      author: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
-      publisher: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
-      mainEntityOfPage: `${SITE.domain}/blog/${p.slug}/`, keywords: p.keywords,
+      author: ORG_MIN,
+      publisher: ORG_MIN,
+      articleSection: p.category,
+      isPartOf: { '@type': 'Blog', '@id': `${SITE.domain}/blog/#blog` },
+      mainEntityOfPage: { '@type': 'WebPage', '@id': url }, keywords: p.keywords,
     },
+    breadcrumbList(crumbs),
   ];
   if (p.faqs.length) {
     jsonLd.push({ '@context': 'https://schema.org', '@type': 'FAQPage',
       mainEntity: p.faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) });
   }
   const relSvc = p.related ? DATA.services.find((s) => s.slug === p.related) : null;
-  const hub = !p.hub ? posts.find((x) => x.hub && x.category === p.category) : null;
   const sameCategory = posts.filter((x) => x.slug !== p.slug && x.category === p.category && !x.hub);
   const others = [...sameCategory, ...posts.filter((x) => x.slug !== p.slug && x.category !== p.category)].slice(0, 3);
   return head({
@@ -2289,7 +2391,7 @@ function blogPostPage(p, posts) {
   }) + nav('blog') + `
 <header class="page-head">
   <div class="container-narrow">
-    <a href="/blog/" class="back-link">← 블로그</a>
+    ${crumbsHtml(crumbs)}
     <span class="badge${p.hub ? ' badge-hub' : ''}">${p.hub ? '🧭 가이드 · ' : ''}${p.category}</span>
     <h1 class="page-title" style="font-size:36px;line-height:1.25;">${p.title}</h1>
     <p class="page-sub">${p.date} · ${p.readMin}분 읽기 · BizHigher</p>
@@ -2403,8 +2505,8 @@ function dataReportPage(s) {
       temporalCoverage: s.asOf,
       isAccessibleForFree: true,
       license: 'https://creativecommons.org/licenses/by/4.0/',
-      creator: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
-      publisher: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
+      creator: ORG_MIN,
+      publisher: ORG_MIN,
       spatialCoverage: {
         '@type': 'Place',
         name: 'Los Angeles County and Orange County, California, USA',
@@ -2433,8 +2535,8 @@ function dataReportPage(s) {
       dateModified: s.asOf,
       inLanguage: 'ko',
       mainEntityOfPage: url,
-      author: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
-      publisher: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
+      author: ORG_MIN,
+      publisher: ORG_MIN,
       about: { '@id': `${url}#dataset` },
     },
     {
@@ -2463,7 +2565,11 @@ function dataReportPage(s) {
     `
 <header class="page-head">
   <div class="container-narrow">
-    <a href="/data/" class="back-link">← 데이터 리포트</a>
+    ${crumbsHtml([
+      { name: '홈', url: `${SITE.domain}/` },
+      { name: '데이터', url: `${SITE.domain}/data/` },
+      { name: s.title, url },
+    ])}
     <span class="badge">${s.quarter} 조사</span>
     <h1 class="page-title" style="font-size:36px;line-height:1.25;">${e.headline || s.title}</h1>
     <p class="page-sub">${s.asOf} 기준 · 직접 확인한 ${s.totals.businesses}곳 전수 집계 · BizHigher</p>
@@ -2531,10 +2637,11 @@ function dataReportPage(s) {
 function dataIndexPage(surveys) {
   /* 1호(surveys)와 2호 이후(reports)를 한 목록으로 합친다 */
   surveys = surveys.concat(loadReports()).sort((a, b) => (a.asOf < b.asOf ? 1 : -1));
-  const jsonLd = {
+  const jsonLd = [{
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: 'BizHigher 데이터 리포트',
+    publisher: ORG_MIN,
     url: `${SITE.domain}/data/`,
     inLanguage: 'ko',
     hasPart: surveys.map((s) => ({
@@ -2543,10 +2650,13 @@ function dataIndexPage(surveys) {
       url: `${SITE.domain}/data/${s.slug}/`,
       datePublished: s.asOf,
     })),
-  };
+  }, breadcrumbList([
+    { name: '홈', url: `${SITE.domain}/` },
+    { name: '데이터', url: `${SITE.domain}/data/` },
+  ])];
   return (
     head({
-      title: '데이터 리포트 | BizHigher',
+      title: '미국 한인 비즈니스 온라인 실태 데이터 리포트 | BizHigher',
       description:
         '미국 한인 비즈니스의 온라인 실태를 직접 확인해 분기마다 공개합니다. 원자료 CSV를 함께 제공하며 인용은 자유입니다.',
       pathName: '/data/',
@@ -2672,8 +2782,8 @@ function metricReportPage(s) {
       temporalCoverage: s.asOf,
       isAccessibleForFree: true,
       license: 'https://creativecommons.org/licenses/by/4.0/',
-      creator: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
-      publisher: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
+      creator: ORG_MIN,
+      publisher: ORG_MIN,
       spatialCoverage: { '@type': 'Place', name: 'Los Angeles County and Orange County, California, USA' },
       measurementTechnique: (s.method[0] || {}).text,
       variableMeasured: (s.stats || []).map((x) => ({
@@ -2694,8 +2804,8 @@ function metricReportPage(s) {
       dateModified: s.asOf,
       inLanguage: 'ko',
       mainEntityOfPage: url,
-      author: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
-      publisher: { '@type': 'Organization', name: 'BizHigher', url: SITE.domain },
+      author: ORG_MIN,
+      publisher: ORG_MIN,
       about: { '@id': `${url}#dataset` },
     },
     {
@@ -2723,7 +2833,11 @@ function metricReportPage(s) {
     `
 <header class="page-head">
   <div class="container-narrow">
-    <a href="/data/" class="back-link">← 데이터 리포트</a>
+    ${crumbsHtml([
+      { name: '홈', url: `${SITE.domain}/` },
+      { name: '데이터', url: `${SITE.domain}/data/` },
+      { name: s.title, url },
+    ])}
     <span class="badge">${s.quarter} 조사</span>
     <h1 class="page-title" style="font-size:36px;line-height:1.25;">${e.headline || s.title}</h1>
     <p class="page-sub">${s.subline || `${s.asOf} 기준 · BizHigher`}</p>

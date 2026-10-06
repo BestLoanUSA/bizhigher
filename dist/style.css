@@ -993,6 +993,14 @@ img { max-width: 100%; display: block; }
 .detail-head > .container-narrow { position: relative; z-index: 1; }
 .detail-head .back-link { color: var(--mist-400); }
 .detail-head .back-link:hover { color: #fff; }
+.crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; line-height: 1.5; max-width: 100%; }
+.crumbs.back-link:hover { color: var(--ink-400); }
+.detail-head .crumbs.back-link:hover { color: var(--mist-400); }
+.crumbs a { color: inherit; }
+.crumbs a:hover { color: var(--blue-600); }
+.detail-head .crumbs a:hover { color: #fff; }
+.crumbs-sep { opacity: .6; }
+.crumbs [aria-current] { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .detail-title { color: #fff; }
 .detail-sub { color: var(--mist-300); }
 .detail-head .badge { background: rgba(125, 162, 255, 0.12); color: var(--blue-300); border: 1px solid rgba(125, 162, 255, 0.3); }
