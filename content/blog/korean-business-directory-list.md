@@ -3,6 +3,7 @@ title: 미국 한인 업소록 총정리 — 무료로 등록할 수 있는 곳 
 slug: korean-business-directory-list
 date: 2026-09-23
 description: 구글 지도 하나로는 부족합니다. 미국 전역 필수 디렉토리부터 라디오코리아·한국일보 같은 한인 업소록까지, 무료로 등록 가능한 곳을 한 번에 정리했습니다.
+summary: Bing·Apple 지도·Yelp 같은 전국 디렉토리와 한인 업소록에는 무료로 등록할 수 있습니다. | 디렉토리 등록의 주된 목적은 여러 곳의 NAP를 일치시켜 구글 지도 신뢰도를 쌓는 것입니다. | 등록 전에 업체명·주소·전화번호 표기를 하나로 확정하고 Bing Places부터 시작합니다.
 keywords: 미국 한인 업소록, 비즈니스 디렉토리 등록, 무료 업체 등록, NAP 일관성, 로컬 SEO
 category: 구글 노출
 related: local-listing-setup

@@ -3,6 +3,7 @@ title: 손님이 ChatGPT에게 맛집을 물어보는 시대 — 내 가게가 A
 slug: ai-search-optimization-aio
 date: 2026-09-13
 description: 구글 다음의 전장은 AI 검색입니다. ChatGPT·Perplexity가 가게를 추천하는 원리와, 오늘 시작할 수 있는 AI 검색 최적화(AIO) 7가지를 정리했습니다.
+summary: AI의 추천을 받으려면 프로필·웹사이트·디렉토리·리뷰 속 가게 정보를 명확하게 갖춰야 합니다. | AI는 애매한 가게를 추천하지 않고 여러 출처에서 일관되게 확인되는 가게를 추천합니다. | 매달 ChatGPT·Perplexity에 손님처럼 물어보고 내 가게가 어떻게 소개되는지 기록합니다.
 keywords: AI 검색 최적화, AIO, ChatGPT 가게 추천, AI 검색 노출, AEO
 category: AI 검색
 related: seo-aio

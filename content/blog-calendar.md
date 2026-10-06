@@ -5,7 +5,8 @@
 ## 발행 스타일 가이드 (루틴 필독)
 
 - 파일 위치: content/blog/{slug}.md
-- frontmatter: title, slug(영문), date(오늘), description(155자 내), keywords, category, related(서비스 slug)
+- frontmatter: title, slug(영문), date(오늘), description(155자 내), **summary(핵심 요약 3문장)**, keywords, category, related(서비스 slug)
+- **summary 규칙 (2026-10-06 도입)**: `summary: 문장1 | 문장2 | 문장3` 한 줄. ` | `로 정확히 세 문장, 각 70자 이내, 문장 안에 `|` 금지, 값이 `"`로 시작하지 않게. 문장1 = 제목 질문에 대한 직접 답, 문장2 = 핵심 기준·숫자·이유, 문장3 = 첫 실행 단계 또는 솔직한 주의사항. 맥락 없이 따로 인용돼도 뜻이 통하는 단정문으로, 본문에 있는 사실만 쓰고 판매 문구 금지. 빌드가 글 맨 위 "핵심 요약" 박스와 BlogPosting abstract로 자동 출력한다
 - 본문: 1,800자 이상 · ## 섹션 4~7개 · 표 또는 체크리스트 1개 이상 · 마지막에 `## 자주 묻는 질문` 섹션(### 질문 3~4개 — FAQ 스키마로 자동 추출됨)
 - 톤: 존댓말, 미국 한인 사장님 눈높이, 과장 금지, 솔직한 주의사항 1개 이상, 모든 주장에 실행 단계·판단 기준
 - 본문에 판매 문구 금지 (CTA는 빌드가 자동 부착: 무료 진단 + related 서비스)

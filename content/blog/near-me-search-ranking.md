@@ -3,6 +3,7 @@ title: "near me" 검색의 비밀 — 손님 위치가 순위를 바꾸는 원�
 slug: near-me-search-ranking
 date: 2026-09-24
 description: "치과 near me" 같은 검색에서 같은 가게가 손님 위치에 따라 다른 순위로 뜨는 이유와, 이 변수 안에서 순위를 올리는 방법을 정리했습니다.
+summary: 근처(near me) 검색 순위는 검색자 위치마다 따로 계산되어 같은 가게도 매번 달라집니다. | 구글 지도 순위는 관련성, 인지도, 거리로 정해지며 near me 검색은 거리 비중이 커집니다. | 거리는 바꿀 수 없지만 서비스 지역 설정과 지역 디렉토리 등재 같은 주변 신호는 관리됩니다.
 keywords: near me 검색, 근처 검색 순위, 구글 지도 거리, 로컬 SEO
 category: 구글 노출
 related: seo-aio
