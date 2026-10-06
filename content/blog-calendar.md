@@ -28,6 +28,7 @@
 
 | 상태 | 제목 | slug |
 |---|---|---|
+| ✅ 2026-10-06 | 숏폼 영상, 우리 가게도 해야 할까? — 릴스·틱톡 현실적인 시작법 | shortform-video-guide |
 | ✅ 2026-10-05 | 홈페이지 방문자는 있는데 전화가 안 오는 이유 | website-visitors-no-calls |
 | ✅ 2026-10-02 | 한인 손님 vs 현지 손님 — 두 마리 토끼 잡는 이중 언어 마케팅 | bilingual-marketing-korean-local-customers |
 | ✅ 2026-10-01 | 우리 가게 상권, 구글 지도로 5분 만에 분석하는 법 | trade-area-analysis-google-maps |
@@ -51,9 +52,14 @@
 
 | 상태 | 제목 | 카테고리 | related |
 |---|---|---|---|
-| ⬜ | 숏폼 영상, 우리 가게도 해야 할까? — 릴스·틱톡 현실적인 시작법 | 콘텐츠·SNS | shortform-video |
 | ⬜ | 식당·학원·뷰티샵의 시즌 마케팅 캘린더 — 연중 놓치면 아까운 시기들 | 광고 | ad-creative-pack |
 | ⬜ | 구글 AI 요약(AI Overviews)에 내 가게가 나오게 하려면 | AI 검색 | seo-aio |
 | ⬜ | 2026년 로컬 마케팅 결산 — 한인 가게가 내년에 준비할 3가지 | AI 검색 | seo-aio |
+| ⬜ | 구글 프로필 Q&A 기능 활용법 — 손님 질문에 먼저 답해두기 | 구글 노출 | google-profile-optimization |
+| ⬜ | 영업시간·휴무일 변경, 구글 프로필에 제대로 반영하는 법 | 구글 노출 | google-profile-optimization |
+| ⬜ | 리뷰 요청 QR 코드, 어디에 붙여야 효과가 있을까 | 리뷰·평판 | review-qr-kit |
+| ⬜ | 가게 이메일·문자 마케팅 입문 — 단골에게 다시 오게 하는 법 | 콘텐츠·SNS | seo-blog-pack |
+| ⬜ | 랜딩페이지와 홈페이지, 광고를 돌릴 때 뭐가 다를까 | 웹사이트 | local-landing-pack |
+| ⬜ | 광고 성과 읽는 법 — 클릭수 말고 봐야 할 숫자 3가지 | 광고 | ad-creative-pack |
 
 대기열이 3개 이하로 줄면 루틴이 기존 글과 겹치지 않는 새 주제 6개를 이 표에 추가한다.
