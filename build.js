@@ -116,6 +116,7 @@ function nav(active) {
       <a class="${cls('pricing')}" href="/pricing/">가격</a>
       <a class="${cls('blog')}" href="/blog/">블로그</a>
       <a class="${cls('data')}" href="/data/">데이터</a>
+      <a class="${cls('tools')}" href="/tools/">무료 도구</a>
       <a class="${cls('audit')}" href="/free-audit/">무료 진단</a>
     </div>
     <div class="nav-cta"><a class="btn btn-primary btn-small" href="/free-audit/">무료 진단 받기</a></div>
@@ -126,6 +127,7 @@ function nav(active) {
     <a href="/pricing/">가격</a>
     <a href="/blog/">블로그</a>
     <a href="/data/">데이터</a>
+    <a href="/tools/">무료 도구</a>
     <a href="/free-audit/">무료 진단</a>
     <a class="btn btn-primary btn-block" href="/free-audit/" style="border-bottom:none;color:#fff;">무료 진단 받기</a>
   </div>
@@ -202,6 +204,7 @@ const FOOTER_BASE = `
         <a href="/free-audit/" class="footer-link">무료 진단</a>
         <a href="/blog/" class="footer-link">블로그</a>
         <a href="/data/" class="footer-link">데이터 리포트</a>
+        <a href="/tools/" class="footer-link">무료 도구</a>
       </div>
       <div class="footer-col">
         <span class="footer-head">문의</span>
@@ -2089,6 +2092,12 @@ function servicePage(s, posts) {
     <div class="detail-desc">${s.description.map((p) => `<p>${p}</p>`).join('')}</div>
   </div>
 </section>
+${TOOLS.own.some((t) => t.service === s.slug) ? `
+<section class="section" style="padding-bottom:0;">
+  <div class="container-narrow">
+    ${TOOLS.own.filter((t) => t.service === s.slug).map((t) => `<a href="/tools/${t.slug}/" class="hub-callout">🧰 먼저 무료로 해보기: <b>${t.name}</b> →</a>`).join('')}
+  </div>
+</section>` : ''}
 ${guide && guide.guide ? `
 <section class="section svc-guide">
   <div class="container-narrow">
@@ -2298,8 +2307,8 @@ function extractFaqs(body) {
 
 /* 서비스 페이지 검색용 가이드 — content/services/{slug}.md
    front matter(keywords) + 질문형 ## 섹션 + "## 자주 묻는 질문". 가격 파일(services.json)과 분리해 둔다. */
-function loadServiceGuide(slug) {
-  const f = path.join(__dirname, 'content', 'services', `${slug}.md`);
+function loadServiceGuide(slug, dir = 'services') {
+  const f = path.join(__dirname, 'content', dir, `${slug}.md`);
   if (!fs.existsSync(f)) return null;
   const raw = fs.readFileSync(f, 'utf8');
   const m = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
@@ -2989,12 +2998,13 @@ const PRIVACY_HTML = `
 <p>BizHigher(이하 "회사", bizhigher.com)는 이용자의 개인정보를 소중히 다룹니다. 본 방침은 회사가 어떤 정보를 수집하고 어떻게 사용하는지 설명합니다.</p>
 <h2 class="h2-left">1. 수집하는 정보</h2>
 <p>• <b>직접 제공 정보</b>: 무료 진단 신청 및 주문 질문지를 통해 업체명, 담당자 성함, 이메일, 전화번호, 웹사이트·소셜 링크 등을 수집합니다.<br>
+• <b>무료 도구 이용 정보</b>: 무료 도구(/tools/) 이용 시 이메일(필수), 전화번호(선택), 입력한 업체명과 이용한 도구 이름을 수집합니다. 도구에 입력한 리뷰·메뉴 사진·소개문 등의 내용과 도구 결과는 결과 생성에만 쓰고 저장하지 않습니다. 하루 이용 횟수 제한을 위해 IP 주소를 일자별로 변환한 값(원본 IP 아님)을 하루 동안 사용합니다.<br>
 • <b>결제 정보</b>: 결제는 Stripe가 처리하며, 회사는 카드번호를 저장하지 않습니다.<br>
 • <b>자동 수집 정보</b>: Google Analytics 및 Microsoft Clarity를 통해 방문 기록, 기기·브라우저 정보, 사이트 이용 행태(쿠키 포함)가 수집될 수 있습니다.</p>
 <h2 class="h2-left">2. 이용 목적</h2>
-<p>서비스 제공 및 결과물 제작·전달, 주문·구독 관리, 고객 문의 응대, 서비스 개선과 사이트 분석, 서비스 관련 안내에 사용합니다. 이용자의 동의 없이 제3자에게 개인정보를 판매하지 않습니다.</p>
+<p>서비스 제공 및 결과물 제작·전달, 주문·구독 관리, 고객 문의 응대, 서비스 개선과 사이트 분석, 서비스 관련 안내에 사용합니다. 무료 도구·무료 진단 이용 시 남긴 이메일·전화번호로 마케팅 팁과 서비스 소식을 보낼 수 있으며, 이용자는 언제든 수신을 거부할 수 있습니다. 이용자의 동의 없이 제3자에게 개인정보를 판매하지 않습니다.</p>
 <h2 class="h2-left">3. 제3자 서비스</h2>
-<p>회사는 서비스 운영을 위해 다음 처리자를 이용합니다: Stripe(결제), Google Analytics(분석), Microsoft Clarity(분석), Cloudflare(호스팅·보안), Resend(이메일 발송). 각 서비스는 자체 개인정보처리방침에 따라 정보를 처리합니다.</p>
+<p>회사는 서비스 운영을 위해 다음 처리자를 이용합니다: Stripe(결제), Google Analytics(분석), Microsoft Clarity(분석), Cloudflare(호스팅·보안), Resend(이메일 발송), Anthropic(무료 진단·도구의 AI 처리), Google Maps Platform(장소 정보 조회). 각 서비스는 자체 개인정보처리방침에 따라 정보를 처리합니다.</p>
 <h2 class="h2-left">4. 보관 및 파기</h2>
 <p>개인정보는 서비스 제공에 필요한 기간 동안 보관하며, 목적 달성 후 관련 법령이 정한 기간을 제외하고 지체 없이 파기합니다. 구독 해지 후에도 법적 의무 이행을 위한 최소한의 거래 기록은 보관될 수 있습니다.</p>
 <h2 class="h2-left">5. 이용자의 권리</h2>
@@ -3089,6 +3099,8 @@ function sitemap() {
     { u: '/services/' },
     { u: '/pricing/' },
     { u: '/free-audit/' },
+    { u: '/tools/' },
+    ...TOOLS.own.map((t) => ({ u: `/tools/${t.slug}/` })),
     { u: '/privacy/' },
     { u: '/terms/' },
     { u: '/blog/', d: newestPost },
@@ -3110,6 +3122,213 @@ Allow: /
 Disallow: /admin/
 
 Sitemap: ${SITE.domain}/sitemap.xml`;
+
+/* ---------- 페이지: 무료 도구 /tools/ ----------
+   데이터 data/tools.json · 화면 조각 src/tools/{slug}.html · 동작 src/tools/{slug}.js(+common.js)
+   서버 functions/api/tools/[tool].js · 검색용 설명 content/tools/{slug}.md */
+
+const TOOLS = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'tools.json'), 'utf8'));
+const TOOLS_SRC = path.join(__dirname, 'src', 'tools');
+const toolAssetVer = (f) => crypto.createHash('md5').update(fs.readFileSync(path.join(TOOLS_SRC, f))).digest('hex').slice(0, 8);
+
+/* 도구 아이콘 — 한 가지 색의 선 아이콘으로 통일(색은 CSS .tool-ico). 이모지는 쓰지 않는다 */
+const TOOL_ICONS = {
+  'review-link': '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM20 14v1M14 20h1M18 18v3h3"/>',
+  'review-reply': '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>',
+  'ads-budget': '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11v6M8 14h2M12 14h2M8 17h2M12 17h2"/>',
+  'local-rank': '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>',
+  'nap-check': '<path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11z"/><path d="M9.5 10l1.8 1.8 3.2-3.3"/>',
+  'ai-check': '<path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M18.5 15.5l.8 1.7 1.7.8-1.7.8-.8 1.7-.8-1.7-1.7-.8 1.7-.8z"/>',
+  'gbp-post': '<path d="M4 10v4h3l7 4V6L7 10z"/><path d="M17.5 9a4 4 0 0 1 0 6M7 14l1 5h2.5l-1-5"/>',
+  'menu-to-web': '<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 11h7M9 14h7M9 17h4"/>',
+  'bilingual-intro': '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/>',
+};
+function toolIcon(slug, cls) {
+  return `<span class="tool-ico${cls ? ' ' + cls : ''}" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${TOOL_ICONS[slug] || TOOL_ICONS['local-rank']}</svg></span>`;
+}
+
+function toolCard(t) {
+  return `
+<a href="/tools/${t.slug}/" class="prod-card tool-card">
+  <span class="tool-card-top">${toolIcon(t.slug)}<span class="tool-free">Free</span></span>
+  <h3 class="h3">${t.name}</h3>
+  <p class="body-sm">${t.short}</p>
+  <span class="card-cta">무료로 쓰기 →</span>
+</a>`;
+}
+
+function toolsIndexPage() {
+  const url = `${SITE.domain}/tools/`;
+  const intro = loadServiceGuide('_index', 'tools');
+  const crumbs = [{ name: '홈', url: `${SITE.domain}/` }, { name: '무료 도구', url }];
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: '무료 마케팅 도구',
+      url,
+      inLanguage: 'ko',
+      isPartOf: { '@id': WEBSITE_ID },
+      publisher: ORG_REF,
+      hasPart: TOOLS.own.map((t) => ({
+        '@type': 'WebApplication',
+        name: t.name,
+        url: `${SITE.domain}/tools/${t.slug}/`,
+        applicationCategory: 'BusinessApplication',
+        operatingSystem: 'Web',
+        isAccessibleForFree: true,
+      })),
+    },
+    breadcrumbList(crumbs),
+  ];
+  if (intro && intro.faqs.length) {
+    jsonLd.push({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: intro.faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+    });
+  }
+  const ext = TOOLS.externalGroups.map((g) => `
+    <h3 class="h3 tool-ext-head">${g.name}</h3>
+    <div class="tool-ext-list">
+      ${g.items.map((x) => `<a class="tool-ext" href="${x.url}" target="_blank" rel="noopener">
+        <span class="tool-ext-top"><b>${x.name}</b><span class="tool-ext-by">${x.by}</span></span>
+        <span class="tool-ext-desc">${x.desc}</span>
+        <span class="tool-ext-meta"><span class="chip">${x.free}</span>${x.ko ? '<span class="chip">한국어 지원</span>' : '<span class="chip chip-muted">영어</span>'}</span>
+      </a>`).join('')}
+    </div>`).join('');
+  return head({
+    title: '무료 마케팅 도구 — 구글 지도 순위·리뷰 링크·리뷰 답글·광고 예산 | BizHigher',
+    description: '구글 지도 순위 체크, 구글 리뷰 링크·QR, 한/영 리뷰 답글, 광고 예산 계산, 가게 정보 일치, AI 추천 체크까지. 동네 가게 마케팅에 바로 쓰는 무료 도구 모음입니다.',
+    pathName: '/tools/',
+    jsonLd,
+  }) + nav('tools') + `
+<header class="page-head">
+  <div class="container">
+    ${crumbsHtml(crumbs)}
+    <h1 class="page-title">무료 마케팅 도구</h1>
+    <p class="page-sub" style="max-width:760px;line-height:1.7;">대행사에 맡기기 전에, 우리 가게가 지금 어디에 서 있는지 직접 확인해 보세요. 회원가입 없이 이메일만 남기면 쓰는 도구 ${TOOLS.own.length}가지와, 로그인 없이 쓰는 공식 무료 도구를 모았습니다.</p>
+  </div>
+</header>
+<section class="section" style="padding-top:8px;">
+  <div class="container">
+    <h2 class="h2-left" style="margin-top:0;">BizHigher 무료 도구</h2>
+    <div class="grid3">${TOOLS.own.map(toolCard).join('')}</div>
+  </div>
+</section>
+<section class="section section-gray">
+  <div class="container">
+    <h2 class="h2-left" style="margin-top:0;">함께 쓰면 좋은 외부 무료 도구</h2>
+    <p class="body-sm" style="margin:-8px 0 8px;">구글·메타·schema.org가 공개한, 로그인 없이 바로 쓰는 공식 도구만 골랐습니다. 링크는 새 창으로 열립니다.</p>
+    ${ext}
+  </div>
+</section>
+${intro && intro.guide ? `
+<section class="section svc-guide">
+  <div class="container-narrow">
+    <article class="post-body">${mdToHtml(intro.guide).html}</article>
+  </div>
+</section>` : ''}
+${intro && intro.faqs.length ? `
+<section class="section section-gray">
+  <div class="container-narrow">
+    <h2 class="h2">자주 묻는 질문</h2>
+    ${intro.faqs.map((f, k) => `<details class="faq-item"${k === 0 ? ' open' : ''}><summary class="faq-q">${f.q}</summary><p class="faq-a">${f.a}</p></details>`).join('')}
+  </div>
+</section>` : ''}
+` + FOOTER;
+}
+
+function toolPage(t) {
+  const url = `${SITE.domain}/tools/${t.slug}/`;
+  const guide = loadServiceGuide(t.slug, 'tools');
+  const svc = DATA.services.find((x) => x.slug === t.service);
+  const crumbs = [
+    { name: '홈', url: `${SITE.domain}/` },
+    { name: '무료 도구', url: `${SITE.domain}/tools/` },
+    { name: t.name, url },
+  ];
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebApplication',
+      name: t.name,
+      description: t.short,
+      url,
+      applicationCategory: 'BusinessApplication',
+      operatingSystem: 'Web',
+      inLanguage: 'ko',
+      isAccessibleForFree: true,
+      offers: { '@type': 'Offer', price: 0, priceCurrency: 'USD' },
+      provider: ORG_MIN,
+      isPartOf: { '@id': WEBSITE_ID },
+    },
+    breadcrumbList(crumbs),
+  ];
+  if (guide && guide.faqs.length) {
+    jsonLd.push({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: guide.faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+    });
+  }
+  const frag = fs.readFileSync(path.join(TOOLS_SRC, `${t.slug}.html`), 'utf8');
+  const others = TOOLS.own.filter((x) => x.slug !== t.slug);
+  const i = TOOLS.own.findIndex((x) => x.slug === t.slug);
+  const pick = others.slice(i).concat(others.slice(0, i)).slice(0, 3);
+  const extraScripts = t.slug === 'review-link'
+    ? `<script src="/assets/tools/qrcode.min.js?v=${toolAssetVer('qrcode.min.js')}"></script>`
+    : '';
+  return head({
+    title: `${t.name} — 무료 마케팅 도구 | BizHigher`,
+    description: `${t.short} 회원가입 없이 이메일만 남기면 무료로 쓸 수 있는 BizHigher 마케팅 도구입니다.`,
+    pathName: `/tools/${t.slug}/`,
+    jsonLd,
+  }) + nav('tools') + `
+<header class="page-head">
+  <div class="container-narrow">
+    ${crumbsHtml(crumbs)}
+    <div class="tool-head">${toolIcon(t.slug, 'tool-ico-lg')}<span class="tool-free">Free</span></div>
+    <h1 class="page-title tool-title">${t.name}</h1>
+    <p class="page-sub">${t.short}</p>
+  </div>
+</header>
+<section class="section tool-section">
+  <div class="container-narrow">
+    ${frag}
+  </div>
+</section>
+${guide && guide.guide ? `
+<section class="section svc-guide">
+  <div class="container-narrow">
+    <article class="post-body">${mdToHtml(guide.guide).html}</article>
+  </div>
+</section>` : ''}
+${guide && guide.faqs.length ? `
+<section class="section section-gray">
+  <div class="container-narrow">
+    <h2 class="h2">자주 묻는 질문</h2>
+    ${guide.faqs.map((f, k) => `<details class="faq-item"${k === 0 ? ' open' : ''}><summary class="faq-q">${f.q}</summary><p class="faq-a">${f.a}</p></details>`).join('')}
+  </div>
+</section>` : ''}
+<section class="section">
+  <div class="container">
+    ${svc ? `<div class="post-cta" style="margin-bottom:40px;">
+      <b>매번 직접 하기 번거롭다면</b>
+      <p>${svc.name}(${svc.price}) — ${svc.shortDescription}</p>
+      <a href="/service/${svc.slug}/" class="btn btn-primary">${svc.name} 자세히 보기 →</a>
+      <a href="/free-audit/" class="btn btn-ghost">무료 AI 진단 받기</a>
+    </div>` : ''}
+    <h2 class="h2-left">다른 무료 도구</h2>
+    <div class="grid3">${pick.map(toolCard).join('')}</div>
+    <p class="body-sm" style="margin-top:16px;"><a href="/tools/">무료 도구 전체 보기 →</a></p>
+  </div>
+</section>
+${extraScripts}
+<script src="/assets/tools/common.js?v=${toolAssetVer('common.js')}"></script>
+<script src="/assets/tools/${t.slug}.js?v=${toolAssetVer(`${t.slug}.js`)}"></script>
+` + FOOTER;
+}
 
 /* ---------- 빌드 실행 ---------- */
 
@@ -3181,6 +3400,11 @@ if (fs.existsSync(OGDIR)) {
     console.log(`  \u2713 og/ (${pngs.length}\uc7a5)`);
   }
 }
+write('tools/index.html', toolsIndexPage());
+TOOLS.own.forEach((t) => write(`tools/${t.slug}/index.html`, toolPage(t)));
+fs.mkdirSync(path.join(DIST, 'assets', 'tools'), { recursive: true });
+fs.readdirSync(TOOLS_SRC).filter((f) => f.endsWith('.js')).forEach((f) => fs.copyFileSync(path.join(TOOLS_SRC, f), path.join(DIST, 'assets', 'tools', f)));
+console.log('  \u2713 assets/tools/');
 write('sitemap.xml', sitemap());
 write('robots.txt', ROBOTS);
 write('llms.txt', `# BizHigher (비즈하이어)
@@ -3203,6 +3427,7 @@ ${loadReports().map((x) => `- ${x.title}: https://bizhigher.com/data/${x.slug}/ 
 
 ## 무료 도구
 - 무료 AI 마케팅 진단 (60초, 가입 불필요): https://bizhigher.com/free-audit/ — 구글 노출·리뷰·웹사이트·SNS·경쟁사 대비 5개 영역 점수와 개선 우선순위 제공
+${TOOLS.own.map((t) => `- ${t.name} (무료, 이메일만 입력): https://bizhigher.com/tools/${t.slug}/ — ${t.short}`).join('\n')}
 
 ## 블로그 (한인 비즈니스 마케팅 가이드)
 ${loadPosts().map((p) => `- ${p.title}: https://bizhigher.com/blog/${p.slug}/`).join('\n')}

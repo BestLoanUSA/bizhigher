@@ -219,7 +219,9 @@ async function intakes() {
 async function leads() {
   const d = await api('leads'); if (!d) return;
   app.innerHTML = '<h1>무료 진단 신청</h1><div class="list">' + (d.leads.length ? d.leads.map((l) =>
-    '<div class="row"><div class="m"><div class="t">' + esc(l.business) + '</div><div class="s">' + esc(l.location || '') + ' · <a href="mailto:' + esc(l.email) + '">' + esc(l.email) + '</a></div></div><div class="r">' + (l.report_id ? '<a class="btn ghost sm" target="_blank" href="/report/' + esc(l.report_id) + '">리포트</a>' : '<span class="muted">리포트 없음</span>') + '<div>' + day(l.created_at) + '</div></div></div>').join('') : '<div class="empty">아직 신청이 없습니다</div>') + '</div>';
+    '<div class="row"><div class="m"><div class="t">' + esc(l.business) + '</div><div class="s">' + esc(l.location || '') + ' · <a href="mailto:' + esc(l.email) + '">' + esc(l.email) + '</a></div></div><div class="r">' + (l.report_id ? '<a class="btn ghost sm" target="_blank" href="/report/' + esc(l.report_id) + '">리포트</a>' : '<span class="muted">리포트 없음</span>') + '<div>' + day(l.created_at) + '</div></div></div>').join('') : '<div class="empty">아직 신청이 없습니다</div>') + '</div>' +
+    '<h1 style="margin-top:28px">무료 도구 이용자</h1><div class="list">' + ((d.toolLeads || []).length ? d.toolLeads.map((l) =>
+    '<div class="row"><div class="m"><div class="t"><a href="mailto:' + esc(l.email) + '">' + esc(l.email) + '</a></div><div class="s">' + esc(l.business || '업체명 없음') + (l.phone ? ' · <a href="tel:' + esc(l.phone) + '">' + esc(l.phone) + '</a>' : '') + ' · ' + esc(l.tools || '') + '</div></div><div class="r"><span class="muted">' + l.uses + '회</span><div>' + day(l.last_at) + '</div></div></div>').join('') : '<div class="empty">아직 이용자가 없습니다</div>') + '</div>';
 }
 async function reports() {
   const d = await api('reports'); if (!d) return;

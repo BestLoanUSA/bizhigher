@@ -35,6 +35,15 @@
 
 ## 무료 도구
 - 무료 AI 마케팅 진단 (60초, 가입 불필요): https://bizhigher.com/free-audit/ — 구글 노출·리뷰·웹사이트·SNS·경쟁사 대비 5개 영역 점수와 개선 우선순위 제공
+- 구글 리뷰 링크·QR 포스터 생성기 (무료, 이메일만 입력): https://bizhigher.com/tools/review-link/ — 가게 이름만 넣으면 리뷰 작성 화면으로 바로 가는 링크와 QR, 한/영 테이블 포스터를 만들어 드립니다.
+- 리뷰 답글 생성기 (한/영) (무료, 이메일만 입력): https://bizhigher.com/tools/review-reply/ — 받은 리뷰를 붙여 넣으면 별점에 맞는 한국어·영어 답글 3가지를 바로 만들어 드립니다.
+- 구글 광고 예산 계산기 (무료, 이메일만 입력): https://bizhigher.com/tools/ads-budget/ — 목표 손님 수와 객단가를 넣으면 필요한 월 광고비와 손익분기를 계산합니다.
+- 구글 지도 순위 체크 (무료, 이메일만 입력): https://bizhigher.com/tools/local-rank/ — 가게 주변 49개 지점에서 손님이 검색했을 때 우리 가게가 구글 지도에서 몇 위로 보이는지 격자로 보여 드립니다.
+- 가게 정보 일치 체크 (NAP) (무료, 이메일만 입력): https://bizhigher.com/tools/nap-check/ — 구글에 등록된 이름·주소·전화번호와 내 웹사이트 정보가 서로 맞는지 한 번에 비교합니다.
+- AI 추천 체크 (무료, 이메일만 입력): https://bizhigher.com/tools/ai-check/ — "OO 도시 OO 추천해 줘"라고 AI 검색에 물었을 때 우리 가게가 나오는지 확인합니다.
+- 구글 프로필 게시물 생성기 (무료, 이메일만 입력): https://bizhigher.com/tools/gbp-post/ — 이번 주 소식 한 줄이면 구글 프로필에 올릴 게시물 문구와 이미지 문구를 한/영으로 만들어 드립니다.
+- 메뉴판 → 웹 메뉴 변환기 (무료, 이메일만 입력): https://bizhigher.com/tools/menu-to-web/ — 메뉴판 사진을 올리면 검색에 잡히는 텍스트 메뉴(한/영)와 웹사이트용 코드로 바꿔 드립니다.
+- 한/영 가게 소개문 생성기 (무료, 이메일만 입력): https://bizhigher.com/tools/bilingual-intro/ — 한국어로 쓴 가게 소개를 구글 프로필 규격(750자)에 맞는 자연스러운 영어·한국어 소개로 다듬습니다.
 
 ## 블로그 (한인 비즈니스 마케팅 가이드)
 - 숏폼 영상, 우리 가게도 해야 할까? — 릴스·틱톡 현실적인 시작법: https://bizhigher.com/blog/shortform-video-guide/

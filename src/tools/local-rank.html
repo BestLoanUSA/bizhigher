@@ -1,0 +1,13 @@
+<form class="tool-box" id="tool-form">
+  <label class="tool-label">우리 가게 (업체명과 도시)</label>
+  <input class="input" name="query" placeholder="예: Seoul Garden Duluth GA" required maxlength="200">
+  <div class="tool-row">
+    <div><label class="tool-label">손님이 검색할 키워드</label><input class="input" name="keyword" required maxlength="80" placeholder="예: korean bbq, 한식당, dentist"></div>
+    <div><label class="tool-label">확인할 범위 (반경)</label>
+      <select class="input" name="radius"><option value="0.5">0.5마일</option><option value="1">1마일</option><option value="2" selected>2마일</option><option value="3">3마일</option><option value="5">5마일</option></select></div>
+  </div>
+  <button type="submit" class="btn btn-primary btn-block" data-busy="49개 지점에서 검색 중… (최대 20초)">지도 순위 확인</button>
+  <p class="tool-msg"></p>
+  <p class="tool-fine">가게 주변 7×7 = 49개 지점에서 각각 키워드를 검색해, 그 자리에 선 손님에게 우리 가게가 몇 위로 보이는지 보여줍니다 · 구글 지도 데이터 기준</p>
+</form>
+<div class="tool-result" id="tool-result" hidden></div>

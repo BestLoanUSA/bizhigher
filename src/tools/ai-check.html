@@ -1,0 +1,14 @@
+<form class="tool-box" id="tool-form">
+  <div class="tool-row">
+    <div><label class="tool-label">우리 가게 이름 (간판 표기)</label><input class="input" name="business" required maxlength="100" placeholder="예: Seoul Garden"></div>
+    <div><label class="tool-label">도시</label><input class="input" name="city" required maxlength="80" placeholder="예: Duluth GA"></div>
+  </div>
+  <div class="tool-row">
+    <div><label class="tool-label">업종 (손님이 부르는 말)</label><input class="input" name="category" required maxlength="60" placeholder="예: 한식당, Korean BBQ, 치과"></div>
+    <div><label class="tool-label">질문 언어</label><select class="input" name="lang"><option value="ko">한국어로 질문</option><option value="en">영어로 질문</option></select></div>
+  </div>
+  <button type="submit" class="btn btn-primary btn-block" data-busy="AI가 검색하는 중… (최대 40초)">AI에게 물어보기</button>
+  <p class="tool-msg"></p>
+  <p class="tool-fine">AI(Claude)가 웹을 검색해 손님처럼 답한 결과입니다. ChatGPT·Gemini 답과는 다를 수 있습니다</p>
+</form>
+<div class="tool-result" id="tool-result" hidden></div>

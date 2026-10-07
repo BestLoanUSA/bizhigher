@@ -78,6 +78,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | 블로그 글 | `content/blog/*.md` |
 | 블로그 주제 큐 | `content/blog-calendar.md` |
 | 서비스 페이지 검색용 가이드·추가 FAQ | `content/services/{slug}.md` — 질문형 `##` 섹션 + `## 자주 묻는 질문`. 가격은 여기 쓰지 않는다(`services.json`이 원본) |
+| 무료 도구 `/tools/` | 목록·외부 도구 `data/tools.json` · 화면 `src/tools/{slug}.html` · 동작 `src/tools/{slug}.js`(+`common.js`) · 서버 `functions/api/tools/[tool].js`(공용 `_shared.js`) · 설명·FAQ `content/tools/{slug}.md` (§5-1) |
 | 진단 채점 로직 | `functions/api/_engine.js` |
 | 리포트 디자인 | `functions/report/[id].js` |
 | GBP 리뷰 답글·게시물 자동화 실험 | `automation/gbp/` (README 참고. API 승인 전엔 `--dry-run`만) |
@@ -118,6 +119,32 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 
 **약점 영역이 3개 이상이면 개별 상품 대신 패키지를 제안한다.**
 
+### 5-1. 무료 도구 `/tools/` (2026-10-07)
+
+도구 9개 + 외부 공식 무료 도구 7개. 각 도구 페이지 하단에서 관련 유료 서비스로 연결하고, 서비스 페이지에서도 "먼저 무료로 해보기"로 도구를 링크한다. 목록 페이지 설명·FAQ는 `content/tools/_index.md`.
+
+**이용 조건 (David 결정 2026-10-07)**
+- **이메일 필수 + 휴대폰 선택** — 무료 도구의 대가. D1 `tool_leads`에 이메일·전화·업체명·도구만 저장하고, 이메일이 처음 보이면 David에게 알림. `/admin/` 리드 탭 하단 "무료 도구 이용자"에서 본다
+- **모든 도구 하루 2회** — IP와 이메일을 각각 세서 어느 쪽이든 2회면 막는다
+- 외부 도구는 **로그인·계정이 필요 없는 공식 공공 도구만**. Canva·CapCut·HubSpot 같은 다른 회사 상업 제품은 넣지 않는다
+- 아이콘은 이모지 대신 `build.js`의 `TOOL_ICONS`(단색 선 아이콘)
+
+| 도구 | 외부 비용 | 전체 하루 한도 |
+|---|---|---|
+| 광고 예산 계산기 `ads-budget` | 없음 (계산은 브라우저, 서버는 리드·횟수만) | 1000 |
+| 구글 지도 순위 체크 `local-rank` | 7×7=49지점은 Places **IDs Only(구글 기준 무료·무제한)** + 중심 상위 3곳 이름 Pro 1회 + 가게 찾기 Pro 1회 | 150 |
+| 리뷰 링크·QR `review-link` | Places Text Search Pro (월 5,000 무료 후 1,000건당 $32, 무료 진단과 공유) | 300 |
+| 가게 정보 일치 `nap-check` | Places Enterprise 필드 (월 1,000 무료 후 1,000건당 $35) | 100 |
+| 리뷰 답글 · 게시물 · 한/영 소개문 | Claude 텍스트 1회 (약 $0.005) | 200 |
+| 메뉴판 → 웹 메뉴 `menu-to-web` | Claude 이미지 1회 (브라우저에서 1568px 축소) | 80 |
+| AI 추천 체크 `ai-check` | Claude + 웹 검색 최대 3회 (검색 1,000회당 $10) — 가장 비싸다 | 60 |
+
+- 한도는 `functions/api/tools/_shared.js`의 `LIMITS`. 횟수는 D1 `tool_usage`에 일자별 솔트 해시로만 센다. **리뷰·사진·결과 등 입력 내용과 Places 결과는 저장하지 않는다**(§14)
+- 입력 검증 실패는 횟수를 차감하지 않는다(`charge()`는 외부 API 호출 직전). 로컬 순위의 가게 찾기 단계는 별도 보조 한도(`local-rank-find`, 6회)
+- 지도 순위는 Places API 결과로 계산한 **근사치**다(실제 앱은 개인화·광고로 다를 수 있음) — 화면과 FAQ에 명시
+- QR 라이브러리는 `src/tools/qrcode.min.js`(qrcode-generator 1.4.4, MIT)로 자체 호스팅
+- **Claude를 쓰는 도구는 `ANTHROPIC_API_KEY`(무료 진단과 같은 키)가 있어야 동작하고, AI 추천 체크는 Anthropic Console에서 웹 검색이 허용돼 있어야 한다**
+
 ---
 
 ## 6. 홈페이지 구성
@@ -142,6 +169,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | `orders` · `payments` | Stripe 결제·구독 1건 = 주문 1건, 입금 내역 | `functions/api/stripe-webhook.js` |
 | `jobs` · `job_events` · `deliverables` | 주문당 작업 1건, 상태 타임라인, 결과물 링크 | `/admin/` · 웹훅 · `intake.js` |
 | `stripe_events` | 처리한 Stripe 이벤트 id (중복 방지) | 웹훅 |
+| `tool_usage` | 무료 도구 하루 사용 횟수 (일자·IP 해시·도구) — 자동 생성 | `functions/api/tools/_shared.js` |
 
 `orders` 이하 6개 테이블은 `functions/api/_orders.js`의 `ensureSchema()`가 **없으면 자동 생성**한다(`CREATE TABLE IF NOT EXISTS`). 손으로 SQL을 돌릴 필요 없다. 기존 3개 테이블은 이 코드가 만들지 않았으므로 관리자 API는 `PRAGMA table_info`로 컬럼 유무를 확인하고 쓴다.
 
@@ -161,6 +189,8 @@ Cloudflare 프로젝트 → Settings → Environment variables (Production).
 | `ADMIN_ACCESS_TEAM` · `ADMIN_ACCESS_AUD` | 선택 | Cloudflare Access로 바꿀 때. 둘 다 있으면 Access 토큰 검증 |
 | `STRIPE_WEBHOOK_SECRET` | 주문 기록 필수 | 웹훅이 503, 결제가 관리자 페이지에 안 뜬다 |
 | `STRIPE_SECRET_KEY` | 선택 (Restricted key, Payment Links·Checkout Sessions 읽기) | 상품명 매핑이 안 돼 "미확인"으로 들어온다 |
+| `TOOLS_OFF` | 선택 | 쉼표 목록의 도구를 끈다. 예: `ai-check,menu-to-web` (비용이 걱정될 때) |
+| `TOOLS_DAILY_SCALE` | 선택 | 모든 도구의 전체 하루 한도에 곱하는 배수. 예: `0.5`면 절반 |
 
 **변수를 바꾸면 재배포 1회가 필요하다.**
 

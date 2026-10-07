@@ -1827,3 +1827,107 @@ img { max-width: 100%; display: block; }
   .period-toggle-lg button b { font-size: 13px; }
   .period-toggle-lg button small { white-space: normal; text-align: center; line-height: 1.25; }
 }
+
+/* ---------- 무료 도구 /tools/ ---------- */
+.tool-section { padding-top: 8px; }
+.tool-title { font-size: 36px; line-height: 1.25; }
+.tool-box { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 24px; display: grid; gap: 12px; box-shadow: 0 8px 30px rgba(17, 19, 24, .05); }
+.tool-box .input { width: 100%; box-sizing: border-box; }
+.tool-box textarea.input { resize: vertical; min-height: 96px; font-family: inherit; line-height: 1.6; }
+.tool-label { font-size: 14px; font-weight: 700; color: var(--ink-900); margin-bottom: -4px; }
+.tool-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.tool-row > div { display: grid; gap: 8px; }
+.tool-msg { margin: 0; font-size: 14px; min-height: 0; }
+.tool-msg.is-error { color: var(--red-600); font-weight: 600; }
+.tool-fine { font-size: 13px; color: var(--ink-400); margin: 0; line-height: 1.6; }
+.tool-result { margin-top: 28px; display: grid; gap: 14px; }
+.tool-result .h2-left { margin: 0; }
+.tool-out { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #fff; }
+.tool-out-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; background: #F7F9FC; border-bottom: 1px solid var(--line); font-size: 14px; }
+.tool-out-head .btn { padding: 6px 14px; flex-shrink: 0; }
+.tool-out-body { padding: 14px; font-size: 15.5px; line-height: 1.75; white-space: normal; word-break: break-word; overflow-wrap: anywhere; }
+.tool-result .callout { background: #FFF8E6; border: 1px solid #F5DFA1; border-radius: 12px; padding: 14px 18px; font-size: 15px; line-height: 1.6; }
+.tool-pick { display: grid; gap: 10px; }
+.tool-pick-item { text-align: left; background: #fff; border: 1.5px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; cursor: pointer; font: inherit; }
+.tool-pick-item:hover { border-color: var(--blue-600); }
+.tool-pick-item span { font-size: 13.5px; color: var(--ink-600); }
+.tool-qr-wrap { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+.tool-qr { width: 180px; height: 180px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 8px; }
+.tool-qr svg { width: 100%; height: 100%; display: block; }
+.tool-qr-actions { display: grid; gap: 10px; }
+.tool-poster { display: none; }
+.tool-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.tool-stats > div { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 4px; }
+.tool-stats span { font-size: 13px; color: var(--ink-600); }
+.tool-stats b { font-size: 22px; }
+.is-good { color: var(--green-600); }
+.is-bad { color: var(--red-600); }
+.is-warn { color: #B26A00; }
+.tool-table { width: 100%; border-collapse: collapse; font-size: 14.5px; background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.tool-table th, .tool-table td { padding: 12px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; line-height: 1.55; overflow-wrap: anywhere; }
+.tool-table th { white-space: nowrap; font-weight: 700; color: var(--ink-900); }
+.tool-table td:first-child { width: 28px; }
+.tool-links { display: flex; gap: 10px; flex-wrap: wrap; }
+.tool-verdict { padding: 16px 18px; border-radius: 14px; font-weight: 800; font-size: 18px; background: #fff; border: 2px solid currentColor; }
+.tool-sources { margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.8; overflow-wrap: anywhere; }
+.tool-post { display: grid; gap: 10px; padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: #FBFCFE; }
+.tool-post-img { aspect-ratio: 4 / 3; max-width: 320px; border-radius: 12px; background: linear-gradient(135deg, var(--blue-600), #7B5CFF); color: #fff; display: flex; align-items: center; justify-content: center; text-align: center; font-weight: 900; font-size: 24px; padding: 16px; }
+.tool-card-top, .tool-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.tool-head { justify-content: flex-start; margin: 6px 0 14px; }
+.tool-ico { width: 52px; height: 52px; border-radius: 14px; background: var(--blue-50); color: var(--blue-600); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.tool-ico svg { width: 26px; height: 26px; }
+.tool-ico-lg { width: 60px; height: 60px; border-radius: 16px; }
+.tool-ico-lg svg { width: 30px; height: 30px; }
+.tool-free { font-size: 13px; font-weight: 700; color: var(--green-600); background: #E7F7EE; border-radius: 999px; padding: 5px 14px; }
+.tool-lead { display: grid; gap: 8px; padding: 14px; border-radius: 14px; background: #F7F9FC; border: 1px dashed var(--line); }
+.tool-req, .tool-opt { font-size: 11.5px; font-weight: 700; border-radius: 6px; padding: 2px 6px; margin-left: 4px; vertical-align: 1px; }
+.tool-req { color: var(--blue-600); background: var(--blue-50); }
+.tool-opt { color: var(--ink-600); background: #EEF0F4; }
+.rank-wrap { display: grid; gap: 10px; justify-items: center; }
+.rank-compass { font-size: 12px; font-weight: 700; color: var(--ink-400); }
+.rank-grid { display: grid; gap: 6px; width: 100%; max-width: 440px; }
+.rank-cell { aspect-ratio: 1; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: #fff; min-width: 26px; }
+.rank-cell.is-center { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--ink-900); }
+.r-top { background: #0B9E58; }
+.r-mid { background: #E3A008; }
+.r-low { background: #F0712C; }
+.r-out { background: #D3382F; font-size: 11px; }
+.r-na { background: #C3C8D2; }
+.rank-legend { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; justify-content: center; font-size: 12.5px; color: var(--ink-600); }
+.rank-legend .rank-cell { width: 30px; height: 30px; min-width: 0; font-size: 10px; }
+.tool-ext-head { margin: 28px 0 12px; }
+.tool-ext-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.tool-ext { display: grid; gap: 6px; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px; color: inherit; text-decoration: none; }
+.tool-ext:hover { border-color: var(--blue-600); }
+.tool-ext-top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.tool-ext-by { font-size: 12.5px; color: var(--ink-400); flex-shrink: 0; }
+.tool-ext-desc { font-size: 14px; color: var(--ink-600); line-height: 1.6; }
+.tool-ext-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+.tool-ext-meta .chip { font-size: 12px; padding: 3px 9px; border-radius: 999px; background: var(--blue-50); color: var(--blue-600); font-weight: 700; }
+.tool-ext-meta .chip-muted { background: #F1F3F7; color: var(--ink-600); }
+@media (max-width: 720px) {
+  .tool-row { grid-template-columns: 1fr; }
+  .tool-stats { grid-template-columns: 1fr 1fr; }
+  .tool-ext-list { grid-template-columns: 1fr; }
+  .tool-table, .tool-table tbody { display: block; }
+  .tool-table tr { display: grid; grid-template-columns: 28px 1fr; border-bottom: 1px solid var(--line); padding: 4px 0; }
+  .tool-table th, .tool-table td { border-bottom: 0; padding: 8px 10px; }
+  .tool-table td:last-child { grid-column: 1 / -1; padding-top: 0; padding-left: 38px; }
+  .tool-title { font-size: 28px; }
+  .tool-box { padding: 18px; }
+}
+/* 리뷰 QR 테이블 포스터 인쇄 — 인쇄할 때만 포스터 한 장만 보인다 */
+@media print {
+  body.print-poster > *:not(.tool-section) { display: none !important; }
+  body.print-poster .tool-section .container-narrow > *:not(#tool-result) { display: none !important; }
+  body.print-poster #tool-result > *:not(.tool-poster) { display: none !important; }
+  body.print-poster .tool-poster { display: flex !important; justify-content: center; }
+  .tp-card { width: 4in; border: 2px solid #111; border-radius: 18px; padding: 28px 24px; text-align: center; font-family: inherit; }
+  .tp-ko { font-size: 24px; font-weight: 900; margin: 0; }
+  .tp-en { font-size: 16px; margin: 4px 0 16px; color: #444; }
+  .tp-qr { width: 2.4in; height: 2.4in; margin: 0 auto 14px; }
+  .tp-qr svg { width: 100%; height: 100%; }
+  .tp-ko2 { font-size: 14px; font-weight: 700; margin: 0; }
+  .tp-en2 { font-size: 13px; margin: 2px 0 12px; color: #444; }
+  .tp-name { font-size: 15px; font-weight: 800; margin: 0; }
+}
