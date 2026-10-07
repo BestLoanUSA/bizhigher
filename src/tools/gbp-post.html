@@ -1,0 +1,16 @@
+<form class="tool-box" id="tool-form">
+  <label class="tool-label">이번 주 소식 (한 줄이면 충분합니다)</label>
+  <textarea class="input" name="news" rows="3" required maxlength="800" placeholder="예: 가을 신메뉴 갈비 순두부 출시, 평일 점심에만 판매"></textarea>
+  <label class="tool-label">혜택·기간 (선택)</label>
+  <input class="input" name="offer" maxlength="300" placeholder="예: 10/15까지 음료 1잔 무료">
+  <div class="tool-row">
+    <div><label class="tool-label">업종</label><input class="input" name="bizType" maxlength="60" placeholder="예: 한식당"></div>
+    <div><label class="tool-label">언어</label><select class="input" name="lang"><option value="both">한국어 + 영어</option><option value="en">영어만</option><option value="ko">한국어만</option></select></div>
+  </div>
+  <label class="tool-label">가게 이름 (선택)</label>
+  <input class="input" name="bizName" maxlength="80">
+  <button type="submit" class="btn btn-primary btn-block">게시물 2개 만들기</button>
+  <p class="tool-msg"></p>
+  <p class="tool-fine">하루 15회까지 무료</p>
+</form>
+<div class="tool-result" id="tool-result" hidden></div>

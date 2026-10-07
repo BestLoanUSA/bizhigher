@@ -1,0 +1,10 @@
+<form class="tool-box" id="tool-form">
+  <label class="tool-label">메뉴판 사진</label>
+  <input class="input" name="photo" type="file" accept="image/jpeg,image/png,image/webp">
+  <label class="tool-label">또는 메뉴를 글자로 붙여 넣기</label>
+  <textarea class="input" name="text" rows="4" maxlength="8000" placeholder="순두부찌개 12.99&#10;갈비 순두부 15.99 ..."></textarea>
+  <button type="submit" class="btn btn-primary btn-block" data-busy="메뉴 읽는 중… (최대 40초)">웹 메뉴로 바꾸기</button>
+  <p class="tool-msg"></p>
+  <p class="tool-fine">사진은 변환에만 쓰고 저장하지 않습니다 · 글씨가 또렷하게 보이도록 정면에서 찍은 사진이 좋습니다 · 하루 5회까지 무료</p>
+</form>
+<div class="tool-result" id="tool-result" hidden></div>

@@ -1,0 +1,18 @@
+<form class="tool-box" id="tool-form">
+  <label class="tool-label">받은 리뷰 (그대로 붙여 넣기)</label>
+  <textarea class="input" name="review" rows="5" required maxlength="3000" placeholder="Food was great but we waited 40 minutes for a table..."></textarea>
+  <div class="tool-row">
+    <div><label class="tool-label">별점</label>
+      <select class="input" name="stars"><option value="5">★★★★★ 5</option><option value="4">★★★★ 4</option><option value="3">★★★ 3</option><option value="2">★★ 2</option><option value="1">★ 1</option></select></div>
+    <div><label class="tool-label">답글 언어</label>
+      <select class="input" name="lang"><option value="both">한국어 + 영어</option><option value="en">영어만</option><option value="ko">한국어만</option></select></div>
+  </div>
+  <div class="tool-row">
+    <div><label class="tool-label">업종</label><input class="input" name="bizType" placeholder="예: 한식당, 치과, 네일샵" maxlength="60"></div>
+    <div><label class="tool-label">가게 이름 (선택)</label><input class="input" name="bizName" maxlength="80"></div>
+  </div>
+  <button type="submit" class="btn btn-primary btn-block">답글 3가지 만들기</button>
+  <p class="tool-msg"></p>
+  <p class="tool-fine">입력한 리뷰는 저장하지 않습니다 · 하루 15회까지 무료</p>
+</form>
+<div class="tool-result" id="tool-result" hidden></div>

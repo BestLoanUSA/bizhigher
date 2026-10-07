@@ -1,0 +1,16 @@
+<form class="tool-box" id="tool-form">
+  <div class="tool-row">
+    <div><label class="tool-label">업체명</label><input class="input" name="business" required maxlength="120" placeholder="예: New Optix"></div>
+    <div><label class="tool-label">도시</label><input class="input" name="location" required maxlength="120" placeholder="예: Garden Grove CA"></div>
+  </div>
+  <label class="tool-label">손님에게 알리는 정확한 정보 (비교 기준)</label>
+  <div class="tool-row">
+    <div><input class="input" name="phone" maxlength="40" placeholder="전화번호 (예: 714-555-0123)"></div>
+    <div><input class="input" name="zip" maxlength="10" placeholder="우편번호 (예: 92840)"></div>
+  </div>
+  <input class="input" name="website" maxlength="300" placeholder="웹사이트 주소 (비우면 구글에 등록된 주소로 확인)">
+  <button type="submit" class="btn btn-primary btn-block" data-busy="확인 중… (최대 15초)">일치 여부 확인</button>
+  <p class="tool-msg"></p>
+  <p class="tool-fine">구글 지도 데이터와 웹사이트 첫 화면을 비교합니다 · 결과는 저장하지 않습니다 · 하루 8회까지 무료</p>
+</form>
+<div class="tool-result" id="tool-result" hidden></div>
