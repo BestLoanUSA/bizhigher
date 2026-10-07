@@ -4,6 +4,7 @@
   T.bind(form, function () {
     var c = +form.customers.value, ticket = +form.ticket.value, cpc = +form.cpc.value, cvr = +form.cvr.value / 100, margin = +form.margin.value / 100, rep = +form.repeat.value || 1;
     if (!(c > 0 && ticket > 0 && cpc > 0 && cvr > 0 && margin > 0)) throw new Error('숫자를 모두 0보다 크게 넣어 주세요.');
+    return T.call('ads-budget', {}).then(function () {
     var clicks = Math.ceil(c / cvr);
     var budget = clicks * cpc;
     var cac = budget / c;
@@ -25,5 +26,6 @@
         : '🔴 지금 숫자로는 광고비가 이익보다 큽니다. 전환율(전화·예약 버튼, 리뷰)을 먼저 높이거나 객단가가 높은 상품으로 광고하세요.') + '</div>';
     html += '<p class="tool-fine">예산이 너무 작으면 구글이 학습할 데이터가 부족합니다. 처음엔 월 $300 안팎으로 4주 테스트하는 방법을 권합니다 — <a href="/blog/google-ads-small-budget-guide/">최소 예산 설계 가이드</a></p>';
     T.show(out, html);
+    });
   });
 })();

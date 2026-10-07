@@ -1,9 +1,11 @@
 /**
  * 무료 도구 API — POST /api/tools/{tool}
  * 도구 목록·한도는 _shared.js의 LIMITS. 화면은 build.js가 만드는 /tools/{tool}/ 페이지.
- * 광고 예산 계산기는 브라우저 계산만 하므로 여기 없다.
+ * 모든 도구는 이메일(필수)·전화(선택)를 받아 tool_leads에 남긴다 — 무료 도구의 대가. 입력 내용·결과는 저장하지 않는다.
+ * 광고 예산 계산기는 계산은 브라우저에서 하고, 여기서는 리드 기록과 횟수만 처리한다.
  */
-import { json, originAllowed, takeQuota, QUOTA_MSG, claude, jsonOf, textOf, placesSearch, clip, POLICY } from './_shared.js';
+import { json, originAllowed, takeQuota, QUOTA_MSG, claude, jsonOf, textOf, placesSearch, clip, POLICY, saveLead, validEmail } from './_shared.js';
+import { notify, esc } from '../_notify.js';
 
 const HANDLERS = {
   'review-link': reviewLink,
@@ -13,6 +15,13 @@ const HANDLERS = {
   'gbp-post': gbpPost,
   'menu-to-web': menuToWeb,
   'bilingual-intro': bilingualIntro,
+  'ads-budget': adsBudget,
+  'local-rank': localRank,
+};
+
+const TOOL_NAMES = {
+  'review-link': '리뷰 링크·QR', 'review-reply': '리뷰 답글', 'nap-check': '가게 정보 일치', 'ai-check': 'AI 추천 체크',
+  'gbp-post': '프로필 게시물', 'menu-to-web': '웹 메뉴 변환', 'bilingual-intro': '한/영 소개문', 'ads-budget': '광고 예산 계산', 'local-rank': '로컬 순위 체크',
 };
 
 export async function onRequestPost(context) {
@@ -31,11 +40,29 @@ export async function onRequestPost(context) {
     return json({ ok: false, error: '입력값을 확인해 주세요.' }, 400);
   }
 
-  // 입력 검증 실패는 횟수를 차감하지 않는다 — 각 도구가 외부 API를 부르기 직전에 charge()를 호출한다
+  const email = clip(input && input.email, 200).toLowerCase();
+  const phone = clip(input && input.phone, 40);
+  if (!validEmail(email)) return json({ ok: false, error: '이메일을 정확히 입력해 주세요.' }, 400);
+
+  // 입력 검증 실패는 횟수를 차감하지 않는다 — 각 도구가 외부 API를 부르기 직전에 charge()를 호출한다.
+  // charge(key)의 key를 바꾸면 같은 도구 안에서도 다른 한도로 센다(예: 로컬 순위의 가게 찾기 단계)
   let q = null;
-  const charge = async () => {
-    q = await takeQuota(env, request, tool);
-    if (!q.ok) throw Object.assign(new Error('quota'), { quota: q.reason });
+  const charge = async (key) => {
+    const qk = key || tool;
+    const r = await takeQuota(env, request, qk, email);
+    if (!r.ok) throw Object.assign(new Error('quota'), { quota: r.reason });
+    if (qk !== tool) return; // 보조 단계는 리드·남은 횟수에 반영하지 않는다
+    q = r;
+    const business = clip(input.business || input.bizName || input.query, 120);
+    const first = await saveLead(env, { email, phone, tool, business });
+    if (first) {
+      context.waitUntil(notify(env, `🧰 무료 도구 새 이용자 — ${TOOL_NAMES[tool] || tool}`, [
+        ['도구', esc(TOOL_NAMES[tool] || tool)],
+        ['이메일', esc(email)],
+        ['전화', esc(phone || '-')],
+        ['업체', esc(business || '-')],
+      ]));
+    }
   };
 
   try {
@@ -280,4 +307,92 @@ ${POLICY}
   });
   const out = jsonOf(resp);
   return { en: clip(out.en, 750), ko: clip(out.ko, 750), keywords: (out.keywords || []).slice(0, 6).map((k) => clip(k, 60)) };
+}
+
+/* ---------- 8. 광고 예산 계산기 — 계산은 브라우저, 여기선 리드·횟수만 ---------- */
+async function adsBudget(input, env, charge) {
+  await charge();
+  return {};
+}
+
+/* ---------- 9. 로컬 순위 체크 (지도 순위 그리드) ----------
+ * 1단계 find: 가게 찾기(이름·주소·좌표 — Text Search Pro 1회, 별도 한도 'local-rank-find')
+ * 2단계 run : 가게 주변 7×7 지점마다 "키워드"를 검색해 우리 가게 순위를 센다.
+ *   지점 검색은 places.id만 요청 → Text Search Essentials(IDs Only) SKU, 구글 기준 무료·무제한.
+ *   중심점 1곳만 Pro로 상위 3곳 이름을 가져온다.
+ * 주의: Places API 순위는 실제 구글 지도 앱 순위의 근사치다(개인화·광고 제외). 화면에 명시한다.
+ */
+const GRID = 7;
+
+async function localRank(input, env, charge) {
+  if (input.step === 'find') {
+    const query = clip(input.query, 200);
+    if (query.length < 2) return { error: '업체명과 도시를 입력해 주세요.' };
+    await charge('local-rank-find');
+    const places = await placesSearch(env, query, ['id', 'displayName', 'formattedAddress', 'location'], 5);
+    return {
+      candidates: places.filter((p) => p.location).map((p) => ({
+        id: p.id, name: (p.displayName && p.displayName.text) || '', address: p.formattedAddress || '',
+        lat: p.location.latitude, lng: p.location.longitude,
+      })),
+    };
+  }
+  const placeId = clip(input.placeId, 200);
+  const keyword = clip(input.keyword, 80);
+  const lat = Number(input.lat), lng = Number(input.lng);
+  const radiusMi = [0.5, 1, 2, 3, 5].includes(Number(input.radius)) ? Number(input.radius) : 2;
+  if (!placeId || !keyword || !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+    return { error: '가게를 먼저 고르고 검색 키워드를 입력해 주세요.' };
+  }
+  await charge();
+  const half = (GRID - 1) / 2;
+  const step = radiusMi / half; // 지점 간격(마일)
+  const dLat = step / 69.0;
+  const dLng = step / (69.0 * Math.cos((lat * Math.PI) / 180));
+  const biasM = Math.max(400, Math.round(step * 1609.34 * 0.7));
+  const points = [];
+  for (let r = 0; r < GRID; r++) {
+    for (let c = 0; c < GRID; c++) {
+      points.push({ r, c, lat: lat + (half - r) * dLat, lng: lng + (c - half) * dLng });
+    }
+  }
+  const rankAt = async (pt) => {
+    try {
+      const res = await placesSearch(env, keyword, ['id'], 20, {
+        locationBias: { circle: { center: { latitude: pt.lat, longitude: pt.lng }, radius: biasM } },
+        rankPreference: 'RELEVANCE',
+      });
+      const i = res.findIndex((p) => p.id === placeId);
+      return i >= 0 ? i + 1 : 0; // 0 = 20위 밖
+    } catch {
+      return -1; // 조회 실패
+    }
+  };
+  const ranks = new Array(points.length);
+  for (let i = 0; i < points.length; i += 10) {
+    const chunk = points.slice(i, i + 10);
+    const out = await Promise.all(chunk.map(rankAt));
+    out.forEach((v, k) => { ranks[i + k] = v; });
+  }
+  // 중심점 상위 3곳 이름 (Pro 1회)
+  let leaders = [];
+  try {
+    const top = await placesSearch(env, keyword, ['id', 'displayName'], 3, {
+      locationBias: { circle: { center: { latitude: lat, longitude: lng }, radius: biasM } },
+    });
+    leaders = top.map((p) => ({ name: (p.displayName && p.displayName.text) || '', isYou: p.id === placeId }));
+  } catch { /* 없어도 그리드는 보여준다 */ }
+  const grid = [];
+  for (let r = 0; r < GRID; r++) grid.push(ranks.slice(r * GRID, r * GRID + GRID));
+  const found = ranks.filter((v) => v > 0);
+  return {
+    grid,
+    radiusMi,
+    keyword,
+    avg: found.length ? Math.round((found.reduce((a, b) => a + b, 0) / found.length) * 10) / 10 : null,
+    top3: ranks.filter((v) => v > 0 && v <= 3).length,
+    outside: ranks.filter((v) => v === 0).length,
+    total: ranks.length,
+    leaders,
+  };
 }

@@ -2998,12 +2998,13 @@ const PRIVACY_HTML = `
 <p>BizHigher(이하 "회사", bizhigher.com)는 이용자의 개인정보를 소중히 다룹니다. 본 방침은 회사가 어떤 정보를 수집하고 어떻게 사용하는지 설명합니다.</p>
 <h2 class="h2-left">1. 수집하는 정보</h2>
 <p>• <b>직접 제공 정보</b>: 무료 진단 신청 및 주문 질문지를 통해 업체명, 담당자 성함, 이메일, 전화번호, 웹사이트·소셜 링크 등을 수집합니다.<br>
+• <b>무료 도구 이용 정보</b>: 무료 도구(/tools/) 이용 시 이메일(필수), 전화번호(선택), 입력한 업체명과 이용한 도구 이름을 수집합니다. 도구에 입력한 리뷰·메뉴 사진·소개문 등의 내용과 도구 결과는 결과 생성에만 쓰고 저장하지 않습니다. 하루 이용 횟수 제한을 위해 IP 주소를 일자별로 변환한 값(원본 IP 아님)을 하루 동안 사용합니다.<br>
 • <b>결제 정보</b>: 결제는 Stripe가 처리하며, 회사는 카드번호를 저장하지 않습니다.<br>
 • <b>자동 수집 정보</b>: Google Analytics 및 Microsoft Clarity를 통해 방문 기록, 기기·브라우저 정보, 사이트 이용 행태(쿠키 포함)가 수집될 수 있습니다.</p>
 <h2 class="h2-left">2. 이용 목적</h2>
-<p>서비스 제공 및 결과물 제작·전달, 주문·구독 관리, 고객 문의 응대, 서비스 개선과 사이트 분석, 서비스 관련 안내에 사용합니다. 이용자의 동의 없이 제3자에게 개인정보를 판매하지 않습니다.</p>
+<p>서비스 제공 및 결과물 제작·전달, 주문·구독 관리, 고객 문의 응대, 서비스 개선과 사이트 분석, 서비스 관련 안내에 사용합니다. 무료 도구·무료 진단 이용 시 남긴 이메일·전화번호로 마케팅 팁과 서비스 소식을 보낼 수 있으며, 이용자는 언제든 수신을 거부할 수 있습니다. 이용자의 동의 없이 제3자에게 개인정보를 판매하지 않습니다.</p>
 <h2 class="h2-left">3. 제3자 서비스</h2>
-<p>회사는 서비스 운영을 위해 다음 처리자를 이용합니다: Stripe(결제), Google Analytics(분석), Microsoft Clarity(분석), Cloudflare(호스팅·보안), Resend(이메일 발송). 각 서비스는 자체 개인정보처리방침에 따라 정보를 처리합니다.</p>
+<p>회사는 서비스 운영을 위해 다음 처리자를 이용합니다: Stripe(결제), Google Analytics(분석), Microsoft Clarity(분석), Cloudflare(호스팅·보안), Resend(이메일 발송), Anthropic(무료 진단·도구의 AI 처리), Google Maps Platform(장소 정보 조회). 각 서비스는 자체 개인정보처리방침에 따라 정보를 처리합니다.</p>
 <h2 class="h2-left">4. 보관 및 파기</h2>
 <p>개인정보는 서비스 제공에 필요한 기간 동안 보관하며, 목적 달성 후 관련 법령이 정한 기간을 제외하고 지체 없이 파기합니다. 구독 해지 후에도 법적 의무 이행을 위한 최소한의 거래 기록은 보관될 수 있습니다.</p>
 <h2 class="h2-left">5. 이용자의 권리</h2>
@@ -3130,10 +3131,26 @@ const TOOLS = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'tools.jso
 const TOOLS_SRC = path.join(__dirname, 'src', 'tools');
 const toolAssetVer = (f) => crypto.createHash('md5').update(fs.readFileSync(path.join(TOOLS_SRC, f))).digest('hex').slice(0, 8);
 
+/* 도구 아이콘 — 한 가지 색의 선 아이콘으로 통일(색은 CSS .tool-ico). 이모지는 쓰지 않는다 */
+const TOOL_ICONS = {
+  'review-link': '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM20 14v1M14 20h1M18 18v3h3"/>',
+  'review-reply': '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>',
+  'ads-budget': '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11v6M8 14h2M12 14h2M8 17h2M12 17h2"/>',
+  'local-rank': '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>',
+  'nap-check': '<path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11z"/><path d="M9.5 10l1.8 1.8 3.2-3.3"/>',
+  'ai-check': '<path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M18.5 15.5l.8 1.7 1.7.8-1.7.8-.8 1.7-.8-1.7-1.7-.8 1.7-.8z"/>',
+  'gbp-post': '<path d="M4 10v4h3l7 4V6L7 10z"/><path d="M17.5 9a4 4 0 0 1 0 6M7 14l1 5h2.5l-1-5"/>',
+  'menu-to-web': '<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 11h7M9 14h7M9 17h4"/>',
+  'bilingual-intro': '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/>',
+};
+function toolIcon(slug, cls) {
+  return `<span class="tool-ico${cls ? ' ' + cls : ''}" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${TOOL_ICONS[slug] || TOOL_ICONS['local-rank']}</svg></span>`;
+}
+
 function toolCard(t) {
   return `
 <a href="/tools/${t.slug}/" class="prod-card tool-card">
-  <span class="tool-card-icon" aria-hidden="true">${t.icon}</span>
+  <span class="tool-card-top">${toolIcon(t.slug)}<span class="tool-free">Free</span></span>
   <h3 class="h3">${t.name}</h3>
   <p class="body-sm">${t.short}</p>
   <span class="card-cta">무료로 쓰기 →</span>
@@ -3142,12 +3159,13 @@ function toolCard(t) {
 
 function toolsIndexPage() {
   const url = `${SITE.domain}/tools/`;
+  const intro = loadServiceGuide('_index', 'tools');
   const crumbs = [{ name: '홈', url: `${SITE.domain}/` }, { name: '무료 도구', url }];
   const jsonLd = [
     {
       '@context': 'https://schema.org',
       '@type': 'CollectionPage',
-      name: '한인 사장님 무료 마케팅 도구',
+      name: '무료 마케팅 도구',
       url,
       inLanguage: 'ko',
       isPartOf: { '@id': WEBSITE_ID },
@@ -3163,6 +3181,13 @@ function toolsIndexPage() {
     },
     breadcrumbList(crumbs),
   ];
+  if (intro && intro.faqs.length) {
+    jsonLd.push({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: intro.faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+    });
+  }
   const ext = TOOLS.externalGroups.map((g) => `
     <h3 class="h3 tool-ext-head">${g.name}</h3>
     <div class="tool-ext-list">
@@ -3173,16 +3198,16 @@ function toolsIndexPage() {
       </a>`).join('')}
     </div>`).join('');
   return head({
-    title: '무료 마케팅 도구 — 구글 리뷰 링크·리뷰 답글·광고 예산 계산기 | BizHigher',
-    description: '미국 한인 사장님을 위한 무료 마케팅 도구 모음. 구글 리뷰 링크·QR, 한/영 리뷰 답글, 광고 예산 계산, 가게 정보 일치 체크, AI 추천 체크까지 가입 없이 바로 쓰세요.',
+    title: '무료 마케팅 도구 — 구글 지도 순위·리뷰 링크·리뷰 답글·광고 예산 | BizHigher',
+    description: '구글 지도 순위 체크, 구글 리뷰 링크·QR, 한/영 리뷰 답글, 광고 예산 계산, 가게 정보 일치, AI 추천 체크까지. 동네 가게 마케팅에 바로 쓰는 무료 도구 모음입니다.',
     pathName: '/tools/',
     jsonLd,
   }) + nav('tools') + `
 <header class="page-head">
   <div class="container">
     ${crumbsHtml(crumbs)}
-    <h1 class="page-title">한인 사장님 무료 마케팅 도구</h1>
-    <p class="page-sub" style="max-width:760px;line-height:1.7;">가입 없이 바로 쓰는 도구 ${TOOLS.own.length}가지와, 함께 쓰면 좋은 검증된 외부 무료 도구를 모았습니다. 모두 한국어로 안내합니다.</p>
+    <h1 class="page-title">무료 마케팅 도구</h1>
+    <p class="page-sub" style="max-width:760px;line-height:1.7;">대행사에 맡기기 전에, 우리 가게가 지금 어디에 서 있는지 직접 확인해 보세요. 회원가입 없이 이메일만 남기면 쓰는 도구 ${TOOLS.own.length}가지와, 로그인 없이 쓰는 공식 무료 도구를 모았습니다.</p>
   </div>
 </header>
 <section class="section" style="padding-top:8px;">
@@ -3194,10 +3219,23 @@ function toolsIndexPage() {
 <section class="section section-gray">
   <div class="container">
     <h2 class="h2-left" style="margin-top:0;">함께 쓰면 좋은 외부 무료 도구</h2>
-    <p class="body-sm" style="margin:-8px 0 8px;">구글·애플·메타 등이 직접 제공하는 공식 도구 위주로 골랐습니다. 링크는 새 창으로 열립니다.</p>
+    <p class="body-sm" style="margin:-8px 0 8px;">구글·메타·schema.org가 공개한, 로그인 없이 바로 쓰는 공식 도구만 골랐습니다. 링크는 새 창으로 열립니다.</p>
     ${ext}
   </div>
 </section>
+${intro && intro.guide ? `
+<section class="section svc-guide">
+  <div class="container-narrow">
+    <article class="post-body">${mdToHtml(intro.guide).html}</article>
+  </div>
+</section>` : ''}
+${intro && intro.faqs.length ? `
+<section class="section section-gray">
+  <div class="container-narrow">
+    <h2 class="h2">자주 묻는 질문</h2>
+    ${intro.faqs.map((f, k) => `<details class="faq-item"${k === 0 ? ' open' : ''}><summary class="faq-q">${f.q}</summary><p class="faq-a">${f.a}</p></details>`).join('')}
+  </div>
+</section>` : ''}
 ` + FOOTER;
 }
 
@@ -3242,16 +3280,16 @@ function toolPage(t) {
     ? `<script src="/assets/tools/qrcode.min.js?v=${toolAssetVer('qrcode.min.js')}"></script>`
     : '';
   return head({
-    title: `${t.name} — 무료, 가입 없이 | BizHigher`,
-    description: `${t.short} 미국 한인 사장님을 위한 무료 도구로, 가입 없이 바로 쓸 수 있습니다.`,
+    title: `${t.name} — 무료 마케팅 도구 | BizHigher`,
+    description: `${t.short} 회원가입 없이 이메일만 남기면 무료로 쓸 수 있는 BizHigher 마케팅 도구입니다.`,
     pathName: `/tools/${t.slug}/`,
     jsonLd,
   }) + nav('tools') + `
 <header class="page-head">
   <div class="container-narrow">
     ${crumbsHtml(crumbs)}
-    <span class="badge">무료 도구</span>
-    <h1 class="page-title tool-title"><span aria-hidden="true">${t.icon}</span> ${t.name}</h1>
+    <div class="tool-head">${toolIcon(t.slug, 'tool-ico-lg')}<span class="tool-free">Free</span></div>
+    <h1 class="page-title tool-title">${t.name}</h1>
     <p class="page-sub">${t.short}</p>
   </div>
 </header>
@@ -3389,7 +3427,7 @@ ${loadReports().map((x) => `- ${x.title}: https://bizhigher.com/data/${x.slug}/ 
 
 ## 무료 도구
 - 무료 AI 마케팅 진단 (60초, 가입 불필요): https://bizhigher.com/free-audit/ — 구글 노출·리뷰·웹사이트·SNS·경쟁사 대비 5개 영역 점수와 개선 우선순위 제공
-${TOOLS.own.map((t) => `- ${t.name} (무료, 가입 불필요): https://bizhigher.com/tools/${t.slug}/ — ${t.short}`).join('\n')}
+${TOOLS.own.map((t) => `- ${t.name} (무료, 이메일만 입력): https://bizhigher.com/tools/${t.slug}/ — ${t.short}`).join('\n')}
 
 ## 블로그 (한인 비즈니스 마케팅 가이드)
 ${loadPosts().map((p) => `- ${p.title}: https://bizhigher.com/blog/${p.slug}/`).join('\n')}

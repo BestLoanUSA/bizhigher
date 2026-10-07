@@ -201,7 +201,9 @@ async function api(db, method, seg, body, url) {
   }
   if (res === 'leads' && method === 'GET') {
     const rows = await safeAll(db, `SELECT l.*, (SELECT id FROM reports WHERE lead_id = l.id ORDER BY rowid DESC LIMIT 1) report_id FROM audit_leads l ORDER BY l.id DESC LIMIT 300`);
-    return { leads: rows };
+    // 무료 도구(/tools/) 이용 리드 — 테이블은 첫 도구 이용 때 자동 생성되므로 없으면 빈 목록
+    const toolLeads = await safeAll(db, `SELECT email, MAX(phone) phone, MAX(business) business, GROUP_CONCAT(DISTINCT tool) tools, COUNT(*) uses, MAX(created_at) last_at FROM tool_leads GROUP BY email ORDER BY last_at DESC LIMIT 300`);
+    return { leads: rows, toolLeads };
   }
   if (res === 'reports' && method === 'GET') {
     const created = (await hasColumn(db, 'reports', 'created_at')) ? 'created_at' : `NULL created_at`;

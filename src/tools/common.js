@@ -6,8 +6,32 @@
     return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   };
 
+  /* 이용자 이메일(필수)·전화(선택) — 무료 도구의 대가. 한 번 입력하면 이 브라우저에 기억해 다음부터 자동 입력 */
+  var LS = 'bh_tools_contact';
+  function remembered() { try { return JSON.parse(localStorage.getItem(LS) || '{}'); } catch (e) { return {}; } }
+  function remember(c) { try { localStorage.setItem(LS, JSON.stringify(c)); } catch (e) {} }
+  T.contact = function () {
+    var f = document.getElementById('tool-form');
+    var c = { email: f && f.email ? f.email.value.trim() : '', phone: f && f.phone ? f.phone.value.trim() : '' };
+    if (c.email) remember(c);
+    return c;
+  };
+  function leadBlock() {
+    var c = remembered();
+    var d = document.createElement('div');
+    d.className = 'tool-lead';
+    d.innerHTML = '<div class="tool-row"><div><label class="tool-label">이메일 <span class="tool-req">필수</span></label>' +
+      '<input class="input" type="email" name="email" required maxlength="200" autocomplete="email" placeholder="you@example.com" value="' + T.esc(c.email || '') + '"></div>' +
+      '<div><label class="tool-label">휴대폰 <span class="tool-opt">선택</span></label>' +
+      '<input class="input" type="tel" name="phone" maxlength="40" autocomplete="tel" placeholder="(213) 555-0123" value="' + T.esc(c.phone || '') + '"></div></div>' +
+      '<p class="tool-fine">이메일을 남기시면 도구를 무료로 쓰실 수 있습니다(도구별 하루 2회). 마케팅 팁과 BizHigher 소식을 보내드릴 수 있고, 언제든 수신 거부할 수 있습니다. 입력하신 가게 정보·결과는 저장하지 않습니다 · <a href="/privacy/">개인정보처리방침</a></p>';
+    return d;
+  }
+
   /* POST /api/tools/{tool} — 실패하면 사용자에게 보여줄 문장을 담아 throw */
   T.call = function (tool, body) {
+    var c = T.contact();
+    body = Object.assign({}, body, { email: c.email, phone: c.phone });
     return fetch('/api/tools/' + tool, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -24,6 +48,7 @@
   /* 폼 제출 공통 처리: 버튼 잠금 + 진행 문구 + 오류 표시 */
   T.bind = function (form, run) {
     var btn = form.querySelector('button[type=submit]');
+    if (btn && !form.querySelector('.tool-lead')) form.insertBefore(leadBlock(), btn);
     var msg = form.querySelector('.tool-msg');
     var label = btn ? btn.textContent : '';
     form.addEventListener('submit', function (e) {

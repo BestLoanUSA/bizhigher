@@ -1872,7 +1872,29 @@ img { max-width: 100%; display: block; }
 .tool-sources { margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.8; overflow-wrap: anywhere; }
 .tool-post { display: grid; gap: 10px; padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: #FBFCFE; }
 .tool-post-img { aspect-ratio: 4 / 3; max-width: 320px; border-radius: 12px; background: linear-gradient(135deg, var(--blue-600), #7B5CFF); color: #fff; display: flex; align-items: center; justify-content: center; text-align: center; font-weight: 900; font-size: 24px; padding: 16px; }
-.tool-card-icon { font-size: 28px; line-height: 1; }
+.tool-card-top, .tool-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.tool-head { justify-content: flex-start; margin: 6px 0 14px; }
+.tool-ico { width: 52px; height: 52px; border-radius: 14px; background: var(--blue-50); color: var(--blue-600); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.tool-ico svg { width: 26px; height: 26px; }
+.tool-ico-lg { width: 60px; height: 60px; border-radius: 16px; }
+.tool-ico-lg svg { width: 30px; height: 30px; }
+.tool-free { font-size: 13px; font-weight: 700; color: var(--green-600); background: #E7F7EE; border-radius: 999px; padding: 5px 14px; }
+.tool-lead { display: grid; gap: 8px; padding: 14px; border-radius: 14px; background: #F7F9FC; border: 1px dashed var(--line); }
+.tool-req, .tool-opt { font-size: 11.5px; font-weight: 700; border-radius: 6px; padding: 2px 6px; margin-left: 4px; vertical-align: 1px; }
+.tool-req { color: var(--blue-600); background: var(--blue-50); }
+.tool-opt { color: var(--ink-600); background: #EEF0F4; }
+.rank-wrap { display: grid; gap: 10px; justify-items: center; }
+.rank-compass { font-size: 12px; font-weight: 700; color: var(--ink-400); }
+.rank-grid { display: grid; gap: 6px; width: 100%; max-width: 440px; }
+.rank-cell { aspect-ratio: 1; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: #fff; min-width: 26px; }
+.rank-cell.is-center { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--ink-900); }
+.r-top { background: #0B9E58; }
+.r-mid { background: #E3A008; }
+.r-low { background: #F0712C; }
+.r-out { background: #D3382F; font-size: 11px; }
+.r-na { background: #C3C8D2; }
+.rank-legend { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; justify-content: center; font-size: 12.5px; color: var(--ink-600); }
+.rank-legend .rank-cell { width: 30px; height: 30px; min-width: 0; font-size: 10px; }
 .tool-ext-head { margin: 28px 0 12px; }
 .tool-ext-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 .tool-ext { display: grid; gap: 6px; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px; color: inherit; text-decoration: none; }
