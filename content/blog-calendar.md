@@ -29,6 +29,7 @@
 
 | 상태 | 제목 | slug |
 |---|---|---|
+| ✅ 2026-10-08 | 식당·학원·뷰티샵의 시즌 마케팅 캘린더 — 연중 놓치면 아까운 시기들 | seasonal-marketing-calendar |
 | ✅ 2026-10-06 | 숏폼 영상, 우리 가게도 해야 할까? — 릴스·틱톡 현실적인 시작법 | shortform-video-guide |
 | ✅ 2026-10-05 | 홈페이지 방문자는 있는데 전화가 안 오는 이유 | website-visitors-no-calls |
 | ✅ 2026-10-02 | 한인 손님 vs 현지 손님 — 두 마리 토끼 잡는 이중 언어 마케팅 | bilingual-marketing-korean-local-customers |
@@ -53,7 +54,6 @@
 
 | 상태 | 제목 | 카테고리 | related |
 |---|---|---|---|
-| ⬜ | 식당·학원·뷰티샵의 시즌 마케팅 캘린더 — 연중 놓치면 아까운 시기들 | 광고 | ad-creative-pack |
 | ⬜ | 구글 AI 요약(AI Overviews)에 내 가게가 나오게 하려면 | AI 검색 | seo-aio |
 | ⬜ | 2026년 로컬 마케팅 결산 — 한인 가게가 내년에 준비할 3가지 | AI 검색 | seo-aio |
 | ⬜ | 구글 프로필 Q&A 기능 활용법 — 손님 질문에 먼저 답해두기 | 구글 노출 | google-profile-optimization |
