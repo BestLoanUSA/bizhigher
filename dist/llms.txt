@@ -46,6 +46,7 @@
 - 한/영 가게 소개문 생성기 (무료, 이메일만 입력): https://bizhigher.com/tools/bilingual-intro/ — 한국어로 쓴 가게 소개를 구글 프로필 규격(750자)에 맞는 자연스러운 영어·한국어 소개로 다듬습니다.
 
 ## 블로그 (한인 비즈니스 마케팅 가이드)
+- 구글 AI 요약(AI Overviews)에 내 가게가 나오게 하려면: https://bizhigher.com/blog/google-ai-overviews-local-business/
 - 식당·학원·뷰티샵의 시즌 마케팅 캘린더 — 연중 놓치면 아까운 시기들: https://bizhigher.com/blog/seasonal-marketing-calendar/
 - 숏폼 영상, 우리 가게도 해야 할까? — 릴스·틱톡 현실적인 시작법: https://bizhigher.com/blog/shortform-video-guide/
 - 홈페이지 방문자는 있는데 전화가 안 오는 이유: https://bizhigher.com/blog/website-visitors-no-calls/
