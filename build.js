@@ -3144,6 +3144,9 @@ const TOOL_ICONS = {
   'review-calc': '<path d="M12 3.5l2.3 4.8 5.2.7-3.8 3.6.9 5.2-4.6-2.5-4.6 2.5.9-5.2L4.5 9l5.2-.7z"/><path d="M17.5 17.5h4M19.5 15.5v4"/>',
   'utm-builder': '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
   'ad-copy-check': '<path d="M4 7V5h12v2M10 5v13M7.5 18h5"/><path d="M15 15l2 2 4-4"/>',
+  'competitor-reviews': '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  'ad-keywords': '<circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5.5 5.5M8 10.5h5M10.5 8v5"/>',
+  'schema-generator': '<path d="M8 6l-5 6 5 6M16 6l5 6-5 6M13.5 4l-3 16"/>',
   'bilingual-intro': '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/>',
 };
 function toolIcon(slug, cls) {

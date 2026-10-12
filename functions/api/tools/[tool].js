@@ -4,7 +4,7 @@
  * 모든 도구는 이메일(필수)·전화(선택)를 받아 tool_leads에 남긴다 — 무료 도구의 대가. 입력 내용·결과는 저장하지 않는다.
  * 광고 예산 계산기는 계산은 브라우저에서 하고, 여기서는 리드 기록과 횟수만 처리한다.
  */
-import { json, originAllowed, takeQuota, QUOTA_MSG, claude, jsonOf, textOf, placesSearch, clip, POLICY, saveLead, validEmail } from './_shared.js';
+import { json, originAllowed, takeQuota, QUOTA_MSG, claude, jsonOf, textOf, placesSearch, placeDetails, clip, POLICY, saveLead, validEmail } from './_shared.js';
 import { notify, esc } from '../_notify.js';
 
 const HANDLERS = {
@@ -21,12 +21,16 @@ const HANDLERS = {
   'review-calc': adsBudget,
   'utm-builder': adsBudget,
   'ad-copy-check': adsBudget,
+  'schema-generator': adsBudget,
+  'competitor-reviews': competitorReviews,
+  'ad-keywords': adKeywords,
 };
 
 const TOOL_NAMES = {
   'review-link': '리뷰 링크·QR', 'review-reply': '리뷰 답글', 'nap-check': '가게 정보 일치', 'ai-check': 'AI 추천 체크',
   'gbp-post': '프로필 게시물', 'menu-to-web': '웹 메뉴 변환', 'bilingual-intro': '한/영 소개문', 'ads-budget': '광고 예산 계산', 'local-rank': '로컬 순위 체크',
   'review-calc': '리뷰 별점 계산', 'utm-builder': '광고 링크 추적', 'ad-copy-check': '광고 문구 글자 수',
+  'competitor-reviews': '경쟁 가게 리뷰 비교', 'ad-keywords': '광고 키워드', 'schema-generator': '스키마 생성',
 };
 
 export async function onRequestPost(context) {
@@ -400,4 +404,78 @@ async function localRank(input, env, charge) {
     total: ranks.length,
     leaders,
   };
+}
+
+/* ---------- 10. 경쟁 가게 리뷰 비교 ----------
+ * 1단계 find: 가게 찾기(Pro, 보조 한도 'competitor-find')
+ * 2단계 run : 가게 위치 주변에서 키워드 상위 10곳의 별점·리뷰 수(Enterprise 1회) + 우리 가게가 목록에 없으면 상세 1회.
+ * 결과는 화면에만 보여주고 저장하지 않는다(CLAUDE.md §14).
+ */
+async function competitorReviews(input, env, charge) {
+  if (input.step === 'find') {
+    const query = clip(input.query, 200);
+    if (query.length < 2) return { error: '업체명과 도시를 입력해 주세요.' };
+    await charge('competitor-find');
+    const places = await placesSearch(env, query, ['id', 'displayName', 'formattedAddress', 'location'], 5);
+    return {
+      candidates: places.filter((p) => p.location).map((p) => ({
+        id: p.id, name: (p.displayName && p.displayName.text) || '', address: p.formattedAddress || '',
+        lat: p.location.latitude, lng: p.location.longitude,
+      })),
+    };
+  }
+  const placeId = clip(input.placeId, 200);
+  const keyword = clip(input.keyword, 80);
+  const lat = Number(input.lat), lng = Number(input.lng);
+  const radiusMi = [1, 3, 5, 10].includes(Number(input.radius)) ? Number(input.radius) : 3;
+  if (!placeId || !keyword || !Number.isFinite(lat) || !Number.isFinite(lng)) return { error: '가게를 먼저 고르고 업종 키워드를 입력해 주세요.' };
+  await charge();
+  const fields = ['id', 'displayName', 'rating', 'userRatingCount', 'formattedAddress'];
+  const found = await placesSearch(env, keyword, fields, 10, {
+    locationBias: { circle: { center: { latitude: lat, longitude: lng }, radius: Math.round(radiusMi * 1609.34) } },
+  });
+  const map = (p, rank) => ({
+    id: p.id, name: (p.displayName && p.displayName.text) || '', address: p.formattedAddress || '',
+    rating: typeof p.rating === 'number' ? p.rating : null, count: p.userRatingCount || 0, rank,
+  });
+  const list = found.map((p, i) => map(p, i + 1));
+  let me = list.find((x) => x.id === placeId) || null;
+  if (!me) {
+    try { me = map(await placeDetails(env, placeId, fields), null); } catch { me = null; }
+  }
+  if (!me) return { error: '우리 가게 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.' };
+  return { keyword, radiusMi, me, competitors: list.filter((x) => x.id !== placeId) };
+}
+
+/* ---------- 11. 구글 광고 키워드·제외 키워드 ---------- */
+async function adKeywords(input, env, charge) {
+  const bizType = clip(input.bizType, 80);
+  const area = clip(input.area, 120);
+  if (!bizType || !area) return { error: '업종과 지역을 입력해 주세요.' };
+  const lang = ['ko', 'en', 'both'].includes(input.lang) ? input.lang : 'both';
+  await charge();
+  const resp = await claude(env, {
+    max_tokens: 3000,
+    system: `너는 미국 한인 소상공인의 구글 검색 광고 키워드를 짜는 광고 담당자다.
+${POLICY}
+- 검색량·클릭 단가 숫자를 지어내지 않는다. 숫자는 쓰지 않는다
+- 경쟁 업체 상호·상표는 키워드로 넣지 않는다
+- 손님이 실제로 "지금 가게를 찾을 때" 치는 말 위주(구매 의도). 정보만 찾는 말(레시피, 만드는 법, 역사)은 제외 키워드로 보낸다
+- 지역 키워드는 입력한 지역과 바로 옆 동네 정도만. 멀리 있는 지역은 넣지 않는다
+- 키워드 그룹 3~5개, 그룹당 5~8개. match는 "phrase" 또는 "exact"
+- 제외 키워드는 15~30개: 채용(jobs, hiring, 구인), 무료(free), 셀프·DIY·레시피, 중고·도매, 교육·자격증, 불만 검색 등 이 업종에서 돈만 새는 말. 각 항목에 짧은 이유(why)
+- 언어: ${lang === 'ko' ? '한국어 키워드만' : lang === 'en' ? '영어 키워드만' : '한국어와 영어 섞어서(현지 손님이 많으면 영어 비중을 높게)'}
+반드시 JSON만 출력: {"groups":[{"theme":"그룹 이름","keywords":[{"kw":"...","match":"phrase"}]}],"negatives":[{"kw":"...","why":"..."}],"tips":["짧은 조언 2~3개"]}`,
+    messages: [{
+      role: 'user',
+      content: `업종: ${bizType}\n지역: ${area}\n대표 메뉴·서비스(있으면): ${clip(input.services, 400) || '없음'}\n가게 이름(키워드에 넣지 말 것, 참고만): ${clip(input.bizName, 80) || '없음'}`,
+    }],
+  });
+  const out = jsonOf(resp);
+  const groups = (out.groups || []).slice(0, 6).map((g) => ({
+    theme: clip(g.theme, 60),
+    keywords: (g.keywords || []).slice(0, 10).map((k) => ({ kw: clip(k.kw, 80), match: k.match === 'exact' ? 'exact' : 'phrase' })).filter((k) => k.kw),
+  })).filter((g) => g.keywords.length);
+  const negatives = (out.negatives || []).slice(0, 40).map((n) => ({ kw: clip(n.kw, 60), why: clip(n.why, 80) })).filter((n) => n.kw);
+  return { groups, negatives, tips: (out.tips || []).slice(0, 4).map((t) => clip(t, 200)) };
 }

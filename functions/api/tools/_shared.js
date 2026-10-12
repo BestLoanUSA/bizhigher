@@ -23,8 +23,12 @@ export const LIMITS = {
   'review-calc': { perUser: 2, global: 1000 },
   'utm-builder': { perUser: 2, global: 1000 },
   'ad-copy-check': { perUser: 2, global: 1000 },
+  'competitor-reviews': { perUser: 2, global: 100 },
+  'ad-keywords': { perUser: 2, global: 200 },
+  'schema-generator': { perUser: 2, global: 1000 },
   // 로컬 순위의 1단계(가게 찾기)는 횟수 안내 대상이 아닌 보조 한도
   'local-rank-find': { perUser: 6, global: 500 },
+  'competitor-find': { perUser: 6, global: 300 },
 };
 
 export function json(obj, status) {
@@ -175,6 +179,16 @@ export async function placesSearch(env, textQuery, fields, pageSize, extra) {
   if (!res.ok) throw new Error('places ' + res.status);
   const data = await res.json();
   return data.places || [];
+}
+
+/* 장소 1곳 상세 — 필드 등급은 searchText와 같은 규칙(rating·userRatingCount는 Enterprise) */
+export async function placeDetails(env, placeId, fields) {
+  if (!env.GOOGLE_PLACES_API_KEY) throw new Error('no-places');
+  const res = await fetch('https://places.googleapis.com/v1/places/' + encodeURIComponent(placeId), {
+    headers: { 'X-Goog-Api-Key': env.GOOGLE_PLACES_API_KEY, 'X-Goog-FieldMask': fields.join(',') },
+  });
+  if (!res.ok) throw new Error('places ' + res.status);
+  return res.json();
 }
 
 export function clip(v, n) {

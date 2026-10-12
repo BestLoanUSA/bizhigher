@@ -1,0 +1,13 @@
+<form class="tool-box" id="tool-form">
+  <label class="tool-label">우리 가게 (업체명과 도시)</label>
+  <input class="input" name="query" placeholder="예: Seoul Garden Duluth GA" required maxlength="200">
+  <div class="tool-row">
+    <div><label class="tool-label">업종 키워드 (손님이 검색하는 말)</label><input class="input" name="keyword" required maxlength="80" placeholder="예: korean bbq, dentist, nail salon"></div>
+    <div><label class="tool-label">비교할 범위</label>
+      <select class="input" name="radius"><option value="1">1마일</option><option value="3" selected>3마일</option><option value="5">5마일</option><option value="10">10마일</option></select></div>
+  </div>
+  <button type="submit" class="btn btn-primary btn-block" data-busy="경쟁 가게 찾는 중…">경쟁 가게와 비교하기</button>
+  <p class="tool-msg"></p>
+  <p class="tool-fine">구글 지도에서 같은 키워드로 검색했을 때 상위에 나오는 가게 10곳의 별점·리뷰 수를 우리 가게와 나란히 보여줍니다 · 구글 지도 데이터 기준, 결과는 저장하지 않습니다</p>
+</form>
+<div class="tool-result" id="tool-result" hidden></div>

@@ -9,7 +9,7 @@
   };
 
   T.bind(form, function () {
-    var myPhone = dig(form.phone.value), myZip = (form.zip.value.match(/\d{5}/) || [''])[0];
+    var myPhone = dig(form.bizPhone.value), myZip = (form.zip.value.match(/\d{5}/) || [''])[0];
     return T.call('nap-check', { business: form.business.value, location: form.location.value, website: form.website.value }).then(function (d) {
       var g = (d.google || [])[0];
       if (!g) throw new Error('구글 지도에서 가게를 찾지 못했습니다. 간판의 영어 이름으로 다시 시도해 보세요.');
