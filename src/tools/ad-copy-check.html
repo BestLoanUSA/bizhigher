@@ -1,0 +1,16 @@
+<form class="tool-box" id="tool-form">
+  <label class="tool-label">어디에 쓸 문구인가요</label>
+  <select class="input" name="platform">
+    <option value="google" selected>구글 검색 광고 (반응형 검색 광고)</option>
+    <option value="meta">페이스북·인스타 광고</option>
+    <option value="gbp">구글 비즈니스 프로필 (게시물·설명)</option>
+  </select>
+  <label class="tool-label" id="lab-a">광고 제목 — 한 줄에 하나씩 (최대 15개)</label>
+  <textarea class="input" name="a" rows="5" maxlength="3000" placeholder="LA 한식당 갈비 순두부&#10;평일 점심 세트 $12.95&#10;Korean Tofu Soup in LA"></textarea>
+  <label class="tool-label" id="lab-b">광고 설명 — 한 줄에 하나씩 (최대 4개)</label>
+  <textarea class="input" name="b" rows="3" maxlength="3000" placeholder="매일 아침 직접 만든 두부로 끓입니다. 가든그로브 2005년부터."></textarea>
+  <button type="submit" class="btn btn-primary btn-block">글자 수·규정 확인</button>
+  <p class="tool-msg"></p>
+  <p class="tool-fine">구글 광고는 한글·한자·일본어를 1자당 2자로 셉니다(구글 공식 기준) · 계산은 이 브라우저에서만 이뤄집니다</p>
+</form>
+<div class="tool-result" id="tool-result" hidden></div>

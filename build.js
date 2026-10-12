@@ -3141,6 +3141,9 @@ const TOOL_ICONS = {
   'ai-check': '<path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M18.5 15.5l.8 1.7 1.7.8-1.7.8-.8 1.7-.8-1.7-1.7-.8 1.7-.8z"/>',
   'gbp-post': '<path d="M4 10v4h3l7 4V6L7 10z"/><path d="M17.5 9a4 4 0 0 1 0 6M7 14l1 5h2.5l-1-5"/>',
   'menu-to-web': '<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 11h7M9 14h7M9 17h4"/>',
+  'review-calc': '<path d="M12 3.5l2.3 4.8 5.2.7-3.8 3.6.9 5.2-4.6-2.5-4.6 2.5.9-5.2L4.5 9l5.2-.7z"/><path d="M17.5 17.5h4M19.5 15.5v4"/>',
+  'utm-builder': '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  'ad-copy-check': '<path d="M4 7V5h12v2M10 5v13M7.5 18h5"/><path d="M15 15l2 2 4-4"/>',
   'bilingual-intro': '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/>',
 };
 function toolIcon(slug, cls) {
@@ -3276,7 +3279,7 @@ function toolPage(t) {
   const others = TOOLS.own.filter((x) => x.slug !== t.slug);
   const i = TOOLS.own.findIndex((x) => x.slug === t.slug);
   const pick = others.slice(i).concat(others.slice(0, i)).slice(0, 3);
-  const extraScripts = t.slug === 'review-link'
+  const extraScripts = ['review-link', 'utm-builder'].includes(t.slug)
     ? `<script src="/assets/tools/qrcode.min.js?v=${toolAssetVer('qrcode.min.js')}"></script>`
     : '';
   return head({

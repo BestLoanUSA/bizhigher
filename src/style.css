@@ -1931,3 +1931,19 @@ img { max-width: 100%; display: block; }
   .tp-en2 { font-size: 13px; margin: 2px 0 12px; color: #444; }
   .tp-name { font-size: 15px; font-weight: 800; margin: 0; }
 }
+
+/* 계산 결과 표 — 모바일에서도 표 모양 유지(.tool-table 기본은 모바일에서 행을 쌓는다) */
+@media (max-width: 720px) {
+  .tool-table.tool-table-plain { display: table; }
+  .tool-table.tool-table-plain tbody { display: table-row-group; }
+  .tool-table.tool-table-plain tr { display: table-row; padding: 0; }
+  .tool-table.tool-table-plain th, .tool-table.tool-table-plain td { display: table-cell; border-bottom: 1px solid var(--line); padding: 10px 8px; }
+  .tool-table.tool-table-plain td:last-child { padding-left: 8px; padding-top: 10px; }
+  .tool-table.tool-table-plain th { white-space: normal; }
+}
+.tool-copy-table td:last-child { white-space: nowrap; text-align: right; width: 1%; }
+.tool-copy-table td:first-child { color: var(--ink-400); }
+.ad-preview { border: 1px solid var(--line); border-radius: 14px; padding: 16px; background: #fff; display: grid; gap: 6px; font-family: Arial, sans-serif; }
+.ad-preview-tag { font-size: 12px; font-weight: 700; color: var(--ink-900); }
+.ad-preview-h { color: #1A0DAB; font-size: 18px; line-height: 1.35; }
+.ad-preview-d { color: #4D5156; font-size: 14px; line-height: 1.55; }

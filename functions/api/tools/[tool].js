@@ -17,11 +17,16 @@ const HANDLERS = {
   'bilingual-intro': bilingualIntro,
   'ads-budget': adsBudget,
   'local-rank': localRank,
+  // 아래 셋도 계산은 브라우저에서 한다 — 서버는 리드·횟수만
+  'review-calc': adsBudget,
+  'utm-builder': adsBudget,
+  'ad-copy-check': adsBudget,
 };
 
 const TOOL_NAMES = {
   'review-link': '리뷰 링크·QR', 'review-reply': '리뷰 답글', 'nap-check': '가게 정보 일치', 'ai-check': 'AI 추천 체크',
   'gbp-post': '프로필 게시물', 'menu-to-web': '웹 메뉴 변환', 'bilingual-intro': '한/영 소개문', 'ads-budget': '광고 예산 계산', 'local-rank': '로컬 순위 체크',
+  'review-calc': '리뷰 별점 계산', 'utm-builder': '광고 링크 추적', 'ad-copy-check': '광고 문구 글자 수',
 };
 
 export async function onRequestPost(context) {
@@ -309,7 +314,7 @@ ${POLICY}
   return { en: clip(out.en, 750), ko: clip(out.ko, 750), keywords: (out.keywords || []).slice(0, 6).map((k) => clip(k, 60)) };
 }
 
-/* ---------- 8. 광고 예산 계산기 — 계산은 브라우저, 여기선 리드·횟수만 ---------- */
+/* ---------- 8. 브라우저 계산 도구(광고 예산·리뷰 별점·광고 링크·광고 문구) — 여기선 리드·횟수만 ---------- */
 async function adsBudget(input, env, charge) {
   await charge();
   return {};

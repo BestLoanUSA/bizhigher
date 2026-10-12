@@ -20,6 +20,9 @@ export const LIMITS = {
   'gbp-post': { perUser: 2, global: 200 },
   'menu-to-web': { perUser: 2, global: 80 },
   'bilingual-intro': { perUser: 2, global: 200 },
+  'review-calc': { perUser: 2, global: 1000 },
+  'utm-builder': { perUser: 2, global: 1000 },
+  'ad-copy-check': { perUser: 2, global: 1000 },
   // 로컬 순위의 1단계(가게 찾기)는 횟수 안내 대상이 아닌 보조 한도
   'local-rank-find': { perUser: 6, global: 500 },
 };
