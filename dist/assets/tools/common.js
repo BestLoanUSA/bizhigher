@@ -11,8 +11,10 @@
   function remembered() { try { return JSON.parse(localStorage.getItem(LS) || '{}'); } catch (e) { return {}; } }
   function remember(c) { try { localStorage.setItem(LS, JSON.stringify(c)); } catch (e) {} }
   T.contact = function () {
-    var f = document.getElementById('tool-form');
-    var c = { email: f && f.email ? f.email.value.trim() : '', phone: f && f.phone ? f.phone.value.trim() : '' };
+    // 이용자 연락처 칸만 읽는다 — 도구 자체에 같은 이름(phone 등)의 칸이 생겨도 섞이지 않게
+    var lb = document.querySelector('#tool-form .tool-lead');
+    var em = lb && lb.querySelector('[name=email]'), ph = lb && lb.querySelector('[name=phone]');
+    var c = { email: em ? em.value.trim() : '', phone: ph ? ph.value.trim() : '' };
     if (c.email) remember(c);
     return c;
   };

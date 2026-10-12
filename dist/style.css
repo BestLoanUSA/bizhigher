@@ -1947,3 +1947,27 @@ img { max-width: 100%; display: block; }
 .ad-preview-tag { font-size: 12px; font-weight: 700; color: var(--ink-900); }
 .ad-preview-h { color: #1A0DAB; font-size: 18px; line-height: 1.35; }
 .ad-preview-d { color: #4D5156; font-size: 14px; line-height: 1.55; }
+
+/* 경쟁 가게 리뷰 비교 표 */
+.cmp-table tr.is-me { background: var(--blue-50); }
+.cmp-table th, .cmp-table td { vertical-align: middle; }
+.cmp-table tr:first-child th { white-space: nowrap; font-size: 13px; color: var(--ink-600); }
+.cmp-table td:nth-child(3) { white-space: nowrap; }
+.cmp-table td:first-child { width: 36px; color: var(--ink-400); }
+.cmp-bar-cell { position: relative; min-width: 76px; }
+.cmp-bar { position: absolute; left: 0; top: 50%; height: 20px; transform: translateY(-50%); background: rgba(10, 77, 245, .14); border-radius: 6px; }
+.cmp-bar-cell b { position: relative; padding-left: 6px; }
+/* 스키마 생성기 영업시간 */
+.tool-row-3 { grid-template-columns: 2fr 1fr 1fr; }
+.sg-hours { display: grid; gap: 6px; }
+.sg-day { display: grid; grid-template-columns: 24px 1fr 12px 1fr auto; gap: 8px; align-items: center; }
+.sg-day .input { padding: 10px 12px; font-size: 15px; }
+.sg-closed { font-size: 13.5px; color: var(--ink-600); white-space: nowrap; display: flex; gap: 4px; align-items: center; }
+.sg-food { display: grid; gap: 12px; }
+.tool-label .btn-small { padding: 4px 10px; font-size: 12.5px; margin-left: 6px; vertical-align: 1px; }
+@media (max-width: 720px) {
+  .tool-row-3 { grid-template-columns: 1fr 1fr; }
+  .tool-row-3 > div:first-child { grid-column: 1 / -1; }
+  .sg-day { grid-template-columns: 20px 1fr 8px 1fr; }
+  .sg-closed { grid-column: 2 / -1; }
+}
