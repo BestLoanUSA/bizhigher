@@ -3218,8 +3218,15 @@ function toolsIndexPage() {
 </header>
 <section class="section" style="padding-top:8px;">
   <div class="container">
-    <h2 class="h2-left" style="margin-top:0;">BizHigher 무료 도구</h2>
-    <div class="grid3">${TOOLS.own.map(toolCard).join('')}</div>
+    <nav class="tool-jump" aria-label="도구 묶음">
+      ${TOOLS.groups.map((g) => `<a href="#g-${g.id}">${g.name} <span>${TOOLS.own.filter((t) => t.group === g.id).length}</span></a>`).join('')}
+    </nav>
+    ${TOOLS.groups.map((g, k) => `
+    <div class="tool-group" id="g-${g.id}">
+      <h2 class="h2-left"${k === 0 ? ' style="margin-top:0;"' : ''}>${g.name}</h2>
+      <p class="body-sm tool-group-desc">${g.desc}</p>
+      <div class="grid3">${TOOLS.own.filter((t) => t.group === g.id).map(toolCard).join('')}</div>
+    </div>`).join('')}
   </div>
 </section>
 <section class="section section-gray">
@@ -3279,9 +3286,12 @@ function toolPage(t) {
     });
   }
   const frag = fs.readFileSync(path.join(TOOLS_SRC, `${t.slug}.html`), 'utf8');
+  // 다른 무료 도구 — 같은 묶음을 먼저, 나머지는 자기 위치부터 돌려가며 채운다
+  const group = TOOLS.groups.find((g) => g.id === t.group);
   const others = TOOLS.own.filter((x) => x.slug !== t.slug);
   const i = TOOLS.own.findIndex((x) => x.slug === t.slug);
-  const pick = others.slice(i).concat(others.slice(0, i)).slice(0, 3);
+  const rotated = others.slice(i).concat(others.slice(0, i));
+  const pick = [...rotated.filter((x) => x.group === t.group), ...rotated.filter((x) => x.group !== t.group)].slice(0, 3);
   const extraScripts = ['review-link', 'utm-builder'].includes(t.slug)
     ? `<script src="/assets/tools/qrcode.min.js?v=${toolAssetVer('qrcode.min.js')}"></script>`
     : '';
@@ -3294,7 +3304,7 @@ function toolPage(t) {
 <header class="page-head">
   <div class="container-narrow">
     ${crumbsHtml(crumbs)}
-    <div class="tool-head">${toolIcon(t.slug, 'tool-ico-lg')}<span class="tool-free">Free</span></div>
+    <div class="tool-head">${toolIcon(t.slug, 'tool-ico-lg')}<span class="tool-free">Free</span>${group ? `<a class="tool-group-tag" href="/tools/#g-${group.id}">${group.name} 도구</a>` : ''}</div>
     <h1 class="page-title tool-title">${t.name}</h1>
     <p class="page-sub">${t.short}</p>
   </div>
@@ -3325,7 +3335,7 @@ ${guide && guide.faqs.length ? `
       <a href="/service/${svc.slug}/" class="btn btn-primary">${svc.name} 자세히 보기 →</a>
       <a href="/free-audit/" class="btn btn-ghost">무료 AI 진단 받기</a>
     </div>` : ''}
-    <h2 class="h2-left">다른 무료 도구</h2>
+    <h2 class="h2-left">${group && pick.some((x) => x.group === t.group) ? `${group.name} — 함께 쓰면 좋은 도구` : '다른 무료 도구'}</h2>
     <div class="grid3">${pick.map(toolCard).join('')}</div>
     <p class="body-sm" style="margin-top:16px;"><a href="/tools/">무료 도구 전체 보기 →</a></p>
   </div>
