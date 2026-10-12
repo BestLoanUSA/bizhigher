@@ -1,0 +1,18 @@
+<form class="tool-box" id="tool-form">
+  <div class="tool-row">
+    <div><label class="tool-label">지금 구글에 보이는 별점</label><input class="input" name="rating" type="number" min="1" max="5" step="0.1" value="4.2" required></div>
+    <div><label class="tool-label">지금 리뷰 수</label><input class="input" name="count" type="number" min="1" step="1" value="87" required></div>
+  </div>
+  <div class="tool-row">
+    <div><label class="tool-label">목표 별점</label>
+      <select class="input" name="target"><option>4.0</option><option>4.3</option><option selected>4.5</option><option>4.6</option><option>4.7</option><option>4.8</option><option>4.9</option></select></div>
+    <div><label class="tool-label">새 리뷰 평균 별점 (예상)</label>
+      <select class="input" name="newAvg"><option value="5">5.0 — 전부 5점</option><option value="4.8" selected>4.8 — 대부분 5점 (현실적)</option><option value="4.6">4.6 — 5점·4점 섞임</option><option value="4.4">4.4 — 가끔 낮은 별점</option></select></div>
+  </div>
+  <label class="tool-label">한 달에 새로 받는 리뷰 수 (선택 — 걸리는 기간 계산)</label>
+  <input class="input" name="perMonth" type="number" min="0" step="1" placeholder="예: 6">
+  <button type="submit" class="btn btn-primary btn-block">필요한 리뷰 수 계산</button>
+  <p class="tool-msg"></p>
+  <p class="tool-fine">구글 평점은 소수 첫째 자리로 반올림해 표시되므로, 지금 보이는 별점의 실제 값 범위까지 함께 계산합니다 · 계산은 이 브라우저에서만 이뤄집니다</p>
+</form>
+<div class="tool-result" id="tool-result" hidden></div>

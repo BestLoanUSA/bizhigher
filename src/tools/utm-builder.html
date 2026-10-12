@@ -1,0 +1,32 @@
+<form class="tool-box" id="tool-form">
+  <label class="tool-label">손님이 도착할 내 웹사이트 주소</label>
+  <input class="input" name="url" required maxlength="500" placeholder="예: https://mystore.com/menu">
+  <div class="tool-row">
+    <div><label class="tool-label">어디에 낸 광고인가요</label>
+      <select class="input" name="preset">
+        <option value="google|cpc">구글 검색 광고</option>
+        <option value="facebook|paid_social">페이스북 광고</option>
+        <option value="instagram|paid_social">인스타그램 광고</option>
+        <option value="instagram|social">인스타 프로필·게시물 링크</option>
+        <option value="kakao|social">카카오톡 공유</option>
+        <option value="gbp|organic">구글 비즈니스 프로필 웹사이트 버튼</option>
+        <option value="newsletter|email">이메일·뉴스레터</option>
+        <option value="sms|sms">문자 메시지</option>
+        <option value="flyer|qr" selected>전단지·포스터 QR</option>
+        <option value="newspaper|print">신문·잡지 광고 QR</option>
+        <option value="radio|offline">라디오 광고 (말로 읽는 주소)</option>
+        <option value="custom|custom">직접 입력</option>
+      </select></div>
+    <div><label class="tool-label">캠페인 이름 (영문 권장)</label><input class="input" name="campaign" required maxlength="80" placeholder="예: fall-menu-2026"></div>
+  </div>
+  <div class="tool-row" id="custom-row" hidden>
+    <div><label class="tool-label">utm_source</label><input class="input" name="source" maxlength="60" placeholder="예: koreatimes"></div>
+    <div><label class="tool-label">utm_medium</label><input class="input" name="medium" maxlength="60" placeholder="예: print"></div>
+  </div>
+  <label class="tool-label">광고 구분 메모 (선택 — 같은 캠페인 안 여러 광고 비교용)</label>
+  <input class="input" name="content" maxlength="80" placeholder="예: front-door-poster, table-tent">
+  <button type="submit" class="btn btn-primary btn-block">추적 링크 만들기</button>
+  <p class="tool-msg"></p>
+  <p class="tool-fine">만든 링크로 들어온 손님은 GA4(구글 애널리틱스)의 트래픽 획득 보고서에서 광고별로 따로 집계됩니다 · 계산은 이 브라우저에서만 이뤄집니다</p>
+</form>
+<div class="tool-result" id="tool-result" hidden></div>
