@@ -192,30 +192,7 @@ const FOOTER_AUDIT = `
 const FOOTER_BASE = `
 <footer class="footer">
   <div class="container">
-    <div class="footer-cols">
-      <div class="footer-brand">
-        <span class="logo">${LOGO_SVG}<span>Biz<span class="logo-accent">Higher</span></span></span>
-        <p class="footer-desc">미국 한인 비즈니스를 위한 AI 자동화 마케팅. 내 비즈니스를 한 단계 위로.</p>
-      </div>
-      <div class="footer-col">
-        <span class="footer-head">서비스</span>
-        <a href="/services/" class="footer-link">전체 서비스</a>
-        <a href="/pricing/" class="footer-link">가격</a>
-        <a href="/free-audit/" class="footer-link">무료 진단</a>
-        <a href="/blog/" class="footer-link">블로그</a>
-        <a href="/data/" class="footer-link">데이터 리포트</a>
-        <a href="/tools/" class="footer-link">무료 도구</a>
-      </div>
-      <div class="footer-col">
-        <span class="footer-head">문의</span>
-        <a href="mailto:${SITE.email}" class="footer-link">${SITE.email}</a>
-      </div>
-      <div class="footer-col">
-        <span class="footer-head">약관</span>
-        <a href="/privacy/" class="footer-link">개인정보처리방침</a>
-        <a href="/terms/" class="footer-link">이용약관</a>
-      </div>
-    </div>
+    <!--FOOTER_COLS-->
     <p class="footer-copy">© ${new Date().getFullYear()} BizHigher. All rights reserved.</p>
   </div>
 </footer>
@@ -408,34 +385,46 @@ function trustStrip(kind, opts = {}) {
    data/surveys·data/reports에서 최신 수치를 읽어 홈에 노출한다. 숫자를 손으로 적지 않는다. */
 function dataBandSection() {
   const surveys = loadSurveys().sort((a, b) => (a.asOf < b.asOf ? 1 : -1));
-  if (!surveys.length) return '';
-  const s = surveys[0];
   const reports = loadReports().sort((a, b) => (a.asOf < b.asOf ? 1 : -1));
-  const r = reports[0];
-  const stats = [
-    { n: s.totals.businesses, label: '직접 한 곳씩 확인한 LA·OC 한인 업소' },
-    { n: s.totals.noWebsite, label: '그중 검색으로 찾을 수 있는 자기 웹사이트가 없는 곳' },
-  ];
-  if (r && r.stats && r.stats.length) {
-    const last = r.stats[r.stats.length - 1];
-    const n = parseInt(String(last.value).replace(/[^0-9]/g, ''), 10);
-    if (!Number.isNaN(n)) stats.push({ n, label: last.label });
+  /* 최신 리포트에 homeBand가 있으면 그 숫자를 쓴다(3호부터). 없으면 1호 설문 + 최신 리포트 마지막 수치 */
+  const band = reports.find((r) => r.homeBand);
+  let stats, link, asOf, note = '';
+  if (band) {
+    stats = band.homeBand.stats.map((x) => ({ n: x.value, label: x.label }));
+    link = { href: `/data/${band.slug}/`, text: (band.editorial && band.editorial.headline) || band.title };
+    asOf = band.asOf;
+    note = band.homeBand.note || '';
+  } else {
+    if (!surveys.length) return '';
+    const s = surveys[0];
+    stats = [
+      { n: s.totals.businesses, label: '직접 한 곳씩 확인한 LA·OC 한인 업소' },
+      { n: s.totals.noWebsite, label: '그중 검색으로 찾을 수 있는 자기 웹사이트가 없는 곳' },
+    ];
+    const r = reports[0];
+    if (r && r.stats && r.stats.length) {
+      const last = r.stats[r.stats.length - 1];
+      const n = parseInt(String(last.value).replace(/[^0-9]/g, ''), 10);
+      if (!Number.isNaN(n)) stats.push({ n, label: last.label });
+    }
+    link = { href: `/data/${s.slug}/`, text: (s.editorial && s.editorial.headline) || s.title };
+    asOf = s.asOf;
   }
-  const headline = (s.editorial && s.editorial.headline) || s.title;
   return `
 <section class="section section-gray data-band data-band-quiet">
   <div class="container">
     <p class="eyebrow">OUR OWN DATA</p>
     <h2 class="h2">추정이 아니라, 직접 센 숫자입니다</h2>
-    <p class="data-band-sub">한인 업소의 온라인 실태를 한 곳씩 확인해 분기마다 공개합니다. 원자료 CSV까지 엽니다 — 출처만 남기면 인용은 자유입니다.</p>
+    <p class="data-band-sub">한인 업소의 온라인 실태를 한 곳씩 확인해 공개합니다. 원자료 CSV까지 엽니다 — 출처만 남기면 인용은 자유입니다.</p>
     <div class="grid3">
-      ${stats.map((x) => `<div class="stat-box"><div class="stat" data-count="${x.n}" data-suffix="곳">${x.n}곳</div><p class="stat-label">${x.label}</p></div>`).join('')}
+      ${stats.map((x) => `<div class="stat-box"><div class="stat" data-count="${x.n}" data-suffix="곳">${x.n.toLocaleString('en-US')}곳</div><p class="stat-label">${x.label}</p></div>`).join('')}
     </div>
+    ${note ? `<p class="data-band-sub" style="margin-top:18px;">${note}</p>` : ''}
     <div class="data-band-links">
-      <a class="btn btn-ghost" href="/data/${s.slug}/">${headline} →</a>
+      <a class="btn btn-ghost" href="${link.href}">${link.text} →</a>
       <a class="data-band-more" href="/data/">전체 데이터 리포트 →</a>
     </div>
-    <p class="data-band-note">${s.asOf} 기준 · ${s.method && s.method.noGooglePlaces ? s.method.noGooglePlaces : '원자료 CSV 제공'}</p>
+    <p class="data-band-note">${asOf} 기준 · 구글 지도 데이터 미사용 · 원자료 CSV 제공</p>
   </div>
 </section>`;
 }
@@ -985,6 +974,21 @@ function packageMatrixSection(opts = {}) {
     cards.forEach(function (c) { io.observe(c); });
     setTimeout(show, 3000);
   }
+  /* 터치 기기 — 호버가 없으니 화면 가운데 띠(위아래 40%씩 제외)를 지나는 카드에 .pk-live를 붙여 같은 효과를 낸다 */
+  if (!reduced && 'IntersectionObserver' in window && window.matchMedia && window.matchMedia('(hover: none)').matches) {
+    var live = null;
+    var lio = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          if (live && live !== en.target) live.classList.remove('pk-live');
+          live = en.target; live.classList.add('pk-live');
+        } else if (en.target === live) {
+          live.classList.remove('pk-live'); live = null;
+        }
+      });
+    }, { threshold: 0, rootMargin: '-40% 0px -40% 0px' });
+    grid.querySelectorAll('.pk-card').forEach(function (c) { lio.observe(c); });
+  }
 })();
 </script>`;
 }
@@ -993,6 +997,7 @@ function packageMatrixSection(opts = {}) {
 
 function packagePage(p) {
   const g = giftsFor(p.slug);
+  const guide = loadServiceGuide(p.slug, 'packages');
   const url = `${SITE.domain}/package/${p.slug}/`;
   const crumbs = [
     { name: '홈', url: `${SITE.domain}/` },
@@ -1019,7 +1024,13 @@ function packagePage(p) {
       })),
     },
     breadcrumbList(crumbs),
+    ...(guide && guide.faqs.length ? [{
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: guide.faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') } })),
+    }] : []),
   ];
+  const others = DATA.packages.filter((x) => x.slug !== p.slug);
   const rows = PERIODS.map((per) => {
     const price = p.prices[per.key];
     const months = per.months || 0;
@@ -1062,6 +1073,25 @@ function packagePage(p) {
       <p>온보딩 순서: 1개월차에 프로필 최적화·리뷰 QR·로컬 등록을 마치고, 2개월차에 웹사이트·지역 페이지를 제작합니다. 월간 서비스(포스팅·리뷰·소재 등)는 결제 직후 질문지 제출과 함께 바로 시작됩니다.</p>
       <p>모든 결과물은 전문가 검수 후 전달되며, 매달 초 성과 리포트로 진행 상황을 숫자로 확인하실 수 있습니다.</p>
     </div>
+  </div>
+</section>
+${guide && guide.guide ? `
+<section class="section svc-guide">
+  <div class="container-narrow">
+    <article class="post-body">${mdToHtml(guide.guide).html}</article>
+  </div>
+</section>` : ''}
+${guide && guide.faqs.length ? `
+<section class="section section-gray">
+  <div class="container-narrow">
+    <h2 class="h2">자주 묻는 질문</h2>
+    ${guide.faqs.map((f, k) => `<details class="faq-item"${k === 0 ? ' open' : ''}><summary class="faq-q">${f.q}</summary><p class="faq-a">${mdToHtml(f.a).html.replace(/^<p>|<\/p>$/g, '')}</p></details>`).join('')}
+  </div>
+</section>` : ''}
+<section class="section">
+  <div class="container-narrow">
+    <h2 class="h2-left">다른 플랜과 비교해 보기</h2>
+    <div class="pk-others">${others.map((o) => `<a class="pk-other" href="/package/${o.slug}/"><b>${o.name}</b><span>월 $${o.prices.annual}부터</span><small>${PKG_WHO[o.slug] || o.tagline}</small></a>`).join('')}</div>
   </div>
 </section>
 <section class="cta-band">
@@ -1704,6 +1734,8 @@ ${packageMatrixSection({ home: true })}
 
 ${dataBandSection()}
 
+${homeToolsSection()}
+
 ${blogStripSection(posts)}
 
 <section class="section">
@@ -1713,6 +1745,24 @@ ${blogStripSection(posts)}
   </div>
 </section>
 ` + FOOTER;
+}
+
+/* ---------- 홈: 인기 무료 도구 ----------
+   손님이 가장 먼저 궁금해할 것(지도 순위·리뷰·AI 추천·경쟁 가게) 위주로 고른다. 순서를 바꾸려면 HOME_TOOLS만 고친다 */
+const HOME_TOOLS = ['local-rank', 'review-link', 'ai-check', 'competitor-reviews'];
+function homeToolsSection() {
+  const picks = HOME_TOOLS.map((slug) => TOOLS.own.find((t) => t.slug === slug)).filter(Boolean);
+  if (!picks.length) return '';
+  return `
+<section class="section home-tools">
+  <div class="container">
+    <p class="eyebrow">FREE TOOLS</p>
+    <h2 class="h2">돈 쓰기 전에, 무료로 먼저 확인하세요</h2>
+    <p class="home-tools-sub">우리 가게가 지도에서 몇 위인지, AI가 우리 가게를 아는지 — 저희가 고객 가게를 맡을 때 처음 확인하는 것들을 무료 도구로 열어 두었습니다. 가입 없이 이메일만 있으면 됩니다.</p>
+    <div class="grid4 home-tools-grid">${picks.map(toolCard).join('')}</div>
+    <div class="hero-ctas" style="margin-top:26px;justify-content:center;"><a href="/tools/" class="btn btn-ghost">무료 도구 ${TOOLS.own.length}개 전체 보기 →</a></div>
+  </div>
+</section>`;
 }
 
 /* ---------- 홈: 최신 블로그 가로 스크롤 띠 ---------- */
@@ -1890,6 +1940,7 @@ ${packageMatrixSection()}
 /* ---------- 페이지: 무료 진단 ---------- */
 
 function auditPage() {
+  const guide = loadServiceGuide('free-audit', 'pages');
   return head({
     title: '무료 AI 마케팅 진단 — 내 가게 마케팅 점수 확인 | BizHigher',
     description: '60초 만에 우리 가게가 구글에서 어떻게 보이는지 AI가 분석해 드립니다. 가입 없이 무료로 진단받으세요.',
@@ -1912,6 +1963,11 @@ function auditPage() {
         { name: '홈', url: `${SITE.domain}/` },
         { name: '무료 진단', url: `${SITE.domain}/free-audit/` },
       ]),
+      ...(guide && guide.faqs.length ? [{
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: guide.faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') } })),
+      }] : []),
     ],
   }) + nav('audit') + `
 <section class="audit-hero">
@@ -1934,13 +1990,27 @@ function auditPage() {
   <div class="container">
     <h2 class="h2">진단 리포트에 담기는 것</h2>
     <div class="grid3">
-      <div class="step-card"><h3 class="h3">5개 영역 점수</h3><p class="body-sm">구글 노출 · 리뷰·평판 · 웹사이트 · SNS · 경쟁사 대비 — 100점 만점 채점</p></div>
+      <div class="step-card"><h3 class="h3">5개 영역 점수</h3><p class="body-sm">구글 노출 · 리뷰·평판 · 웹사이트 · 정보 완성도 · 경쟁사 대비 — 100점 만점 채점</p></div>
       <div class="step-card"><h3 class="h3">가장 급한 문제 2가지</h3><p class="body-sm">왜 문제인지, 방치하면 어떻게 되는지, 무엇부터 고치면 되는지 설명합니다</p></div>
       <div class="step-card"><h3 class="h3">다음 단계 추천</h3><p class="body-sm">지금 상황에서 가장 효과적인 서비스를 추천해 드립니다 — 강요는 없습니다</p></div>
     </div>
     <div class="hero-ctas" style="margin-top:28px;justify-content:center;"><a href="/report/sample" class="btn btn-ghost">샘플 리포트 열어보기 →</a></div>
   </div>
 </section>
+${guide && guide.guide ? `
+<section class="section svc-guide">
+  <div class="container-narrow">
+    <article class="post-body">${mdToHtml(guide.guide).html}</article>
+  </div>
+</section>` : ''}
+${guide && guide.faqs.length ? `
+<section class="section section-gray">
+  <div class="container-narrow">
+    <h2 class="h2">자주 묻는 질문</h2>
+    ${guide.faqs.map((f, k) => `<details class="faq-item"${k === 0 ? ' open' : ''}><summary class="faq-q">${f.q}</summary><p class="faq-a">${f.a}</p></details>`).join('')}
+    <div class="hero-ctas" style="margin-top:24px;justify-content:center;"><a href="#audit-form" class="btn btn-primary">지금 무료 진단 받기 →</a></div>
+  </div>
+</section>` : ''}
 <script>
 document.getElementById('audit-form').addEventListener('submit', async function (e) {
   e.preventDefault();
@@ -3376,7 +3446,72 @@ ${extraScripts}
 
 /* ---------- 빌드 실행 ---------- */
 
+/* ---------- 푸터 열 ----------
+   FOOTER_BASE는 파일 위쪽에서 만들어져 블로그·도구 데이터를 모르므로, 자리표시(<!--FOOTER_COLS-->)를 두고
+   write()가 페이지를 쓸 때 여기서 만든 열로 바꿔 넣는다(한 번만 계산). 고를 항목은 아래 배열만 고친다 */
+const FOOT_SERVICES = ['google-profile-optimization', 'review-qr-kit', 'website', 'seo-aio', 'ads-management', 'gbp-posting'];
+const FOOT_TOOLS = ['local-rank', 'review-link', 'ai-check', 'competitor-reviews', 'ads-budget'];
+let _footerCols = null;
+function footerColsHtml() {
+  if (_footerCols) return _footerCols;
+  const link = (href, text) => `<a href="${href}" class="footer-link">${text}</a>`;
+  const more = (href, text) => `<a href="${href}" class="footer-link footer-more">${text} →</a>`;
+  const clip = (t, n) => { const a = [...String(t || '')]; return a.length > n ? a.slice(0, n).join('').trim() + '…' : a.join(''); };
+  const svcs = FOOT_SERVICES.map((slug) => DATA.services.find((x) => x.slug === slug)).filter(Boolean);
+  const tools = FOOT_TOOLS.map((slug) => TOOLS.own.find((t) => t.slug === slug)).filter(Boolean);
+  const posts = loadPosts();
+  const hubs = posts.filter((p) => p.hub);
+  const latest = posts.filter((p) => !p.hub).slice(0, 3);
+  const reports = loadSurveys().concat(loadReports()).sort((a, b) => (a.asOf < b.asOf ? 1 : -1)).slice(0, 3);
+  const hubLabel = (p) => `${p.category} 가이드`;
+  _footerCols = `<div class="footer-cols footer-cols-rich">
+      <div class="footer-brand">
+        <span class="logo">${LOGO_SVG}<span>Biz<span class="logo-accent">Higher</span></span></span>
+        <p class="footer-desc">미국 한인 비즈니스를 위한 AI 광고회사. 견적 미팅 없는 정찰제로, 대행사 절반 이하의 가격에 더 빠르게.</p>
+        <a href="mailto:${SITE.email}" class="footer-link">${SITE.email}</a>
+        <a href="/free-audit/" class="btn btn-primary footer-cta">무료 AI 진단 받기 →</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">인기 서비스</span>
+        ${svcs.map((x) => link(`/service/${x.slug}/`, x.name)).join('')}
+        ${more('/services/', `전체 서비스 ${DATA.services.length}개`)}
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">플랜·가격</span>
+        ${DATA.packages.map((p) => link(`/package/${p.slug}/`, `${p.name} 플랜`)).join('')}
+        ${link('/pricing/', '가격 한눈에 보기')}
+        ${link('/free-audit/', '무료 AI 진단')}
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">무료 도구</span>
+        ${tools.map((t) => link(`/tools/${t.slug}/`, clip(t.name, 18))).join('')}
+        ${more('/tools/', `무료 도구 ${TOOLS.own.length}개 전체`)}
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">마케팅 가이드</span>
+        ${hubs.map((p) => link(`/blog/${p.slug}/`, hubLabel(p))).join('')}
+        ${more('/blog/', '블로그 전체')}
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">최신 글</span>
+        ${latest.map((p) => link(`/blog/${p.slug}/`, clip(p.title, 22))).join('')}
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">데이터 리포트</span>
+        ${reports.map((r) => link(`/data/${r.slug}/`, clip(r.title, 22))).join('')}
+        ${more('/data/', '전체 리포트')}
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">약관</span>
+        ${link('/privacy/', '개인정보처리방침')}
+        ${link('/terms/', '이용약관')}
+      </div>
+    </div>`;
+  return _footerCols;
+}
+
 function write(rel, content) {
+  if (typeof content === 'string' && content.includes('<!--FOOTER_COLS-->')) content = content.replace('<!--FOOTER_COLS-->', footerColsHtml());
   const full = path.join(DIST, rel);
   fs.mkdirSync(path.dirname(full), { recursive: true });
   fs.writeFileSync(full, content);

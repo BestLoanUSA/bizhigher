@@ -1983,3 +1983,66 @@ img { max-width: 100%; display: block; }
 .tool-group-tag { font-size: 13px; font-weight: 700; color: var(--ink-600); background: #F1F3F7; border-radius: 999px; padding: 5px 12px; text-decoration: none; }
 .tool-group-tag:hover { color: var(--blue-600); }
 @media (max-width: 720px) { .tool-jump a { padding: 8px 12px; font-size: 13.5px; } }
+
+/* ==========================================================
+   v40 — 패키지 상세: 다른 플랜 비교 카드
+   ========================================================== */
+.pk-others { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 8px; }
+.pk-other { display: flex; flex-direction: column; gap: 4px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 14px; background: #fff; color: var(--ink-900); text-decoration: none; transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
+.pk-other:hover { border-color: var(--blue-300); box-shadow: 0 8px 24px rgba(10, 27, 77, 0.08); transform: translateY(-2px); }
+.pk-other b { font-size: 17px; }
+.pk-other span { color: var(--blue-600); font-weight: 700; font-size: 14.5px; }
+.pk-other small { color: var(--ink-600); font-size: 13px; line-height: 1.5; }
+@media (max-width: 600px) { .pk-others { grid-template-columns: 1fr; } }
+
+/* ==========================================================
+   v40 — 플랜 카드: 터치 기기에서는 스크롤로 화면 가운데 온 카드에 호버 효과 (.pk-live)
+   데스크톱 호버 규칙(v31)과 같은 모양, 선택자만 .pk-live
+   ========================================================== */
+@media (hover: none) and (prefers-reduced-motion: no-preference) {
+  .plans-hero .pk-card.pk-live .pk-cta.btn-ghost { background-size: 100% 100%; color: #fff; border-color: transparent; box-shadow: var(--glow-blue); }
+  .pk-card.pk-live { border-color: rgba(34, 211, 238, 0.55); box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.25), 0 18px 40px rgba(0, 0, 0, 0.35); transition: border-color .35s ease, box-shadow .35s ease; }
+  .pk-lv-3.pk-live { border-color: rgba(245, 199, 106, 0.6); }
+  .pk-card.pk-live .pk-only { color: #fff; animation: pk-only-lift 1.8s ease-in-out infinite; }
+  .pk-card.pk-live .pk-only::after {
+    content: ""; position: absolute; left: -8px; right: -8px; top: 0; bottom: 0; border-radius: 8px; pointer-events: none;
+    background: linear-gradient(100deg, transparent 20%, rgba(34, 211, 238, 0.22) 50%, transparent 80%); background-size: 220% 100%;
+    animation: pk-only-sweep 1.8s linear infinite;
+  }
+  .pk-lv-3.pk-live .pk-only::after { background-image: linear-gradient(100deg, transparent 20%, rgba(245, 199, 106, 0.26) 50%, transparent 80%); }
+  .pk-card.pk-live .pk-only-tag { display: inline-block; animation: pk-tag-in .3s ease both .1s; }
+  .pk-card.pk-live .pk-list .pk-only::before { background: var(--cyan-400); color: #0A1230; transform: scale(1.18); }
+  .pk-card.pk-live .pk-giftbox .pk-only::before { color: var(--cyan-400); transform: scale(1.3); }
+  .pk-lv-3.pk-live .pk-list .pk-only::before { background: #F5C76A; }
+  .pk-lv-3.pk-live .pk-giftbox .pk-only::before { color: #F5C76A; }
+  .pk-card.pk-live .pk-only:nth-child(1), .pk-card.pk-live .pk-only:nth-child(1)::after { animation-delay: 0s; }
+  .pk-card.pk-live .pk-only:nth-child(2), .pk-card.pk-live .pk-only:nth-child(2)::after { animation-delay: .15s; }
+  .pk-card.pk-live .pk-only:nth-child(3), .pk-card.pk-live .pk-only:nth-child(3)::after { animation-delay: .3s; }
+  .pk-card.pk-live .pk-only:nth-child(4), .pk-card.pk-live .pk-only:nth-child(4)::after { animation-delay: .45s; }
+  .pk-card.pk-live .pk-only:nth-child(5), .pk-card.pk-live .pk-only:nth-child(5)::after { animation-delay: .6s; }
+}
+
+/* ==========================================================
+   v40 — 풍성한 푸터 (열은 build.js footerColsHtml이 만든다)
+   ========================================================== */
+.footer-cols-rich { display: grid; grid-template-columns: 1.6fr repeat(4, 1fr); gap: 36px 32px; }
+.footer-cols-rich .footer-brand { max-width: none; grid-row: span 2; display: flex; flex-direction: column; gap: 10px; }
+.footer-cols-rich .footer-desc { margin-top: 4px; }
+.footer-cta { align-self: flex-start; margin-top: 8px; padding: 10px 18px; font-size: 14px; }
+.footer-cols-rich .footer-col { min-width: 0; }
+.footer-cols-rich .footer-link { line-height: 1.45; overflow-wrap: anywhere; }
+.footer-more { color: var(--cyan-400); font-weight: 600; }
+.footer-more:hover { color: #fff; }
+@media (max-width: 991px) {
+  .footer-cols-rich { grid-template-columns: repeat(3, 1fr); }
+  .footer-cols-rich .footer-brand { grid-column: 1 / -1; grid-row: auto; }
+}
+@media (max-width: 600px) {
+  .footer-cols-rich { grid-template-columns: 1fr 1fr; gap: 28px 18px; }
+}
+
+/* ==========================================================
+   v40 — 홈: 인기 무료 도구
+   ========================================================== */
+.home-tools-sub { max-width: 640px; margin: -6px auto 28px; text-align: center; color: var(--ink-600); font-size: 15.5px; line-height: 1.65; }
+.home-tools-grid .tool-card { height: 100%; }
