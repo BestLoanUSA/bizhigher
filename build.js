@@ -3135,9 +3135,12 @@ const REDIRECTS = [
   })
   .join('\n') + '\n';
 
-/* Cloudflare Pages _headers — 프로덕션 pages.dev 주소는 bizhigher.com과 같은 내용이라 색인에서 뺀다
+/* Cloudflare Pages _headers — 프로덕션 pages.dev 주소와 www(2026-10-13 기준 리디렉트 없이 200)는 bizhigher.com과 같은 내용이라 색인에서 뺀다
    (브랜치 프리뷰 주소는 Cloudflare가 이미 noindex를 붙인다). */
 const HEADERS = `https://bizhigher-site.pages.dev/*
+  X-Robots-Tag: noindex
+
+https://www.bizhigher.com/*
   X-Robots-Tag: noindex
 `;
 
