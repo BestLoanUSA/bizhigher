@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="/style.css?v=8f4d4157">
+<link rel="stylesheet" href="/style.css?v=dcd128cd">
 <script type="application/ld+json">[{"@context":"https://schema.org","@type":"CollectionPage","name":"가격 안내","isPartOf":{"@id":"https://bizhigher.com/#website"},"publisher":{"@id":"https://bizhigher.com/#organization"},"url":"https://bizhigher.com/pricing/","inLanguage":"ko","hasPart":[{"@type":"Service","name":"Local Starter 플랜","provider":{"@id":"https://bizhigher.com/#organization"},"url":"https://bizhigher.com/package/local-starter/","offers":{"@type":"Offer","price":139,"priceCurrency":"USD"}},{"@type":"Service","name":"Local Growth 플랜","provider":{"@id":"https://bizhigher.com/#organization"},"url":"https://bizhigher.com/package/local-growth/","offers":{"@type":"Offer","price":279,"priceCurrency":"USD"}},{"@type":"Service","name":"Local Premium 플랜","provider":{"@id":"https://bizhigher.com/#organization"},"url":"https://bizhigher.com/package/local-premium/","offers":{"@type":"Offer","price":479,"priceCurrency":"USD"}}]},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"홈","item":"https://bizhigher.com/"},{"@type":"ListItem","position":2,"name":"가격","item":"https://bizhigher.com/pricing/"}]}]</script>
 
 <script type="text/javascript">
@@ -273,6 +273,19 @@
       });
     }, { threshold: 0, rootMargin: '-40% 0px -40% 0px' });
     grid.querySelectorAll('.pk-card').forEach(function (c) { lio.observe(c); });
+  }
+  /* 터치 기기 — "지금 시작하기" 파란 채움은 카드가 아니라 버튼 자체가 손가락 높이(화면 위에서 72%)까지 올라왔을 때.
+     다시 아래로 내려가면 비운다 */
+  if (!reduced && window.matchMedia && window.matchMedia('(hover: none)').matches) {
+    var ctas = Array.prototype.slice.call(grid.querySelectorAll('.pk-cta.btn-ghost'));
+    var ctaTick = false;
+    function ctaUpd() {
+      ctaTick = false;
+      var line = window.innerHeight * 0.72;
+      ctas.forEach(function (b) { var r = b.getBoundingClientRect(); b.classList.toggle('pk-cta-on', r.top < line && r.bottom > 0); });
+    }
+    window.addEventListener('scroll', function () { if (!ctaTick) { ctaTick = true; requestAnimationFrame(ctaUpd); } }, { passive: true });
+    ctaUpd();
   }
 })();
 </script>
