@@ -12,6 +12,11 @@ import { computeScores, templateAnalysis, buildClaudePrompt } from './_engine.js
 import { notify, esc } from './_notify.js';
 import { webcheckSite } from './_webcheck.js';
 
+/* 브라우저·크롤러가 주소를 직접 열면(GET) 진단 폼으로 보낸다 — 예전엔 404였다(GSC 404 보고) */
+export function onRequestGet(context) {
+  return Response.redirect(new URL('/free-audit/', context.request.url).toString(), 301);
+}
+
 export async function onRequestPost(context) {
   const { request, env } = context;
   let data;

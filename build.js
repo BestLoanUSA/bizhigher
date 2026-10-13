@@ -3117,9 +3117,37 @@ ${urls.map((x) => `  <url><loc>${SITE.domain}${x.u}</loc>${x.d ? `<lastmod>${x.d
 </urlset>`;
 }
 
+/* Cloudflare Pages _redirects — 예전 주소(GSC 404)를 지금 페이지로 301.
+   상품 슬러그를 바꾸거나 없애면 여기에 한 줄 추가한다. 한글 경로는 원문과 퍼센트 인코딩 둘 다 적는다. */
+const REDIRECTS = [
+  ['/service/seo-sprint', '/service/seo-aio/'],
+  ['/service/ad-creative-pack-premium', '/service/ad-creative-pack/'],
+  ['/service/start-package', '/package/local-starter/'],
+  ['/service/launch-package', '/package/local-growth/'],
+  ['/service/monthly-report', '/service/ai-marketing-report/'],
+  ['/월', '/pricing/'],
+]
+  .flatMap(([from, to]) => {
+    const enc = encodeURI(from);
+    const froms = [from, from + '/'];
+    if (enc !== from) froms.push(enc, enc + '/');
+    return froms.map((f) => `${f} ${to} 301`);
+  })
+  .join('\n') + '\n';
+
+/* Cloudflare Pages _headers — 프로덕션 pages.dev 주소와 www(2026-10-13 기준 리디렉트 없이 200)는 bizhigher.com과 같은 내용이라 색인에서 뺀다
+   (브랜치 프리뷰 주소는 Cloudflare가 이미 noindex를 붙인다). */
+const HEADERS = `https://bizhigher-site.pages.dev/*
+  X-Robots-Tag: noindex
+
+https://www.bizhigher.com/*
+  X-Robots-Tag: noindex
+`;
+
 const ROBOTS = `User-agent: *
 Allow: /
 Disallow: /admin/
+Disallow: /api/
 
 Sitemap: ${SITE.domain}/sitemap.xml`;
 
@@ -3423,6 +3451,8 @@ fs.readdirSync(TOOLS_SRC).filter((f) => f.endsWith('.js')).forEach((f) => fs.cop
 console.log('  \u2713 assets/tools/');
 write('sitemap.xml', sitemap());
 write('robots.txt', ROBOTS);
+write('_redirects', REDIRECTS);
+write('_headers', HEADERS);
 write('llms.txt', `# BizHigher (비즈하이어)
 
 > 미국 한인 비즈니스를 위한 AI 자동화 마케팅 회사. 견적 미팅 없는 정찰제로 마케팅 서비스를 쇼핑하듯 주문할 수 있다. AI가 제작하고 전문가가 검수하며, 대부분 영업일 3일 내 제공된다. 웹사이트는 한국어로 운영되며, 결과물(웹사이트·콘텐츠·광고 소재)은 한국어·영어 모두 제작 가능하다.
