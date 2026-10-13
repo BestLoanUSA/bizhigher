@@ -2000,7 +2000,7 @@ img { max-width: 100%; display: block; }
    데스크톱 호버 규칙(v31)과 같은 모양, 선택자만 .pk-live
    ========================================================== */
 @media (hover: none) and (prefers-reduced-motion: no-preference) {
-  .plans-hero .pk-card.pk-live .pk-cta.btn-ghost { background-size: 100% 100%; color: #fff; border-color: transparent; box-shadow: var(--glow-blue); }
+  .plans-hero .pk-cta.btn-ghost.pk-cta-on { background-size: 100% 100%; color: #fff; border-color: transparent; box-shadow: var(--glow-blue); }
   .pk-card.pk-live { border-color: rgba(34, 211, 238, 0.55); box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.25), 0 18px 40px rgba(0, 0, 0, 0.35); transition: border-color .35s ease, box-shadow .35s ease; }
   .pk-lv-3.pk-live { border-color: rgba(245, 199, 106, 0.6); }
   .pk-card.pk-live .pk-only { color: #fff; animation: pk-only-lift 1.8s ease-in-out infinite; }
@@ -2046,3 +2046,23 @@ img { max-width: 100%; display: block; }
    ========================================================== */
 .home-tools-sub { max-width: 640px; margin: -6px auto 28px; text-align: center; color: var(--ink-600); font-size: 15.5px; line-height: 1.65; }
 .home-tools-grid .tool-card { height: 100%; }
+
+/* ==========================================================
+   v41 — 쇼케이스: 모바일 고정(.pinned-m) — 화면 높이 560px 이상인 모바일에서 화면에 멈춘 채 01→05
+   위치·장면 축소는 build.js showcaseSection 스크립트(--sc-top, zoom)
+   ========================================================== */
+@media (max-width: 991px) {
+  .showcase-pin.pinned-m { position: relative; }
+  .showcase-pin.pinned-m .showcase { position: sticky; top: var(--sc-top, 76px); height: calc(100vh - var(--sc-top, 76px)); height: calc(100svh - var(--sc-top, 76px)); padding: 6px 0 12px; display: flex; flex-direction: column; }
+  .showcase-pin.pinned-m .showcase > .container { flex: 1; min-height: 0; width: 100%; min-width: 0; display: flex; flex-direction: column; }
+  .showcase-pin.pinned-m .sc-wrap, .showcase-pin.pinned-m .sc-stage { min-width: 0; width: 100%; }
+  .showcase-pin.pinned-m .eyebrow, .showcase-pin.pinned-m .mk-section-sub, .showcase-pin.pinned-m .note-text { display: none; }
+  .showcase-pin.pinned-m .showcase .h2 { font-size: 20px; margin-bottom: 8px; }
+  .showcase-pin.pinned-m .sc-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+  .showcase-pin.pinned-m .sc-tabs { flex: 0 0 auto; padding-bottom: 6px; }
+  .showcase-pin.pinned-m .sc-stage { flex: 1; min-height: 0; }
+  .showcase-pin.pinned-m .sc-scene.on { height: 100%; grid-template-rows: minmax(0, 1fr) auto; padding: 14px 12px 12px; }
+  .showcase-pin.pinned-m .sc-stage-in { overflow: hidden; justify-content: flex-start; }
+  .showcase-pin.pinned-m .sc-link { display: none; }
+  .showcase-pin.pinned-m .sc-chips { margin-top: 8px; }
+}

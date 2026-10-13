@@ -708,23 +708,49 @@ function showcaseSection() {
 </section>
 </div>
 <script>
-/* 쇼케이스 — 데스크탑에서는 화면에 고정(sticky)된 채 스크롤로 01→05를 훑고 나서 풀린다.
+/* 쇼케이스 — 화면에 고정(sticky)된 채 스크롤로 01→05를 훑고 나서 풀린다(모바일은 화면 높이 560px 이상일 때, 장면당 300px로 빠르게).
    시간 T = 시계(보이는 동안 흐름) + 스크롤 거리. 고정 구간에서는 스크롤 위치가 곧 진행도라 위로 올리면 되감긴다.
-   모바일(991px 이하)은 고정 없이 자동 넘김 + 스크롤 빨리감기. 스크롤을 가로채지 않고, JS 실패 시 첫 장면이 그대로 보인다 */
+   화면이 낮은 모바일은 고정 없이 자동 넘김 + 스크롤 빨리감기. 스크롤을 가로채지 않고, JS 실패 시 첫 장면이 그대로 보인다 */
 (function () {
   var wrap = document.getElementById('sc-wrap'), pin = document.getElementById('showcase-pin'); if (!wrap || !pin) return;
   var tabs = Array.prototype.slice.call(wrap.querySelectorAll('.sc-tab'));
   var scenes = Array.prototype.slice.call(wrap.querySelectorAll('.sc-scene'));
   var progs = tabs.map(function (t) { return t.querySelector('.sc-prog'); });
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var N = tabs.length, DUR = 6000, TOTAL = N * DUR, SCENE_PX = 520, FF = 14;
+  var N = tabs.length, DUR = 6000, TOTAL = N * DUR, FF = 14;
   var idx = 0, clock = 0, scrollT = 0, paused = false, visible = false, active = false, lastTs = null, raf = null, lastY = window.scrollY;
   var pinMQ = window.matchMedia('(min-width: 992px)');
-  function pinMode() { return pinMQ.matches; }
+  /* 모바일도 화면이 충분히 높으면(560px 이상) 고정해서 빠르게 01→05를 훑는다 — 장면당 스크롤 거리를 짧게 */
+  function mobilePin() { return !pinMQ.matches && window.innerHeight >= 560; }
+  function pinMode() { return pinMQ.matches || mobilePin(); }
+  function scenePx() { return pinMQ.matches ? 520 : 300; }
+  var stage = wrap.querySelector('.sc-stage');
+  function fitScene() {
+    /* 모바일 고정 모드: 장면이 무대보다 크면 zoom으로 줄여 한 화면에 다 보이게 */
+    scenes.forEach(function (sc) { var inr = sc.querySelector('.sc-stage-in'); if (inr) Array.prototype.forEach.call(inr.children, function (c) { c.style.zoom = ''; }); });
+    if (!pin.classList.contains('pinned-m')) return;
+    var sc = scenes[idx], inr = sc && sc.querySelector('.sc-stage-in');
+    if (!inr) return;
+    /* zoom을 바꾸면 줄바꿈이 달라져 높이가 다시 변하므로 두어 번 다시 잰다 */
+    var z = 1;
+    for (var k = 0; k < 3; k++) {
+      var natural = inr.scrollHeight, avail = inr.clientHeight;
+      if (!(natural > avail + 1 && avail > 0)) break;
+      z = Math.max(0.45, z * avail / natural * 0.98);
+      Array.prototype.forEach.call(inr.children, function (c) { c.style.zoom = z; });
+    }
+  }
   function applyPin() {
-    var on = pinMode();
-    pin.classList.toggle('pinned', on);
-    pin.style.height = on ? 'calc(100vh + ' + (N * SCENE_PX) + 'px)' : '';
+    var desk = pinMQ.matches, mob = mobilePin();
+    pin.classList.toggle('pinned', desk);
+    pin.classList.toggle('pinned-m', mob);
+    if (mob) {
+      var nav = document.querySelector('.nav');
+      var topPx = nav ? Math.round(nav.getBoundingClientRect().bottom + 8) : 76;
+      pin.style.setProperty('--sc-top', topPx + 'px');
+    }
+    pin.style.height = (desk || mob) ? 'calc(100vh + ' + (N * scenePx()) + 'px)' : '';
+    fitScene();
   }
   function T() { return Math.max(0, Math.min(TOTAL - 1, clock + scrollT)); }
   function apply() {
@@ -733,6 +759,12 @@ function showcaseSection() {
       idx = i;
       tabs.forEach(function (tb, k) { tb.classList.toggle('on', k === idx); tb.setAttribute('aria-selected', k === idx ? 'true' : 'false'); });
       scenes.forEach(function (sc, k) { sc.classList.toggle('on', k === idx); });
+      fitScene();
+      /* 모바일: 가로로 넘치는 탭 줄에서 지금 탭을 가운데로 (세로 스크롤은 건드리지 않는다) */
+      var bar = tabs[idx] && tabs[idx].parentNode;
+      if (bar && !pinMQ.matches && bar.scrollWidth > bar.clientWidth) {
+        bar.scrollTo({ left: tabs[idx].offsetLeft - (bar.clientWidth - tabs[idx].offsetWidth) / 2, behavior: reduced ? 'auto' : 'smooth' });
+      }
     }
     progs.forEach(function (p, k) { if (p) p.style.width = k === idx ? ((t - idx * DUR) / DUR * 100) + '%' : '0%'; });
   }
@@ -749,10 +781,11 @@ function showcaseSection() {
     var y = window.scrollY, d = y - lastY; lastY = y;
     if (pinMode()) {
       var top = pin.getBoundingClientRect().top;
-      var dist = Math.max(0, Math.min(N * SCENE_PX, -top));
-      active = top <= 0 && dist < N * SCENE_PX;
+      var span = N * scenePx();
+      var dist = Math.max(0, Math.min(span, -top));
+      active = top <= 0 && dist < span;
       if (top > 0) clock = 0; /* 고정 구간 위로 올라가면 처음부터 */
-      scrollT = dist / (N * SCENE_PX) * TOTAL;
+      scrollT = dist / span * TOTAL;
     } else if (visible && d > 0 && !reduced) {
       scrollT = Math.min(TOTAL - 1, scrollT + Math.min(d * FF, DUR));
     }
@@ -760,7 +793,7 @@ function showcaseSection() {
   }
   tabs.forEach(function (tb, k) { tb.addEventListener('click', function () {
     clock = k * DUR - scrollT; apply();
-    if (!pinMode() && tb.scrollIntoView) tb.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+    if (!pinMQ.matches && tb.scrollIntoView) tb.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
   }); });
   wrap.addEventListener('mouseenter', function () { paused = true; });
   wrap.addEventListener('mouseleave', function () { paused = false; });
@@ -992,6 +1025,19 @@ function packageMatrixSection(opts = {}) {
       });
     }, { threshold: 0, rootMargin: '-40% 0px -40% 0px' });
     grid.querySelectorAll('.pk-card').forEach(function (c) { lio.observe(c); });
+  }
+  /* 터치 기기 — "지금 시작하기" 파란 채움은 카드가 아니라 버튼 자체가 손가락 높이(화면 위에서 72%)까지 올라왔을 때.
+     다시 아래로 내려가면 비운다 */
+  if (!reduced && window.matchMedia && window.matchMedia('(hover: none)').matches) {
+    var ctas = Array.prototype.slice.call(grid.querySelectorAll('.pk-cta.btn-ghost'));
+    var ctaTick = false;
+    function ctaUpd() {
+      ctaTick = false;
+      var line = window.innerHeight * 0.72;
+      ctas.forEach(function (b) { var r = b.getBoundingClientRect(); b.classList.toggle('pk-cta-on', r.top < line && r.bottom > 0); });
+    }
+    window.addEventListener('scroll', function () { if (!ctaTick) { ctaTick = true; requestAnimationFrame(ctaUpd); } }, { passive: true });
+    ctaUpd();
   }
 })();
 </script>`;
