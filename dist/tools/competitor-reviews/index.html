@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="/style.css?v=3febc3b4">
+<link rel="stylesheet" href="/style.css?v=8f4d4157">
 <script type="application/ld+json">[{"@context":"https://schema.org","@type":"WebApplication","name":"경쟁 가게 리뷰 비교","description":"같은 동네·같은 업종에서 구글 지도 상위에 나오는 가게 10곳의 별점·리뷰 수를 우리 가게와 나란히 비교하고, 따라잡으려면 리뷰가 몇 개 필요한지 알려 드립니다.","url":"https://bizhigher.com/tools/competitor-reviews/","applicationCategory":"BusinessApplication","operatingSystem":"Web","inLanguage":"ko","isAccessibleForFree":true,"offers":{"@type":"Offer","price":0,"priceCurrency":"USD"},"provider":{"@type":"Organization","@id":"https://bizhigher.com/#organization","name":"BizHigher","url":"https://bizhigher.com/","logo":{"@type":"ImageObject","url":"https://bizhigher.com/apple-touch-icon.png","width":180,"height":180}},"isPartOf":{"@id":"https://bizhigher.com/#website"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"홈","item":"https://bizhigher.com/"},{"@type":"ListItem","position":2,"name":"무료 도구","item":"https://bizhigher.com/tools/"},{"@type":"ListItem","position":3,"name":"경쟁 가게 리뷰 비교","item":"https://bizhigher.com/tools/competitor-reviews/"}]},{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"경쟁 가게는 어떻게 골라지나요?","acceptedAnswer":{"@type":"Answer","text":"우리 가게 위치를 중심으로, 입력한 키워드로 구글 지도에서 검색했을 때 상위에 나오는 가게 10곳을 가져옵니다. 손님이 실제로 같은 검색을 했을 때 함께 보게 되는 가게들입니다. 키워드를 바꾸면 비교 대상도 바뀝니다."}},{"@type":"Question","name":"우리 가게가 \"목록 밖\"으로 나오는데 무슨 뜻인가요?","acceptedAnswer":{"@type":"Answer","text":"가게 위치에서 그 키워드로 검색했을 때 상위 10곳 안에 들지 못했다는 뜻입니다. 이 경우에도 우리 가게 별점·리뷰 수는 따로 불러와 비교해 드립니다. 위치별 순위는 [구글 지도 순위 체크](/tools/local-rank/)에서 더 자세히 볼 수 있습니다."}},{"@type":"Question","name":"숫자가 구글 지도 앱과 조금 다른데 정상인가요?","acceptedAnswer":{"@type":"Answer","text":"네. 구글 지도 데이터를 실시간으로 불러오지만, 리뷰 수 반영 시점이나 검색 위치에 따라 앱 화면과 조금 다를 수 있습니다. 순서보다 리뷰 수 격차의 크기를 보시는 것이 정확합니다."}},{"@type":"Question","name":"하루 몇 번까지 쓸 수 있나요?","acceptedAnswer":{"@type":"Answer","text":"이메일을 남기시면 하루 2회까지 무료입니다. 조회한 경쟁 가게 정보는 화면에만 보여 드리고 저장하지 않으며, 보관하는 것은 남겨 주신 이메일·전화번호와 업체명뿐입니다."}}]}]</script>
 
 <script type="text/javascript">
@@ -196,26 +196,37 @@
 </script>
 <footer class="footer">
   <div class="container">
-    <div class="footer-cols">
+    <div class="footer-cols footer-cols-rich">
       <div class="footer-brand">
         <span class="logo"><svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#0A4DF5"/><path d="M15 44 h9 v-9 h9 v-9 h6.5" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M38.5 15.5 h10 v10" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Biz<span class="logo-accent">Higher</span></span></span>
-        <p class="footer-desc">미국 한인 비즈니스를 위한 AI 자동화 마케팅. 내 비즈니스를 한 단계 위로.</p>
-      </div>
-      <div class="footer-col">
-        <span class="footer-head">서비스</span>
-        <a href="/services/" class="footer-link">전체 서비스</a>
-        <a href="/pricing/" class="footer-link">가격</a>
-        <a href="/free-audit/" class="footer-link">무료 진단</a>
-        <a href="/blog/" class="footer-link">블로그</a>
-        <a href="/data/" class="footer-link">데이터 리포트</a>
-        <a href="/tools/" class="footer-link">무료 도구</a>
-      </div>
-      <div class="footer-col">
-        <span class="footer-head">문의</span>
+        <p class="footer-desc">미국 한인 비즈니스를 위한 AI 광고회사. 견적 미팅 없는 정찰제로, 대행사 절반 이하의 가격에 더 빠르게.</p>
         <a href="mailto:hello@bizhigher.com" class="footer-link">hello@bizhigher.com</a>
+        <a href="/free-audit/" class="btn btn-primary footer-cta">무료 AI 진단 받기 →</a>
       </div>
       <div class="footer-col">
-        <span class="footer-head">약관</span>
+        <span class="footer-head">인기 서비스</span>
+        <a href="/service/google-profile-optimization/" class="footer-link">구글 비즈니스 프로필 최적화</a><a href="/service/review-qr-kit/" class="footer-link">구글 리뷰 QR 키트</a><a href="/service/website/" class="footer-link">웹사이트 제작</a><a href="/service/seo-aio/" class="footer-link">SEO/AIO 관리</a><a href="/service/ads-management/" class="footer-link">광고 운영</a><a href="/service/gbp-posting/" class="footer-link">포스팅 관리</a>
+        <a href="/services/" class="footer-link footer-more">전체 서비스 16개 →</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">플랜·가격</span>
+        <a href="/package/local-starter/" class="footer-link">Local Starter 플랜</a><a href="/package/local-growth/" class="footer-link">Local Growth 플랜</a><a href="/package/local-premium/" class="footer-link">Local Premium 플랜</a>
+        <a href="/pricing/" class="footer-link">가격 한눈에 보기</a>
+        <a href="/free-audit/" class="footer-link">무료 AI 진단</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">무료 도구</span>
+        <a href="/tools/local-rank/" class="footer-link">구글 지도 순위 체크</a><a href="/tools/review-link/" class="footer-link">구글 리뷰 링크·QR 포스터 생성…</a><a href="/tools/ai-check/" class="footer-link">AI 추천 체크</a><a href="/tools/competitor-reviews/" class="footer-link">경쟁 가게 리뷰 비교</a><a href="/tools/ads-budget/" class="footer-link">구글 광고 예산 계산기</a>
+        <a href="/tools/" class="footer-link footer-more">무료 도구 15개 전체 →</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">마케팅 가이드</span>
+        <a href="/blog/ai-search-hub/" class="footer-link">AI 검색 가이드</a><a href="/blog/website-hub/" class="footer-link">웹사이트 가이드</a><a href="/blog/content-sns-hub/" class="footer-link">콘텐츠·SNS 가이드</a><a href="/blog/review-management-hub/" class="footer-link">리뷰·평판 가이드</a><a href="/blog/google-business-profile-hub/" class="footer-link">구글 노출 가이드</a>
+        <a href="/blog/" class="footer-link footer-more">블로그 전체 →</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">BizHigher</span>
+        <a href="/data/" class="footer-link">데이터 리포트</a>
         <a href="/privacy/" class="footer-link">개인정보처리방침</a>
         <a href="/terms/" class="footer-link">이용약관</a>
       </div>
