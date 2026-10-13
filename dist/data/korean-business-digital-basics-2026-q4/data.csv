@@ -2,18 +2,18 @@ table,segment,metric,value
 funnel,자체 웹사이트가 있다,1차,536
 funnel,웹사이트가 열린다,1차,445
 funnel,보안 연결(HTTPS)·휴대폰 화면 대응,1차,424
-funnel,첫 화면에 영업시간,1차,231
-funnel,검색·AI가 읽는 업소 정보(LocalBusiness),1차,81
+funnel,구조화 데이터가 있다,1차,289
+funnel,그 안에 업소 정보(LocalBusiness)가 있다,1차,154
 funnel,자체 웹사이트가 있다,2차,536
 funnel,웹사이트가 열린다,2차,445
 funnel,보안 연결(HTTPS)·휴대폰 화면 대응,2차,424
-funnel,첫 화면에 영업시간,2차,230
-funnel,검색·AI가 읽는 업소 정보(LocalBusiness),2차,81
+funnel,구조화 데이터가 있다,2차,288
+funnel,그 안에 업소 정보(LocalBusiness)가 있다,2차,154
 funnel,자체 웹사이트가 있다,935곳 중,57.3%
 funnel,웹사이트가 열린다,935곳 중,47.6%
 funnel,보안 연결(HTTPS)·휴대폰 화면 대응,935곳 중,45.3%
-funnel,첫 화면에 영업시간,935곳 중,24.6%
-funnel,검색·AI가 읽는 업소 정보(LocalBusiness),935곳 중,8.7%
+funnel,구조화 데이터가 있다,935곳 중,30.8%
+funnel,그 안에 업소 정보(LocalBusiness)가 있다,935곳 중,16.5%
 growth,2026-09-16,확인된 업소,70
 growth,2026-09-20,확인된 업소,259
 growth,2026-09-30,확인된 업소,629
@@ -36,8 +36,8 @@ overall,두 번 모두 열리지 않음(404·503·연결 실패 등),1차,40
 overall,보안 연결(HTTPS),1차,436
 overall,휴대폰 화면 대응,1차,432
 overall,첫 화면에 영업시간,1차,238
-overall,LocalBusiness 구조화 데이터,1차,130
 overall,구조화 데이터(종류 무관),1차,292
+overall,그중 업소 정보(LocalBusiness 계열),1차,156
 overall,첫 화면 주문·예약,1차,28
 overall,검색 결과 설명문(meta description),1차,297
 overall,링크 공유 미리보기(OG),1차,354
@@ -50,8 +50,8 @@ overall,두 번 모두 열리지 않음(404·503·연결 실패 등),2차,39
 overall,보안 연결(HTTPS),2차,436
 overall,휴대폰 화면 대응,2차,432
 overall,첫 화면에 영업시간,2차,237
-overall,LocalBusiness 구조화 데이터,2차,130
 overall,구조화 데이터(종류 무관),2차,291
+overall,그중 업소 정보(LocalBusiness 계열),2차,156
 overall,첫 화면 주문·예약,2차,28
 overall,검색 결과 설명문(meta description),2차,297
 overall,링크 공유 미리보기(OG),2차,354
@@ -66,28 +66,28 @@ by_platform,Shopify,사이트,15
 by_platform,Webflow,사이트,14
 by_platform,GoDaddy,사이트,12
 by_platform,Weebly,사이트,4
-by_platform,WordPress,영업시간,88
-by_platform,기타·직접 제작,영업시간,75
-by_platform,Wix,영업시간,28
-by_platform,Squarespace,영업시간,19
-by_platform,Shopify,영업시간,4
-by_platform,Webflow,영업시간,12
-by_platform,GoDaddy,영업시간,10
-by_platform,Weebly,영업시간,1
-by_platform,WordPress,LocalBusiness,16
-by_platform,기타·직접 제작,LocalBusiness,31
-by_platform,Wix,LocalBusiness,42
+by_platform,WordPress,구조화 데이터,93
+by_platform,기타·직접 제작,구조화 데이터,67
+by_platform,Wix,구조화 데이터,61
+by_platform,Squarespace,구조화 데이터,39
+by_platform,Shopify,구조화 데이터,12
+by_platform,Webflow,구조화 데이터,9
+by_platform,GoDaddy,구조화 데이터,10
+by_platform,Weebly,구조화 데이터,0
+by_platform,WordPress,LocalBusiness,26
+by_platform,기타·직접 제작,LocalBusiness,45
+by_platform,Wix,LocalBusiness,43
 by_platform,Squarespace,LocalBusiness,28
 by_platform,Shopify,LocalBusiness,0
-by_platform,Webflow,LocalBusiness,3
+by_platform,Webflow,LocalBusiness,4
 by_platform,GoDaddy,LocalBusiness,10
 by_platform,Weebly,LocalBusiness,0
-by_platform,WordPress,비율,10.7%
-by_platform,기타·직접 제작,비율,21.4%
-by_platform,Wix,비율,63.6%
+by_platform,WordPress,비율,17.3%
+by_platform,기타·직접 제작,비율,31%
+by_platform,Wix,비율,65.2%
 by_platform,Squarespace,비율,71.8%
 by_platform,Shopify,비율,0%
-by_platform,Webflow,비율,21.4%
+by_platform,Webflow,비율,28.6%
 by_platform,GoDaddy,비율,83.3%
 by_platform,Weebly,비율,0%
 by_category,한식당,확인 업소,164
@@ -162,102 +162,102 @@ by_category,보험,열림,8
 by_category,마사지·스파,열림,7
 by_category,단체·기관,열림,9
 by_category,그 밖의 업종 10개,열림,28
-by_category,한식당,영업시간,55
-by_category,뷰티·미용,영업시간,20
-by_category,치과,영업시간,30
-by_category,건강·한의원,영업시간,16
-by_category,종교,영업시간,1
-by_category,카페·베이커리,영업시간,20
-by_category,병원·의원·약국,영업시간,3
-by_category,자동차,영업시간,8
-by_category,회계사,영업시간,4
-by_category,세탁소,영업시간,1
-by_category,은행·금융,영업시간,13
-by_category,학교·학원,영업시간,4
-by_category,한인마트,영업시간,7
-by_category,운동·오락,영업시간,8
-by_category,변호사,영업시간,4
-by_category,노래·주점,영업시간,3
-by_category,쇼핑,영업시간,3
-by_category,부동산,영업시간,0
-by_category,여행·관광,영업시간,0
-by_category,안경·렌즈,영업시간,11
-by_category,보험,영업시간,5
-by_category,마사지·스파,영업시간,4
-by_category,단체·기관,영업시간,3
-by_category,그 밖의 업종 10개,영업시간,14
+by_category,한식당,구조화 데이터,55
+by_category,뷰티·미용,구조화 데이터,21
+by_category,치과,구조화 데이터,27
+by_category,건강·한의원,구조화 데이터,18
+by_category,종교,구조화 데이터,12
+by_category,카페·베이커리,구조화 데이터,14
+by_category,병원·의원·약국,구조화 데이터,7
+by_category,자동차,구조화 데이터,9
+by_category,회계사,구조화 데이터,7
+by_category,세탁소,구조화 데이터,2
+by_category,은행·금융,구조화 데이터,12
+by_category,학교·학원,구조화 데이터,8
+by_category,한인마트,구조화 데이터,12
+by_category,운동·오락,구조화 데이터,8
+by_category,변호사,구조화 데이터,12
+by_category,노래·주점,구조화 데이터,1
+by_category,쇼핑,구조화 데이터,6
+by_category,부동산,구조화 데이터,10
+by_category,여행·관광,구조화 데이터,1
+by_category,안경·렌즈,구조화 데이터,11
+by_category,보험,구조화 데이터,4
+by_category,마사지·스파,구조화 데이터,6
+by_category,단체·기관,구조화 데이터,7
+by_category,그 밖의 업종 10개,구조화 데이터,21
 by_category,한식당,LocalBusiness,37
-by_category,뷰티·미용,LocalBusiness,7
-by_category,치과,LocalBusiness,20
+by_category,뷰티·미용,LocalBusiness,10
+by_category,치과,LocalBusiness,21
 by_category,건강·한의원,LocalBusiness,9
 by_category,종교,LocalBusiness,6
 by_category,카페·베이커리,LocalBusiness,4
 by_category,병원·의원·약국,LocalBusiness,5
-by_category,자동차,LocalBusiness,2
-by_category,회계사,LocalBusiness,2
+by_category,자동차,LocalBusiness,6
+by_category,회계사,LocalBusiness,4
 by_category,세탁소,LocalBusiness,1
 by_category,은행·금융,LocalBusiness,0
 by_category,학교·학원,LocalBusiness,3
 by_category,한인마트,LocalBusiness,3
-by_category,운동·오락,LocalBusiness,4
-by_category,변호사,LocalBusiness,5
+by_category,운동·오락,LocalBusiness,6
+by_category,변호사,LocalBusiness,8
 by_category,노래·주점,LocalBusiness,1
 by_category,쇼핑,LocalBusiness,2
-by_category,부동산,LocalBusiness,2
+by_category,부동산,LocalBusiness,4
 by_category,여행·관광,LocalBusiness,0
-by_category,안경·렌즈,LocalBusiness,5
-by_category,보험,LocalBusiness,0
+by_category,안경·렌즈,LocalBusiness,8
+by_category,보험,LocalBusiness,4
 by_category,마사지·스파,LocalBusiness,2
-by_category,단체·기관,LocalBusiness,2
-by_category,그 밖의 업종 10개,LocalBusiness,8
-by_category,한식당,다섯 가지 모두,32
-by_category,뷰티·미용,다섯 가지 모두,5
-by_category,치과,다섯 가지 모두,15
-by_category,건강·한의원,다섯 가지 모두,3
-by_category,종교,다섯 가지 모두,0
-by_category,카페·베이커리,다섯 가지 모두,0
-by_category,병원·의원·약국,다섯 가지 모두,3
-by_category,자동차,다섯 가지 모두,1
-by_category,회계사,다섯 가지 모두,1
+by_category,단체·기관,LocalBusiness,3
+by_category,그 밖의 업종 10개,LocalBusiness,9
+by_category,한식당,다섯 가지 모두,36
+by_category,뷰티·미용,다섯 가지 모두,10
+by_category,치과,다섯 가지 모두,21
+by_category,건강·한의원,다섯 가지 모두,9
+by_category,종교,다섯 가지 모두,6
+by_category,카페·베이커리,다섯 가지 모두,4
+by_category,병원·의원·약국,다섯 가지 모두,5
+by_category,자동차,다섯 가지 모두,6
+by_category,회계사,다섯 가지 모두,4
 by_category,세탁소,다섯 가지 모두,1
 by_category,은행·금융,다섯 가지 모두,0
-by_category,학교·학원,다섯 가지 모두,2
-by_category,한인마트,다섯 가지 모두,0
-by_category,운동·오락,다섯 가지 모두,2
-by_category,변호사,다섯 가지 모두,1
+by_category,학교·학원,다섯 가지 모두,3
+by_category,한인마트,다섯 가지 모두,3
+by_category,운동·오락,다섯 가지 모두,6
+by_category,변호사,다섯 가지 모두,7
 by_category,노래·주점,다섯 가지 모두,1
-by_category,쇼핑,다섯 가지 모두,1
-by_category,부동산,다섯 가지 모두,0
+by_category,쇼핑,다섯 가지 모두,2
+by_category,부동산,다섯 가지 모두,4
 by_category,여행·관광,다섯 가지 모두,0
-by_category,안경·렌즈,다섯 가지 모두,5
-by_category,보험,다섯 가지 모두,0
-by_category,마사지·스파,다섯 가지 모두,1
-by_category,단체·기관,다섯 가지 모두,2
-by_category,그 밖의 업종 10개,다섯 가지 모두,5
-by_category,한식당,비율,19.5%
-by_category,뷰티·미용,비율,5.5%
-by_category,치과,비율,19.2%
-by_category,건강·한의원,비율,5.1%
-by_category,종교,비율,0%
-by_category,카페·베이커리,비율,0%
-by_category,병원·의원·약국,비율,7.5%
-by_category,자동차,비율,2.9%
-by_category,회계사,비율,3.4%
+by_category,안경·렌즈,다섯 가지 모두,8
+by_category,보험,다섯 가지 모두,4
+by_category,마사지·스파,다섯 가지 모두,2
+by_category,단체·기관,다섯 가지 모두,3
+by_category,그 밖의 업종 10개,다섯 가지 모두,9
+by_category,한식당,비율,22%
+by_category,뷰티·미용,비율,11%
+by_category,치과,비율,26.9%
+by_category,건강·한의원,비율,15.3%
+by_category,종교,비율,12.5%
+by_category,카페·베이커리,비율,9.1%
+by_category,병원·의원·약국,비율,12.5%
+by_category,자동차,비율,17.6%
+by_category,회계사,비율,13.8%
 by_category,세탁소,비율,3.7%
 by_category,은행·금융,비율,0%
-by_category,학교·학원,비율,7.7%
-by_category,한인마트,비율,0%
-by_category,운동·오락,비율,8%
-by_category,변호사,비율,4%
+by_category,학교·학원,비율,11.5%
+by_category,한인마트,비율,11.5%
+by_category,운동·오락,비율,24%
+by_category,변호사,비율,28%
 by_category,노래·주점,비율,4.3%
-by_category,쇼핑,비율,4.3%
-by_category,부동산,비율,0%
+by_category,쇼핑,비율,8.7%
+by_category,부동산,비율,18.2%
 by_category,여행·관광,비율,0%
-by_category,안경·렌즈,비율,38.5%
-by_category,보험,비율,0%
-by_category,마사지·스파,비율,10%
-by_category,단체·기관,비율,20%
-by_category,그 밖의 업종 10개,비율,8.5%
+by_category,안경·렌즈,비율,61.5%
+by_category,보험,비율,33.3%
+by_category,마사지·스파,비율,20%
+by_category,단체·기관,비율,30%
+by_category,그 밖의 업종 10개,비율,15.3%
 by_city,한인타운,확인 업소,287
 by_city,가든그로브,확인 업소,150
 by_city,어바인,확인 업소,108
@@ -282,35 +282,35 @@ by_city,풀러튼,열림,57
 by_city,부에나팍,열림,50
 by_city,토랜스,열림,51
 by_city,로스앤젤레스,열림,0
-by_city,한인타운,영업시간,73
-by_city,가든그로브,영업시간,27
-by_city,어바인,영업시간,26
-by_city,세리토스,영업시간,26
-by_city,풀러튼,영업시간,32
-by_city,부에나팍,영업시간,25
-by_city,토랜스,영업시간,28
-by_city,로스앤젤레스,영업시간,0
-by_city,한인타운,LocalBusiness,37
-by_city,가든그로브,LocalBusiness,11
-by_city,어바인,LocalBusiness,19
+by_city,한인타운,구조화 데이터,96
+by_city,가든그로브,구조화 데이터,22
+by_city,어바인,구조화 데이터,43
+by_city,세리토스,구조화 데이터,23
+by_city,풀러튼,구조화 데이터,39
+by_city,부에나팍,구조화 데이터,32
+by_city,토랜스,구조화 데이터,36
+by_city,로스앤젤레스,구조화 데이터,0
+by_city,한인타운,LocalBusiness,48
+by_city,가든그로브,LocalBusiness,13
+by_city,어바인,LocalBusiness,23
 by_city,세리토스,LocalBusiness,11
-by_city,풀러튼,LocalBusiness,20
-by_city,부에나팍,LocalBusiness,15
-by_city,토랜스,LocalBusiness,17
+by_city,풀러튼,LocalBusiness,23
+by_city,부에나팍,LocalBusiness,17
+by_city,토랜스,LocalBusiness,21
 by_city,로스앤젤레스,LocalBusiness,0
-by_city,한인타운,다섯 가지 모두,26
-by_city,가든그로브,다섯 가지 모두,8
-by_city,어바인,다섯 가지 모두,11
-by_city,세리토스,다섯 가지 모두,9
-by_city,풀러튼,다섯 가지 모두,11
-by_city,부에나팍,다섯 가지 모두,5
-by_city,토랜스,다섯 가지 모두,11
+by_city,한인타운,다섯 가지 모두,47
+by_city,가든그로브,다섯 가지 모두,13
+by_city,어바인,다섯 가지 모두,23
+by_city,세리토스,다섯 가지 모두,11
+by_city,풀러튼,다섯 가지 모두,22
+by_city,부에나팍,다섯 가지 모두,17
+by_city,토랜스,다섯 가지 모두,21
 by_city,로스앤젤레스,다섯 가지 모두,0
-by_city,한인타운,비율,9.1%
-by_city,가든그로브,비율,5.3%
-by_city,어바인,비율,10.2%
-by_city,세리토스,비율,9%
-by_city,풀러튼,비율,11.5%
-by_city,부에나팍,비율,5.6%
-by_city,토랜스,비율,12.4%
+by_city,한인타운,비율,16.4%
+by_city,가든그로브,비율,8.7%
+by_city,어바인,비율,21.3%
+by_city,세리토스,비율,11%
+by_city,풀러튼,비율,22.9%
+by_city,부에나팍,비율,18.9%
+by_city,토랜스,비율,23.6%
 by_city,로스앤젤레스,비율,0%
