@@ -2868,7 +2868,7 @@ function metricReportPage(s) {
       headline: e.headline || s.title,
       description: e.dek || s.title,
       datePublished: s.asOf,
-      dateModified: s.asOf,
+      dateModified: s.updated || s.asOf,
       inLanguage: 'ko',
       mainEntityOfPage: url,
       author: ORG_MIN,
@@ -2907,7 +2907,7 @@ function metricReportPage(s) {
     ])}
     <span class="badge">${s.quarter} 조사</span>
     <h1 class="page-title" style="font-size:36px;line-height:1.25;">${e.headline || s.title}</h1>
-    <p class="page-sub">${s.subline || `${s.asOf} 기준 · BizHigher`}</p>
+    <p class="page-sub">${s.subline || `${s.asOf} 기준 · BizHigher`}${s.updated ? ` · ${s.updated} 정정` : ''}</p>
   </div>
 </header>
 
