@@ -389,11 +389,15 @@ function dataBandSection() {
   /* 최신 리포트에 homeBand가 있으면 그 숫자를 쓴다(3호부터). 없으면 1호 설문 + 최신 리포트 마지막 수치 */
   const band = reports.find((r) => r.homeBand);
   let stats, link, asOf, note = '';
+  let headline = '추정이 아니라, 직접 센 숫자입니다';
+  let sub = '한인 업소의 온라인 실태를 한 곳씩 직접 확인해 공개합니다.';
   if (band) {
     stats = band.homeBand.stats.map((x) => ({ n: x.value, label: x.label }));
-    link = { href: `/data/${band.slug}/`, text: (band.editorial && band.editorial.headline) || band.title };
+    link = { href: `/data/${band.slug}/`, text: '조사 결과 자세히 보기' };
     asOf = band.asOf;
     note = band.homeBand.note || '';
+    headline = band.homeBand.headline || headline;
+    sub = band.homeBand.sub || sub;
   } else {
     if (!surveys.length) return '';
     const s = surveys[0];
@@ -414,8 +418,8 @@ function dataBandSection() {
 <section class="section section-gray data-band data-band-quiet">
   <div class="container">
     <p class="eyebrow">OUR OWN DATA</p>
-    <h2 class="h2">추정이 아니라, 직접 센 숫자입니다</h2>
-    <p class="data-band-sub">한인 업소의 온라인 실태를 한 곳씩 확인해 공개합니다. 원자료 CSV까지 엽니다 — 출처만 남기면 인용은 자유입니다.</p>
+    <h2 class="h2">${headline}</h2>
+    <p class="data-band-sub">${sub}</p>
     <div class="grid3">
       ${stats.map((x) => `<div class="stat-box"><div class="stat" data-count="${x.n}" data-suffix="곳">${x.n.toLocaleString('en-US')}곳</div><p class="stat-label">${x.label}</p></div>`).join('')}
     </div>
@@ -424,7 +428,7 @@ function dataBandSection() {
       <a class="btn btn-ghost" href="${link.href}">${link.text} →</a>
       <a class="data-band-more" href="/data/">전체 데이터 리포트 →</a>
     </div>
-    <p class="data-band-note">${asOf} 기준 · 구글 지도 데이터 미사용 · 원자료 CSV 제공</p>
+    <p class="data-band-note">${asOf} 기준 · BizHigher 직접 점검</p>
   </div>
 </section>`;
 }
@@ -3461,8 +3465,6 @@ function footerColsHtml() {
   const tools = FOOT_TOOLS.map((slug) => TOOLS.own.find((t) => t.slug === slug)).filter(Boolean);
   const posts = loadPosts();
   const hubs = posts.filter((p) => p.hub);
-  const latest = posts.filter((p) => !p.hub).slice(0, 3);
-  const reports = loadSurveys().concat(loadReports()).sort((a, b) => (a.asOf < b.asOf ? 1 : -1)).slice(0, 3);
   const hubLabel = (p) => `${p.category} 가이드`;
   _footerCols = `<div class="footer-cols footer-cols-rich">
       <div class="footer-brand">
@@ -3493,16 +3495,8 @@ function footerColsHtml() {
         ${more('/blog/', '블로그 전체')}
       </div>
       <div class="footer-col">
-        <span class="footer-head">최신 글</span>
-        ${latest.map((p) => link(`/blog/${p.slug}/`, clip(p.title, 22))).join('')}
-      </div>
-      <div class="footer-col">
-        <span class="footer-head">데이터 리포트</span>
-        ${reports.map((r) => link(`/data/${r.slug}/`, clip(r.title, 22))).join('')}
-        ${more('/data/', '전체 리포트')}
-      </div>
-      <div class="footer-col">
-        <span class="footer-head">약관</span>
+        <span class="footer-head">BizHigher</span>
+        ${link('/data/', '데이터 리포트')}
         ${link('/privacy/', '개인정보처리방침')}
         ${link('/terms/', '이용약관')}
       </div>

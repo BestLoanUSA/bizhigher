@@ -86,9 +86,9 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | Stripe 결제 → 주문·작업 기록 | `functions/api/stripe-webhook.js` + 공용 `functions/api/_orders.js` |
 | 패키지 상세 페이지 검색용 가이드·FAQ | `content/packages/{slug}.md` (서비스 가이드와 같은 형식, 가격은 쓰지 않고 `services.json`이 원본) |
 | 무료 진단 페이지 설명·FAQ | `content/pages/free-audit.md` — 채점 기준 표는 `functions/api/_engine.js`의 `computeScores`와 일치시킨다 |
-| 홈 "OUR OWN DATA" 숫자 | 최신 데이터 리포트 JSON의 `homeBand`(`stats`·`note`). 없으면 1호 설문으로 폴백 |
+| 홈 "OUR OWN DATA" 제목·문구·숫자 | 최신 데이터 리포트 JSON의 `homeBand`(`headline`·`sub`·`stats`·`note`). 없으면 1호 설문으로 폴백 |
 | 홈 인기 무료 도구 | `build.js`의 `HOME_TOOLS` |
-| 푸터 항목 | `build.js`의 `FOOT_SERVICES`·`FOOT_TOOLS`(나머지 열은 블로그 허브·최신 글·데이터 리포트에서 자동) — `footerColsHtml()` |
+| 푸터 항목 | `build.js`의 `FOOT_SERVICES`·`FOOT_TOOLS`(마케팅 가이드 열은 블로그 허브에서 자동) — `footerColsHtml()` |
 | 옛 주소 301 리디렉트·응답 헤더 | `build.js`의 `REDIRECTS`(→ `dist/_redirects`)·`HEADERS`(→ `dist/_headers`). 상품 슬러그를 바꾸거나 없애면 `REDIRECTS`에 한 줄 추가. `robots.txt`는 `/admin/`·`/api/` 차단 |
 
 ---
