@@ -29,6 +29,7 @@
 
 | 상태 | 제목 | slug |
 |---|---|---|
+| ✅ 2026-10-15 | 영업시간·휴무일 변경, 구글 프로필에 제대로 반영하는 법 | google-business-profile-hours-update |
 | ✅ 2026-10-13 | 구글 프로필 Q&A가 사라진 뒤 — 손님 질문에 미리 답해두는 법 | google-business-profile-qa-removed |
 | ✅ 2026-10-12 | 2026년 로컬 마케팅 결산 — 한인 가게가 내년에 준비할 3가지 | local-marketing-2026-review-2027-prep |
 | ✅ 2026-10-09 | 구글 AI 요약(AI Overviews)에 내 가게가 나오게 하려면 | google-ai-overviews-local-business |
@@ -57,7 +58,6 @@
 
 | 상태 | 제목 | 카테고리 | related |
 |---|---|---|---|
-| ⬜ | 영업시간·휴무일 변경, 구글 프로필에 제대로 반영하는 법 | 구글 노출 | google-profile-optimization |
 | ⬜ | 리뷰 요청 QR 코드, 어디에 붙여야 효과가 있을까 | 리뷰·평판 | review-qr-kit |
 | ⬜ | 가게 이메일·문자 마케팅 입문 — 단골에게 다시 오게 하는 법 | 콘텐츠·SNS | seo-blog-pack |
 | ⬜ | 랜딩페이지와 홈페이지, 광고를 돌릴 때 뭐가 다를까 | 웹사이트 | local-landing-pack |
