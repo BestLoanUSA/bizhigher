@@ -66,7 +66,7 @@ export const PLAYBOOK = {
       S('lls-3', 'NAP 표준 문서·설명문·카테고리·사진 세트 준비', 'setup', 'ai', 5, { verify: true }),
       S('lls-4', 'Bing Places — GBP 가져오기', 'setup', 'david', 10),
       S('lls-5', 'Apple Business Connect — 등록·인증', 'setup', 'david', 20, { block: '인증 까다로움, 온보딩 초반에 시작' }),
-      S('lls-6', 'Yelp·Nextdoor·한인 디렉토리 등 나머지 등록 — 곳당 10~15분, 이메일·전화·CAPTCHA 인증', 'setup', 'david', 600, { block: 'Premium 120곳 = 20~30시간. 브라우저 자동화·CAPTCHA 우회 금지(§15). 지금 구조로는 Premium 셋업에서 가장 큰 병목', next: '결정 필요: (a) 120곳 → 핵심 30곳 + 데이터 애그리게이터(Yext/BrightLocal류, 곳당 비용) (b) 파트타임 등록 담당 (c) 상품 수량 재정의' }),
+      S('lls-6', 'Yelp·Nextdoor·한인 디렉토리 등 나머지 등록 — 곳당 10~15분, 이메일·전화·CAPTCHA 인증', 'setup', 'david', 600, { block: 'Premium 120곳 = 20~30시간. 브라우저 자동화·CAPTCHA 우회 금지(§15). 지금 구조로는 Premium 셋업에서 가장 큰 병목', next: '방향(2026-10-15): 핵심 30곳은 David + Claude in Chrome 보조 입력(사람이 보는 앞에서 폼 채우기, CAPTCHA·전화 인증은 David) → 곳당 3~5분. 나머지는 일회성 시티에이션 빌더(곳당 $2~3, 영구 등록). Yext류 구독 애그리게이터는 해지 시 등록이 사라져 제외' }),
       S('lls-7', '등록 완료 리포트(링크 목록) → Drive → Gmail 초안', 'setup', 'auto', 3, { verify: true }),
     ],
   },
@@ -80,7 +80,7 @@ export const PLAYBOOK = {
   },
   'ads-setup': {
     name: '광고 셋업', steps: [
-      S('ads-1', '고객 Google Ads·Meta 광고 계정 생성 또는 접근 권한 + 결제 카드 등록', 'onboarding', 'customer', 10, { block: '광고비는 고객 카드로 직접 결제(상품 정책). Meta는 비즈니스 인증 선행' }),
+      S('ads-1', 'BizHigher MCC 아래 고객 Google Ads 계정 생성 + 고객 카드 등록(결제 프로필은 고객 명의) · Meta는 Business Manager 파트너 권한', 'onboarding', 'customer', 10, { block: '결정(2026-10-15): MCC 방식. 광고비는 고객 카드로 직접 결제(상품 정책). Meta는 비즈니스 인증 선행' }),
       S('ads-2', '계정 구조·캠페인 설계안 (검색·로컬·리마케팅, 예산 배분)', 'setup', 'ai', 15, { verify: true }),
       S('ads-3', 'Google Ads 캠페인 구축 + 전환 연결', 'setup', 'david', 90, { next: 'Google Ads API 개발자 토큰(기본 액세스) + MCC → 캠페인 생성 자동화' }),
       S('ads-4', 'Meta 픽셀·전환 API 연결 + 캠페인 구축', 'setup', 'david', 90, { block: 'Meta 마케팅 API는 앱 심사 6~8주(§15) → 당분간 수동', next: 'Meta 앱 심사 통과' }),
@@ -107,7 +107,7 @@ export const PLAYBOOK = {
     name: '포스팅 관리 3채널 (주 2회)', steps: [
       S('post-1', 'IG·FB 페이지 접근 — Meta Business Suite 파트너 권한 또는 예약 툴 연결', 'onboarding', 'customer', 10, { block: 'Meta API 없이도 Business Suite 예약 발행은 가능. 고객이 파트너 추가해야 함' }),
       S('post-2', '월간 캘린더 8건 초안 — 주제·캡션 한/영·CTA·사진 촬영 가이드', 'monthly', 'ai', 15, { verify: true }),
-      S('post-3', '고객 캘린더 승인 (월 1회, 기한 내 무응답 시 승인 간주)', 'monthly', 'customer', 0, { block: '약관 문구 미확정(§19-12)', next: '/portal 승인 페이지 + 무응답 자동 승인' }),
+      S('post-3', '고객 캘린더 승인 (월 1회, 기한 내 무응답 시 승인 간주 — 2026-10-15 확정)', 'monthly', 'customer', 0, { block: '약관 문구 작성 필요(§19-12)', next: '/portal 승인 페이지 + 무응답 자동 승인' }),
       S('post-4', '이미지 제작 — 고객 사진 + 템플릿 조판 (한글 텍스트는 PIL 오버레이)', 'weekly', 'auto', 0, { block: 'Canva 생성 쿼터·Higgsfield 크레딧 비용. 고객 사진 없으면 품질 저하' }),
       S('post-5', 'GBP 게시 — 주 2회', 'weekly', 'david', 10, { block: 'GBP API 신청 거절(2026-10-07). 지금은 앱에서 붙여넣기 또는 Publer류 예약 툴($10~30/월)', next: 'GBP API 재신청 통과 → 완전 자동' }),
       S('post-6', 'IG·FB 게시 — 주 2회', 'weekly', 'david', 10, { block: 'Meta API 앱 심사 전 → Business Suite 예약 발행 수동', next: '예약 툴 도입 시 GBP와 함께 한 번에 예약' }),
