@@ -89,6 +89,26 @@ const SCHEMA = [
     note TEXT,
     created_at TEXT DEFAULT (datetime('now'))
   )`,
+  `CREATE TABLE IF NOT EXISTS job_tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_id INTEGER,
+    key TEXT,
+    service TEXT,
+    service_name TEXT,
+    title TEXT,
+    phase TEXT,
+    who TEXT,
+    david_min INTEGER DEFAULT 0,
+    verify INTEGER DEFAULT 0,
+    block TEXT,
+    next TEXT,
+    status TEXT DEFAULT 'todo',
+    note TEXT,
+    sort INTEGER DEFAULT 0,
+    done_at TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_job_tasks_job ON job_tasks(job_id)`,
   `CREATE TABLE IF NOT EXISTS deliverables (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     job_id INTEGER,
@@ -98,6 +118,8 @@ const SCHEMA = [
     created_at TEXT DEFAULT (datetime('now'))
   )`,
 ];
+
+import { tasksFor } from './_playbook.js';
 
 let schemaReady = false;
 export async function ensureSchema(db) {
@@ -153,6 +175,7 @@ export async function createJobForOrder(db, order, { deliveryDays } = {}) {
       .bind(order.id, order.service_slug, order.service_name, job.id)
       .run();
     await addEvent(db, job.id, 'system', null, null, `Stripe 주문 #${order.id} 연결됨 (${order.service_name || order.service_slug || '상품 미확인'})`);
+    await seedTasks(db, job.id, order.service_slug || job.service_slug);
     return job.id;
   }
   const due = deliveryDays ? addBusinessDays(new Date(), deliveryDays) : null;
@@ -164,6 +187,7 @@ export async function createJobForOrder(db, order, { deliveryDays } = {}) {
     .run();
   const id = r.meta && r.meta.last_row_id;
   await addEvent(db, id, 'system', null, 'new', `결제 확인 — ${order.service_name || order.service_slug || '상품 미확인'} $${((order.amount_cents || 0) / 100).toFixed(0)}`);
+  await seedTasks(db, id, order.service_slug);
   return id;
 }
 
@@ -190,6 +214,8 @@ export async function attachIntake(db, intake, { deliveryDays } = {}) {
       .bind(intake.id, intake.business || '', intake.service || '', due, job.id)
       .run();
     await addEvent(db, job.id, 'system', job.status, job.status === 'new' ? 'info' : job.status, `질문지 #${intake.id} 제출됨 — 딜리버리 기한 시작`);
+    await seedTasks(db, job.id, job.service_slug || intake.service);
+    await db.prepare(`UPDATE job_tasks SET status = 'done', done_at = datetime('now') WHERE job_id = ? AND key = 'ob-2'`).bind(job.id).run();
     return job.id;
   }
   const r = await db
@@ -200,7 +226,32 @@ export async function attachIntake(db, intake, { deliveryDays } = {}) {
     .run();
   const id = r.meta && r.meta.last_row_id;
   await addEvent(db, id, 'system', null, 'info', `질문지 #${intake.id} 제출됨 (Stripe 결제 기록 없음 — 이메일 신청이거나 웹훅 미수신)`);
+  await seedTasks(db, id, intake.service);
+  await db.prepare(`UPDATE job_tasks SET status = 'done', done_at = datetime('now') WHERE job_id = ? AND key = 'ob-2'`).bind(id).run();
   return id;
+}
+
+/** 플레이북 단계를 job_tasks 로 펼친다. 이미 있으면 건너뛴다(force 면 todo 상태만 교체). */
+export async function seedTasks(db, jobId, slug, { force } = {}) {
+  if (!jobId) return 0;
+  const tasks = tasksFor(slug);
+  if (!tasks.length) return 0;
+  const existing = await db.prepare(`SELECT COUNT(*) n FROM job_tasks WHERE job_id = ?`).bind(jobId).first();
+  if (existing && existing.n && !force) return 0;
+  if (force) await db.prepare(`DELETE FROM job_tasks WHERE job_id = ? AND status = 'todo'`).bind(jobId).run();
+  const keep = force ? new Set(((await db.prepare(`SELECT key FROM job_tasks WHERE job_id = ?`).bind(jobId).all()).results || []).map((r) => r.key)) : new Set();
+  const stmts = tasks
+    .filter((t) => !keep.has(t.k))
+    .map((t) =>
+      db
+        .prepare(`INSERT INTO job_tasks (job_id, key, service, service_name, title, phase, who, david_min, verify, block, next, status, sort) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+        .bind(jobId, t.k, t.service, t.serviceName, t.t, t.ph, t.who, t.min || 0, t.verify ? 1 : 0, t.block || '', t.next || '', t.who === 'blocked' ? 'blocked' : 'todo', t.sort)
+    );
+  for (let i = 0; i < stmts.length; i += 50) await db.batch(stmts.slice(i, i + 50));
+  // 자동 단계 중 이미 끝난 것: 결제 기록(ob-1)
+  await db.prepare(`UPDATE job_tasks SET status = 'done', done_at = datetime('now') WHERE job_id = ? AND key = 'ob-1'`).bind(jobId).run();
+  await addEvent(db, jobId, 'system', null, null, `플레이북 ${tasks.length}단계 생성 (${slug})`);
+  return stmts.length;
 }
 
 export async function addEvent(db, jobId, kind, from, to, note) {

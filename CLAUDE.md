@@ -84,6 +84,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | GBP 리뷰 답글·게시물 자동화 실험 | `automation/gbp/` (README 참고. API 승인 전엔 `--dry-run`만) |
 | 관리자 페이지 `/admin/` | `functions/admin/` (화면 `_ui.js`, API `[[path]].js`, 인증 `_auth.js`). 설정 안내 `docs/admin-setup-ko.md` |
 | Stripe 결제 → 주문·작업 기록 | `functions/api/stripe-webhook.js` + 공용 `functions/api/_orders.js` |
+| 서비스별 작업 단계·자동화 수준(플레이북) | `functions/api/_playbook.js` — 관리자 파이프라인·플레이북 탭·`docs/automation-map-ko.md`의 단일 소스 |
 | 패키지 상세 페이지 검색용 가이드·FAQ | `content/packages/{slug}.md` (서비스 가이드와 같은 형식, 가격은 쓰지 않고 `services.json`이 원본) |
 | 무료 진단 페이지 설명·FAQ | `content/pages/free-audit.md` — 채점 기준 표는 `functions/api/_engine.js`의 `computeScores`와 일치시킨다 |
 | 홈 "OUR OWN DATA" 제목·문구·숫자 | 최신 데이터 리포트 JSON의 `homeBand`(`headline`·`sub`·`stats`·`note`). 없으면 1호 설문으로 폴백 |
@@ -180,6 +181,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | `customer_profiles` | 고객 정보 (fulfillment에서 재사용) | fulfillment 스킬 |
 | `orders` · `payments` | Stripe 결제·구독 1건 = 주문 1건, 입금 내역 | `functions/api/stripe-webhook.js` |
 | `jobs` · `job_events` · `deliverables` | 주문당 작업 1건, 상태 타임라인, 결과물 링크 | `/admin/` · 웹훅 · `intake.js` |
+| `job_tasks` | 작업당 플레이북 단계(누가·검증·David 분·막힌 이유·상태) | `_orders.js seedTasks()` · `/admin/` |
 | `stripe_events` | 처리한 Stripe 이벤트 id (중복 방지) | 웹훅 |
 | `tool_usage` | 무료 도구 하루 사용 횟수 (일자·IP 해시·도구) — 자동 생성 | `functions/api/tools/_shared.js` |
 
@@ -302,7 +304,9 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 - 상품 매핑은 빌드가 쓰는 `dist/data/stripe-links.json`(Payment Link URL → slug)을 웹훅이 `env.ASSETS`로 읽는다. **새 Stripe 링크를 `services.json`에 넣으면 자동 반영**, 손으로 매핑하지 않는다
 - 월 분납 2회차 `invoice.paid`가 오면 타임라인에 "웹사이트 제작 시작 가능" 메모가 자동으로 붙는다(§4)
 - 결과물은 이 페이지가 만들지 않는다 — fulfillment 스킬이 만들고 Drive 링크를 여기 붙인다. 고객 자동 발송 금지는 그대로
-- 2단계 예정: GBP 리뷰·게시물 승인 큐(§15), 월간 리포트, 매출 통계
+- **서비스 파이프라인(2026-10-15)**: 작업이 생기면 `_playbook.js`의 단계가 `job_tasks`로 펼쳐진다. 단계마다 🟢자동 / 🟡AI+검수 / 🔵David 수동 / 🟠고객 대기 / 🔴막힘과 David 분, 검증 필수 표시. 단계 상태는 대기→진행→검증 대기→완료(막힘·해당 없음). 플레이북 탭은 작업 없이 상품별 자동화 지도를 보여준다. 대시보드 "데모 주문 만들기"는 New Optix Premium 12개월을 실제 결제 없이 같은 코드 경로로 만든다(업체명에 "(데모)", "데모 삭제"로 제거)
+- **자동화 현황과 병목은 `docs/automation-map-ko.md`.** Premium 12개월 1곳 = 83단계, 자동+AI 46%, David 셋업 21h + 월 14h(목표선 §15의 7~14배). 상위 병목: 광고 운영 수동(5.4h/월) · 로컬 등록 120곳(10h) · GBP API 거절 · 고객 대기 14단계. 플레이북 숫자를 바꾸면 문서 §7 표를 다시 생성한다
+- 2단계 예정: 검증 큐(결과물 보고 승인 → Gmail 초안 자동), 고객 포털(사진·권한·월간 승인), GBP 리뷰·게시물 승인 큐(§15), 매출 통계
 
 ---
 
@@ -350,11 +354,13 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 - 고객별 전용 인증 이메일 발급(`고객명@listings.bizhigher.com`, Cloudflare Email Routing) — 인증 메일이 David에게 직접 오게 해 고객 왕복 제거
 - 도입 순서: 리뷰 자동화 → GBP 포스팅 → FB/IG 포스팅 → 등록 반자동화 → 월간 리포트 자동화
 - **GBP API는 지금 즉시 신청**(승인 소요 불확실). Meta는 비즈니스 인증부터 착수하고 그동안은 예약 발행 툴 또는 Meta Business Suite 파트너 권한으로 대체
+- **2026-10-15 David 결정**: ① 광고 계정은 **BizHigher MCC 아래 고객 계정 생성**(카드는 고객 명의) ② **월 1회 캘린더 승인 + 무응답 시 승인 간주** 확정(약관 문구는 미작성) ③ 검수는 David가 전부 보다가 **위험 낮은 것부터 자동 확대**(별 4~5 일반 리뷰 답글 → 게시물 이미지·광고 카피 → 본문 → 리포트) ④ 로컬 등록은 핵심 30곳 **David + Claude in Chrome 보조 입력** + 나머지 **일회성 시티에이션 빌더**(곳당 $2~3, 영구). 구독형 애그리게이터(Yext류)는 해지 시 등록 소멸이라 제외
 - **GBP 대행사 계정(2026-10-03 확정)**: `hello@bizhigher.com` — Workspace 없이 만든 무료 구글 계정, Business Profile Manager 조직 "BizHigher". 고객 프로필은 **소유자가 이 계정을 관리자로 초대**(관리자는 관리자를 추가 못 함 — 구글 정책). 안내문 `automation/gbp/docs/owner-invite-ko.md`. API 신청 자격은 BestLoanUSA 프로필에 이 계정을 관리자로 넣어 충족. david@bestloanusa.com과 maxinchoi@gmail.com은 BizHigher 용도로 쓰지 않는다. Workspace 전환 시 충돌 계정 이름 변경 + 소유권 이전 필요
 
 ### 이 영역의 기술적 함정
 
 - **GBP API 자격**: 인증 후 **60일 이상** 지난 활성 프로필 + 프로필에 웹사이트 등록 + 신청 이메일이 오너/매니저. BizHigher 프로필이 60일 미만이면 BestLoanUSA 프로필로 신청
+- **GBP API 신청 2026-10-07 자동 거절.** 원인: 로그인 이메일 도메인(bizhigher.com)·Company website(bizhigher.com)·선택한 프로필(New Optix, newoptix.com)이 서로 달랐다. 심사 도구는 셋이 같은 회사인지 맞춰 본다 → **고객 프로필로는 대행사가 통과 못 한다.** 재신청은 (A) BestLoanUSA 재인증 후 david@bestloanusa.com + bestloanusa.com + BestLoanUSA 프로필, 또는 (B) BizHigher 프로필 인증 60일 후 hello@ + bizhigher.com. 확인 가능한 Yes/No 질문은 사실대로. 양식 맨 위 드롭다운 Submit은 옛 경로라 에러가 정상, "Apply for Google Business Profile API access" 버튼이 진짜 신청
 - **GBP API 할당량**: 승인 전 0 QPM(호출 자체 불가), 승인 후 300 QPM. 심사 기간 공식 미명시
 - **Meta 앱 심사**: 권한당 2~7영업일, 거절 시 시계 초기화, 복수 권한이면 **총 6~8주**가 현실적
 - **Meta 사전 조건**: 비즈니스 인증 선행, 공개 개인정보처리방침 URL, 데이터 삭제 안내 URL, 권한별 시연 영상(실제 페이지 관리자 권한 테스트 계정)
@@ -366,6 +372,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 - **의료·치과 고객 리뷰 답글에서 환자 여부를 암시하는 표현 금지**(HIPAA). 보상·할인 약속 금지, 개인정보 언급 금지
 - **진짜 병목은 폼 입력이 아니라 인증**(이메일·전화·엽서·CAPTCHA). 전화 인증은 고객과 10분 통화로 몰아서 처리
 - **CAPTCHA 자동 우회는 하지 않는다.** 사람이 처리
+- **"브라우저 자동화 금지"의 범위**: 무인 봇이 계정 생성·CAPTCHA·전화 인증을 넘기는 것. 사람이 화면을 보는 상태에서 Claude in Chrome이 폼을 채우는 **보조 입력은 허용**(2026-10-15). 디렉토리 약관 위반·고객 계정 정지 위험·UI 변경 시 깨짐이 무인 자동화를 피하는 이유
 
 ---
 
@@ -382,7 +389,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 | 리뷰 대가 제공·게이팅·가짜 리뷰 | 구글 정책 위반 |
 | 낮은 별점 리뷰 자동 답글 | 법적·평판 리스크 |
 | 30곳 전수 수작업 등록 | 곳당 10~15분 × 30 = 4~6시간. 셋업가 $129로는 적자 |
-| BrightLocal 등 시티에이션 대행을 기본값으로 | 직접 처리가 원칙 — 마진과 통제력 |
+| Yext류 **구독형** 애그리게이터 | 해지하면 등록이 사라지고 월 비용. 일회성 시티에이션 빌더(영구 등록)는 2026-10-15부터 허용 |
 | 포스팅 건별 고객 승인 | 월 26건 왕복은 운영 불가 |
 | Meta 앱 심사 완료를 서비스 개시 조건으로 | 6~8주 소요 — 론칭이 막힘 |
 | 클라우드 Cowork 세션에서 직접 git push | 프록시 차단(§2) |
@@ -436,6 +443,9 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 10. **30곳 디렉토리 마스터 목록** — 등록 URL·인증 방식·자동화 가능 여부. 미작성 (§15)
 11. **반자동 등록의 고객당 실소요 시간** — 1~1.5시간은 추정치. 1~2곳 실측 필요 (§15)
 12. 포스팅 3채널 최종 확정 / 예약 발행 툴 선정 / 승인 큐 형태 / 무응답 자동 승인 약관 문구 / 월간 리포트 지표 정의 / GBP API 신청 계정 (§15)
+13. **로컬 등록 실행** — 핵심 30곳 마스터 목록(Claude in Chrome 보조 입력용) + 일회성 시티에이션 빌더 업체 선정. `docs/automation-map-ko.md` §3
+14. **Google Ads API 개발자 토큰 신청**(MCC) — 광고 운영 수동 5.4h/월/고객의 유일한 출구
+15. **GBP API 재신청 경로**(A 또는 B, §15) + BestLoanUSA 프로필 재인증
 
 ---
 
