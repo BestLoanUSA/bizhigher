@@ -15,9 +15,15 @@
  *   POST /admin/api/jobs/:id/link-intake        {intake_id}
  *   POST /admin/api/jobs/from-intake            {intake_id}
  *   GET  /admin/api/orders · /admin/api/intakes · /admin/api/leads · /admin/api/reports
+ *   POST /admin/api/jobs/:id/task/:tid        {status|note}   플레이북 단계 상태
+ *   POST /admin/api/jobs/:id/tasks/seed       {force}         플레이북 (재)생성
+ *   GET  /admin/api/playbook?slug=             상품별 자동화 지도 (작업 없이 보기)
+ *   POST /admin/api/demo {slug}               데모 주문·질문지·작업 생성 (New Optix) / POST /admin/api/demo/clear 삭제
  */
+export const TASK_STATUSES = [['todo', '대기'], ['doing', '진행'], ['review', '검증 대기'], ['done', '완료'], ['blocked', '막힘'], ['skipped', '해당 없음']];
 import { authenticate, login, logoutCookie } from './_auth.js';
-import { ensureSchema, JOB_STATUSES, addEvent } from '../api/_orders.js';
+import { ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog } from '../api/_orders.js';
+import { PLAYBOOK, COMMON_ONBOARDING, WHO, PHASES, tasksFor, summarize } from '../api/_playbook.js';
 import { appHtml, loginHtml } from './_ui.js';
 
 const NOINDEX = { 'X-Robots-Tag': 'noindex, nofollow', 'Cache-Control': 'no-store' };
@@ -53,7 +59,7 @@ export async function onRequest(context) {
     await ensureSchema(env.DB);
     const seg = path.split('/').slice(1); // after "api"
     const body = request.method === 'POST' ? await request.json().catch(() => ({})) : {};
-    const out = await api(env.DB, request.method, seg, body, url);
+    const out = await api(env, request.method, seg, body, url);
     if (out === undefined) return json({ ok: false, error: 'not found' }, 404);
     return json({ ok: true, ...out });
   } catch (e) {
@@ -63,7 +69,8 @@ export async function onRequest(context) {
 
 /* ---------- API ---------- */
 
-async function api(db, method, seg, body, url) {
+async function api(env, method, seg, body, url) {
+  const db = env.DB;
   const [res, id, sub, subId] = seg;
 
   if (res === 'summary' && method === 'GET') {
@@ -82,6 +89,9 @@ async function api(db, method, seg, body, url) {
     const intakes = await safeFirst(db, `SELECT COUNT(*) n FROM intakes WHERE id NOT IN (SELECT intake_id FROM jobs WHERE intake_id IS NOT NULL)`);
     const lastEvent = await q(`SELECT created_at, type FROM stripe_events ORDER BY created_at DESC LIMIT 1`);
     const recent = await db.prepare(`SELECT id, kind, note, created_at, job_id FROM job_events ORDER BY id DESC LIMIT 12`).all();
+    const review = await q(`SELECT COUNT(*) n FROM job_tasks t JOIN jobs j ON j.id = t.job_id WHERE t.status = 'review' AND j.status NOT IN ('done','hold')`);
+    const blocked = await q(`SELECT COUNT(*) n FROM job_tasks t JOIN jobs j ON j.id = t.job_id WHERE t.status = 'blocked' AND j.status NOT IN ('done','hold')`);
+    const customerWait = await q(`SELECT COUNT(*) n FROM job_tasks t JOIN jobs j ON j.id = t.job_id WHERE t.who = 'customer' AND t.status IN ('todo','doing') AND j.status NOT IN ('done','hold')`);
     return {
       jobs: byStatus, overdue: overdue.n || 0, dueToday: dueToday.n || 0,
       monthRevenueCents: month.c || 0, monthPayments: month.n || 0,
@@ -89,6 +99,7 @@ async function api(db, method, seg, body, url) {
       leads7d: (leads && leads.n) || 0, unlinkedIntakes: (intakes && intakes.n) || 0,
       lastStripeEvent: lastEvent.created_at ? { at: lastEvent.created_at, type: lastEvent.type } : null,
       recent: recent.results || [],
+      reviewPending: review.n || 0, blockedTasks: blocked.n || 0, customerWait: customerWait.n || 0,
       statuses: JOB_STATUSES,
     };
   }
@@ -135,7 +146,10 @@ async function api(db, method, seg, body, url) {
     const intakeCandidates = !job.intake_id && job.customer_email
       ? (await safeAll(db, `SELECT id, service, business, contact_name, created_at FROM intakes WHERE lower(email) = ? AND id NOT IN (SELECT intake_id FROM jobs WHERE intake_id IS NOT NULL) ORDER BY id DESC LIMIT 5`, job.customer_email.toLowerCase()))
       : [];
-    return { job, order, payments, intake, events, deliverables, history, intakeCandidates, statuses: JOB_STATUSES };
+    const tasks = (await db.prepare(`SELECT * FROM job_tasks WHERE job_id = ? ORDER BY sort ASC, id ASC`).bind(job.id).all()).results;
+    const pipeline = summarize(tasks.map((t) => ({ who: t.who, verify: !!t.verify, min: t.david_min, ph: t.phase, block: t.block })));
+    const doneMin = tasks.filter((t) => t.status === 'done').reduce((a, t) => a + (t.david_min || 0), 0);
+    return { job, order, payments, intake, events, deliverables, history, intakeCandidates, tasks, pipeline: { ...pipeline, doneMin, done: tasks.filter((t) => t.status === 'done').length }, who: WHO, phases: PHASES, taskStatuses: TASK_STATUSES, statuses: JOB_STATUSES };
   }
 
   if (res === 'jobs' && id && method === 'POST') {
@@ -180,6 +194,22 @@ async function api(db, method, seg, body, url) {
       if (body.sent) await addEvent(db, jid, 'deliverable', null, null, `결과물 발송 완료 (#${subId})`);
       return {};
     }
+    if (sub === 'task' && subId) {
+      const t = await db.prepare(`SELECT * FROM job_tasks WHERE id = ? AND job_id = ?`).bind(Number(subId), jid).first();
+      if (!t) throw new Error('단계를 찾을 수 없습니다');
+      if (body.status !== undefined) {
+        const to = String(body.status);
+        if (!TASK_STATUSES.some(([k]) => k === to)) throw new Error('잘못된 단계 상태');
+        await db.prepare(`UPDATE job_tasks SET status = ?, done_at = CASE WHEN ? = 'done' THEN datetime('now') ELSE NULL END WHERE id = ?`).bind(to, to, t.id).run();
+        if (to === 'done' || to === 'review' || to === 'blocked') await addEvent(db, jid, 'task', null, null, `${to === 'done' ? '✔' : to === 'review' ? '👀 검증 요청' : '⛔'} ${t.title}`);
+      }
+      if (body.note !== undefined) await db.prepare(`UPDATE job_tasks SET note = ? WHERE id = ?`).bind(String(body.note || '').slice(0, 2000), t.id).run();
+      return {};
+    }
+    if (sub === 'tasks' && subId === 'seed') {
+      const n = await seedTasks(db, jid, body.slug || job.service_slug, { force: !!body.force });
+      return { added: n };
+    }
     if (sub === 'link-intake') {
       const iid = Number(body.intake_id);
       const intake = await db.prepare(`SELECT id, business FROM intakes WHERE id = ?`).bind(iid).first();
@@ -189,6 +219,59 @@ async function api(db, method, seg, body, url) {
       return {};
     }
     return undefined;
+  }
+
+  if (res === 'playbook' && method === 'GET') {
+    const slug = url.searchParams.get('slug') || '';
+    const tasks = slug ? tasksFor(slug) : [];
+    const catalog = Object.entries(PLAYBOOK).map(([k, v]) => ({ slug: k, name: v.name, ...summarize(v.steps) , bottlenecks: undefined }));
+    const packages = [];
+    for (const pkg of ['local-starter', 'local-growth', 'local-premium']) for (const per of ['monthly', 'six', 'annual']) {
+      const sm = summarize(tasksFor(`${pkg}-${per}`));
+      packages.push({ slug: `${pkg}-${per}`, total: sm.total, autoPct: sm.autoPct, setupMin: sm.setupMin, monthMin: sm.monthMin, verify: sm.verify, blocked: sm.by.blocked });
+    }
+    return { slug, tasks, summary: slug ? { ...summarize(tasks), bottlenecks: undefined } : null, catalog, packages, who: WHO, phases: PHASES, common: COMMON_ONBOARDING };
+  }
+
+  if (res === 'demo' && method === 'POST' && id === 'clear') {
+    const jobs = (await db.prepare(`SELECT id, order_id, intake_id FROM jobs WHERE business LIKE '%(데모)%'`).all()).results || [];
+    for (const j of jobs) {
+      await db.batch([
+        db.prepare(`DELETE FROM job_tasks WHERE job_id = ?`).bind(j.id),
+        db.prepare(`DELETE FROM job_events WHERE job_id = ?`).bind(j.id),
+        db.prepare(`DELETE FROM deliverables WHERE job_id = ?`).bind(j.id),
+        db.prepare(`DELETE FROM payments WHERE order_id = ?`).bind(j.order_id || -1),
+        db.prepare(`DELETE FROM orders WHERE id = ? AND stripe_session_id LIKE 'demo_%'`).bind(j.order_id || -1),
+        db.prepare(`DELETE FROM jobs WHERE id = ?`).bind(j.id),
+      ]);
+      if (j.intake_id) await safeRun(db, `DELETE FROM intakes WHERE id = ? AND business LIKE '%(데모)%'`, j.intake_id);
+    }
+    return { removed: jobs.length };
+  }
+  if (res === 'demo' && method === 'POST') {
+    // New Optix 가 Premium 에 가입했다고 가정한 데모 — 실제 Stripe 없이 같은 코드 경로를 탄다
+    const slug = String(body.slug || 'local-premium-annual');
+    const catalog = await loadCatalog(env, url.toString());
+    const item = catalog.bySlug[slug] || { name: slug, deliveryDays: 7 };
+    const prices = { 'local-premium-monthly': 759, 'local-premium-six': 619 * 6, 'local-premium-annual': 479 * 12, 'local-premium-installment': 519, 'local-growth-annual': 279 * 12, 'local-starter-annual': 139 * 12 };
+    const sid = 'demo_' + Date.now();
+    const r = await db
+      .prepare(`INSERT INTO orders (stripe_session_id, service_slug, service_name, period, mode, amount_cents, currency, interval, status, customer_email, customer_name, customer_phone, paid_count, last_paid_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,1,datetime('now'))`)
+      .bind(sid, slug, item.name, item.period || null, /monthly|installment/.test(slug) ? 'subscription' : 'payment', (prices[slug] || 759) * 100, 'usd', item.interval || null, /monthly|installment/.test(slug) ? 'active' : 'paid', 'demo@newoptix.example', 'New Optix (데모)', '(714) 000-0000')
+      .run();
+    const orderId = r.meta.last_row_id;
+    await db.prepare(`INSERT INTO payments (order_id, stripe_id, amount_cents, currency, reason, paid_at) VALUES (?,?,?,?,?,datetime('now'))`).bind(orderId, 'demo_pi_' + orderId, (prices[slug] || 759) * 100, 'usd', 'demo').run();
+    const order = { id: orderId, service_slug: slug, service_name: item.name, amount_cents: (prices[slug] || 759) * 100, customer_email: 'demo@newoptix.example', customer_name: 'New Optix (데모)' };
+    const jobId = await createJobForOrder(db, order, { deliveryDays: item.deliveryDays });
+    // 질문지도 들어왔다고 가정 (automation/gbp/biz/new-optix.json 내용)
+    const intakeId = await safeInsertIntake(db, {
+      service: slug, business: 'New Optix (데모)', contact_name: '최 사장', phone: '(714) 000-0000', email: 'demo@newoptix.example',
+      links: 'https://maps.google.com/?cid=NEWOPTIX (구글 프로필) · 웹사이트 미정 · 인스타 @newoptix',
+      notes: '업종: 안경점·검안 (Garden Grove, CA)\n한 줄 소개: 한국어 상담이 편한 가든그로브 안경점\n서비스: 안경·선글라스 / 콘택트렌즈 / 검안 예약 / 렌즈 교체\n톤: 정중하고 간결한 존댓말, 과장 없이\n금지 표현: 최저가, 100% 보장, 무조건\n언어: 한/영\n게시물 주제: 이달의 프레임, 영업시간·주차 안내, 콘택트렌즈 관리 팁, 자외선과 선글라스, 검안 예약 안내, 렌즈 선택 가이드, 손님 후기 감사, 시즌 인사\n\n[데모] 실제 주문이 아닙니다. 대시보드의 "데모 삭제"로 지울 수 있습니다.',
+    });
+    if (intakeId) await attachIntake(db, { id: intakeId, service: slug, service_name: item.name, business: 'New Optix (데모)', email: 'demo@newoptix.example' }, { deliveryDays: item.deliveryDays });
+    await db.prepare(`UPDATE jobs SET business = 'New Optix (데모)' WHERE id = ?`).bind(jobId).run();
+    return { job_id: jobId, order_id: orderId, intake_id: intakeId };
   }
 
   if (res === 'orders' && method === 'GET') {
@@ -231,6 +314,13 @@ async function hasColumn(db, table, col) {
     try { colCache[table] = ((await db.prepare(`PRAGMA table_info(${table})`).all()).results || []).map((r) => r.name); } catch { colCache[table] = []; }
   }
   return colCache[table].includes(col);
+}
+async function safeRun(db, sql, ...bind) { try { await db.prepare(sql).bind(...bind).run(); } catch {} }
+async function safeInsertIntake(db, i) {
+  try {
+    const r = await db.prepare(`INSERT INTO intakes (service, business, contact_name, phone, email, links, notes) VALUES (?,?,?,?,?,?,?)`).bind(i.service, i.business, i.contact_name, i.phone, i.email, i.links, i.notes).run();
+    return r.meta && r.meta.last_row_id;
+  } catch { return null; }
 }
 async function safeFirst(db, sql, ...bind) {
   try { return await db.prepare(sql).bind(...bind).first(); } catch { return null; }

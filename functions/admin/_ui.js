@@ -37,6 +37,15 @@ pre.notes{white-space:pre-wrap;font:inherit;font-size:14px;background:var(--bg);
 .back{display:inline-block;font-size:13px;margin-bottom:8px;color:var(--ink-600)}
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:999px;font-size:13.5px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw}.toast.on{opacity:1}
 .login{max-width:360px;margin:14vh auto 0;padding:0 16px}.login .card{padding:24px}
+.pp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}@media(min-width:720px){.pp{grid-template-columns:repeat(6,1fr)}}.pp div{background:var(--bg);border-radius:10px;padding:8px 10px}.pp b{display:block;font-size:17px}.pp span{font-size:11.5px;color:var(--ink-600)}
+.lg{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:var(--ink-600);margin:6px 0 10px}
+.ph{font-size:13px;font-weight:800;color:var(--navy);margin:14px 0 4px;padding-top:10px;border-top:2px solid var(--line);cursor:pointer;list-style:none}.ph::-webkit-details-marker{display:none}.ph::before{content:'▸ ';color:var(--ink-400)}details[open]>.ph::before{content:'▾ '}details:first-of-type>.ph{border-top:0;padding-top:0}
+.sv{font-size:12px;font-weight:700;color:var(--ink-400);margin:8px 0 2px;letter-spacing:.02em}
+.tk{display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)}.tk .ic{flex:0 0 18px;font-size:14px;line-height:1.5}.tk .m{flex:1;min-width:0}.tk .t{font-size:14px}.tk.done .t{color:var(--ink-400);text-decoration:line-through}.tk .b{font-size:12px;color:var(--ink-600);margin-top:2px}.tk .b.red{color:var(--red)}.tk .b.nx{color:var(--green)}
+.tk .r{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:4px}.tk select{font-size:12px;border:1px solid var(--line);border-radius:8px;padding:4px 6px;background:#fff}.tk .mn{font-size:11px;color:var(--ink-400)}
+.vf{display:inline-block;font-size:10.5px;font-weight:800;padding:2px 6px;border-radius:6px;background:#EDE9FE;color:#6D28D9;margin-left:4px;vertical-align:middle}.tk.review{background:#FDF4FF;margin:0 -14px;padding:8px 14px}
+.bn{background:#FFF7ED;border:1px solid #FED7AA;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:13.5px}.bn li{margin:4px 0}
+
 `;
 
 const FONT = `<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">`;
@@ -56,7 +65,7 @@ export function appHtml({ user, noDb } = {}) {
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>BizHigher 관리자</title>${FONT}<style>${CSS}</style></head><body>
 <header class="top"><a class="logo" href="#/">Biz<b>Higher</b><small>ADMIN</small></a><span class="sp"></span><span class="muted" style="font-size:12px">${esc(user || '')}</span><a class="out" href="/admin/logout">나가기</a></header>
 <nav class="tabs" id="tabs">
-<a href="#/" data-t="">대시보드</a><a href="#/jobs" data-t="jobs">작업</a><a href="#/orders" data-t="orders">주문</a><a href="#/intakes" data-t="intakes">질문지</a><a href="#/leads" data-t="leads">리드</a><a href="#/reports" data-t="reports">리포트</a>
+<a href="#/" data-t="">대시보드</a><a href="#/jobs" data-t="jobs">작업</a><a href="#/orders" data-t="orders">주문</a><a href="#/intakes" data-t="intakes">질문지</a><a href="#/leads" data-t="leads">리드</a><a href="#/reports" data-t="reports">리포트</a><a href="#/playbook" data-t="playbook">플레이북</a>
 </nav>
 <main id="app">${noDb ? '<div class="alert err">이 배포에는 D1 바인딩(DB)이 없습니다. 프리뷰 환경이면 정상이고, Production 에서는 Settings → Functions → D1 bindings 를 확인하세요.</div>' : '<div class="empty">불러오는 중…</div>'}</main>
 <div class="toast" id="toast"></div>
@@ -92,7 +101,7 @@ function setTab(t) { document.querySelectorAll('#tabs a').forEach((a) => a.class
 
 /* ---------- 라우팅 ---------- */
 async function route() {
-  const h = location.hash.replace(/^#\/?/, '');
+  const h = location.hash.replace(/^#\/?/, '').split('?')[0];
   const [v, id] = h.split('/');
   setTab(v || '');
   try {
@@ -103,6 +112,7 @@ async function route() {
     else if (v === 'intakes') await intakes();
     else if (v === 'leads') await leads();
     else if (v === 'reports') await reports();
+    else if (v === 'playbook') await playbook(new URLSearchParams(location.hash.split('?')[1] || '').get('slug') || 'local-premium-annual');
     else app.innerHTML = '<div class="empty">없는 페이지</div>';
   } catch (e) { app.innerHTML = '<div class="alert err">' + esc(e.message) + '</div>'; }
   window.scrollTo(0, 0);
@@ -127,9 +137,15 @@ async function dashboard() {
     tile(d.pastDue, '미납 구독', '#/orders', d.pastDue ? 'warn' : '') +
     tile(d.unlinkedIntakes, '작업 없는 질문지', '#/intakes', d.unlinkedIntakes ? 'warn' : '') +
     tile(d.leads7d, '7일 진단 신청', '#/leads') +
+    tile(d.reviewPending, '내가 검증할 단계', '#/jobs', d.reviewPending ? 'warn' : '') +
+    tile(d.blockedTasks, '막힌 단계', '#/jobs', d.blockedTasks ? 'warn' : '') +
+    tile(d.customerWait, '고객 대기 단계', '#/jobs') +
     '</div>' +
+    '<div style="margin:12px 0;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost sm" id="demo-add">데모 주문 만들기 (New Optix · Premium 12개월)</button><button class="btn ghost sm" id="demo-clear">데모 삭제</button><a class="btn ghost sm" href="#/playbook">자동화 지도 보기</a></div>' +
     '<h2>최근 활동</h2><div class="list">' + (d.recent.length ? d.recent.map((e) => '<a class="row" href="#/jobs/' + e.job_id + '"><div class="m"><div class="t" style="font-weight:600;white-space:normal">' + esc(e.note) + '</div><div class="s">작업 #' + e.job_id + '</div></div><div class="r">' + when(e.created_at) + '</div></a>').join('') : '<div class="empty">아직 활동이 없습니다</div>') + '</div>' +
     (d.lastStripeEvent ? '<p class="muted" style="margin-top:12px">마지막 Stripe 이벤트: ' + esc(d.lastStripeEvent.type) + ' · ' + when(d.lastStripeEvent.at) + '</p>' : '');
+  $('#demo-add').onclick = async () => { try { const r = await api('demo', { slug: 'local-premium-annual' }); toast('데모 작업 #' + r.job_id); location.hash = '#/jobs/' + r.job_id; } catch (e) { toast('오류: ' + e.message); } };
+  $('#demo-clear').onclick = async () => { if (!confirm('데모 주문·작업·질문지를 모두 삭제할까요?')) return; try { const r = await api('demo/clear', {}); toast('삭제 ' + r.removed + '건'); dashboard(); } catch (e) { toast('오류: ' + e.message); } };
 }
 function tile(n, l, href, cls) { return '<div class="tile ' + (cls || '') + '"><a href="' + href + '"><div class="n">' + n + '</div><div class="l">' + l + '</div></a></div>'; }
 
@@ -157,6 +173,8 @@ async function jobDetail(id) {
     '<div class="card"><div class="muted" style="margin-bottom:4px">상태 변경</div><div class="st">' + STATUSES.map(([k, l]) => '<button data-st="' + k + '" class="' + (k === job.status ? 'on' : '') + '">' + esc(l) + '</button>').join('') + '</div>' +
     '<div class="frm"><div class="h"><input class="in" id="due" type="date" value="' + esc(job.due_date || '') + '"><button class="btn ghost sm" id="due-save">마감 저장</button></div>' +
     '<div class="h"><input class="in" id="biz" placeholder="업체명" value="' + esc(job.business || '') + '"><button class="btn ghost sm" id="biz-save">업체명 저장</button></div></div></div>' +
+
+    pipelineHtml(d) +
 
     '<h2>결제</h2><div class="card">' + (order ? '<dl class="kv">' +
       kv('상품', esc(order.service_name || order.service_slug || '미확인')) +
@@ -189,6 +207,8 @@ async function jobDetail(id) {
 
   const reload = () => jobDetail(id);
   const act = async (fn, msg) => { try { await fn(); toast(msg); reload(); } catch (e) { toast('오류: ' + e.message); } };
+  app.querySelectorAll('select[data-task]').forEach((sel) => sel.onchange = () => act(() => api('jobs/' + id + '/task/' + sel.dataset.task, { status: sel.value }), '단계 저장'));
+  const seedBtn = $('#tasks-seed'); if (seedBtn) seedBtn.onclick = () => act(() => api('jobs/' + id + '/tasks/seed', { slug: job.service_slug }), '플레이북 생성');
   app.querySelectorAll('[data-st]').forEach((b) => b.onclick = () => { if (b.dataset.st === job.status) return; const note = (b.dataset.st === 'hold' || b.dataset.st === 'done') ? (prompt('메모 (선택)') || '') : ''; act(() => api('jobs/' + id + '/status', { status: b.dataset.st, note }), '상태: ' + stLabel(b.dataset.st)); });
   $('#due-save').onclick = () => act(() => api('jobs/' + id + '/due', { due_date: $('#due').value }), '마감 저장');
   $('#biz-save').onclick = () => act(() => api('jobs/' + id + '/business', { business: $('#biz').value }), '업체명 저장');
@@ -198,6 +218,58 @@ async function jobDetail(id) {
   app.querySelectorAll('[data-link-intake]').forEach((b) => b.onclick = () => act(() => api('jobs/' + id + '/link-intake', { intake_id: Number(b.dataset.linkIntake) }), '질문지 연결'));
 }
 function kv(k, v) { return '<dt>' + k + '</dt><dd>' + (v || '<span class="muted">—</span>') + '</dd>'; }
+
+/* ---------- 서비스 파이프라인 (플레이북) ---------- */
+const hrs = (m) => (m >= 60 ? (m / 60).toFixed(m % 60 ? 1 : 0) + '시간' : m + '분');
+function pipelineHtml(d) {
+  const { tasks, pipeline: p, who, phases, taskStatuses, job } = d;
+  if (!tasks || !tasks.length) return '<h2>서비스 파이프라인</h2><div class="card"><div class="muted">이 작업에는 플레이북이 없습니다' + (job.service_slug ? ' (' + esc(job.service_slug) + ')' : ' — 상품 slug 미확인') + '.</div><div style="margin-top:8px"><button class="btn ghost sm" id="tasks-seed">플레이북 생성</button></div></div>';
+  const bn = tasks.filter((t) => t.status !== 'done' && t.status !== 'skipped' && (t.who === 'blocked' || (t.who === 'david' && t.david_min >= 60) || (t.who === 'customer' && t.block)));
+  return '<h2>서비스 파이프라인 <span class="muted" style="font-weight:500;font-size:12px">' + p.done + '/' + p.total + ' 완료</span></h2><div class="card">' +
+    '<div class="pp">' + pp(p.autoPct + '%', '자동+AI 비율') + pp(p.verify, 'David 검증 단계') + pp(hrs(p.setupMin), 'David 셋업 시간') + pp(hrs(p.monthMin) + '/월', 'David 월간 시간') + pp(p.by.blocked, '막힘') + pp(p.by.customer, '고객 대기') + '</div>' +
+    legend(who) +
+    (bn.length ? '<div class="bn"><b>병목 ' + bn.length + '곳</b><ul style="margin:4px 0 0;padding-left:18px">' + bn.map((t) => '<li>' + who[t.who].icon + ' ' + esc(t.title) + (t.block ? ' — <span class="muted">' + esc(t.block) + '</span>' : '') + '</li>').join('') + '</ul></div>' : '') +
+    taskList(tasks, who, phases, taskStatuses, true) + '</div>';
+}
+function pp(v, l) { return '<div><b>' + v + '</b><span>' + l + '</span></div>'; }
+function legend(who) { return '<div class="lg">' + Object.entries(who).map(([k, w]) => '<span>' + w.icon + ' ' + esc(w.label) + ' <span class="muted">' + esc(w.desc) + '</span></span>').join('') + '<span><span class="vf">검증</span> David가 보고 승인해야 고객에게 나감</span></div>'; }
+function taskList(tasks, who, phases, taskStatuses, editable) {
+  let out = '';
+  for (const [ph, label] of phases) {
+    const rows = tasks.filter((t) => (t.phase || t.ph) === ph);
+    if (!rows.length) continue;
+    const open = rows.filter((t) => t.status !== 'done' && t.status !== 'skipped').length;
+    out += '<details' + (ph === 'onboarding' || ph === 'setup' || !editable ? ' open' : '') + '><summary class="ph">' + esc(label) + ' <span class="muted" style="font-weight:500">' + rows.length + (editable ? '단계 · 남은 ' + open : '단계') + '</span></summary>';
+    let svc = null;
+    for (const t of rows) {
+      const sn = t.service_name || t.serviceName || '';
+      if (sn !== svc) { svc = sn; out += '<div class="sv">' + esc(sn) + '</div>'; }
+      const w = who[t.who] || { icon: '', label: t.who };
+      const st = t.status || (t.who === 'blocked' ? 'blocked' : 'todo');
+      const min = t.david_min != null ? t.david_min : t.min;
+      out += '<div class="tk ' + esc(st) + '"><div class="ic">' + w.icon + '</div><div class="m"><div class="t">' + esc(t.title || t.t) + (t.verify ? '<span class="vf">검증</span>' : '') + '</div>' +
+        (t.block ? '<div class="b ' + (t.who === 'blocked' ? 'red' : '') + '">' + esc(t.block) + '</div>' : '') + (t.next ? '<div class="b nx">→ ' + esc(t.next) + '</div>' : '') + (t.note ? '<div class="b">📝 ' + esc(t.note) + '</div>' : '') + '</div>' +
+        '<div class="r">' + (editable ? '<select data-task="' + t.id + '">' + taskStatuses.map(([k, l]) => '<option value="' + k + '"' + (k === st ? ' selected' : '') + '>' + esc(l) + '</option>').join('') + '</select>' : '<span class="pill ' + esc(t.who) + '" style="background:var(--bg);color:var(--ink-600)">' + esc(w.label) + '</span>') +
+        (min ? '<span class="mn">David ' + min + '분' + ({ weekly: '/주', daily: '/일', monthly: '/월' }[t.phase || t.ph] || '') + '</span>' : '') + '</div></div>';
+    }
+    out += '</details>';
+  }
+  return out;
+}
+
+/* ---------- 플레이북 탭 ---------- */
+async function playbook(slug) {
+  const d = await api('playbook?slug=' + encodeURIComponent(slug)); if (!d) return;
+  const pkgs = d.packages;
+  const PL = { 'local-starter': 'Starter', 'local-growth': 'Growth', 'local-premium': 'Premium' }, PER = { monthly: '월간', six: '6개월', annual: '12개월' };
+  const pname = (s) => { const m = /^(local-\w+)-(\w+)$/.exec(s); return m ? PL[m[1]] + ' ' + PER[m[2]] : (d.catalog.find((c) => c.slug === s) || {}).name || s; };
+  const sm = d.summary || {};
+  app.innerHTML = '<h1>자동화 지도</h1><p class="muted" style="margin:-6px 0 12px">상품을 고르면 고객이 들어왔을 때 돌아가는 단계와 지금 누가 하는지, David 시간이 얼마나 드는지 보입니다. 숫자는 functions/api/_playbook.js 기준 추정치입니다.</p>' +
+    '<div class="chips">' + pkgs.map((p) => '<a href="#/playbook?slug=' + p.slug + '" class="' + (p.slug === slug ? 'on' : '') + '">' + esc(pname(p.slug)) + '</a>').join('') + '</div>' +
+    '<div class="chips">' + d.catalog.map((c) => '<a href="#/playbook?slug=' + c.slug + '" class="' + (c.slug === slug ? 'on' : '') + '">' + esc(c.name) + '</a>').join('') + '</div>' +
+    '<h2>패키지 비교 — David 실투입</h2><div class="list">' + pkgs.map((p) => '<a class="row" href="#/playbook?slug=' + p.slug + '"><div class="m"><div class="t">' + esc(pname(p.slug)) + '</div><div class="s">' + p.total + '단계 · 자동+AI ' + p.autoPct + '% · 검증 ' + p.verify + ' · 막힘 ' + p.blocked + '</div></div><div class="r"><b>' + hrs(p.setupMin) + '</b> 셋업<div><b>' + hrs(p.monthMin) + '</b>/월</div></div></a>').join('') + '</div>' +
+    (d.tasks.length ? '<h2>' + esc(pname(slug)) + ' — ' + d.tasks.length + '단계</h2><div class="card"><div class="pp">' + pp(sm.autoPct + '%', '자동+AI 비율') + pp(sm.verify, 'David 검증 단계') + pp(hrs(sm.setupMin), 'David 셋업 시간') + pp(hrs(sm.monthMin) + '/월', 'David 월간 시간') + pp(sm.by.blocked, '막힘') + pp(sm.by.customer, '고객 대기') + '</div>' + legend(d.who) + taskList(d.tasks, d.who, d.phases, [], false) + '</div>' : '<div class="empty">해당 상품의 플레이북이 없습니다</div>');
+}
 function linkify(s) { return esc(s || '').replace(/(https?:\/\/[^\s,]+)/g, '<a target="_blank" href="$1">$1</a>'); }
 
 /* ---------- 주문 ---------- */
