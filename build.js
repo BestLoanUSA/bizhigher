@@ -3364,6 +3364,181 @@ function toolViz(viz) {
   return '';
 }
 
+/* ---------- 도구 상세 페이지 "실행 결과 예시" 미리보기 ----------
+   실제 도구를 돌려 보지 않아도 어떤 결과가 나오는지 보이도록, 각 도구의 실제 결과 화면과
+   같은 마크업(클래스)을 예시 데이터로 정적 렌더링한다. 전부 "맛있는 식당"(Garden Grove, CA)
+   이라는 하나의 가상 업체로 통일해 15개 도구를 둘러봐도 같은 맥락으로 읽히게 한다. */
+const DEMO_BIZ = { ko: '맛있는 식당', en: 'Delicious Korean Kitchen', addr: '123 Main St, Garden Grove, CA 92840', phone: '(714) 555-0123' };
+
+function rankCellCls(v) { return v === 0 ? 'r-out' : v <= 3 ? 'r-top' : v <= 10 ? 'r-mid' : 'r-low'; }
+function demoRankGrid() {
+  const n = 7, mid = 3, rows = [];
+  for (let r = 0; r < n; r++) {
+    let row = '';
+    for (let c = 0; c < n; c++) {
+      const d = Math.sqrt((r - mid) ** 2 + (c - mid) ** 2);
+      const v = d > 3.2 ? 0 : Math.min(20, Math.round(1 + d * d * 0.95));
+      row += `<span class="rank-cell ${rankCellCls(v)}${r === mid && c === mid ? ' is-center' : ''}" title="${v > 0 ? v + '위' : '20위 밖'}">${v > 0 ? v : '20+'}</span>`;
+    }
+    rows.push(row);
+  }
+  return rows.join('');
+}
+/* QR코드 모양 장식용 패턴(3개 코너 파인더 + 고정 노이즈) — 실제로 스캔되지 않는 예시용 */
+function demoQrSvg() {
+  const n = 21, cell = 180 / n, mods = [];
+  const inFinder = (r, c) => [[0, 0], [0, n - 7], [n - 7, 0]].some(([r0, c0]) => r >= r0 && r < r0 + 7 && c >= c0 && c < c0 + 7);
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+    if (inFinder(r, c)) continue;
+    if ((r * 13 + c * 7 + r * c * 3) % 5 < 2) mods.push(`<rect x="${c * cell}" y="${r * cell}" width="${cell}" height="${cell}"/>`);
+  }
+  const finder = (r0, c0) => {
+    const x = c0 * cell, y = r0 * cell, s = cell * 7;
+    return `<rect x="${x}" y="${y}" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="${cell}"/><rect x="${x + cell * 2}" y="${y + cell * 2}" width="${cell * 3}" height="${cell * 3}"/>`;
+  };
+  return `<svg viewBox="0 0 180 180" width="180" height="180" fill="currentColor" style="color:var(--navy-900)">${finder(0, 0)}${finder(0, n - 7)}${finder(n - 7, 0)}${mods.join('')}</svg>`;
+}
+
+function toolPreview(t) {
+  const b = DEMO_BIZ;
+  let body = '';
+  switch (t.slug) {
+    case 'local-rank':
+      body = `<h3 class="h3">"한식당" 지도 순위 — ${b.ko} (예시)</h3>
+      <div class="tool-stats">
+        <div><span>상위 3위 안 지점</span><b class="is-warn">24 / 49 (49%)</b></div>
+        <div><span>보이는 곳 평균 순위</span><b>8위</b></div>
+        <div><span>20위 밖 지점</span><b class="is-bad">9곳</b></div>
+      </div>
+      <div class="rank-wrap"><div class="rank-compass">북 ↑</div><div class="rank-grid" style="grid-template-columns:repeat(7,1fr)">${demoRankGrid()}</div>
+      <p class="tool-fine">가운데 테두리 칸이 가게 위치입니다. 칸 사이 간격 약 0.33마일, 전체 반경 2마일</p>
+      <div class="rank-legend"><span class="rank-cell r-top">1–3</span>지도 상단 3곳 <span class="rank-cell r-mid">4–10</span>스크롤 필요 <span class="rank-cell r-low">11–20</span>거의 안 보임 <span class="rank-cell r-out">20+</span>목록 밖</div></div>`;
+      break;
+    case 'competitor-reviews':
+      body = `<h3 class="h3">"한식당" 주변 2마일 — ${b.ko} (예시)</h3>
+      <div class="tool-stats">
+        <div><span>우리 가게</span><b>★ 4.6 · 128개</b></div>
+        <div><span>리뷰 수 순위 (11곳 중)</span><b class="is-good">2위</b></div>
+        <div><span>지도 상위 3곳 평균 리뷰</span><b>156개</b></div>
+        <div><span>상위 3곳 평균까지</span><b class="is-bad">28개 부족</b></div>
+      </div>
+      <h3 class="h3">지도 순서대로 비교</h3>
+      <table class="tool-table tool-table-plain cmp-table"><tr><th>지도</th><th>가게</th><th>별점</th><th>리뷰 수</th></tr>
+        <tr class="is-me"><td>1</td><th>${b.ko} <span class="tool-req">우리 가게</span></th><td>★ 4.6</td><td class="cmp-bar-cell"><span class="cmp-bar" style="width:82%"></span><b>128</b></td></tr>
+        <tr><td>2</td><th>경쟁 식당 A</th><td>★ 4.4</td><td class="cmp-bar-cell"><span class="cmp-bar" style="width:100%"></span><b>156</b></td></tr>
+        <tr><td>3</td><th>경쟁 식당 B</th><td>★ 4.8</td><td class="cmp-bar-cell"><span class="cmp-bar" style="width:60%"></span><b>94</b></td></tr>
+      </table>`;
+      break;
+    case 'nap-check':
+      body = `<h3 class="h3">비교 결과 (예시)</h3>
+      <div class="chk-score"><div class="chk-score-ring" style="--p:67"><div class="chk-score-num"><b>67</b><small>%</small></div></div>
+      <div class="chk-score-sub"><b>6개 중 4개 항목 일치</b><p>전화번호와 우편번호가 웹사이트와 다릅니다 — 먼저 손보면 좋습니다</p></div></div>
+      <div class="chk-list">
+        <div class="chk-row is-good"><span class="chk-pill">일치</span><span class="chk-main"><b>구글 주소</b><span class="chk-detail">입력한 우편번호와 같습니다</span></span></div>
+        <div class="chk-row is-bad"><span class="chk-pill">불일치</span><span class="chk-main"><b>구글 전화번호</b><span class="chk-detail">(714) 555-0123 — 입력한 번호 (714) 555-0199와 다릅니다</span></span></div>
+        <div class="chk-row is-bad"><span class="chk-pill">불일치</span><span class="chk-main"><b>웹사이트 전화번호</b><span class="chk-detail">첫 화면 번호가 기준 번호와 다릅니다</span></span></div>
+        <div class="chk-row is-good"><span class="chk-pill">일치</span><span class="chk-main"><b>누르면 전화 걸리는 버튼</b><span class="chk-detail">tel: 링크 확인됨</span></span></div>
+        <div class="chk-row is-warn"><span class="chk-pill">확인 필요</span><span class="chk-main"><b>업소 구조화 데이터</b><span class="chk-detail">LocalBusiness 스키마가 없습니다</span></span></div>
+        <div class="chk-row is-good"><span class="chk-pill">일치</span><span class="chk-main"><b>구글 영업시간</b><span class="chk-detail">등록되어 있습니다</span></span></div>
+      </div>`;
+      break;
+    case 'schema-generator':
+      body = `<h3 class="h3">스키마 코드 (예시)</h3>
+      ${T_copyBlock('웹사이트 &lt;head&gt; 안에 붙여 넣기', `{
+  "@context": "https://schema.org",
+  "@type": "Restaurant",
+  "name": "${b.ko}",
+  "telephone": "+1-714-555-0123",
+  "address": { "@type": "PostalAddress", "streetAddress": "123 Main St", "addressLocality": "Garden Grove", "addressRegion": "CA", "postalCode": "92840" },
+  "servesCuisine": "Korean"
+}`)}`;
+      break;
+    case 'ai-check':
+      body = `<div class="tool-verdict is-bad">AI 답변에 우리 가게가 나오지 않았습니다</div>
+      <p class="tool-fine">질문(예시): "Garden Grove 한식당 추천해 줘"</p>
+      ${T_copyBlock('AI 답변 (예시)', 'Garden Grove에는 OO가든, XX식당, 한마음 분식 등이 있습니다. 그중 OO가든은 갈비와 냉면으로 유명하고...')}
+      <h3 class="h3">AI가 참고한 출처 (예시)</h3>
+      <ul class="tool-sources"><li>옐프 — Garden Grove 한식당 베스트 10</li><li>구글 지도 리뷰 상위 가게 목록</li></ul>`;
+      break;
+    case 'review-link':
+      body = `<h3 class="h3">${b.ko} (예시)</h3><p class="body-sm">${b.addr}</p>
+      ${T_copyBlock('리뷰 작성 바로가기 링크', 'https://search.google.com/local/writereview?placeid=예시ID')}
+      <div class="tool-qr-wrap"><div class="tool-qr">${demoQrSvg()}</div>
+      <div class="tool-qr-actions"><span class="btn btn-ghost btn-small" style="pointer-events:none;">QR 이미지 저장</span><span class="btn btn-primary btn-small" style="pointer-events:none;">테이블 포스터 인쇄 (한/영)</span></div></div>`;
+      break;
+    case 'review-calc':
+      body = `<div class="tool-verdict is-good">4.5점까지 평균 4.8점짜리 새 리뷰 약 47개 필요</div>
+      <div class="tool-stats">
+        <div><span>필요한 새 리뷰 (가장 가능성 높은 값)</span><b>47개</b></div>
+        <div><span>실제 별점 범위에 따른 폭</span><b>32개 ~ 68개</b></div>
+        <div><span>달성 시 총 리뷰 수</span><b>175개</b></div>
+      </div>`;
+      break;
+    case 'review-reply':
+      body = `<h3 class="h3">답글 초안 (예시)</h3>
+      ${T_copyBlock('감사 인사 · 한국어', '소중한 시간 내어 좋은 리뷰 남겨주셔서 감사합니다! 다음에 또 맛있는 음식으로 찾아뵙겠습니다 😊')}
+      ${T_copyBlock('감사 인사 · English', 'Thank you so much for your kind review! We look forward to serving you again soon.')}`;
+      break;
+    case 'ads-budget':
+      body = `<div class="tool-stats">
+        <div><span>필요한 월 클릭</span><b>200회</b></div>
+        <div><span>필요한 월 광고비</span><b>$500</b></div>
+        <div><span>손님 1명 데려오는 비용</span><b>$25</b></div>
+        <div><span>첫 방문 기준 이익</span><b class="is-bad">-$190</b></div>
+        <div><span>1년 재방문 포함 이익</span><b class="is-good">$2,840</b></div>
+        <div><span>손익분기 전환율</span><b>3.2%</b></div>
+      </div>
+      <div class="tool-verdict is-warn">첫 방문은 적자지만 재방문까지 보면 남는 구조입니다</div>`;
+      break;
+    case 'ad-keywords':
+      body = `<h3 class="h3">키워드 12개 · 제외 키워드 4개 (예시)</h3>
+      ${T_copyBlock('광고 그룹 — 한식당 일반', '"한식당 garden grove"\n"korean restaurant near me"\n[korean bbq garden grove]')}
+      ${T_copyBlock('제외 키워드 (캠페인 수준에 추가)', '무료\n레시피\n채용')}`;
+      break;
+    case 'ad-copy-check':
+      body = `<div class="tool-verdict is-bad">고칠 문구 1개</div>
+      <h3 class="h3">광고 제목 — 한 줄에 하나씩 (최대 15개, 30자)</h3>
+      <table class="tool-table tool-table-plain tool-copy-table">
+        <tr><td>1</td><td>가든그로브 정통 한식당</td><td class="is-good"><b>11</b>/30<br><small>✅</small></td></tr>
+        <tr><td>2</td><td>최고의 맛집! 지금 예약하세요!!</td><td class="is-bad"><b>18</b>/30<br><small>❌ 같은 문장부호 반복은 거절됩니다</small></td></tr>
+      </table>`;
+      break;
+    case 'utm-builder':
+      body = `<h3 class="h3">추적 링크 (예시)</h3>
+      ${T_copyBlock('광고에 넣을 링크', 'https://example-restaurant.com/?utm_source=instagram&utm_medium=social&utm_campaign=fall_promo')}
+      <table class="tool-table tool-table-plain"><tr><th>utm_source</th><td>instagram</td></tr><tr><th>utm_medium</th><td>social</td></tr><tr><th>utm_campaign</th><td>fall_promo</td></tr></table>`;
+      break;
+    case 'gbp-post':
+      body = `<h3 class="h3">게시물 초안 (예시)</h3>
+      <div class="tool-post"><div class="tool-post-img">신메뉴 출시<br>가을 특선 갈비탕</div><p class="tool-fine">소식 업데이트 · 버튼: 더 알아보기</p>
+      ${T_copyBlock('한국어', '가을 맞이 특선 갈비탕이 새로 나왔습니다! 진하게 우려낸 국물과 부드러운 갈비, 이번 주말부터 만나보세요.')}</div>`;
+      break;
+    case 'menu-to-web':
+      body = `<h3 class="h3">옮겨진 메뉴</h3><div class="tool-mstat tool-mstat-lg"><b>18</b><span>개</span></div><p class="tool-mstat-sub">메뉴판에서 인식한 항목 수 (예시)</p>
+      ${T_copyBlock('텍스트 메뉴 (구글 프로필·배달 앱·SNS용)', '■ 찌개 Stews\n- 순두부찌개 (Soft Tofu Stew)  $12.99\n- 갈비 순두부 (Short Rib Soft Tofu)  $15.99')}`;
+      break;
+    case 'bilingual-intro':
+      body = `<h3 class="h3">소개문 (예시)</h3>
+      <div class="lang-rings">
+        <div class="lang-ring-item"><div class="lang-ring" style="--p:82"><div class="lang-ring-in">612</div></div><div class="lang-ring-label"><b>English</b><span>612/750자</span></div></div>
+        <div class="lang-ring-item"><div class="lang-ring" style="--p:60"><div class="lang-ring-in">450</div></div><div class="lang-ring-label"><b>한국어</b><span>450/750자</span></div></div>
+      </div>
+      ${T_copyBlock('English', 'A family-run Korean restaurant serving comforting stews and BBQ in Garden Grove since 2010.')}`;
+      break;
+    default:
+      return '';
+  }
+  return `
+<div class="tool-preview">
+  <div class="tool-preview-head"><span class="tool-preview-tag">예시 결과</span><p class="tool-preview-note">실제로 가게 정보를 넣고 실행하면 이런 식으로 결과가 나옵니다 — 아래는 예시 데이터입니다.</p></div>
+  <div class="tool-result tool-preview-body">${body}</div>
+</div>`;
+}
+/* copyBlock과 같은 모양을 정적으로 — common.js의 T.copyBlock()과 마크업을 맞춘다(복사 버튼은 장식용) */
+function T_copyBlock(title, text) {
+  return `<div class="tool-out"><div class="tool-out-head"><b>${title}</b><span class="btn btn-ghost btn-small" style="pointer-events:none;">복사</span></div><div class="tool-out-body">${escAttr(text).replace(/\n/g, '<br>')}</div></div>`;
+}
+
 function toolCard(t) {
   const s = t.stat || {};
   return `
@@ -3529,6 +3704,7 @@ function toolPage(t) {
 <section class="section tool-section">
   <div class="container-narrow">
     ${frag}
+    ${toolPreview(t)}
   </div>
 </section>
 ${guide && guide.guide ? `

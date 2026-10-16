@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="/style.css?v=9e850772">
+<link rel="stylesheet" href="/style.css?v=1288192e">
 <script type="application/ld+json">[{"@context":"https://schema.org","@type":"WebApplication","name":"AI 추천 체크","description":"\"OO 도시 OO 추천해 줘\"라고 AI 검색에 물었을 때 우리 가게가 나오는지 확인합니다.","url":"https://bizhigher.com/tools/ai-check/","applicationCategory":"BusinessApplication","operatingSystem":"Web","inLanguage":"ko","isAccessibleForFree":true,"offers":{"@type":"Offer","price":0,"priceCurrency":"USD"},"provider":{"@type":"Organization","@id":"https://bizhigher.com/#organization","name":"BizHigher","url":"https://bizhigher.com/","logo":{"@type":"ImageObject","url":"https://bizhigher.com/apple-touch-icon.png","width":180,"height":180}},"isPartOf":{"@id":"https://bizhigher.com/#website"}},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"홈","item":"https://bizhigher.com/"},{"@type":"ListItem","position":2,"name":"무료 도구","item":"https://bizhigher.com/tools/"},{"@type":"ListItem","position":3,"name":"AI 추천 체크","item":"https://bizhigher.com/tools/ai-check/"}]},{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"한국어로 물을 때와 영어로 물을 때 결과가 다른가요?","acceptedAnswer":{"@type":"Answer","text":"다를 수 있습니다. 한국어로 물으면 한국어 페이지를, 영어로 물으면 영어 리뷰·지역 기사를 주로 찾기 때문입니다. 현지 손님과 한인 손님이 모두 중요하다면 두 언어로 한 번씩 확인해 보세요."}},{"@type":"Question","name":"나오지 않았다면 무엇부터 해야 하나요?","acceptedAnswer":{"@type":"Answer","text":"결과 화면의 출처 목록부터 보세요. 그 사이트에 우리 가게가 없거나 정보가 틀렸다면 등록·수정부터 하시는 것이 순서입니다. 구글 프로필과 웹사이트의 이름·주소·전화번호가 일치하는지도 함께 확인해 보세요."}},{"@type":"Question","name":"경쟁 가게만 계속 나오는 이유는 무엇인가요?","acceptedAnswer":{"@type":"Answer","text":"대개 경쟁 가게가 리뷰 수가 많거나, 지역 소개 글·업소록에 더 많이 언급되어 있기 때문입니다. 답변에 붙은 추천 이유를 읽어 보면 AI가 어떤 점을 보고 골랐는지 힌트를 얻을 수 있습니다."}},{"@type":"Question","name":"얼마나 자주 확인하면 좋나요?","acceptedAnswer":{"@type":"Answer","text":"한 달에 한 번, 같은 질문으로 반복 확인하시길 권합니다. 한 번의 결과로 판단하기보다 몇 달 동안 이름이 나오는 빈도가 늘어나는지를 보는 것이 더 정확합니다."}}]}]</script>
 
 <script type="text/javascript">
@@ -92,6 +92,15 @@
 </form>
 <div class="tool-result" id="tool-result" hidden></div>
 
+    
+<div class="tool-preview">
+  <div class="tool-preview-head"><span class="tool-preview-tag">예시 결과</span><p class="tool-preview-note">실제로 가게 정보를 넣고 실행하면 이런 식으로 결과가 나옵니다 — 아래는 예시 데이터입니다.</p></div>
+  <div class="tool-result tool-preview-body"><div class="tool-verdict is-bad">AI 답변에 우리 가게가 나오지 않았습니다</div>
+      <p class="tool-fine">질문(예시): "Garden Grove 한식당 추천해 줘"</p>
+      <div class="tool-out"><div class="tool-out-head"><b>AI 답변 (예시)</b><span class="btn btn-ghost btn-small" style="pointer-events:none;">복사</span></div><div class="tool-out-body">Garden Grove에는 OO가든, XX식당, 한마음 분식 등이 있습니다. 그중 OO가든은 갈비와 냉면으로 유명하고...</div></div>
+      <h3 class="h3">AI가 참고한 출처 (예시)</h3>
+      <ul class="tool-sources"><li>옐프 — Garden Grove 한식당 베스트 10</li><li>구글 지도 리뷰 상위 가게 목록</li></ul></div>
+</div>
   </div>
 </section>
 
