@@ -3303,6 +3303,9 @@ function toolIcon(slug, cls) {
 
 /* QR 모양 미니 시각화용 고정 5x5 패턴(장식용, 실제 QR 아님) */
 const TOOL_VIZ_QR_ROWS = ['11101', '10101', '11110', '00101', '11011'];
+/* 지도 순위 체크 카드용 고정 3x3 등급 패턴(장식용) */
+const TOOL_VIZ_GRID_TIERS = ['top', 'top', 'mid', 'mid', 'top', 'low', 'low', 'mid', 'out'];
+const TOOL_VIZ_STAR_PATH = 'M12 2.5l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L12 16.9l-5.6 2.7 1.4-6.3-4.8-4.3 6.4-.6z';
 
 function toolViz(viz) {
   if (!viz) return '';
@@ -3314,7 +3317,7 @@ function toolViz(viz) {
     return `<div class="tool-mviz tmv-ring" style="--p:${viz.value}"></div>`;
   }
   if (viz.type === 'bars') {
-    const bars = viz.values.map((v) => `<span class="tmv-bar" style="height:${v}%"></span>`).join('');
+    const bars = viz.values.map((v, i) => `<span class="tmv-bar${viz.hi === i ? ' is-hi' : ''}" style="height:${v}%"></span>`).join('');
     return `<div class="tool-mviz tmv-bars">${bars}</div>`;
   }
   if (viz.type === 'qr') {
@@ -3324,6 +3327,39 @@ function toolViz(viz) {
   if (viz.type === 'cal') {
     const days = Array.from({ length: 7 }, (_, i) => `<span class="tmv-day${i === viz.on ? ' is-on' : ''}"></span>`).join('');
     return `<div class="tool-mviz tmv-cal">${days}</div>`;
+  }
+  if (viz.type === 'grid') {
+    const cells = TOOL_VIZ_GRID_TIERS.map((t) => `<span class="g-${t}"></span>`).join('');
+    return `<div class="tool-mviz tmv-grid">${cells}</div>`;
+  }
+  if (viz.type === 'fields') {
+    const rows = [true, true, false].map((on) => `<span class="f-row"><i class="f-dot${on ? ' is-on' : ''}"></i><i class="f-bar${on ? '' : ' short'}"></i></span>`).join('');
+    return `<div class="tool-mviz tmv-fields">${rows}</div>`;
+  }
+  if (viz.type === 'stars') {
+    const stars = Array.from({ length: 5 }, (_, i) => `<svg class="star${i < viz.on ? ' is-on' : ''}" viewBox="0 0 24 24"><path d="${TOOL_VIZ_STAR_PATH}"/></svg>`).join('');
+    return `<div class="tool-mviz tmv-stars">${stars}</div>`;
+  }
+  if (viz.type === 'bubbles') {
+    return `<div class="tool-mviz tmv-bubbles"><span class="bub bub-a">KO</span><span class="bub bub-b">EN</span></div>`;
+  }
+  if (viz.type === 'tags') {
+    const widths = ['w1', 'w2', 'w3', 'w1'], on = [1, 2];
+    const tags = widths.map((w, i) => `<span class="tg ${w}${on.indexOf(i) >= 0 ? ' is-on' : ''}"></span>`).join('');
+    return `<div class="tool-mviz tmv-tags">${tags}</div>`;
+  }
+  if (viz.type === 'nodes') {
+    return `<span class="tool-mviz tmv-nodes"><svg viewBox="0 0 56 40" fill="none">` +
+      `<path d="M9 20 L28 9 M9 20 L28 20 M9 20 L28 31" stroke="var(--line)" stroke-width="1.6"/>` +
+      `<circle cx="6" cy="20" r="3.2" fill="currentColor"/><circle cx="30" cy="9" r="2.6" fill="currentColor"/>` +
+      `<circle cx="30" cy="20" r="2.6" fill="currentColor"/><circle cx="30" cy="31" r="2.6" fill="currentColor"/></svg></span>`;
+  }
+  if (viz.type === 'lines') {
+    return `<div class="tool-mviz tmv-lines"><span class="ln l1"></span><span class="ln l2"></span><span class="ln l3"></span></div>`;
+  }
+  if (viz.type === 'dualring') {
+    const rings = viz.values.map((v) => `<span class="dr" style="--p:${v}"></span>`).join('');
+    return `<div class="tool-mviz tmv-dualring">${rings}</div>`;
   }
   return '';
 }

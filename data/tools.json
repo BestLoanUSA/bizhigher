@@ -31,7 +31,7 @@
       "keywords": "구글 지도 순위 확인, 로컬 순위 체크, 구글 맵 순위, local rank checker, google maps rank grid",
       "group": "visibility",
       "stat": { "value": "24", "unit": "%", "sub": "상위 3위 안 지점 (예시)" },
-      "viz": { "type": "dots", "on": 2, "total": 5 }
+      "viz": { "type": "grid" }
     },
     {
       "slug": "competitor-reviews",
@@ -41,7 +41,7 @@
       "keywords": "경쟁 가게 리뷰 비교, 구글 리뷰 경쟁사, 리뷰 수 비교, 주변 가게 별점, competitor review comparison",
       "group": "visibility",
       "stat": { "value": "2위", "unit": "", "sub": "주변 10곳 중 리뷰 수 (예시)" },
-      "viz": { "type": "bars", "values": [45, 75, 100] }
+      "viz": { "type": "bars", "values": [70, 100, 55], "hi": 0 }
     },
     {
       "slug": "nap-check",
@@ -61,7 +61,7 @@
       "keywords": "LocalBusiness 스키마 만들기, 구조화 데이터 생성기, 가게 스키마 코드, schema markup generator, local business schema",
       "group": "visibility",
       "stat": { "value": "9", "unit": "개", "sub": "채워지는 구조화 데이터 항목 (예시)" },
-      "viz": { "type": "dots", "on": 7, "total": 9 }
+      "viz": { "type": "fields" }
     },
     {
       "slug": "ai-check",
@@ -91,7 +91,7 @@
       "keywords": "구글 별점 계산, 리뷰 몇개 필요, 별점 올리기 계산기, 4.5점 만들려면, google review rating calculator",
       "group": "reviews",
       "stat": { "value": "47", "unit": "개", "sub": "4.5점까지 필요한 리뷰 (예시)" },
-      "viz": { "type": "bars", "values": [100, 65, 30] }
+      "viz": { "type": "stars", "on": 4 }
     },
     {
       "slug": "review-reply",
@@ -101,7 +101,7 @@
       "keywords": "구글 리뷰 답글 예시, 나쁜 리뷰 답글, 리뷰 답글 영어, review reply generator",
       "group": "reviews",
       "stat": { "value": "3", "unit": "종", "sub": "톤별 한/영 답글 초안 (예시)" },
-      "viz": { "type": "bars", "values": [90, 70, 50] }
+      "viz": { "type": "bubbles" }
     },
     {
       "slug": "ads-budget",
@@ -121,7 +121,7 @@
       "keywords": "구글 광고 키워드 추천, 제외 키워드 목록, 네거티브 키워드, 구글 애즈 키워드 짜기, google ads keyword generator",
       "group": "ads",
       "stat": { "value": "32", "unit": "개", "sub": "키워드 + 제외 키워드 (예시)" },
-      "viz": { "type": "bars", "values": [100, 80, 40] }
+      "viz": { "type": "tags" }
     },
     {
       "slug": "ad-copy-check",
@@ -141,7 +141,7 @@
       "keywords": "UTM 링크 만들기, 광고 효과 측정, 전단지 QR 추적, GA4 캠페인 링크, utm builder",
       "group": "ads",
       "stat": { "value": "4", "unit": "개 값", "sub": "광고별 추적 파라미터 (예시)" },
-      "viz": { "type": "qr" }
+      "viz": { "type": "nodes" }
     },
     {
       "slug": "gbp-post",
@@ -161,7 +161,7 @@
       "keywords": "온라인 메뉴 만들기, 메뉴판 텍스트 변환, 식당 웹 메뉴, menu to text",
       "group": "content",
       "stat": { "value": "18", "unit": "개", "sub": "메뉴 인식 (예시)" },
-      "viz": { "type": "bars", "values": [100, 85, 60] }
+      "viz": { "type": "lines" }
     },
     {
       "slug": "bilingual-intro",
@@ -171,7 +171,7 @@
       "keywords": "가게 소개 영어로, 구글 프로필 설명 예시, 비즈니스 소개문 영어, business description generator",
       "group": "content",
       "stat": { "value": "612", "unit": "/750자", "sub": "구글 프로필 글자 수 (예시)" },
-      "viz": { "type": "ring", "value": 82 }
+      "viz": { "type": "dualring", "values": [82, 60] }
     }
   ],
   "externalGroups": [
