@@ -3332,15 +3332,14 @@ function toolCard(t) {
   const s = t.stat || {};
   return `
 <a href="/tools/${t.slug}/" class="prod-card tool-card">
-  <span class="tool-card-head"><span class="tool-card-name">${t.name}</span><span class="tool-free">Free</span></span>
+  <span class="tool-card-top">${toolIcon(t.slug)}<span class="tool-card-name">${t.name}</span><span class="tool-free">Free</span></span>
   <div class="tool-card-row">
     <div class="tool-card-main">
       <div class="tool-mstat"><b>${s.value || ''}</b>${s.unit ? `<span>${s.unit}</span>` : ''}</div>
       <p class="tool-mstat-sub">${s.sub || t.short}</p>
     </div>
-    ${toolIcon(t.slug, 'tool-card-ico')}
+    ${toolViz(t.viz)}
   </div>
-  ${toolViz(t.viz)}
   <span class="card-cta">무료로 쓰기 →</span>
 </a>`;
 }
