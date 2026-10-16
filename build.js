@@ -1809,7 +1809,7 @@ function homeToolsSection() {
     <p class="eyebrow">FREE TOOLS</p>
     <h2 class="h2">돈 쓰기 전에, 무료로 먼저 확인하세요</h2>
     <p class="home-tools-sub">우리 가게가 지도에서 몇 위인지, AI가 우리 가게를 아는지 — 저희가 고객 가게를 맡을 때 처음 확인하는 것들을 무료 도구로 열어 두었습니다. 가입 없이 이메일만 있으면 됩니다.</p>
-    <div class="grid4 home-tools-grid">${picks.map(toolCard).join('')}</div>
+    <div class="tool-dark-panel"><div class="grid4 home-tools-grid">${picks.map(toolCard).join('')}</div></div>
     <div class="hero-ctas" style="margin-top:26px;justify-content:center;"><a href="/tools/" class="btn btn-ghost">무료 도구 ${TOOLS.own.length}개 전체 보기 →</a></div>
   </div>
 </section>`;
@@ -3301,12 +3301,41 @@ function toolIcon(slug, cls) {
   return `<span class="tool-ico${cls ? ' ' + cls : ''}" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${TOOL_ICONS[slug] || TOOL_ICONS['local-rank']}</svg></span>`;
 }
 
+/* QR 모양 미니 시각화용 고정 5x5 패턴(장식용, 실제 QR 아님) */
+const TOOL_VIZ_QR_ROWS = ['11101', '10101', '11110', '00101', '11011'];
+
+function toolViz(viz) {
+  if (!viz) return '';
+  if (viz.type === 'dots') {
+    const dots = Array.from({ length: viz.total }, (_, i) => `<span class="tmv-dot${i < viz.on ? ' is-on' : ''}"></span>`).join('');
+    return `<div class="tool-mviz tmv-dots">${dots}</div>`;
+  }
+  if (viz.type === 'ring') {
+    return `<div class="tool-mviz tmv-ring" style="--p:${viz.value}"></div>`;
+  }
+  if (viz.type === 'bars') {
+    const bars = viz.values.map((v) => `<span class="tmv-bar" style="height:${v}%"></span>`).join('');
+    return `<div class="tool-mviz tmv-bars">${bars}</div>`;
+  }
+  if (viz.type === 'qr') {
+    const cells = TOOL_VIZ_QR_ROWS.map((row) => [...row].map((b) => `<span${b === '1' ? ' class="is-on"' : ''}></span>`).join('')).join('');
+    return `<div class="tool-mviz tmv-qr">${cells}</div>`;
+  }
+  if (viz.type === 'cal') {
+    const days = Array.from({ length: 7 }, (_, i) => `<span class="tmv-day${i === viz.on ? ' is-on' : ''}"></span>`).join('');
+    return `<div class="tool-mviz tmv-cal">${days}</div>`;
+  }
+  return '';
+}
+
 function toolCard(t) {
+  const s = t.stat || {};
   return `
 <a href="/tools/${t.slug}/" class="prod-card tool-card">
-  <span class="tool-card-top">${toolIcon(t.slug)}<span class="tool-free">Free</span></span>
-  <h3 class="h3">${t.name}</h3>
-  <p class="body-sm">${t.short}</p>
+  <span class="tool-card-top">${toolIcon(t.slug)}<span class="tool-card-name">${t.name}</span><span class="tool-free">Free</span></span>
+  <div class="tool-mstat"><b>${s.value || ''}</b>${s.unit ? `<span>${s.unit}</span>` : ''}</div>
+  <p class="tool-mstat-sub">${s.sub || t.short}</p>
+  ${toolViz(t.viz)}
   <span class="card-cta">무료로 쓰기 →</span>
 </a>`;
 }
@@ -3373,7 +3402,7 @@ function toolsIndexPage() {
     <div class="tool-group" id="g-${g.id}">
       <h2 class="h2-left"${k === 0 ? ' style="margin-top:0;"' : ''}>${g.name}</h2>
       <p class="body-sm tool-group-desc">${g.desc}</p>
-      <div class="grid3">${TOOLS.own.filter((t) => t.group === g.id).map(toolCard).join('')}</div>
+      <div class="tool-dark-panel"><div class="grid3">${TOOLS.own.filter((t) => t.group === g.id).map(toolCard).join('')}</div></div>
     </div>`).join('')}
   </div>
 </section>
@@ -3484,7 +3513,7 @@ ${guide && guide.faqs.length ? `
       <a href="/free-audit/" class="btn btn-ghost">무료 AI 진단 받기</a>
     </div>` : ''}
     <h2 class="h2-left">${group && pick.some((x) => x.group === t.group) ? `${group.name} — 함께 쓰면 좋은 도구` : '다른 무료 도구'}</h2>
-    <div class="grid3">${pick.map(toolCard).join('')}</div>
+    <div class="tool-dark-panel"><div class="grid3">${pick.map(toolCard).join('')}</div></div>
     <p class="body-sm" style="margin-top:16px;"><a href="/tools/">무료 도구 전체 보기 →</a></p>
   </div>
 </section>

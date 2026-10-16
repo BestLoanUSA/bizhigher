@@ -2,14 +2,16 @@
   var T = window.BHTools, form = document.getElementById('tool-form'), out = document.getElementById('tool-result');
   var dig = function (s) { var d = String(s || '').replace(/\D/g, ''); return d.length === 11 && d[0] === '1' ? d.slice(1) : d; };
   var fmt = function (d) { return d && d.length === 10 ? '(' + d.slice(0, 3) + ') ' + d.slice(3, 6) + '-' + d.slice(6) : d || '—'; };
-  var row = function (label, ok, detail) {
-    var cls = ok === true ? 'is-good' : ok === false ? 'is-bad' : 'is-warn';
-    var ic = ok === true ? '✅' : ok === false ? '❌' : '⚠️';
-    return '<tr><td>' + ic + '</td><th>' + label + '</th><td class="' + cls + '">' + detail + '</td></tr>';
-  };
 
   T.bind(form, function () {
     var myPhone = dig(form.bizPhone.value), myZip = (form.zip.value.match(/\d{5}/) || [''])[0];
+    var total = 0, pass = 0;
+    var row = function (label, ok, detail) {
+      var cls = ok === true ? 'is-good' : ok === false ? 'is-bad' : 'is-warn';
+      var pill = ok === true ? '일치' : ok === false ? '불일치' : '확인 필요';
+      if (ok === true || ok === false) { total++; if (ok) pass++; }
+      return '<div class="chk-row ' + cls + '"><span class="chk-pill">' + pill + '</span><span class="chk-main"><b>' + label + '</b><span class="chk-detail">' + detail + '</span></span></div>';
+    };
     return T.call('nap-check', { business: form.business.value, location: form.location.value, website: form.website.value }).then(function (d) {
       var g = (d.google || [])[0];
       if (!g) throw new Error('구글 지도에서 가게를 찾지 못했습니다. 간판의 영어 이름으로 다시 시도해 보세요.');
@@ -32,8 +34,10 @@
       } else if (s) {
         rows += row('웹사이트', false, '열리지 않았습니다 (' + T.esc(s.error || s.status || '') + ')');
       }
+      var score = total ? Math.round((pass / total) * 100) : null;
+      var scoreHtml = score == null ? '' : '<div class="chk-score"><div class="chk-score-ring" style="--p:' + score + '"><div class="chk-score-num"><b>' + score + '</b><small>%</small></div></div><div class="chk-score-sub"><b>' + total + '개 중 ' + pass + '개 일치</b><p>' + (score >= 80 ? '대체로 일치합니다. 아래 불일치·확인 필요 항목만 손보세요.' : score >= 50 ? '절반 이상은 일치하지만, 아래 불일치 항목이 손님의 혼란으로 이어질 수 있습니다.' : '여러 항목이 다릅니다. 구글 프로필과 웹사이트의 이름·주소·전화번호부터 맞춰 주세요.') + '</p></div></div>';
       var q = encodeURIComponent(g.name + ' ' + form.location.value);
-      var html = '<h2 class="h2-left">비교 결과</h2><table class="tool-table">' + rows + '</table>' +
+      var html = '<h2 class="h2-left">비교 결과</h2>' + scoreHtml + '<div class="chk-list">' + rows + '</div>' +
         '<h3 class="h3">다른 곳도 직접 확인해 보세요</h3><div class="tool-links">' +
         '<a class="btn btn-ghost btn-small" target="_blank" rel="noopener" href="https://www.yelp.com/search?find_desc=' + q + '">Yelp에서 보기</a>' +
         '<a class="btn btn-ghost btn-small" target="_blank" rel="noopener" href="https://www.bing.com/maps?q=' + q + '">Bing 지도에서 보기</a>' +
