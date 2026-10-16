@@ -51,7 +51,7 @@
       if (!sections.length) throw new Error('메뉴를 읽지 못했습니다. 더 밝고 또렷한 사진으로 다시 시도해 주세요.');
       var r = render(sections);
       var count = sections.reduce(function (a, s) { return a + s.items.length; }, 0);
-      T.show(out, '<h2 class="h2-left">메뉴 ' + count + '개를 옮겼습니다</h2>' +
+      T.show(out, '<h2 class="h2-left">옮겨진 메뉴</h2><div class="tool-mstat tool-mstat-lg"><b>' + count + '</b><span>개</span></div><p class="tool-mstat-sub">메뉴판에서 인식한 항목 수</p>' +
         (d.unreadable ? '<div class="callout">⚠️ 읽기 어려운 항목이 ' + d.unreadable + '개 있었습니다. 가격이 빈 항목은 직접 확인해 채워 주세요.</div>' : '') +
         T.copyBlock('텍스트 메뉴 (구글 프로필·배달 앱·SNS용)', r.plain) +
         T.copyBlock('웹사이트용 HTML', r.html) +
