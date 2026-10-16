@@ -1922,7 +1922,13 @@ img { max-width: 100%; display: block; }
 }
 .tool-dark-panel .grid3, .tool-dark-panel .grid4 { position: relative; z-index: 1; }
 .tool-card { gap: 2px; }
+.tool-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .tool-card-name { flex: 1; font-size: 15px; font-weight: 800; color: var(--ink-900); min-width: 0; overflow-wrap: anywhere; }
+.tool-card-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 14px; }
+.tool-card-main { flex: 1; min-width: 0; }
+.tool-card-main .tool-mstat { margin-top: 0; }
+.tool-card-ico { flex-shrink: 0; width: 60px; height: 60px; border-radius: 16px; }
+.tool-card-ico svg { width: 28px; height: 28px; }
 .tool-mstat { display: flex; align-items: baseline; gap: 5px; margin-top: 12px; }
 .tool-mstat b { font-size: 32px; font-weight: 900; letter-spacing: -0.02em; color: var(--ink-900); line-height: 1; }
 .tool-mstat span { font-size: 14px; font-weight: 700; color: var(--ink-600); }
