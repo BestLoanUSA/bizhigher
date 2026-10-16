@@ -1799,7 +1799,7 @@ ${blogStripSection(posts)}
 
 /* ---------- 홈: 인기 무료 도구 ----------
    손님이 가장 먼저 궁금해할 것(지도 순위·리뷰·AI 추천·경쟁 가게) 위주로 고른다. 순서를 바꾸려면 HOME_TOOLS만 고친다 */
-const HOME_TOOLS = ['local-rank', 'review-link', 'ai-check', 'competitor-reviews'];
+const HOME_TOOLS = ['local-rank', 'review-link', 'ai-check'];
 function homeToolsSection() {
   const picks = HOME_TOOLS.map((slug) => TOOLS.own.find((t) => t.slug === slug)).filter(Boolean);
   if (!picks.length) return '';
@@ -1809,7 +1809,7 @@ function homeToolsSection() {
     <p class="eyebrow">FREE TOOLS</p>
     <h2 class="h2">돈 쓰기 전에, 무료로 먼저 확인하세요</h2>
     <p class="home-tools-sub">우리 가게가 지도에서 몇 위인지, AI가 우리 가게를 아는지 — 저희가 고객 가게를 맡을 때 처음 확인하는 것들을 무료 도구로 열어 두었습니다. 가입 없이 이메일만 있으면 됩니다.</p>
-    <div class="tool-dark-panel"><div class="grid4 home-tools-grid">${picks.map(toolCard).join('')}</div></div>
+    <div class="tool-dark-panel"><div class="grid3 home-tools-grid">${picks.map(toolCard).join('')}</div></div>
     <div class="hero-ctas" style="margin-top:26px;justify-content:center;"><a href="/tools/" class="btn btn-ghost">무료 도구 ${TOOLS.own.length}개 전체 보기 →</a></div>
   </div>
 </section>`;
@@ -3402,7 +3402,7 @@ function toolsIndexPage() {
     <div class="tool-group" id="g-${g.id}">
       <h2 class="h2-left"${k === 0 ? ' style="margin-top:0;"' : ''}>${g.name}</h2>
       <p class="body-sm tool-group-desc">${g.desc}</p>
-      <div class="tool-dark-panel"><div class="grid3">${TOOLS.own.filter((t) => t.group === g.id).map(toolCard).join('')}</div></div>
+      <div class="grid3">${TOOLS.own.filter((t) => t.group === g.id).map(toolCard).join('')}</div>
     </div>`).join('')}
   </div>
 </section>
