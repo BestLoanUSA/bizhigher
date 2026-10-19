@@ -298,7 +298,9 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 
 ### 12-1. 관리자 페이지 `/admin/` (2026-10-05 1단계)
 
-- 폰 우선(360px). 탭: 대시보드 · 작업 · 주문 · 질문지 · 리드 · 리포트. 설정 절차는 `docs/admin-setup-ko.md`
+- 폰 우선(360px). **2026-10-19 재설계**(디자인 캔버스 https://claude.ai/artifact/8kp9pBHEQuy9JkeWNB3tAA): 탭은 관제탑 · 검증 큐 · 고객 · 리드 · 플레이북 · 더보기. 원칙은 "지금 내가 누를 버튼 하나가 가장 크다", 색 = 공을 든 사람(🟢 AI · 🔵 David · 🟠 고객 · 🔴 막힘). 화면 설명과 AI가 결과물을 붙이는 법은 `docs/admin-setup-ko.md`
+- 진행률 = 단계마다 10점 + David 분/2 가중 합산(`jobProgress`, `_orders.js`), 검증 대기는 70%로 침. 고객 대기·막힘 집계는 "지금 단계"(가장 앞선 미완료 phase, `currentPhaseTasks`)만 센다. 정렬은 마감 순 / 진행률 낮은 순
+- 검증 큐: `job_tasks.status='review'` + `result_kind/result_text/result_url/checks/self_check`. 승인 → done + `deliverables` 행(발송 대기), 수정 요청 → doing + `revise_note`, 반려 → todo. 자동 승인 규칙은 `settings.admin.autoRules`(지금은 전부 끔 — David 결정 ③). 결과물 미리보기는 페이지 안(텍스트·샌드박스 HTML·bizhigher 도메인 임베드), Drive·PDF는 링크
 - 작업 상태 파이프라인(고정): **신규 → 정보 확인 → 제작 중 → QA 대기 → 발송 대기 → 완료**, 별도로 **보류**. 바꾸는 쪽은 `JOB_STATUSES`(`_orders.js`) 하나
 - 결제(`checkout.session.completed`) → 주문 + 작업(신규). 질문지 제출 → 같은 이메일(30일 내)의 작업에 연결하고 **정보 확인**으로, 마감일은 `data/services.json`의 `delivery`(영업일)로 계산. 질문지가 먼저 오면 질문지만으로 작업을 만들고 결제가 오면 합친다
 - 상품 매핑은 빌드가 쓰는 `dist/data/stripe-links.json`(Payment Link URL → slug)을 웹훅이 `env.ASSETS`로 읽는다. **새 Stripe 링크를 `services.json`에 넣으면 자동 반영**, 손으로 매핑하지 않는다
