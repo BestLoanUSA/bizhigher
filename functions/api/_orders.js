@@ -121,11 +121,79 @@ const SCHEMA = [
 
 import { tasksFor } from './_playbook.js';
 
+// 기존 테이블에 나중에 추가된 컬럼 — CREATE TABLE IF NOT EXISTS 는 컬럼을 못 더하므로 PRAGMA 로 확인 후 ALTER
+const EXTRA_COLUMNS = {
+  job_tasks: [
+    ['result_kind', 'TEXT'],      // text | html | link
+    ['result_text', 'TEXT'],      // 페이지 안에서 보여줄 결과물 본문(텍스트/HTML)
+    ['result_url', 'TEXT'],       // Drive·프리뷰 링크
+    ['checks', 'TEXT'],           // JSON 배열 — David 확인 포인트
+    ['self_check', 'TEXT'],       // AI 자기 점검 한 줄
+    ['requested_at', 'TEXT'],     // 검증 요청 시각
+    ['revise_note', 'TEXT'],      // 수정 요청 내용
+    ['decided_at', 'TEXT'],
+  ],
+};
+
 let schemaReady = false;
 export async function ensureSchema(db) {
   if (schemaReady) return;
   await db.batch(SCHEMA.map((sql) => db.prepare(sql)));
+  await db.prepare(`CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT, updated_at TEXT DEFAULT (datetime('now')))`).run();
+  for (const [table, cols] of Object.entries(EXTRA_COLUMNS)) {
+    const have = new Set(((await db.prepare(`PRAGMA table_info(${table})`).all()).results || []).map((r) => r.name));
+    for (const [name, type] of cols) if (!have.has(name)) await db.prepare(`ALTER TABLE ${table} ADD COLUMN ${name} ${type}`).run();
+  }
   schemaReady = true;
+}
+
+/* ---------- 진행률·다음 할 일 (관제탑·여정 화면이 쓴다) ---------- */
+
+const CLOSED = new Set(['done', 'skipped']);
+export function taskWeight(t) { return 10 + Math.round((Number(t.david_min) || 0) / 2); } // 단계 수와 David 시간을 반반 섞는다
+
+/** 0~100. 단계마다 10점 + David 분/2 — 자동 단계도 진전으로 보이되 큰 수동 단계는 더 무겁게 */
+export function jobProgress(tasks) {
+  if (!tasks || !tasks.length) return 0;
+  let total = 0, done = 0;
+  for (const t of tasks) { const w = taskWeight(t); total += w; if (CLOSED.has(t.status)) done += w; else if (t.status === 'review') done += w * 0.7; }
+  return total ? Math.round((done / total) * 100) : 0;
+}
+
+/** 지금 단계(가장 앞선 미완료 phase) 안의 열린 단계들 — 고객 대기·막힘 집계는 이 범위로 센다 */
+export function currentPhaseTasks(tasks) {
+  const open = (tasks || []).filter((t) => !CLOSED.has(t.status));
+  if (!open.length) return [];
+  const ph = open[0].phase;
+  return open.filter((t) => t.phase === ph);
+}
+
+/** 다음에 공을 든 사람과 단계 — sort 순으로 첫 미완료 */
+export function nextAction(tasks) {
+  const open = (tasks || []).filter((t) => !CLOSED.has(t.status));
+  if (!open.length) return null;
+  // 내 차례(검증 대기·David 수동 진행)가 있으면 그게 먼저, 그다음 sort 순
+  const mine = open.find((t) => t.status === 'review' || ((t.who === 'david' || t.who === 'ai') && t.status === 'doing'));
+  const t = mine || open[0];
+  return { id: t.id, title: t.title, who: t.status === 'review' ? 'david' : t.who === 'ai' && t.status !== 'review' ? 'auto' : t.who, kind: t.status === 'review' ? (t.verify ? '검증' : '승인') : t.who === 'david' ? '직접' : t.who === 'customer' ? '고객' : t.who === 'blocked' || t.status === 'blocked' ? '막힘' : 'AI', min: t.david_min || 0, status: t.status };
+}
+
+/** 최근 단계 8개의 주인 색 점 — 관제탑 막대 아래 */
+export function recentDots(tasks) {
+  const closed = (tasks || []).filter((t) => CLOSED.has(t.status)).slice(-5);
+  const open = (tasks || []).filter((t) => !CLOSED.has(t.status)).slice(0, 8 - closed.length);
+  const color = (t) => CLOSED.has(t.status) ? (t.who === 'david' ? '#0A4DF5' : '#0B9E58') : t.status === 'review' || t.who === 'david' ? '#0A4DF5' : t.who === 'customer' ? '#F59E0B' : t.status === 'blocked' || t.who === 'blocked' ? '#D3382F' : '#D1D5DB';
+  return [...closed, ...open].map(color);
+}
+
+/** 온보딩 / 셋업 / 월간 운영 n개월차 */
+export function jobPhase(job, tasks) {
+  const open = (tasks || []).filter((t) => !CLOSED.has(t.status));
+  const ph = open.length ? open[0].phase : 'monthly';
+  const months = job && job.created_at ? Math.max(1, Math.floor((Date.now() - new Date(job.created_at.replace(' ', 'T') + 'Z').getTime()) / (30 * 864e5)) + 1) : 1;
+  if (ph === 'onboarding') return '온보딩 — 고객 입력·권한';
+  if (ph === 'setup') return '셋업 — 첫 결과물 준비';
+  return `월간 운영 ${months}개월차`;
 }
 
 /* ---------- 카탈로그 (빌드가 dist/data/stripe-links.json 으로 쓴다) ---------- */
