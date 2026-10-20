@@ -51,6 +51,11 @@ function escAttr(str) {
   return String(str == null ? '' : str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+/* 메타 설명·구조화 데이터·llms.txt용 — 본문 강조용 HTML 태그(<b> 등)를 떼고 글자만 남긴다 */
+function plainText(str) {
+  return String(str == null ? '' : str).replace(/<[^>]*>/g, '');
+}
+
 /* ---------- 구조화 데이터: 회사 엔티티 ----------
    모든 페이지의 provider·author·publisher가 같은 @id를 가리키게 해서 구글이 "한 회사"로 묶도록 한다.
    정의 본문은 홈에만 둔다. 대표자(founder)·외부 프로필(sameAs)은 정보가 확정되면 ORG_ENTITY에 추가한다. */
@@ -73,7 +78,7 @@ const ORG_MIN = { '@type': 'Organization', '@id': ORG_ID, name: 'BizHigher', url
 
 function head({ title, description, pathName, jsonLd, noindex, ogImage, ogType }) {
   title = escAttr(title);
-  description = escAttr(description);
+  description = escAttr(plainText(description));
   return `<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -2684,7 +2689,7 @@ function dataReportPage(s) {
       '@type': 'Dataset',
       '@id': `${url}#dataset`,
       name: s.title,
-      description: e.dek || s.title,
+      description: plainText(e.dek) || s.title,
       url,
       inLanguage: 'ko',
       datePublished: s.asOf,
@@ -2716,7 +2721,7 @@ function dataReportPage(s) {
       '@context': 'https://schema.org',
       '@type': 'Article',
       headline: e.headline || s.title,
-      description: e.dek || s.title,
+      description: plainText(e.dek) || s.title,
       datePublished: s.asOf,
       dateModified: s.asOf,
       inLanguage: 'ko',
@@ -2741,7 +2746,7 @@ function dataReportPage(s) {
   return (
     head({
       title: `${s.title} | BizHigher 데이터`,
-      description: e.dek || s.title,
+      description: plainText(e.dek) || s.title,
       pathName: `/data/${s.slug}/`,
       jsonLd,
       ogImage: ogFor(s.slug),
@@ -2962,7 +2967,7 @@ function metricReportPage(s) {
       '@type': 'Dataset',
       '@id': `${url}#dataset`,
       name: s.title,
-      description: e.dek || s.title,
+      description: plainText(e.dek) || s.title,
       url,
       inLanguage: 'ko',
       datePublished: s.asOf,
@@ -2986,7 +2991,7 @@ function metricReportPage(s) {
       '@context': 'https://schema.org',
       '@type': 'Article',
       headline: e.headline || s.title,
-      description: e.dek || s.title,
+      description: plainText(e.dek) || s.title,
       datePublished: s.asOf,
       dateModified: s.updated || s.asOf,
       inLanguage: 'ko',
@@ -3010,7 +3015,7 @@ function metricReportPage(s) {
   return (
     head({
       title: `${s.title} | BizHigher 데이터`,
-      description: e.dek || s.title,
+      description: plainText(e.dek) || s.title,
       pathName: `/data/${s.slug}/`,
       jsonLd,
       ogImage: ogFor(s.slug),
@@ -3889,7 +3894,7 @@ ${DATA.packages.map((p) => `- ${p.name}: 월 $${p.prices.annual}(12개월 기준
 
 ## 공개 데이터 (인용 자유, CC BY 4.0)
 ${loadSurveys().map((x) => `- ${x.title}: https://bizhigher.com/data/${x.slug}/ — ${x.asOf} 기준 직접 확인한 ${x.totals.businesses}곳 중 자체 도메인 보유 ${x.totals.withOwnDomain}곳, 웹사이트 없음 ${x.totals.noWebsite}곳. CSV 원자료 제공.`).join('\n')}
-${loadReports().map((x) => `- ${x.title}: https://bizhigher.com/data/${x.slug}/ — ${(x.editorial && x.editorial.dek) || ''} CSV 원자료 제공.`).join('\n')}
+${loadReports().map((x) => `- ${x.title}: https://bizhigher.com/data/${x.slug}/ — ${plainText(x.editorial && x.editorial.dek)} CSV 원자료 제공.`).join('\n')}
 
 ## 무료 도구
 - 무료 AI 마케팅 진단 (60초, 가입 불필요): https://bizhigher.com/free-audit/ — 구글 노출·리뷰·웹사이트·SNS·경쟁사 대비 5개 영역 점수와 개선 우선순위 제공
