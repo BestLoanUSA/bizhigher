@@ -6,7 +6,8 @@
  *   node automation/ai-runner/runner.js queue [--limit 20]                 # 할 단계 + 고객 컨텍스트 + Gmail 초안 대기 (JSON)
  *   node automation/ai-runner/runner.js submit --task 123 --file out.md [--url https://…] [--kind text|html|link]
  *                                              [--checks "포인트1|포인트2|포인트3"] [--self-check "…"] [--done]   # 기본 검증 큐(review), --done 이면 바로 완료(verify=0 단계)
- *   node automation/ai-runner/runner.js drafted --deliverable 7 [--note "초안 제목"]   # Gmail 초안 만든 뒤 기록
+ *   node automation/ai-runner/runner.js draft --deliverable 7 --file body.txt    # 고객용 초안 본문을 Resend로 David 메일에 보낸다(고객 발송 아님) + drafted 기록
+ *   node automation/ai-runner/runner.js drafted --deliverable 7 [--note "초안 제목"]   # Gmail 초안을 다른 경로로 만든 뒤 기록만
  *   node automation/ai-runner/runner.js note --job 5 --text "…"                      # 타임라인 메모
  *
  * 환경변수: BIZHIGHER_ADMIN_PASSWORD (필수), BIZHIGHER_ADMIN_URL (기본 https://bizhigher.com)
@@ -62,6 +63,14 @@ async function api(path, body) {
     console.log(`완료: task ${id}`);
     return;
   }
+  if (cmd === 'draft') { // Resend → David(NOTIFY_EMAIL). 고객에게는 가지 않는다
+    const id = Number(opt('deliverable'));
+    const file = opt('file');
+    if (!id || !file) throw new Error('--deliverable ID --file body.txt 가 필요합니다');
+    await api(`deliverables/${id}/draft-to-david`, { text: fs.readFileSync(file, 'utf8') });
+    console.log(`전달: deliverable ${id} 초안을 David 메일로`);
+    return;
+  }
   if (cmd === 'drafted') {
     const id = Number(opt('deliverable'));
     await api(`deliverables/${id}/drafted`, { note: opt('note', '') });
@@ -73,5 +82,5 @@ async function api(path, body) {
     console.log('메모 저장');
     return;
   }
-  console.log('사용법: queue | submit --task ID --file F [--url U] [--checks "a|b"] [--self-check S] | done --task ID | drafted --deliverable ID | note --job ID --text T');
+  console.log('사용법: queue | submit --task ID --file F [--url U] [--kind text|html|link|images] [--checks "a|b"] [--self-check S] [--done] | done --task ID | draft --deliverable ID --file F | drafted --deliverable ID | note --job ID --text T');
 })().catch((e) => { console.error('오류:', e.message); process.exit(1); });

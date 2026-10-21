@@ -109,6 +109,17 @@ const SCHEMA = [
     created_at TEXT DEFAULT (datetime('now'))
   )`,
   `CREATE INDEX IF NOT EXISTS idx_job_tasks_job ON job_tasks(job_id)`,
+  `CREATE TABLE IF NOT EXISTS assets (
+    id TEXT PRIMARY KEY,
+    job_id INTEGER,
+    task_id INTEGER,
+    content_type TEXT,
+    bytes INTEGER,
+    label TEXT,
+    data BLOB,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_assets_job ON assets(job_id)`,
   `CREATE TABLE IF NOT EXISTS deliverables (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     job_id INTEGER,
