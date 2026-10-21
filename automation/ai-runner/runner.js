@@ -13,7 +13,9 @@
  */
 const fs = require('fs');
 const BASE = (process.env.BIZHIGHER_ADMIN_URL || 'https://bizhigher.com').replace(/\/$/, '');
-const PW = process.env.BIZHIGHER_ADMIN_PASSWORD;
+// 환경변수 상자에 따옴표로 감싸거나 끝에 공백이 붙어 들어오는 경우가 흔하다 — 값은 바꾸지 않고 겉껍데기만 벗긴다
+const RAW_PW = process.env.BIZHIGHER_ADMIN_PASSWORD || '';
+const PW = RAW_PW.trim().replace(/^(["'])(.*)\1$/s, '$2');
 const args = process.argv.slice(2);
 const cmd = args[0];
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i > -1 && args[i + 1] && !args[i + 1].startsWith('--') ? args[i + 1] : d; };
@@ -22,7 +24,11 @@ async function login() {
   if (!PW) throw new Error('BIZHIGHER_ADMIN_PASSWORD 가 없습니다 (환경 비밀에 넣으세요)');
   const r = await fetch(BASE + '/admin/login', { method: 'POST', body: new URLSearchParams({ password: PW }), redirect: 'manual' });
   const c = (r.headers.get('set-cookie') || '').split(';')[0];
-  if (!c.startsWith('bh_admin=')) throw new Error('로그인 실패 (' + r.status + ') — 비밀번호 또는 ADMIN_PASSWORD 설정 확인');
+  if (!c.startsWith('bh_admin=')) {
+    // 값은 절대 출력하지 않는다. 모양만 알려 준다
+    const shape = `길이 ${PW.length}자` + (RAW_PW !== PW ? ' · 겉의 따옴표/공백을 제거하고 시도함' : '') + (/\s/.test(PW) ? ' · 안에 공백 있음' : '');
+    throw new Error(`로그인 실패 (${r.status}) — ${BASE}/admin/login 에 보낸 비밀번호(${shape})가 Cloudflare Production의 ADMIN_PASSWORD 와 다릅니다. 브라우저에서 같은 값으로 /admin/ 로그인이 되는지 먼저 확인하고, 환경변수 줄이 BIZHIGHER_ADMIN_PASSWORD=값 (따옴표·공백 없이)인지 보세요`);
+  }
   return c;
 }
 async function api(path, body) {
