@@ -17,6 +17,8 @@
  *   GET  /admin/api/orders · intakes · leads · reports · playbook?slug=
  *   GET/POST /admin/api/settings              자동 승인 규칙 등 {key: value}
  *   POST /admin/api/demo {slug} · /admin/api/demo/clear
+ *   GET  /admin/api/runner/queue              AI 실행 루틴용: AI가 지금 할 수 있는 단계 + 고객 컨텍스트 + Gmail 초안 대기 결과물
+ *   POST /admin/api/deliverables/:id/drafted  루틴이 Gmail 초안을 만든 뒤 기록
  */
 import { authenticate, login, logoutCookie } from './_auth.js';
 import { ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady } from '../api/_orders.js';
@@ -228,6 +230,35 @@ async function api(env, method, seg, body, url) {
       return {};
     }
     return undefined;
+  }
+
+  /* AI 실행 루틴 큐 */
+  if (res === 'runner' && id === 'queue' && method === 'GET') {
+    const limit = Math.min(50, Number(url.searchParams.get('limit')) || 20);
+    const jobs = (await db.prepare(`SELECT j.*, o.service_name o_service_name, o.customer_name FROM jobs j LEFT JOIN orders o ON o.id = j.order_id WHERE j.status NOT IN ('done','hold') ORDER BY COALESCE(j.due_date,'9999') ASC, j.id ASC LIMIT 200`).all()).results || [];
+    const tmap = await tasksByJob(db, jobs.map((j) => j.id));
+    const items = [];
+    for (const j of jobs) {
+      const ready = aiReady(tmap[j.id] || []);
+      if (!ready.length) continue;
+      const intake = j.intake_id ? await db.prepare(`SELECT * FROM intakes WHERE id = ?`).bind(j.intake_id).first() : null;
+      const profile = j.customer_email ? await safeFirst(db, `SELECT * FROM customer_profiles WHERE lower(email) = ? ORDER BY rowid DESC LIMIT 1`, j.customer_email.toLowerCase()) : null;
+      const done = (tmap[j.id] || []).filter((t) => CLOSED.has(t.status) && (t.result_text || t.result_url)).map((t) => ({ key: t.key, title: t.title, result_text: (t.result_text || '').slice(0, 4000), result_url: t.result_url }));
+      for (const t of ready) {
+        if (items.length >= limit) break;
+        items.push({ task: { id: t.id, key: t.key, service: t.service, service_name: t.service_name, title: t.title, phase: t.phase, who: t.who, verify: !!t.verify, status: t.status, revise_note: t.revise_note, note: t.note, prev_result_text: t.result_text || '' },
+          job: { id: j.id, business: j.business, service_slug: j.service_slug, service_name: j.service_name || j.o_service_name, customer_email: j.customer_email, due_date: j.due_date, created_at: j.created_at, intake, profile, done_results: done } });
+      }
+    }
+    const drafts = (await db.prepare(`SELECT d.*, j.business, j.customer_email, j.service_name FROM deliverables d JOIN jobs j ON j.id = d.job_id WHERE d.sent_at IS NULL AND d.drafted_at IS NULL ORDER BY d.id ASC LIMIT 20`).all()).results || [];
+    return { items, pendingDrafts: drafts, rules: ['고객에게 자동 발송 금지 — Gmail 초안까지', 'verify 단계는 status review, 아니면 done', '경쟁사 갭 분석 선행(노출·SEO)', '리뷰 대가·게이팅·가짜 리뷰 금지', '의료·치과 환자 암시 금지', '실행 플랜은 180일', '웹 산출물 360px 실측'] };
+  }
+  if (res === 'deliverables' && id && sub === 'drafted' && method === 'POST') {
+    const d = await db.prepare(`SELECT * FROM deliverables WHERE id = ?`).bind(Number(id)).first();
+    if (!d) return undefined;
+    await db.prepare(`UPDATE deliverables SET drafted_at = datetime('now') WHERE id = ?`).bind(d.id).run();
+    await addEvent(db, d.job_id, 'deliverable', null, null, `✉ Gmail 초안 생성 — ${d.title}${body.note ? ' · ' + String(body.note).slice(0, 200) : ''}`);
+    return {};
   }
 
   /* 설정 */

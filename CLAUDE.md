@@ -296,6 +296,14 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 - 웹 산출물은 **360px 실측 후** 전달한다
 - **리뷰 대가 제공·리뷰 게이팅·가짜 리뷰 금지** — 구글 정책 위반. 서비스 결과물과 블로그 콘텐츠 양쪽에서 원칙으로 명시한다
 
+### 12-2. AI 실행 루틴 (2026-10-21)
+
+- claude.ai/code Routine "BizHigher AI 실행 루틴", `CRON_TZ=America/Los_Angeles 23 7 * * *`(매일 LA 7:23), 매번 새 세션, Gmail 커넥터 포함. 코드·절차는 `automation/ai-runner/README.md`
+- 흐름: `runner.js queue`(관리자 API `GET /admin/api/runner/queue` — 같은 서비스 앞 단계가 끝난 AI 단계만) → 플레이북대로 텍스트 결과물 생성 → `submit`(verify면 검증 큐, 아니면 done) → 발송 대기 결과물은 Gmail **초안** + `drafted` 기록 → 작업별 메모
+- 루틴은 **텍스트 결과물만** 만든다. 파일·이미지·영상·웹사이트 빌드 단계는 기획안만 올리고 David 세션(fulfillment 스킬)이 마무리한다. 외부 키(Places·GSC) 없는 단계는 건너뛰고 메모
+- 환경 비밀 `BIZHIGHER_ADMIN_PASSWORD`(= Cloudflare `ADMIN_PASSWORD`). 없으면 루틴이 첫 줄에서 멈추고 그 사실을 보고한다
+- 수동 경로는 그대로 남아 있다: 고객 여정 "AI 실행 지시 복사" → claude.ai fulfillment 스킬
+
 ### 12-1. 관리자 페이지 `/admin/` (2026-10-05 1단계)
 
 - 폰 우선(360px). **2026-10-19 재설계**(디자인 캔버스 https://claude.ai/artifact/8kp9pBHEQuy9JkeWNB3tAA): 탭은 관제탑 · 검증 큐 · 고객 · 리드 · 플레이북 · 더보기. 원칙은 "지금 내가 누를 버튼 하나가 가장 크다", 색 = 공을 든 사람(🟢 AI · 🔵 David · 🟠 고객 · 🔴 막힘). 화면 설명과 AI가 결과물을 붙이는 법은 `docs/admin-setup-ko.md`
@@ -336,7 +344,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 - **루틴 cron은 UTC.** 월수금 LA 아침 7시 = `0 14 * * 1,3,5`. **마지막 자리가 `*`면 매일 실행된다.** 11월 서머타임 종료 시 1시간 시프트
 - **로컬 크론(CronCreate 류)으로 정기 작업을 만들지 말 것** — 세션 종료 시 소멸한다. 스케줄 작업은 반드시 claude.ai 루틴으로
 - **스킬(fulfillment 등) 수정은 파일을 고쳐도 무효**다. `propose_skills` 제안 카드를 David가 저장해야 반영된다
-- 클라우드 세션에서 bizhigher.com을 **curl로 못 연다**(egress 차단). 라이브 확인은 WebFetch 또는 브라우저 도구로
+- 클라우드 세션의 egress: **bizhigher.com·api.cloudflare.com 모두 열려 있다**(2026-10-21 확인, 이전 "curl 차단" 메모는 낡았다). 관리자 API를 `BIZHIGHER_ADMIN_PASSWORD`로 직접 호출할 수 있다 — AI 실행 루틴이 이 경로를 쓴다
 - **Functions 로컬 테스트**는 `npx wrangler pages dev dist --d1 DB=<id> --binding ADMIN_PASSWORD=x --binding STRIPE_WEBHOOK_SECRET=x --persist-to <스크래치 경로>`(루트 `wrangler.toml`은 Worker용이라 `--config`로 못 넘긴다). 로컬 에뮬레이터는 브라우저 navigate 요청에 Functions 대신 404.html을 주는 버그가 있다 — 프로덕션은 Functions 우선이므로 curl이나 Playwright `route.fetch`로 `sec-fetch-mode`를 바꿔 확인한다. 생성되는 `.wrangler/`는 커밋하지 말 것
 - **Google Places는 진단용 실시간 조회에만 쓴다.** 조회 결과를 저장해 재게시하지 않는다 — [[marketingkorean]]과의 경계에서 특히 중요(§16)
 
@@ -450,7 +458,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 13. **로컬 등록 실행** — 핵심 30곳 마스터 목록(Claude in Chrome 보조 입력용) + 일회성 시티에이션 빌더 업체 선정. `docs/automation-map-ko.md` §3
 14. **Google Ads API 개발자 토큰 신청**(MCC) — 광고 운영 수동 5.4h/월/고객의 유일한 출구
 15. **GBP API 재신청 경로**(A 또는 B, §15) + BestLoanUSA 프로필 재인증
-16. **AI 실행 루틴** — `job_tasks`에서 AI 차례를 매일 읽어 플레이북대로 만들고 결과물을 붙이는 claude.ai 루틴(fulfillment 스킬 + D1). 이게 없으면 관리자 페이지의 AI 단계는 David가 지시서를 복사해 수동으로 돌려야 한다. 먼저 `docs/fulfillment-skill-addendum-ko.md`를 스킬에 반영
+16. ~~AI 실행 루틴~~ → 2026-10-21 생성(§12-2). 환경 비밀 `BIZHIGHER_ADMIN_PASSWORD`가 들어가야 첫 실행이 성공한다. 파일·이미지·영상 단계는 아직 David 세션 몫
 
 ---
 
