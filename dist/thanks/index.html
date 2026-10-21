@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="/style.css?v=eb508d16">
+<link rel="stylesheet" href="/style.css?v=bf41958f">
 
 
 <script type="text/javascript">
@@ -80,11 +80,13 @@
         <div id="place-list" class="place-list"></div>
         <div id="place-picked" class="place-picked" style="display:none"></div>
       </div>
+      <p class="form-sec">🏪 업소 정보</p>
       <input type="text" name="business" placeholder="업체명 (한글/영문)" class="input" required>
+      <input type="text" name="links" placeholder="구글 프로필·웹사이트·SNS 링크 (있는 것만, 위에서 골랐으면 자동)" class="input">
+      <p class="form-sec">👤 담당자 (연락 받으실 분)</p>
       <input type="text" name="contact_name" placeholder="담당자 성함" class="input" required>
-      <input type="text" name="phone" placeholder="연락처 (문자 가능한 번호)" class="input" required>
-      <input type="email" name="email" placeholder="이메일 (결제하신 이메일)" class="input" required>
-      <input type="text" name="links" placeholder="구글 프로필·웹사이트·SNS 링크 (있는 것만)" class="input">
+      <input type="text" name="phone" placeholder="담당자 휴대폰 (문자 가능한 번호 — 업소 대표번호가 아니어도 됩니다)" class="input" required>
+      <input type="email" name="email" placeholder="담당자 이메일 (결제하신 이메일)" class="input" required>
       <label class="file-box" id="file-box">
         <input type="file" id="intake-files" multiple accept="image/*,.pdf,.svg,.heic">
         <span class="file-title">📎 사진·로고·메뉴판 첨부 (선택)</span>
@@ -95,7 +97,7 @@
       <!-- 웹사이트 제작 전용 질문 (service가 website로 시작할 때만 표시) -->
       <div id="website-extra" style="display:none;">
         <p style="font-weight:800;color:var(--navy-900,#0A1B4D);margin:18px 0 10px;font-size:15px;">🌐 웹사이트 제작 질문지</p>
-        <input type="text" data-label="원하는 도메인" placeholder="원하는 도메인 주소 (예: mystore.com — 미정이면 비워두세요)" class="input">
+        <input type="text" data-label="현재 웹사이트·원하는 도메인" id="wx-domain" placeholder="현재 웹사이트 주소 또는 원하는 도메인 (예: mystore.com — 미정이면 비워두세요)" class="input">
         <input type="text" data-label="업종·한줄소개" placeholder="업종과 가게 한 줄 소개 (예: 가든그로브 안경점, 한국어 상담)" class="input">
         <textarea data-label="꼭 들어갈 내용" placeholder="홈페이지에 꼭 들어가야 할 내용 — 영업시간, 대표 서비스/메뉴와 가격, 주차 안내, 예약 방법 등" class="input" rows="3" style="resize:vertical;"></textarea>
         <select data-label="로고 보유" class="input">
@@ -111,6 +113,7 @@
 
       <textarea name="notes" placeholder="비즈니스 소개와 요청사항을 자유롭게 적어주세요 — 주 고객층, 강점, 강조하고 싶은 것, 피하고 싶은 표현 등" class="input" rows="5" style="resize:vertical;"></textarea>
       <button type="submit" class="btn btn-primary btn-block">질문지 제출 — 작업 시작하기</button>
+      <div class="bh-loader" id="bh-loader" aria-live="polite"><div class="bh-word" data-text="BizHigher"><span class="bh-fill" id="bh-fill">BizHigher</span></div><div class="bh-step" id="bh-step">제출 준비 중…</div></div>
       <div class="form-msg" id="form-msg"></div>
     </form>
     <p class="note-text">제출 후 확인 연락을 드리고 바로 작업이 시작됩니다. 궁금한 점은 hello@bizhigher.com</p>
@@ -143,7 +146,8 @@ async function placeSearch() {
 function pickPlace(p) {
   pickedPlace = p;
   var set = function (name, v) { var el = document.querySelector('[name=' + name + ']'); if (el && v && !el.value) el.value = v; };
-  set('business', p.name); set('phone', p.phone);
+  set('business', p.name);
+  var dom = document.getElementById('wx-domain'); if (dom && p.website && !dom.value) dom.value = p.website.replace(new RegExp('^https?://'), '').replace(new RegExp('/+$'), '');
   var linksEl = document.querySelector('[name=links]'); var links = [p.website, p.maps].filter(Boolean).join(' · '); if (linksEl && links && !linksEl.value) linksEl.value = links;
   document.getElementById('place-list').innerHTML = '';
   var pk = document.getElementById('place-picked'); pk.style.display = '';
@@ -174,10 +178,14 @@ function renderFiles() {
   list.innerHTML = picked.map(function (f, i) { return '<span class="file-chip">' + f.name.replace(/[<>&]/g, '') + ' <small>' + Math.round(f.size / 1024) + 'KB</small><b data-rm="' + i + '" title="제거">×</b></span>'; }).join('');
   list.querySelectorAll('[data-rm]').forEach(function (b) { b.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); picked.splice(Number(b.getAttribute('data-rm')), 1); renderFiles(); }); });
 }
+var loader = document.getElementById('bh-loader'), loaderFill = document.getElementById('bh-fill'), loaderStep = document.getElementById('bh-step');
+function progress(pct, text, busy) { loader.classList.add('on'); loader.classList.toggle('busy', !!busy); loaderFill.style.width = Math.max(0, Math.min(100, pct)) + '%'; loaderStep.textContent = text; }
+function progressOff() { loader.classList.remove('on', 'busy'); }
 async function uploadAll(email, btn) {
   var urls = [];
   for (var i = 0; i < picked.length; i++) {
     btn.textContent = '첨부 올리는 중 ' + (i + 1) + '/' + picked.length + '...';
+    progress(Math.round((i / (picked.length + 1)) * 100), '사진·파일 올리는 중 ' + (i + 1) + '/' + picked.length + ' — ' + picked[i].name, false);
     if (picked[i].size > 10 * 1024 * 1024) throw new Error('too_large:' + picked[i].name);
     if (picked[i]._url) { urls.push(picked[i].name + ' → ' + picked[i]._url); continue; } // 이전 시도에서 이미 올라간 파일은 다시 올리지 않는다
     var fd = new FormData(); fd.append('file', picked[i]); fd.append('email', email || '');
@@ -194,6 +202,8 @@ document.getElementById('intake-form').addEventListener('submit', async function
   const msg = document.getElementById('form-msg');
   const btn = this.querySelector('button');
   btn.disabled = true; btn.textContent = '제출 중...';
+  msg.className = 'form-msg'; msg.textContent = '';
+  progress(picked.length ? 2 : 40, picked.length ? '첨부 ' + picked.length + '개를 먼저 올립니다…' : '질문지 보내는 중…', !picked.length);
   try {
     const body = Object.fromEntries(new FormData(this).entries());
     delete body.files;
@@ -211,16 +221,21 @@ document.getElementById('intake-form').addEventListener('submit', async function
       });
       if (lines.length) body.notes = '── 웹사이트 질문지 ──\n' + lines.join('\n') + (body.notes ? '\n── 추가 요청 ──\n' + body.notes : '');
     }
+    progress(92, '질문지 보내는 중…', true);
     const res = await fetch('/api/intake', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
     if (!res.ok) throw new Error('server');
+    progress(100, '제출 완료', false);
+    setTimeout(progressOff, 900);
     msg.className = 'form-msg success';
-    msg.textContent = '제출 완료! 곧 확인 연락을 드리고 작업을 시작하겠습니다.';
+    msg.textContent = '제출 완료! 곧 확인 연락을 드리고 작업을 시작하겠습니다.' + (uploaded.length ? ' 첨부 ' + uploaded.length + '개도 잘 받았습니다.' : '');
     btn.textContent = '제출 완료 ✓';
+    msg.scrollIntoView({ behavior: 'smooth', block: 'center' });
   } catch (err) {
+    progressOff();
     msg.className = 'form-msg error';
     var em = String(err && err.message || '');
     msg.textContent = em.indexOf('too_large') === 0 ? '10MB가 넘는 파일이 있습니다: ' + em.split(':')[1] + ' — 줄여서 다시 올려주세요.'
@@ -229,6 +244,7 @@ document.getElementById('intake-form').addEventListener('submit', async function
       : em.indexOf('upload:storage') === 0 ? '첨부 저장소가 아직 준비되지 않았습니다. 첨부를 빼고 제출하신 뒤 파일은 hello@bizhigher.com 으로 보내주세요.'
       : em.indexOf('upload:') === 0 ? '첨부 업로드에 실패했습니다: ' + em.split(':').pop() + ' — 다시 시도하거나 hello@bizhigher.com 으로 보내주세요.'
       : '일시적인 오류입니다. 잠시 후 다시 시도하시거나 hello@bizhigher.com 으로 보내주세요.';
+    msg.scrollIntoView({ behavior: 'smooth', block: 'center' });
     btn.disabled = false; btn.textContent = '질문지 제출 — 작업 시작하기';
   }
 });
