@@ -23,9 +23,9 @@
  *   POST /admin/api/assets {job_id, task_id, label, content_type, base64}  이미지 저장 → 공개 URL /a/{id}.jpg
  */
 import { authenticate, login, logoutCookie } from './_auth.js';
-import { notify, esc as escHtml } from '../api/_notify.js';
-import { ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady } from '../api/_orders.js';
-import { PLAYBOOK, COMMON_ONBOARDING, WHO, PHASES, tasksFor, summarize, DELIVER_KEYS } from '../api/_playbook.js';
+import { notify, sendEmail, esc as escHtml } from '../api/_notify.js';
+import { ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady, ensurePortalToken } from '../api/_orders.js';
+import { PLAYBOOK, COMMON_ONBOARDING, WHO, PHASES, tasksFor, summarize, DELIVER_KEYS, APPROVAL_KEYS } from '../api/_playbook.js';
 import { appHtml, loginHtml } from './_ui.js';
 
 export const TASK_STATUSES = [['todo', '대기'], ['doing', '진행'], ['review', '검증 대기'], ['done', '완료'], ['blocked', '막힘'], ['skipped', '해당 없음']];
@@ -267,7 +267,8 @@ async function api(env, method, seg, body, url) {
           job: { id: j.id, business: j.business, service_slug: j.service_slug, service_name: j.service_name || j.o_service_name, customer_email: j.customer_email, due_date: j.due_date, created_at: j.created_at, intake, profile, done_results: done } });
       }
     }
-    const drafts = (await db.prepare(`SELECT d.*, j.business, j.customer_email, j.service_name FROM deliverables d JOIN jobs j ON j.id = d.job_id WHERE d.sent_at IS NULL AND d.drafted_at IS NULL ORDER BY d.id ASC LIMIT 20`).all()).results || [];
+    // 고객용 요약(summary)이 없는 결과물 — 루틴이 요약만 쓴다. 발송은 David가 관리자 "고객에게 묶음 보내기"로 (고객 페이지 /c/{token})
+    const drafts = (await db.prepare(`SELECT d.*, j.business, j.customer_email, j.service_name, t.result_kind, substr(t.result_text, 1, 3000) AS result_text FROM deliverables d JOIN jobs j ON j.id = d.job_id LEFT JOIN job_tasks t ON t.id = d.task_id WHERE d.sent_at IS NULL AND (d.summary IS NULL OR d.summary = '') ORDER BY d.id ASC LIMIT 20`).all()).results || [];
     return { items, pendingDrafts: drafts, rules: ['고객에게 자동 발송 금지 — Gmail 초안까지', 'verify 단계는 status review, 아니면 done', '경쟁사 갭 분석 선행(노출·SEO)', '리뷰 대가·게이팅·가짜 리뷰 금지', '의료·치과 환자 암시 금지', '실행 플랜은 180일', '웹 산출물 360px 실측'] };
   }
   if (res === 'assets' && method === 'POST') {
@@ -294,6 +295,42 @@ async function api(env, method, seg, body, url) {
     if (env.R2_ASSETS) { r2Key = `a/${aid}.${ext}`; await env.R2_ASSETS.put(r2Key, bin, { httpMetadata: { contentType: ct, cacheControl: 'public, max-age=31536000, immutable' } }); }
     await db.prepare(`INSERT INTO assets (id, job_id, task_id, content_type, bytes, label, data, r2_key) VALUES (?,?,?,?,?,?,?,?)`).bind(aid, Number(body.job_id) || null, Number(body.task_id) || null, ct, bin.byteLength, String(body.label || '').slice(0, 200), r2Key ? null : bin.buffer, r2Key).run();
     return { id: aid, url: `${url.origin}/a/${aid}.${ext}`, store: r2Key ? 'r2' : 'd1' };
+  }
+  if (res === 'deliverables' && id && sub === 'summary' && method === 'POST') {
+    const d = await db.prepare(`SELECT * FROM deliverables WHERE id = ?`).bind(Number(id)).first();
+    if (!d) return undefined;
+    await db.prepare(`UPDATE deliverables SET summary = ? WHERE id = ?`).bind(String(body.text || '').trim().slice(0, 2000), d.id).run();
+    return {};
+  }
+  if (res === 'jobs' && id && sub === 'send-packet' && method === 'POST') {
+    // David 가 누른다: 전달 안 된 결과물 전부를 한 통으로 고객에게 (고객 페이지 링크 + 요약). 루틴은 호출하지 않는다 (§12 자동 발송 금지)
+    const j = await db.prepare(`SELECT * FROM jobs WHERE id = ?`).bind(Number(id)).first();
+    if (!j) return undefined;
+    if (!env.RESEND_API_KEY) throw bad('RESEND_API_KEY 가 없어 보낼 수 없습니다');
+    if (!j.customer_email) throw bad('고객 이메일이 없습니다');
+    const ds = (await db.prepare(`SELECT * FROM deliverables WHERE job_id = ? AND sent_at IS NULL ORDER BY id ASC`).bind(j.id).all()).results || [];
+    if (!ds.length) throw bad('전달할 결과물이 없습니다');
+    const token = await ensurePortalToken(db, j);
+    const portal = `${url.origin}/c/${token}`;
+    const biz = (j.business || '').replace(/\s*\(데모\)/, '');
+    const needs = ds.filter((d) => d.needs_approval && !d.approved_at);
+    const subject = `[BizHigher] ${biz} — 결과물 ${ds.length}건${needs.length ? ' · 확인 부탁드립니다' : ''}`;
+    const list = ds.map((d) => `<li style="margin:0 0 10px"><b>${escHtml(d.title)}</b>${d.needs_approval && !d.approved_at ? ' <span style="color:#B45309">(확인 필요)</span>' : ''}${d.summary ? `<br><span style="color:#374151">${escHtml(d.summary)}</span>` : ''}</li>`).join('');
+    const htmlBody = `<div style="font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#111318;line-height:1.6">
+      <div style="font-size:18px;font-weight:800;margin-bottom:14px">Biz<span style="color:#0A4DF5">Higher</span></div>
+      <p>${escHtml(biz)} 사장님, 안녕하세요.</p>
+      <p>이번에 준비된 결과물 ${ds.length}건을 아래 페이지에 올려 두었습니다.${needs.length ? ` 그중 <b>${needs.length}건은 확인이 필요합니다.</b> 페이지에서 내용을 보시고 "이대로 진행"을 눌러 주시거나 수정 요청을 남겨 주세요. <b>7일 안에 회신이 없으면 승인된 것으로 보고 예정대로 진행합니다.</b>` : ''}</p>
+      <p style="margin:18px 0"><a href="${portal}" style="display:inline-block;background:#0A4DF5;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700">결과물 보기 →</a></p>
+      <ul style="padding-left:18px">${list}</ul>
+      ${body.note ? `<p style="background:#F6F7F9;border-radius:12px;padding:12px">${escHtml(String(body.note).slice(0, 2000))}</p>` : ''}
+      <p>수정은 언제든 이 메일에 회신하시거나 페이지에서 요청하실 수 있습니다(수정 1회 무료). 전화로 확인하셔도 됩니다.</p>
+      <p>BizHigher 드림 · <a href="https://bizhigher.com">bizhigher.com</a> · hello@bizhigher.com</p></div>`;
+    const ok = await sendEmail(env, { to: j.customer_email, bcc: env.NOTIFY_EMAIL || undefined, subject, html: htmlBody });
+    if (!ok) throw bad('메일 발송 실패 — Resend 응답 오류 (도메인 인증·발신 주소 확인)');
+    const pid = 'pk_' + Date.now().toString(36);
+    await db.prepare(`UPDATE deliverables SET sent_at = datetime('now'), packet_id = ? WHERE job_id = ? AND sent_at IS NULL`).bind(pid, j.id).run();
+    await addEvent(db, j.id, 'deliverable', null, null, `📨 고객에게 결과물 ${ds.length}건 묶음 발송 (${j.customer_email}) — 고객 페이지 ${portal}`);
+    return { count: ds.length, portal };
   }
   if (res === 'jobs' && id && sub === 'draft-batch' && method === 'POST') {
     // 한 작업의 초안 대기 결과물을 한 통으로 David 메일에 — 결과물마다 메일이 가던 것을 묶는다 (2026-10-21)
@@ -421,7 +458,8 @@ async function api(env, method, seg, body, url) {
       byOwner: ['auto', 'ai', 'david', 'customer', 'blocked'].reduce((a, w) => { a[w] = { done: doneList.filter((t) => t.who === w).length, left: tasks.filter((t) => t.who === w && !CLOSED.has(t.status)).length }; return a; }, {}),
       byPhase: PHASES.map(([k, l]) => ({ key: k, label: l, done: tasks.filter((t) => t.phase === k && CLOSED.has(t.status)).length, total: tasks.filter((t) => t.phase === k).length })).filter((p) => p.total),
     };
-    return { job: { ...job, pct, phase: jobPhase(job, tasks), dueInfo: dueLabel(job.due_date), day: job.created_at ? Math.max(1, Math.floor((Date.now() - new Date(job.created_at.replace(' ', 'T') + 'Z').getTime()) / 864e5) + 1) : 1 }, order, payments, intake, events, deliverables, tasks, lanes, services, milestones, next: nextAction(tasks), summary: { ...summary, bottlenecks: undefined }, history, intakeCandidates, aiPending, stuck, stuckDays, lastMove, brief, progressSummary, who: WHO, phases: PHASES, taskStatuses: TASK_STATUSES, statuses: JOB_STATUSES };
+    const portal = `${url.origin}/c/${await ensurePortalToken(db, job)}`;
+    return { portal, job: { ...job, pct, phase: jobPhase(job, tasks), dueInfo: dueLabel(job.due_date), day: job.created_at ? Math.max(1, Math.floor((Date.now() - new Date(job.created_at.replace(' ', 'T') + 'Z').getTime()) / 864e5) + 1) : 1 }, order, payments, intake, events, deliverables, tasks, lanes, services, milestones, next: nextAction(tasks), summary: { ...summary, bottlenecks: undefined }, history, intakeCandidates, aiPending, stuck, stuckDays, lastMove, brief, progressSummary, who: WHO, phases: PHASES, taskStatuses: TASK_STATUSES, statuses: JOB_STATUSES };
   }
 
   if (res === 'jobs' && id && method === 'POST') {
@@ -643,9 +681,13 @@ async function syncPlaybook(db, job, tasks) {
 
 /* 결과물 목록에 1번만 올린다 (같은 작업·같은 제목이 있으면 건너뜀) */
 async function ensureDeliverable(db, t) {
-  const dup = await db.prepare(`SELECT id FROM deliverables WHERE job_id = ? AND title = ? LIMIT 1`).bind(t.job_id, t.title.slice(0, 200)).first();
-  if (dup) return dup.id;
-  const r = await db.prepare(`INSERT INTO deliverables (job_id, title, url) VALUES (?, ?, ?)`).bind(t.job_id, t.title.slice(0, 200), t.result_url || '').run();
+  const dup = await db.prepare(`SELECT id, revise_note FROM deliverables WHERE job_id = ? AND title = ? LIMIT 1`).bind(t.job_id, t.title.slice(0, 200)).first();
+  if (dup) {
+    // 같은 단계를 다시 승인(고객 수정 요청 반영 등) → 새 결과물로 취급: 전달 전·요약 없음·승인 전으로 되돌려 다음 묶음에 다시 들어가게
+    await db.prepare(`UPDATE deliverables SET task_id = ?, kind = ?, url = CASE WHEN ? != '' THEN ? ELSE url END, sent_at = NULL, packet_id = NULL, summary = NULL, approved_at = NULL, revise_note = NULL WHERE id = ?`).bind(t.id, t.result_kind || null, t.result_url || '', t.result_url || '', dup.id).run();
+    return dup.id;
+  }
+  const r = await db.prepare(`INSERT INTO deliverables (job_id, title, url, task_id, kind, needs_approval) VALUES (?, ?, ?, ?, ?, ?)`).bind(t.job_id, t.title.slice(0, 200), t.result_url || '', t.id, t.result_kind || null, APPROVAL_KEYS.has(t.key) ? 1 : 0).run();
   return r.meta && r.meta.last_row_id;
 }
 

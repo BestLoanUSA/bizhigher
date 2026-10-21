@@ -85,6 +85,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | 진단 채점 로직 | `functions/api/_engine.js` |
 | 리포트 디자인 | `functions/report/[id].js` |
 | GBP 리뷰 답글·게시물 자동화 실험 | `automation/gbp/` (README 참고. API 승인 전엔 `--dry-run`만) |
+| 고객 결과물 페이지 `/c/{token}` | `functions/c/[token].js` — 묶음 메일·승인 흐름은 §12-3 |
 | 관리자 페이지 `/admin/` | `functions/admin/` (화면 `_ui.js`, API `[[path]].js`, 인증 `_auth.js`). 설정 안내 `docs/admin-setup-ko.md` |
 | Stripe 결제 → 주문·작업 기록 | `functions/api/stripe-webhook.js` + 공용 `functions/api/_orders.js` |
 | 서비스별 작업 단계·자동화 수준(플레이북) | `functions/api/_playbook.js` — 관리자 파이프라인·플레이북 탭·`docs/automation-map-ko.md`의 단일 소스 |
@@ -186,6 +187,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | `jobs` · `job_events` · `deliverables` | 주문당 작업 1건, 상태 타임라인, 결과물 링크 | `/admin/` · 웹훅 · `intake.js` |
 | `job_tasks` | 작업당 플레이북 단계(누가·검증·David 분·막힌 이유·상태) | `_orders.js seedTasks()` · `/admin/` |
 | `stripe_events` | 처리한 Stripe 이벤트 id (중복 방지) | 웹훅 |
+| `deliverables` 추가 열 | `task_id`·`kind`·`summary`·`needs_approval`·`approved_at`·`revise_note`·`packet_id` — 고객 페이지·묶음 발송·승인(§12-3). `jobs.portal_token`도 같이 | `_orders.js EXTRA_COLUMNS` |
 | `tool_usage` | 무료 도구 하루 사용 횟수 (일자·IP 해시·도구) — 자동 생성 | `functions/api/tools/_shared.js` |
 
 `orders` 이하 6개 테이블은 `functions/api/_orders.js`의 `ensureSchema()`가 **없으면 자동 생성**한다(`CREATE TABLE IF NOT EXISTS`). 손으로 SQL을 돌릴 필요 없다. 기존 3개 테이블은 이 코드가 만들지 않았으므로 관리자 API는 `PRAGMA table_info`로 컬럼 유무를 확인하고 쓴다.
@@ -201,7 +203,8 @@ Cloudflare 프로젝트 → Settings → Environment variables (Production).
 | `GOOGLE_PLACES_API_KEY` | **필수** | 리드만 저장되고 채점·리포트가 안 나온다 |
 | `ANTHROPIC_API_KEY` | 선택 | 템플릿 해석으로 대체 |
 | `CLAUDE_MODEL` | 선택 | 기본 `claude-haiku-4-5` |
-| `RESEND_API_KEY` · `NOTIFY_EMAIL` · `NOTIFY_FROM` | 선택 | 이메일 알림·루틴 초안 메일이 안 간다. 이 메일은 전부 David 전용이며 푸터에 그렇게 적힌다(`_notify.js`). 고객에게는 어떤 메일도 자동으로 가지 않는다 |
+| `RESEND_API_KEY` · `NOTIFY_EMAIL` · `NOTIFY_FROM` | 선택 | 이메일 알림이 안 간다. 알림 메일은 전부 David 전용이며 푸터에 그렇게 적힌다(`_notify.js`). 고객에게는 어떤 메일도 자동으로 가지 않는다 |
+| `CUSTOMER_FROM` | 선택 | 고객 묶음 메일 발신 주소(예 `BizHigher <hello@bizhigher.com>`, Resend 도메인 인증 필요). 없으면 `NOTIFY_FROM` |
 | `ADMIN_PASSWORD` | 관리자 페이지 필수 | `/admin/`이 503으로 잠긴다 |
 | `ADMIN_ACCESS_TEAM` · `ADMIN_ACCESS_AUD` | 선택 | Cloudflare Access로 바꿀 때. 둘 다 있으면 Access 토큰 검증 |
 | `STRIPE_WEBHOOK_SECRET` | 주문 기록 필수 | 웹훅이 503, 결제가 관리자 페이지에 안 뜬다 |
@@ -292,7 +295,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 
 **규칙 (예외 없음)**
 
-- **고객에게 자동 발송 금지.** 모든 발송물은 Gmail 초안까지만
+- **고객에게 자동 발송 금지.** 루틴·AI는 메일을 보내지 않는다. 고객 메일은 David가 관리자에서 "고객에게 묶음 보내기"를 눌렀을 때만 간다(§12-3)
 - 모든 결과물은 David QA 필수
 - 노출·SEO 서비스는 **경쟁사 갭 분석을 선행**한다
 - 고객 정보는 D1 `customer_profiles`를 재사용한다
@@ -302,11 +305,21 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 ### 12-2. AI 실행 루틴 (2026-10-21)
 
 - claude.ai/code Routine "BizHigher AI 실행 루틴", `CRON_TZ=America/Los_Angeles 23 7-21/2 * * *`(LA 7:23부터 2시간마다, 21:23까지 하루 8회 — 2026-10-21 David 결정. 승인 뒤 다음 AI 단계가 2시간 안에 열린다), 매번 새 세션, Gmail 커넥터 없음(조직 정책). 할 일이 없는 실행은 약 30초·$0.15. 코드·절차는 `automation/ai-runner/README.md`
-- 흐름: `runner.js queue`(관리자 API `GET /admin/api/runner/queue` — 같은 서비스 앞 단계가 끝난 AI 단계만) → 플레이북대로 결과물 생성 → `submit`(verify면 검증 큐, 아니면 done) → 발송 대기 결과물은 `draft`(Resend로 **David 메일**에 고객용 초안 본문, 고객에게는 안 감) → 작업별 메모. 루틴 세션에는 Gmail 커넥터를 붙일 수 없어(조직 정책) Resend 경로를 쓴다
+- 흐름: `runner.js queue`(관리자 API `GET /admin/api/runner/queue` — 같은 서비스 앞 단계가 끝난 AI 단계만) → 플레이북대로 결과물 생성 → `submit`(verify면 검증 큐, 아니면 done) → 전달 대기 결과물은 `summary`(고객용 요약 2~4문장 저장, 메일 없음) → 작업별 메모. 발송은 §12-3
 - **2026-10-21 확장**: 우리 가게 공개 정보는 `places.js lookup`(고객 프로필 단계와 "GBP·구글 프로필 확인" 수정 요청에서 — 주소·전화·웹사이트·카테고리·영업시간·평점·리뷰 수·place_id·지도 링크·사진 수·소개문을 "(Places 공개 정보, 날짜)" 표시로 채운다), 경쟁사 갭 분석은 `places.js competitors`(실시간 조회만, 저장 금지), 광고 소재·게시물 이미지는 `creative.js gen→compose→upload`(fal.ai flux/schnell 배경 + Playwright 한글 조판 1:1·9:16·1.91:1 → D1 `assets` BLOB → `/a/{id}.jpg`, `functions/a/[id].js`) → `submit --kind images`로 검증 큐에 이미지 그리드. 숏폼 영상은 `creative.js video`(고객 사진 1장 → fal.ai Kling 2.1 이미지→영상 5초 클립, 편당 약 $0.25~0.5, `sv-2` auto)로 클립까지 루틴이 만들고 자막·로고·음악 편집은 David(sv-3). 웹사이트 빌드·PDF·인쇄물·실사진 합성은 여전히 기획안만 올리고 David 세션이 마무리. 자산 업로드는 multipart(R2 60MB, mp4·webm·pdf 포함)
 - `bizhigher` 환경변수: `BIZHIGHER_ADMIN_PASSWORD`(= Cloudflare `ADMIN_PASSWORD`, 없으면 첫 줄에서 멈춤) · `FAL_KEY` · `GOOGLE_PLACES_API_KEY`. 이미지는 Pages R2 바인딩 `R2_ASSETS`(버킷 `bizhigher-assets`)에 본문, D1 `assets`에 메타·`r2_key`. 바인딩이 없으면 D1 BLOB 폴백. 서빙은 둘 다 `/a/{id}.jpg`(`functions/a/[id].js`)
 - 사이트 QA는 `qa.js --url …`(360/768/1280 스크린샷·LCP·전송량·가로 넘침·링크·폼·터치 대상 → 리포트 md + 몽타주 jpg). `web-4`·`llp-4`가 이걸 쓴다. 속도 수치는 세션 프록시 영향이 커 상대 비교용. 광고 셋업 `ads-2`는 Google Ads Editor 가져오기 CSV + Meta 설정표까지 만들어 David 구축 시간을 90분 → 25/40분으로
 - 수동 경로는 그대로 남아 있다: 고객 여정 "AI 실행 지시 복사" → claude.ai fulfillment 스킬. 스킬에는 2026-10-21 기준 연동 섹션이 들어가 있고, 추가분은 `docs/fulfillment-skill-addendum-ko.md` v2
+
+### 12-3. 고객 메일 정책 — 최소·묶음 (2026-10-21 David 결정)
+
+목표는 거의 100% 자동화. 고객에게 가는 메일은 **꼭 필요한 순간에만, 한꺼번에 묶어서**. 결과물마다 메일을 보내지 않는다.
+
+- **고객 결과물 페이지 `/c/{token}`** (`functions/c/[token].js`): 작업마다 하나, 로그인 없음(`jobs.portal_token` 24자). 전달된(`sent_at`) 결과물만 보이고 이미지 그리드·영상·텍스트·HTML(샌드박스)·링크를 그 자리에서 본다. David 미리보기는 `?preview=1`(관리자 고객 여정 "고객 페이지 미리보기"). noindex
+- **보내는 순간은 4가지뿐**: ① 킥오프(ob-5) ② 월간 승인 묶음(게시물 캘린더·콘텐츠·광고 소재·영상 — `APPROVAL_KEYS`) ③ 월간 리포트 ④ 고객 자료가 없어 막혔을 때. 그 밖의 내부 작업물은 메일 없이 관리자 페이지에만 쌓인다
+- **발송 = David 클릭 1번**: 관리자 고객 여정 "고객에게 묶음 보내기" → `POST /admin/api/jobs/{id}/send-packet {note}` → 전달 안 된 결과물 전부를 한 통(고객 페이지 링크 + 목록·요약 + 승인 요청 문구)으로 Resend 발송, David BCC, `sent_at`·`packet_id` 기록. 루틴은 이 API를 호출하지 않는다
+- **고객 승인은 페이지에서**: `needs_approval` 결과물에 [이대로 진행]/[수정 요청] 버튼. 승인 → `approved_at` + 같은 서비스의 다음 고객 차례 단계 완료 + 타임라인. 수정 요청 → 그 단계 `doing` + `revise_note`로 되돌아가 다음 루틴이 다시 만든다. 7일 무응답 시 승인 간주(약관)
+- 루틴은 결과물마다 **고객용 요약**(`deliverables.summary`, `runner.js summary`)만 쓴다. 구 `draft --job`(David 메일 초안)은 남아 있지만 기본 경로가 아니다
 
 ### 12-1. 관리자 페이지 `/admin/` (2026-10-05 1단계)
 
@@ -401,7 +414,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 | "동시 5곳 한정" 희소성 표기 | 오히려 작아 보이게 함 |
 | 파운딩 할인 50% | 20%로 축소 + 장기 플랜 중복 불가 — 마진 파괴 방지 |
 | 히어로에 도시명 칩 | "달라스"가 안 와닿음 → 손님 행동 신호 칩(리뷰·전화·길찾기)으로 교체 |
-| 고객에게 자동 이메일 발송 | Gmail 초안까지만, 발송은 David 승인 후 |
+| 고객에게 자동 이메일 발송 | 루틴은 요약만 쓴다. 발송은 David가 "고객에게 묶음 보내기" 클릭(§12-3) |
 | 리뷰 대가 제공·게이팅·가짜 리뷰 | 구글 정책 위반 |
 | 낮은 별점 리뷰 자동 답글 | 법적·평판 리스크 |
 | 30곳 전수 수작업 등록 | 곳당 10~15분 × 30 = 4~6시간. 셋업가 $129로는 적자 |

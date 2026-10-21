@@ -68,7 +68,7 @@ SELECT d.id, d.title, d.url, j.business, j.customer_email FROM deliverables d JO
 
 ### 고객 전달 결과물 규칙
 - 승인하면 "결과물 · 발송"에 올라가는 단계는 `_playbook.js` `DELIVER_KEYS` 에 있는 것만(킥오프 메일·리포트·캘린더·인쇄 파일·클립 등). 설계안·NAP 문서 같은 내부 작업물은 올리지 않는다
-- 고객용 초안은 **작업당 한 통**으로 묶는다(`POST /admin/api/jobs/{id}/draft-batch {text}` 또는 Gmail 초안 1통). 결과물마다 보내지 않는다
+- 고객에게 보내는 메일은 **David가 관리자 고객 여정의 "고객에게 묶음 보내기"를 눌러** 한 통으로 간다(고객 페이지 `/c/{token}` 링크 + 결과물 목록·요약). AI는 결과물마다 고객용 요약 2~4문장만 쓴다(`POST /admin/api/deliverables/{id}/summary {text}`). 결과물마다 메일·초안을 만들지 않는다
 
 ### 질문지 읽는 법
 - `intakes.phone`·`email` 은 담당자 연락처(업소 대표번호 아님). `notes` 맨 앞 "── 구글 프로필 공개 정보 ──" 블록(place_id 포함), "── 웹사이트 질문지 ──", "── 첨부 파일 ──"(사진·로고·PDF URL) 순으로 읽는다

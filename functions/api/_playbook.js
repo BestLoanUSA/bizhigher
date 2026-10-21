@@ -204,6 +204,9 @@ const GIFTS = {
 /* 승인·완료 시 "결과물 · 발송" 목록(고객 전달)에 올라가는 단계 — 나머지는 내부 작업물이라 올리지 않는다 (2026-10-21: 매 단계마다 초안 메일이 가던 문제) */
 export const DELIVER_KEYS = new Set(['ob-5', 'gpo-5', 'qr-3', 'lls-7', 'ads-5', 'llp-4', 'web-4', 'post-2', 'post-7', 'rr-7', 'ac-5', 'cp-2', 'mr-4', 'seo-3', 'seo-4', 'seo-8', 'sv-2', 'am-5', 'llc-2']);
 
+/* 고객 승인이 필요한 결과물 — 고객 페이지에 [승인]/[수정 요청] 버튼이 붙고, 승인하면 같은 서비스의 다음 고객 차례 단계가 완료된다 */
+export const APPROVAL_KEYS = new Set(['post-2', 'seo-3', 'ac-5', 'sv-2']);
+
 export function servicesFor(slug) {
   if (!slug) return [];
   const m = /^(local-(?:starter|growth|premium))(?:-(monthly|six|annual|installment))?$/.exec(slug);
