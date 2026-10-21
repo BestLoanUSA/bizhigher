@@ -446,10 +446,11 @@ async function api(env, method, seg, body, url) {
     if (!list.length) throw bad('해당 데모 고객이 없습니다: ' + only);
     for (const d of list) {
       // fresh: 결제 직후처럼 온보딩부터 전부 비운다 — 루틴이 처음부터 처리하는 것을 보기 위함
-      const x = body.fresh ? { ...d, daysAgo: 0, done: [], doneResults: {}, doing: [], review: {} } : d;
+      const x = body.fresh ? { ...d, daysAgo: 0, done: [], doneResults: {}, doing: [], review: {}, noIntake: true } : d;
       made.push(await seedDemo(db, catalog, x));
     }
-    return { jobs: made };
+    const first = list[0];
+    return { jobs: made, intake_url: body.fresh ? `/thanks/?service=${encodeURIComponent(first.slug)}&email=${encodeURIComponent(first.email)}&business=${encodeURIComponent(first.business)}&contact=${encodeURIComponent(first.contact)}&phone=${encodeURIComponent(first.phone)}` : null };
   }
 
   /* 목록들 */
@@ -576,7 +577,8 @@ async function seedDemo(db, catalog, d) {
   const orderId = r.meta.last_row_id;
   await db.prepare(`INSERT INTO payments (order_id, stripe_id, amount_cents, currency, reason, paid_at) VALUES (?,?,?,?,?,?)`).bind(orderId, 'demo_pi_' + orderId, d.price * 100, 'usd', 'demo', createdAt).run();
   const jobId = await createJobForOrder(db, { id: orderId, service_slug: d.slug, service_name: item.name, amount_cents: d.price * 100, customer_email: d.email, customer_name: d.business }, { deliveryDays: item.deliveryDays });
-  const intakeId = await safeInsertIntake(db, { service: d.slug, business: d.business, contact_name: d.contact, phone: d.phone, email: d.email, links: d.links, notes: d.notes });
+  // fresh(결제 직후) 데모는 질문지를 넣지 않는다 — David가 /thanks/ 질문지를 직접 써서 같은 이메일로 붙인다 (실제 흐름과 동일)
+  const intakeId = d.noIntake ? null : await safeInsertIntake(db, { service: d.slug, business: d.business, contact_name: d.contact, phone: d.phone, email: d.email, links: d.links, notes: d.notes });
   if (intakeId) await attachIntake(db, { id: intakeId, service: d.slug, service_name: item.name, business: d.business, email: d.email }, { deliveryDays: item.deliveryDays });
   await db.prepare(`UPDATE jobs SET business = ?, created_at = ?, due_date = ? WHERE id = ?`).bind(d.business, createdAt, new Date(Date.now() + (d.daysAgo > 30 ? 0 : 3) * 864e5).toISOString().slice(0, 10), jobId).run();
   for (const k of d.done) await db.prepare(`UPDATE job_tasks SET status = 'done', done_at = datetime('now', ?) WHERE job_id = ? AND key = ?`).bind(`-${Math.floor(Math.random() * 20)} hours`, jobId, k).run();

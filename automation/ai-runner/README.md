@@ -9,6 +9,7 @@ claude.ai/code **Routine** "BizHigher AI 실행 루틴" — `bizhigher` 환경�
 1. `node automation/ai-runner/runner.js queue` — 관리자 API에서 "AI가 지금 할 수 있는 단계"(같은 서비스의 앞 단계가 끝난 것만)와 고객 컨텍스트(질문지·프로필·이미 만든 결과물·David 수정 요청)를 받는다
 2. 단계마다 fulfillment 스킬의 플레이북대로 결과물을 만든다 → `submit`으로 올린다. `verify=1`이면 검증 큐(review)로, 아니면 `--done`으로 바로 완료
    - **텍스트** 단계(답글·게시물 본문·키워드·프로필·설계안 등): 스크래치 파일에 쓰고 `submit --task N --file F`
+   - **우리 가게 공개 정보**(고객 프로필 `ob-3`, 또는 수정 요청에 "GBP·구글 프로필·Places 확인"이 있을 때): `places.js lookup --query "상호 도시 주" [--pick N]` 결과 표를 프로필에 채우고 "(Places 공개 정보, 날짜)"를 붙인다. 질문지 값과 다르면 둘 다 적고 [확인 필요]
    - **경쟁사 갭 분석**(`gpo-2` 등 노출·SEO 선행 단계): `places.js competitors --query "업종 도시" --me {place_id}` 결과 표를 그대로 결과물에 넣는다. 실시간 조회만 하고 저장·재게시하지 않는다
    - **이미지** 단계(`ac-3` 광고 소재, `post-4` 게시물 이미지): `creative.js gen`(fal.ai 배경) → `compose`(한글 헤드라인·CTA·브랜드 조판, 1:1·9:16·1.91:1) → `upload`(공개 URL `/a/….jpg`) → URL 목록을 `submit --kind images`. 검증 큐에서 이미지 그리드로 보인다
 3. **발송 대기** 결과물(`deliverables.sent_at IS NULL AND drafted_at IS NULL`)은 고객용 초안 본문을 써서 `draft --deliverable N --file body.txt` — Resend로 **David 메일(NOTIFY_EMAIL)** 에 간다. 고객에게는 아무것도 가지 않는다. David가 읽고 고객에게 전달한 뒤 관리자 페이지에서 "보냈음"
@@ -22,6 +23,7 @@ node automation/ai-runner/runner.js submit --task 123 --file out.md [--kind text
 node automation/ai-runner/runner.js draft --deliverable 7 --file body.txt      # Resend → David 메일 (RESEND_API_KEY 가 Cloudflare 에 있어야 함)
 node automation/ai-runner/runner.js note --job 5 --text "…"
 
+node automation/ai-runner/places.js lookup --query "New Optix Garden Grove CA" [--pick 2]      # 우리 가게 공개 정보 전부 (후보 여러 곳이면 --pick)
 node automation/ai-runner/places.js competitors --query "optical store Garden Grove CA" [--me ChIJ…] [--n 3]
 node automation/ai-runner/creative.js gen --prompt "modern optical shop interior, warm light, no text, no people" --out bg.jpg [--size square_hd|1024x1024]
 node automation/ai-runner/creative.js compose --bg bg.jpg --headline "가을 안경테 신상 입고" --sub "검안 포함 $149부터" --cta "지금 예약" --brand "New Optix" --color "#0A4DF5" --out out --name oct

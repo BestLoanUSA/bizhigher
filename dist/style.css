@@ -386,6 +386,19 @@ img { max-width: 100%; display: block; }
 }
 .input { border: 1.5px solid var(--line); border-radius: 12px; padding: 16px 18px; font-size: 16px; font-family: inherit; color: var(--ink-900); background: #fff; width: 100%; transition: border-color .15s ease, box-shadow .15s ease; }
 .input:focus { outline: none; border-color: var(--blue-600); box-shadow: 0 0 0 3px rgba(10, 77, 245, 0.12); }
+.place-box { border: 1.5px solid var(--line); border-radius: 12px; padding: 14px 16px; background: #F7FAFF; }
+.place-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.place-list:empty { display: none; }
+.place-item { text-align: left; border: 1.5px solid var(--line); border-radius: 10px; padding: 10px 12px; background: #fff; font-family: inherit; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+.place-item:hover { border-color: var(--blue-600); }
+.place-item b { font-size: 15px; color: var(--ink-900); }
+.place-item span { font-size: 13px; color: #4B5563; }
+.place-item small { font-size: 12px; color: #6B7280; }
+.place-msg { font-size: 13px; color: #6B7280; padding: 8px 2px; }
+.place-picked { margin-top: 10px; background: #E7F7EE; border-radius: 10px; padding: 10px 12px; font-size: 14px; color: #0B4A2A; }
+.place-picked .place-sum { font-size: 13px; margin-top: 4px; line-height: 1.5; }
+.place-picked .place-note { font-size: 12px; color: #4B5563; margin-top: 6px; }
+.place-x { margin-left: 8px; background: none; border: 1px solid #0B9E58; color: #0B7A3E; border-radius: 999px; padding: 2px 10px; font-size: 12px; cursor: pointer; font-family: inherit; }
 .file-box { display: flex; flex-direction: column; gap: 6px; border: 1.5px dashed var(--line); border-radius: 12px; padding: 14px 16px; cursor: pointer; background: #FAFBFD; }
 .file-box:hover { border-color: var(--blue-600); }
 .file-box input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; }

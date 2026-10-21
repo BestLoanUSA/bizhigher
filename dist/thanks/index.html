@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="/style.css?v=185a1e29">
+<link rel="stylesheet" href="/style.css?v=eb508d16">
 
 
 <script type="text/javascript">
@@ -74,6 +74,12 @@
     <p class="hero-sub">작업을 시작하려면 아래 질문지만 작성해주세요. 5분이면 충분하고, <b>이 질문지가 제출된 시점부터 딜리버리 기한(영업일 기준)이 시작됩니다.</b></p>
     <form class="audit-form" id="intake-form" style="max-width:560px;">
       <input type="hidden" name="service" id="service-field" value="">
+      <div class="place-box" id="place-box">
+        <div class="file-title">🔎 구글에서 내 가게 찾기 <small style="font-weight:500;color:#6B7280">— 고르면 주소·전화·영업시간·카테고리가 자동으로 채워집니다</small></div>
+        <div style="display:flex;gap:8px;margin-top:8px"><input type="text" id="place-q" placeholder="상호 + 도시 (예: New Optix Garden Grove)" class="input" style="flex:1;padding:12px 14px"><button type="button" class="btn btn-primary" id="place-go" style="white-space:nowrap;padding:0 16px">찾기</button></div>
+        <div id="place-list" class="place-list"></div>
+        <div id="place-picked" class="place-picked" style="display:none"></div>
+      </div>
       <input type="text" name="business" placeholder="업체명 (한글/영문)" class="input" required>
       <input type="text" name="contact_name" placeholder="담당자 성함" class="input" required>
       <input type="text" name="phone" placeholder="연락처 (문자 가능한 번호)" class="input" required>
@@ -114,6 +120,43 @@
 var params = new URLSearchParams(location.search);
 var svc = params.get('service') || '';
 document.getElementById('service-field').value = svc;
+// 데모·재작성 링크에서 미리 채우기 (?email=&business=&contact=&phone=)
+['business', 'contact_name', 'phone', 'email'].forEach(function (k) { var v = params.get(k === 'contact_name' ? 'contact' : k); if (v) { var el = document.querySelector('[name=' + k + ']'); if (el) el.value = v; } });
+// 구글에서 내 가게 찾기 → 후보 고르면 필드 채움 + 공개 정보 블록을 notes 에 붙일 준비
+var pickedPlace = null;
+function escH(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+async function placeSearch() {
+  var q = document.getElementById('place-q').value.trim(); var list = document.getElementById('place-list'); var go = document.getElementById('place-go');
+  if (q.length < 2) { list.innerHTML = '<div class="place-msg">상호와 도시를 함께 적어 주세요.</div>'; return; }
+  go.disabled = true; go.textContent = '찾는 중…'; list.innerHTML = '';
+  try {
+    var emailEl = document.querySelector('[name=email]');
+    var r = await fetch('/api/place-lookup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: q, email: emailEl ? emailEl.value : '' }) });
+    var j = await r.json().catch(function () { return {}; });
+    if (!r.ok || !j.ok) { list.innerHTML = '<div class="place-msg">' + (j.error === 'quota' ? '오늘 검색 한도를 넘었습니다. 아래 칸에 직접 적어 주세요.' : j.error === 'off' ? '지금은 자동 찾기를 쓸 수 없습니다. 아래 칸에 직접 적어 주세요.' : '잠시 후 다시 시도해 주세요.') + '</div>'; return; }
+    if (!j.items.length) { list.innerHTML = '<div class="place-msg">구글에서 찾지 못했습니다. 영문 상호나 다른 도시명으로 다시 시도하거나, 아래 칸에 직접 적어 주세요.</div>'; return; }
+    list.innerHTML = j.items.map(function (p, i) { return '<button type="button" class="place-item" data-i="' + i + '"><b>' + escH(p.name) + '</b><span>' + escH(p.address) + '</span>' + (p.rating ? '<small>★ ' + p.rating + ' · 리뷰 ' + p.reviews + (p.category ? ' · ' + escH(p.category) : '') + '</small>' : (p.category ? '<small>' + escH(p.category) + '</small>' : '')) + '</button>'; }).join('');
+    list.querySelectorAll('.place-item').forEach(function (b) { b.addEventListener('click', function () { pickPlace(j.items[Number(b.getAttribute('data-i'))]); }); });
+  } catch (e) { list.innerHTML = '<div class="place-msg">잠시 후 다시 시도해 주세요.</div>'; }
+  finally { go.disabled = false; go.textContent = '찾기'; }
+}
+function pickPlace(p) {
+  pickedPlace = p;
+  var set = function (name, v) { var el = document.querySelector('[name=' + name + ']'); if (el && v && !el.value) el.value = v; };
+  set('business', p.name); set('phone', p.phone);
+  var linksEl = document.querySelector('[name=links]'); var links = [p.website, p.maps].filter(Boolean).join(' · '); if (linksEl && links && !linksEl.value) linksEl.value = links;
+  document.getElementById('place-list').innerHTML = '';
+  var pk = document.getElementById('place-picked'); pk.style.display = '';
+  pk.innerHTML = '<div><b>' + escH(p.name) + '</b> 선택됨 <button type="button" id="place-clear" class="place-x">바꾸기</button></div><div class="place-sum">' + escH(p.address) + (p.phone ? ' · ' + escH(p.phone) : '') + (p.category ? ' · ' + escH(p.category) : '') + (p.rating ? ' · ★ ' + p.rating + ' (' + p.reviews + ')' : '') + (p.hours.length ? '<br>영업시간: ' + escH(p.hours.join(' / ')) : '<br>영업시간 미등록') + '</div><div class="place-note">틀린 정보가 있으면 아래 요청사항에 적어 주세요. 구글 프로필 수정도 작업에 포함됩니다.</div>';
+  document.getElementById('place-clear').addEventListener('click', function () { pickedPlace = null; pk.style.display = 'none'; pk.innerHTML = ''; document.getElementById('place-q').focus(); });
+}
+document.getElementById('place-go').addEventListener('click', placeSearch);
+document.getElementById('place-q').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); placeSearch(); } });
+function placeBlock() {
+  if (!pickedPlace) return '';
+  var p = pickedPlace;
+  return '── 구글 프로필 공개 정보 (고객이 선택, 자동 채움) ──\n' + ['상호: ' + p.name, '주소: ' + p.address, '전화: ' + (p.phone || '-'), '웹사이트: ' + (p.website || '없음'), '카테고리: ' + (p.category || '-') + (p.types && p.types.length ? ' (' + p.types.join(', ') + ')' : ''), '영업시간: ' + (p.hours.length ? p.hours.join(' / ') : '미등록'), '평점/리뷰: ' + (p.rating ? p.rating + ' / ' + p.reviews : '-'), '영업 상태: ' + (p.status || '-'), 'place_id: ' + p.place_id, '지도: ' + (p.maps || '-')].join('\n');
+}
 // 웹사이트 제작 주문이면 전용 질문지 표시
 // 웹사이트 제작 주문 또는 웹사이트가 포함된 12개월 플랜(선결제·월 분납)이면 전용 질문지 표시
 if (svc.indexOf('website') === 0 || (svc.indexOf('local-') === 0 && (svc.indexOf('annual') > -1 || svc.indexOf('installment') > -1))) {
@@ -153,6 +196,8 @@ document.getElementById('intake-form').addEventListener('submit', async function
     const body = Object.fromEntries(new FormData(this).entries());
     delete body.files;
     const uploaded = await uploadAll(body.email, btn);
+    var pb = placeBlock();
+    if (pb) body.notes = pb + (body.notes ? '\n\n' + body.notes : '');
     if (uploaded.length) body.notes = (body.notes ? body.notes + '\n\n' : '') + '── 첨부 파일 ──\n' + uploaded.join('\n');
     btn.textContent = '제출 중...';
     // 웹사이트 전용 답변을 notes 앞에 정리해서 붙임
