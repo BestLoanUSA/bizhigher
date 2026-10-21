@@ -1,12 +1,17 @@
 /**
- * 공개 결과물 이미지 — GET /a/{id}.jpg
- * 루틴이 만든 광고 소재·게시물 이미지. R2 바인딩(R2_ASSETS)이 있으면 R2 객체를, 없으면 D1 `assets` BLOB 을 서빙한다.
+ * 공개 결과물·첨부 파일 — GET /a/{id}.{ext}
+ * 루틴이 만든 이미지(a/…)와 고객이 질문지에 첨부한 파일(u/…). R2 바인딩(R2_ASSETS)이 있으면 R2 객체를, 없으면 D1 `assets` BLOB 을 서빙한다.
  * id는 추측 불가능한 16자 토큰이라 목록 노출은 없다. 고객 GBP 게시물·메타 예약 발행이 이 URL을 쓴다.
  */
-const HEADERS = (ct) => ({ 'Content-Type': ct || 'image/jpeg', 'Cache-Control': 'public, max-age=31536000, immutable', 'X-Robots-Tag': 'noindex' });
+const HEADERS = (ct) => {
+  const h = { 'Content-Type': ct || 'image/jpeg', 'Cache-Control': 'public, max-age=31536000, immutable', 'X-Robots-Tag': 'noindex', 'X-Content-Type-Options': 'nosniff' };
+  // SVG·PDF는 스크립트를 품을 수 있어 격리해서 보여준다
+  if (/svg|pdf/.test(ct || '')) h['Content-Security-Policy'] = "default-src 'none'; sandbox";
+  return h;
+};
 
 export async function onRequestGet({ params, env }) {
-  const id = String(params.id || '').replace(/\.(jpe?g|png|webp)$/i, '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 32);
+  const id = String(params.id || '').replace(/\.(jpe?g|png|webp|gif|heic|svg|pdf)$/i, '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 32);
   if (!id || !env.DB) return new Response('not found', { status: 404 });
   const row = await env.DB.prepare('SELECT data, content_type, r2_key FROM assets WHERE id = ?').bind(id).first().catch(() => null);
   if (!row) return new Response('not found', { status: 404 });

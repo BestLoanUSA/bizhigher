@@ -28,6 +28,8 @@ export const LIMITS = {
   'schema-generator': { perUser: 2, global: 1000 },
   // 로컬 순위의 1단계(가게 찾기)는 횟수 안내 대상이 아닌 보조 한도
   'local-rank-find': { perUser: 6, global: 500 },
+  // 결제 후 질문지 첨부(functions/api/upload.js) — 도구가 아니라 안내 대상 아님
+  'intake-upload': { perUser: 30, global: 1000 },
   'competitor-find': { perUser: 6, global: 300 },
 };
 

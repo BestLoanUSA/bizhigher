@@ -282,7 +282,7 @@ async function api(env, method, seg, body, url) {
       ['받는 고객', escHtml(d.customer_email || '(이메일 없음)')],
       ['결과물', d.url ? `<a href="${escHtml(d.url)}">${escHtml(d.title)}</a>` : escHtml(d.title)],
       ['본문 (복사해 고객에게 보내세요)', `<pre style="white-space:pre-wrap;font:inherit">${escHtml(bodyText)}</pre>`],
-    ]);
+    ], { footer: 'David 전용 초안 메일입니다 — 고객에게는 자동 발송되지 않습니다. 위 본문만 복사해 보내고 관리자 페이지에서 "보냈음"을 누르세요.' });
     await db.prepare(`UPDATE deliverables SET drafted_at = datetime('now') WHERE id = ?`).bind(d.id).run();
     await addEvent(db, d.job_id, 'deliverable', null, null, `✉ 고객용 초안을 David 메일로 전달 — ${d.title}`);
     return {};

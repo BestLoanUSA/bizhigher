@@ -2286,6 +2286,12 @@ function thanksPage() {
       <input type="text" name="phone" placeholder="연락처 (문자 가능한 번호)" class="input" required>
       <input type="email" name="email" placeholder="이메일 (결제하신 이메일)" class="input" required>
       <input type="text" name="links" placeholder="구글 프로필·웹사이트·SNS 링크 (있는 것만)" class="input">
+      <label class="file-box" id="file-box">
+        <input type="file" id="intake-files" multiple accept="image/*,.pdf,.svg,.heic">
+        <span class="file-title">📎 사진·로고·메뉴판 첨부 (선택)</span>
+        <span class="file-sub">매장 외관·내부·대표 상품 사진, 로고 파일, 메뉴판 PDF — 최대 10개, 개당 10MB. 사진이 있으면 결과물 품질이 크게 좋아집니다.</span>
+        <span class="file-list" id="file-list"></span>
+      </label>
 
       <!-- 웹사이트 제작 전용 질문 (service가 website로 시작할 때만 표시) -->
       <div id="website-extra" style="display:none;">
@@ -2295,11 +2301,11 @@ function thanksPage() {
         <textarea data-label="꼭 들어갈 내용" placeholder="홈페이지에 꼭 들어가야 할 내용 — 영업시간, 대표 서비스/메뉴와 가격, 주차 안내, 예약 방법 등" class="input" rows="3" style="resize:vertical;"></textarea>
         <select data-label="로고 보유" class="input">
           <option value="">로고가 있나요?</option>
-          <option>로고 파일 있음 (이메일로 보내드릴게요)</option>
+          <option>로고 파일 있음 (위 첨부란에 올렸어요)</option>
           <option>로고 없음 — 텍스트 로고로 진행</option>
           <option>로고 없음 — 로고 제작도 관심 있어요</option>
         </select>
-        <input type="text" data-label="사진 자산" placeholder="매장·상품 사진 링크 (구글드라이브/카카오 등, 없으면 '이메일로 보낼게요')" class="input">
+        <input type="text" data-label="사진 자산" placeholder="매장·상품 사진 링크 (구글드라이브/카카오 등, 위 첨부란에 올렸으면 비워두세요)" class="input">
         <input type="text" data-label="참고 사이트" placeholder="마음에 드는 참고 사이트 주소 (있다면)" class="input">
         <input type="text" data-label="선호 분위기" placeholder="선호하는 색·분위기 (예: 깔끔한 화이트, 고급스러운 네이비)" class="input">
       </div>
@@ -2320,6 +2326,31 @@ document.getElementById('service-field').value = svc;
 if (svc.indexOf('website') === 0 || (svc.indexOf('local-') === 0 && (svc.indexOf('annual') > -1 || svc.indexOf('installment') > -1))) {
   document.getElementById('website-extra').style.display = 'block';
 }
+var picked = [];
+var fileInput = document.getElementById('intake-files');
+fileInput.addEventListener('change', function () {
+  picked = picked.concat(Array.prototype.slice.call(fileInput.files)).slice(0, 10);
+  fileInput.value = '';
+  renderFiles();
+});
+function renderFiles() {
+  var list = document.getElementById('file-list');
+  list.innerHTML = picked.map(function (f, i) { return '<span class="file-chip">' + f.name.replace(/[<>&]/g, '') + ' <small>' + Math.round(f.size / 1024) + 'KB</small><b data-rm="' + i + '" title="제거">×</b></span>'; }).join('');
+  list.querySelectorAll('[data-rm]').forEach(function (b) { b.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); picked.splice(Number(b.getAttribute('data-rm')), 1); renderFiles(); }); });
+}
+async function uploadAll(email, btn) {
+  var urls = [];
+  for (var i = 0; i < picked.length; i++) {
+    btn.textContent = '첨부 올리는 중 ' + (i + 1) + '/' + picked.length + '...';
+    if (picked[i].size > 10 * 1024 * 1024) throw new Error('too_large:' + picked[i].name);
+    var fd = new FormData(); fd.append('file', picked[i]); fd.append('email', email || '');
+    var r = await fetch('/api/upload', { method: 'POST', body: fd });
+    var j = await r.json().catch(function () { return {}; });
+    if (!r.ok || !j.ok) throw new Error('upload:' + (j.error || r.status) + ':' + picked[i].name);
+    urls.push(picked[i].name + ' → ' + j.url);
+  }
+  return urls;
+}
 document.getElementById('intake-form').addEventListener('submit', async function (e) {
   e.preventDefault();
   const msg = document.getElementById('form-msg');
@@ -2327,6 +2358,10 @@ document.getElementById('intake-form').addEventListener('submit', async function
   btn.disabled = true; btn.textContent = '제출 중...';
   try {
     const body = Object.fromEntries(new FormData(this).entries());
+    delete body.files;
+    const uploaded = await uploadAll(body.email, btn);
+    if (uploaded.length) body.notes = (body.notes ? body.notes + '\\n\\n' : '') + '── 첨부 파일 ──\\n' + uploaded.join('\\n');
+    btn.textContent = '제출 중...';
     // 웹사이트 전용 답변을 notes 앞에 정리해서 붙임
     const extra = document.getElementById('website-extra');
     if (extra && extra.style.display !== 'none') {
@@ -2347,7 +2382,13 @@ document.getElementById('intake-form').addEventListener('submit', async function
     btn.textContent = '제출 완료 ✓';
   } catch (err) {
     msg.className = 'form-msg error';
-    msg.textContent = '일시적인 오류입니다. 잠시 후 다시 시도하시거나 hello@bizhigher.com 으로 보내주세요.';
+    var em = String(err && err.message || '');
+    msg.textContent = em.indexOf('too_large') === 0 ? '10MB가 넘는 파일이 있습니다: ' + em.split(':')[1] + ' — 줄여서 다시 올려주세요.'
+      : em.indexOf('upload:type') === 0 ? '첨부할 수 없는 파일 형식입니다: ' + em.split(':')[2] + ' — 사진(JPG/PNG/HEIC), 로고(PNG/SVG), PDF만 가능합니다.'
+      : em.indexOf('upload:quota') === 0 ? '오늘 첨부 한도를 넘었습니다. 나머지는 hello@bizhigher.com 으로 보내주세요.'
+      : em.indexOf('upload:storage') === 0 ? '첨부 저장소가 아직 준비되지 않았습니다. 첨부를 빼고 제출하신 뒤 파일은 hello@bizhigher.com 으로 보내주세요.'
+      : em.indexOf('upload:') === 0 ? '첨부 업로드에 실패했습니다: ' + em.split(':').pop() + ' — 다시 시도하거나 hello@bizhigher.com 으로 보내주세요.'
+      : '일시적인 오류입니다. 잠시 후 다시 시도하시거나 hello@bizhigher.com 으로 보내주세요.';
     btn.disabled = false; btn.textContent = '질문지 제출 — 작업 시작하기';
   }
 });

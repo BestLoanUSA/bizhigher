@@ -79,6 +79,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | 블로그 주제 큐 | `content/blog-calendar.md` |
 | 서비스 페이지 검색용 가이드·추가 FAQ | `content/services/{slug}.md` — 질문형 `##` 섹션 + `## 자주 묻는 질문`. 가격은 여기 쓰지 않는다(`services.json`이 원본) |
 | 무료 도구 `/tools/` | 목록·외부 도구 `data/tools.json` · 화면 `src/tools/{slug}.html` · 동작 `src/tools/{slug}.js`(+`common.js`) · 서버 `functions/api/tools/[tool].js`(공용 `_shared.js`) · 설명·FAQ `content/tools/{slug}.md` (§5-1) |
+| 결제 후 질문지 첨부(사진·로고·PDF) | 화면 `build.js`의 `/thanks/` 폼(`file-box`) · 서버 `functions/api/upload.js`(R2 `R2_ASSETS` 필수, 파일당 10MB, IP·일 30개) · 공개 URL `/a/{id}.{ext}`(`functions/a/[id].js`, SVG·PDF는 CSP sandbox). URL은 질문지 `notes` 끝 "── 첨부 파일 ──" 블록에 들어가 관리자·루틴(`job.intake.notes`)이 본다 |
 | 진단 채점 로직 | `functions/api/_engine.js` |
 | 리포트 디자인 | `functions/report/[id].js` |
 | GBP 리뷰 답글·게시물 자동화 실험 | `automation/gbp/` (README 참고. API 승인 전엔 `--dry-run`만) |
@@ -198,7 +199,7 @@ Cloudflare 프로젝트 → Settings → Environment variables (Production).
 | `GOOGLE_PLACES_API_KEY` | **필수** | 리드만 저장되고 채점·리포트가 안 나온다 |
 | `ANTHROPIC_API_KEY` | 선택 | 템플릿 해석으로 대체 |
 | `CLAUDE_MODEL` | 선택 | 기본 `claude-haiku-4-5` |
-| `RESEND_API_KEY` · `NOTIFY_EMAIL` · `NOTIFY_FROM` | 선택 | 이메일 알림이 안 간다 |
+| `RESEND_API_KEY` · `NOTIFY_EMAIL` · `NOTIFY_FROM` | 선택 | 이메일 알림·루틴 초안 메일이 안 간다. 이 메일은 전부 David 전용이며 푸터에 그렇게 적힌다(`_notify.js`). 고객에게는 어떤 메일도 자동으로 가지 않는다 |
 | `ADMIN_PASSWORD` | 관리자 페이지 필수 | `/admin/`이 503으로 잠긴다 |
 | `ADMIN_ACCESS_TEAM` · `ADMIN_ACCESS_AUD` | 선택 | Cloudflare Access로 바꿀 때. 둘 다 있으면 Access 토큰 검증 |
 | `STRIPE_WEBHOOK_SECRET` | 주문 기록 필수 | 웹훅이 503, 결제가 관리자 페이지에 안 뜬다 |
@@ -298,7 +299,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 
 ### 12-2. AI 실행 루틴 (2026-10-21)
 
-- claude.ai/code Routine "BizHigher AI 실행 루틴", `CRON_TZ=America/Los_Angeles 23 7 * * *`(매일 LA 7:23), 매번 새 세션, Gmail 커넥터 포함. 코드·절차는 `automation/ai-runner/README.md`
+- claude.ai/code Routine "BizHigher AI 실행 루틴", `CRON_TZ=America/Los_Angeles 23 7-21/2 * * *`(LA 7:23부터 2시간마다, 21:23까지 하루 8회 — 2026-10-21 David 결정. 승인 뒤 다음 AI 단계가 2시간 안에 열린다), 매번 새 세션, Gmail 커넥터 없음(조직 정책). 할 일이 없는 실행은 약 30초·$0.15. 코드·절차는 `automation/ai-runner/README.md`
 - 흐름: `runner.js queue`(관리자 API `GET /admin/api/runner/queue` — 같은 서비스 앞 단계가 끝난 AI 단계만) → 플레이북대로 결과물 생성 → `submit`(verify면 검증 큐, 아니면 done) → 발송 대기 결과물은 `draft`(Resend로 **David 메일**에 고객용 초안 본문, 고객에게는 안 감) → 작업별 메모. 루틴 세션에는 Gmail 커넥터를 붙일 수 없어(조직 정책) Resend 경로를 쓴다
 - **2026-10-21 확장**: 경쟁사 갭 분석은 `places.js competitors`(실시간 조회만, 저장 금지), 광고 소재·게시물 이미지는 `creative.js gen→compose→upload`(fal.ai flux/schnell 배경 + Playwright 한글 조판 1:1·9:16·1.91:1 → D1 `assets` BLOB → `/a/{id}.jpg`, `functions/a/[id].js`) → `submit --kind images`로 검증 큐에 이미지 그리드. 영상·웹사이트 빌드·PDF·인쇄물·실사진 합성은 여전히 기획안만 올리고 David 세션이 마무리
 - `bizhigher` 환경변수: `BIZHIGHER_ADMIN_PASSWORD`(= Cloudflare `ADMIN_PASSWORD`, 없으면 첫 줄에서 멈춤) · `FAL_KEY` · `GOOGLE_PLACES_API_KEY`. 이미지는 Pages R2 바인딩 `R2_ASSETS`(버킷 `bizhigher-assets`)에 본문, D1 `assets`에 메타·`r2_key`. 바인딩이 없으면 D1 BLOB 폴백. 서빙은 둘 다 `/a/{id}.jpg`(`functions/a/[id].js`)
