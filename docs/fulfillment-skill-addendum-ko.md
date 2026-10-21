@@ -51,3 +51,27 @@ SELECT d.id, d.title, d.url, j.business, j.customer_email FROM deliverables d JO
 - `status`를 `done`으로 바꾸는 것은 verify=0 단계뿐. verify=1 단계는 반드시 `review`로 올리고 David가 승인한다
 - 고객에게 메일을 보내지 않는다. 초안까지
 - `jobs.status`는 건드리지 않는다(관리자 페이지가 관리)
+
+---
+
+## v2 추가분 (2026-10-21 저녁) — 스킬의 "관리자 페이지와 함께 일하는 법" 섹션 아래에 덧붙인다
+
+### 결과물 종류
+- `result_kind` 는 `text | html | link | images | video`. `images`·`video` 는 `result_text` 에 한 줄씩 공개 URL(`https://bizhigher.com/a/….jpg`, `….mp4`)을 넣으면 검증 큐·"AI가 했음"에서 바로 보인다
+- 파일 업로드: `POST /admin/api/assets` (multipart `file`, `job_id`, `task_id`, `label`) → `{url}`. R2 가 있어 60MB 까지, mp4·webm·pdf 가능
+
+### 저장소 스크립트 (claude.ai/code 세션에서만 — 스킬 세션에서는 같은 내용을 직접 수행)
+- `automation/ai-runner/places.js lookup --query "상호 도시 주"` — 우리 가게 공개 정보 전부. `competitors --query "업종 도시 주" --me {place_id} --n 3` — 경쟁사 갭 분석 표
+- `automation/ai-runner/creative.js gen|compose|upload|video|crop` — 광고 소재 3규격, 숏폼 5초 클립
+- `automation/ai-runner/qa.js --url …` — 360/768/1280 스크린샷·속도·링크·폼 QA 리포트
+- `docs/listings-master-30-ko.md` — 로컬 등록 디렉토리 마스터 목록(등록 방식·인증·자동화 등급)
+
+### 고객 전달 결과물 규칙
+- 승인하면 "결과물 · 발송"에 올라가는 단계는 `_playbook.js` `DELIVER_KEYS` 에 있는 것만(킥오프 메일·리포트·캘린더·인쇄 파일·클립 등). 설계안·NAP 문서 같은 내부 작업물은 올리지 않는다
+- 고객용 초안은 **작업당 한 통**으로 묶는다(`POST /admin/api/jobs/{id}/draft-batch {text}` 또는 Gmail 초안 1통). 결과물마다 보내지 않는다
+
+### 질문지 읽는 법
+- `intakes.phone`·`email` 은 담당자 연락처(업소 대표번호 아님). `notes` 맨 앞 "── 구글 프로필 공개 정보 ──" 블록(place_id 포함), "── 웹사이트 질문지 ──", "── 첨부 파일 ──"(사진·로고·PDF URL) 순으로 읽는다
+
+### 월간 콘텐츠 승인 (약관 반영 2026-10-21)
+- 캘린더를 보낸 뒤 7일 안에 회신이 없으면 승인 간주. 전화 확인으로 대체 가능. 낮은 별점·환불·위생·법적 언급 리뷰 답글은 승인 간주 대상이 아니다
