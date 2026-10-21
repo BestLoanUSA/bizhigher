@@ -19,7 +19,7 @@
  *   POST /admin/api/demo {slug} · /admin/api/demo/clear
  */
 import { authenticate, login, logoutCookie } from './_auth.js';
-import { ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks } from '../api/_orders.js';
+import { ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady } from '../api/_orders.js';
 import { PLAYBOOK, COMMON_ONBOARDING, WHO, PHASES, tasksFor, summarize } from '../api/_playbook.js';
 import { appHtml, loginHtml } from './_ui.js';
 
@@ -111,8 +111,12 @@ function boardRow(j, ts) {
   const pct = jobProgress(ts);
   const open = ts.filter((t) => !CLOSED.has(t.status));
   const cur = currentPhaseTasks(ts);
+  const aiPending = aiReady(ts).length;
+  const lastMove = ts.map((t) => t.done_at || t.requested_at || '').filter(Boolean).sort().pop() || j.updated_at || j.created_at;
+  const stuckDays = lastMove ? Math.floor((Date.now() - new Date(String(lastMove).replace(' ', 'T') + 'Z').getTime()) / 864e5) : 0;
+  const aiStuck = !!(next && (next.who === 'auto' || (next.who === 'ai' && next.status !== 'review')) && stuckDays >= 1);
   return {
-    id: j.id, business: j.business || j.customer_name || j.customer_email || '(업체명 없음)', service_name: j.service_name || j.o_service_name || j.service_slug || '상품 미확인', service_slug: j.service_slug,
+    id: j.id, aiPending, aiStuck, stuckDays, business: j.business || j.customer_name || j.customer_email || '(업체명 없음)', service_name: j.service_name || j.o_service_name || j.service_slug || '상품 미확인', service_slug: j.service_slug,
     status: j.status, due_date: j.due_date, dueInfo: dueLabel(j.due_date), created_at: j.created_at,
     day: j.created_at ? Math.max(1, Math.floor((Date.now() - new Date(j.created_at.replace(' ', 'T') + 'Z').getTime()) / 864e5) + 1) : 1,
     pct, phase: jobPhase(j, ts), dots: recentDots(ts), next,
@@ -149,6 +153,7 @@ async function api(env, method, seg, body, url) {
     return {
       sort, scope, todo, todoMin: todo.reduce((a, t) => a + (t.min || 0), 0), customers: rows,
       aiDone24h: aiDone.n || 0, aiDoneJobs: aiDone.jobs || 0, customerWait: custWait, customerWaitJobs: custLate, blocked, blockedTasks: rows.reduce((a, r) => a + r.counts.blockedAll, 0),
+      aiStuck: rows.filter((r) => r.aiStuck).length, aiPending: rows.reduce((a, r) => a + r.aiPending, 0),
       monthRevenueCents: month.c || 0, monthPayments: month.n || 0, activeSubs: subs.n || 0, mrrCents: subs.c || 0,
       leads7d: (leads && leads.n) || 0, lastStripeEvent: lastEvent.created_at ? { at: lastEvent.created_at, type: lastEvent.type } : null,
       who: WHO, statuses: JOB_STATUSES,
@@ -186,6 +191,20 @@ async function api(env, method, seg, body, url) {
       await db.prepare(`UPDATE job_tasks SET status = 'todo', note = ?, decided_at = datetime('now') WHERE id = ?`).bind(note ? '반려: ' + note : '반려', t.id).run();
       await addEvent(db, t.job_id, 'task', null, null, `⛔ 반려 — ${t.title}${note ? ': ' + note : ''}`);
       return { next: await nextReview(db, t.id) };
+    }
+    if (sub === 'edit') {
+      // David가 AI 결과물을 직접 고친다 (상태는 그대로)
+      await db.prepare(`UPDATE job_tasks SET result_text = COALESCE(?, result_text), result_url = COALESCE(?, result_url), result_kind = COALESCE(?, result_kind) WHERE id = ?`)
+        .bind(body.text != null ? String(body.text).slice(0, 200000) : null, body.url != null ? String(body.url).slice(0, 1000) : null, body.kind != null ? String(body.kind) : null, t.id).run();
+      await addEvent(db, t.job_id, 'task', null, null, `✎ 결과물 직접 수정 — ${t.title}`);
+      return {};
+    }
+    if (sub === 'reopen') {
+      // 완료된 AI 단계를 다시 열어 수정 요청
+      if (!note) throw bad('무엇을 고칠지 적어 주세요');
+      await db.prepare(`UPDATE job_tasks SET status = 'doing', revise_note = ?, done_at = NULL, decided_at = datetime('now') WHERE id = ?`).bind(note, t.id).run();
+      await addEvent(db, t.job_id, 'task', null, null, `↩ 다시 열어 수정 요청 — ${t.title}: ${note}`);
+      return {};
     }
     if (sub === 'result') {
       // AI(fulfillment 스킬·루틴)가 결과물을 붙이고 검증을 요청한다
@@ -282,7 +301,21 @@ async function api(env, method, seg, body, url) {
       { key: 'report', label: '180일 리포트', state: job.status === 'done' ? 'done' : 'todo', sub: job.created_at ? new Date(new Date(job.created_at.replace(' ', 'T') + 'Z').getTime() + 180 * 864e5).toISOString().slice(0, 10).replace(/-/g, '/') : '' },
     ];
     const summary = summarize(tasks.map((t) => ({ who: t.who, verify: !!t.verify, min: t.david_min, ph: t.phase, block: t.block })));
-    return { job: { ...job, pct, phase: jobPhase(job, tasks), dueInfo: dueLabel(job.due_date), day: job.created_at ? Math.max(1, Math.floor((Date.now() - new Date(job.created_at.replace(' ', 'T') + 'Z').getTime()) / 864e5) + 1) : 1 }, order, payments, intake, events, deliverables, tasks, lanes, services, milestones, next: nextAction(tasks), summary: { ...summary, bottlenecks: undefined }, history, intakeCandidates, who: WHO, phases: PHASES, taskStatuses: TASK_STATUSES, statuses: JOB_STATUSES };
+    // AI 차례: 지금 단계에서 AI(auto·ai)가 해야 하는데 아직 결과물이 없는 단계 — 이건 저절로 돌지 않는다(§12-1), fulfillment 루틴/David 호출이 실행한다
+    const aiPending = aiReady(tasks);
+    const lastMove = tasks.map((t) => t.done_at || t.requested_at || '').concat(events.map((e) => e.created_at || '')).filter(Boolean).sort().pop() || job.created_at;
+    const stuckDays = lastMove ? Math.floor((Date.now() - new Date(String(lastMove).replace(' ', 'T') + 'Z').getTime()) / 864e5) : 0;
+    const nx = nextAction(tasks);
+    const stuck = !!(nx && (nx.who === 'auto' || (nx.who === 'ai' && nx.status !== 'review')) && stuckDays >= 1);
+    const brief = aiBrief(job, intake, order, aiPending, url);
+    const doneList = tasks.filter((t) => CLOSED.has(t.status));
+    const progressSummary = {
+      done: doneList.length, review: tasks.filter((t) => t.status === 'review').length,
+      remaining: tasks.filter((t) => !CLOSED.has(t.status) && t.status !== 'review').length,
+      byOwner: ['auto', 'ai', 'david', 'customer', 'blocked'].reduce((a, w) => { a[w] = { done: doneList.filter((t) => t.who === w).length, left: tasks.filter((t) => t.who === w && !CLOSED.has(t.status)).length }; return a; }, {}),
+      byPhase: PHASES.map(([k, l]) => ({ key: k, label: l, done: tasks.filter((t) => t.phase === k && CLOSED.has(t.status)).length, total: tasks.filter((t) => t.phase === k).length })).filter((p) => p.total),
+    };
+    return { job: { ...job, pct, phase: jobPhase(job, tasks), dueInfo: dueLabel(job.due_date), day: job.created_at ? Math.max(1, Math.floor((Date.now() - new Date(job.created_at.replace(' ', 'T') + 'Z').getTime()) / 864e5) + 1) : 1 }, order, payments, intake, events, deliverables, tasks, lanes, services, milestones, next: nextAction(tasks), summary: { ...summary, bottlenecks: undefined }, history, intakeCandidates, aiPending, stuck, stuckDays, lastMove, brief, progressSummary, who: WHO, phases: PHASES, taskStatuses: TASK_STATUSES, statuses: JOB_STATUSES };
   }
 
   if (res === 'jobs' && id && method === 'POST') {
@@ -367,6 +400,30 @@ async function nextReview(db, afterId) {
   return r ? r.id : null;
 }
 
+/* ---------- AI 실행 지시서 — David가 claude.ai(fulfillment)에 붙여넣거나 루틴이 읽는다 ---------- */
+function aiBrief(job, intake, order, aiPending, url) {
+  const origin = url.origin;
+  const lines = [];
+  lines.push(`# BizHigher 작업 지시 — ${job.business || ''} (작업 #${job.id})`);
+  lines.push(`상품: ${job.service_name || job.service_slug || ''} · 시작 ${String(job.created_at || '').slice(0, 10)} · 마감 ${job.due_date || '미정'}`);
+  if (intake) {
+    lines.push('', '## 고객 정보 (질문지)');
+    lines.push(`업체: ${intake.business || ''} · 담당 ${intake.contact_name || ''} · ${intake.phone || ''} · ${intake.email || ''}`);
+    if (intake.links) lines.push(`링크: ${intake.links}`);
+    if (intake.notes) lines.push('', intake.notes);
+  } else lines.push('', '(질문지 미제출 — customer_profiles 또는 David에게 확인)');
+  lines.push('', `## 지금 AI가 할 단계 ${aiPending.length}개 (순서대로)`);
+  if (!aiPending.length) lines.push('(없음 — 다음 단계는 David 또는 고객 차례)');
+  for (const t of aiPending) {
+    lines.push(`- [task ${t.id}] ${t.service_name} — ${t.title}${t.verify ? ' (David 검증 필요 → status review)' : ' (검증 불필요 → status done)'}${t.revise_note ? '\n  수정 요청: ' + t.revise_note : ''}`);
+  }
+  lines.push('', '## 결과물 올리는 법 (둘 중 하나)');
+  lines.push(`1) API: POST ${origin}/admin/api/tasks/{task_id}/result  body {"kind":"text|html|link","text":"결과물 본문","url":"Drive/프리뷰 링크","checks":["David 확인 포인트 1","2","3"],"self_check":"금지 표현 0건 · 가격 0건 …"} (관리자 로그인 쿠키 필요)`);
+  lines.push(`2) D1 bizhigher-db: UPDATE job_tasks SET status='review', result_kind=?, result_text=?, result_url=?, checks=?(JSON), self_check=?, requested_at=datetime('now') WHERE id={task_id}; 검증 불필요 단계는 status='done', done_at=datetime('now')`);
+  lines.push('', '규칙: 고객 자동 발송 금지(Gmail 초안까지) · 경쟁사 갭 분석 선행 · 리뷰 대가·가짜 리뷰 금지 · 의료업 환자 암시 금지 · 실행 플랜은 180일 · 웹 산출물 360px 실측 (CLAUDE.md §12)');
+  return lines.join('\n');
+}
+
 /* ---------- 설정 ---------- */
 function defaultAutoRules() {
   return [
@@ -402,6 +459,11 @@ New Optix is a Korean-speaking optical shop in Garden Grove. We help you choose 
       links: '구글 프로필 (관리자 초대 완료) · 웹사이트 미정 · 인스타 @newoptix',
       notes: '업종: 안경점·검안 (Garden Grove, CA)\n한 줄 소개: 한국어 상담이 편한 가든그로브 안경점\n서비스: 안경·선글라스 / 콘택트렌즈 / 검안 예약 / 렌즈 교체\n톤: 정중하고 간결한 존댓말, 과장 없이\n금지 표현: 최저가, 100% 보장, 무조건\n언어: 한/영\n\n[데모] 실제 주문이 아닙니다.',
       done: ['ob-3', 'ob-4', 'ob-5', 'gpo-1', 'gpo-2', 'qr-1', 'lls-2', 'lls-3', 'lls-4', 'an-1', 'an-2', 'ads-1', 'web-1', 'post-1', 'seo-1', 'rr-1'],
+      doneResults: {
+        'gpo-2': { kind: 'text', text: '경쟁사 갭 분석 — Garden Grove 안경점 3곳 (Places, 2026-10-17)\n\n| 항목 | New Optix | A안경 | B Optical | C Vision |\n|---|---|---|---|---|\n| 기본 카테고리 | 안경점 | 안경점 | 검안의 | 안경점 |\n| 추가 카테고리 | 없음 | 선글라스 매장 | 안경점·콘택트렌즈 | 선글라스 매장 |\n| 리뷰 수 / 평점 | 41 / 4.6 | 118 / 4.7 | 203 / 4.5 | 77 / 4.8 |\n| 최근 90일 신규 리뷰 | 2 | 9 | 14 | 6 |\n| 게시물 활동 | 없음 | 주 1회 | 없음 | 월 2회 |\n| 예약 속성 | 없음 | 온라인 예약 | 온라인 예약 | 없음 |\n\n우선순위: 전원 보유 = 추가 카테고리(필수) · 2곳 = 온라인 예약 속성(강력 권장) · 1곳 = 주 1회 게시물(차별화 기회). 리뷰 속도 목표: 월 4건(현재 0.7건).', self_check: 'Places 조회 3곳 · 수동 보강 2항목(속성·게시물)' },
+        'ob-3': { kind: 'text', text: '고객 프로필 저장 — customer_profiles #demo\n업종 안경점·검안 · 도시 Garden Grove CA · 언어 한/영 · 톤 정중하고 간결한 존댓말 · 금지 표현 최저가/100% 보장/무조건 · 경쟁사 3곳 · 타깃 키워드: 가든그로브 안경, Garden Grove optical, 한인 안경점, 콘택트렌즈 가든그로브' },
+        'qr-1': { kind: 'link', url: 'https://search.google.com/local/writereview?placeid=ChIJdemo-newoptix', text: 'place_id 확인 → 리뷰 링크 생성 → QR(오류정정 H, #0A4DF5) 생성 · 스캔 테스트 3회 OK' },
+      },
       review: { 'gpo-3': { kind: 'text', text: packContent, checks: ['카테고리 교정안이 맞는가 (안경점 → 검안의 추가?)', '검안·처방을 확인하거나 암시하는 표현이 없는가', '영문 설명 톤이 매장 분위기와 맞는가'], self_check: '금지 표현 0건 · 가격 언급 0건 · 검안·처방 표현 0건 · 글자 수 706/750 · 경쟁사 상호 0건' },
         'qr-2': { kind: 'link', url: 'https://drive.google.com/drive/folders/demo-newoptix-qr', text: '테이블텐트 4×6 양면 · 포스터 레터 · 카운터 카드 5×7 · 스티커 2.5" × 6 — 한/영 "리뷰 한 줄이 큰 힘이 됩니다 / Your review means a lot!"', checks: ['리뷰 대가 문구가 없는가', 'QR 스캔이 리뷰 작성 화면으로 가는가', '브랜드 색이 간판과 맞는가'], self_check: 'QR 스캔 테스트 3회 OK · 재단선 3mm · 오탈자 0건' } },
       doing: ['ads-2', 'lls-5'] },
@@ -434,6 +496,7 @@ async function seedDemo(db, catalog, d) {
   if (intakeId) await attachIntake(db, { id: intakeId, service: d.slug, service_name: item.name, business: d.business, email: d.email }, { deliveryDays: item.deliveryDays });
   await db.prepare(`UPDATE jobs SET business = ?, created_at = ?, due_date = ? WHERE id = ?`).bind(d.business, createdAt, new Date(Date.now() + (d.daysAgo > 30 ? 0 : 3) * 864e5).toISOString().slice(0, 10), jobId).run();
   for (const k of d.done) await db.prepare(`UPDATE job_tasks SET status = 'done', done_at = datetime('now', ?) WHERE job_id = ? AND key = ?`).bind(`-${Math.floor(Math.random() * 20)} hours`, jobId, k).run();
+  for (const [k, rv] of Object.entries(d.doneResults || {})) await db.prepare(`UPDATE job_tasks SET result_kind = ?, result_text = ?, result_url = ?, self_check = ? WHERE job_id = ? AND key = ?`).bind(rv.kind, rv.text || '', rv.url || '', rv.self_check || '', jobId, k).run();
   for (const k of d.doing) await db.prepare(`UPDATE job_tasks SET status = 'doing' WHERE job_id = ? AND key = ?`).bind(jobId, k).run();
   for (const [k, rv] of Object.entries(d.review)) {
     await db.prepare(`UPDATE job_tasks SET status = 'review', result_kind = ?, result_text = ?, result_url = ?, checks = ?, self_check = ?, requested_at = datetime('now','-3 hours') WHERE job_id = ? AND key = ?`)
