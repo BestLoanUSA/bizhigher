@@ -46,7 +46,7 @@ export const PLAYBOOK = {
   'google-profile-optimization': {
     name: '구글 프로필 최적화', steps: [
       S('gpo-1', 'GBP 관리자 초대 — 사장님이 hello@bizhigher.com 을 관리자로 추가', 'onboarding', 'customer', 5, { block: '소유자만 초대 가능. 안내문 automation/gbp/docs/owner-invite-ko.md' }),
-      S('gpo-2', '경쟁사 3곳 갭 분석 — 카테고리·속성·리뷰 속도(90일)·게시물 활동 (Places API)', 'setup', 'auto', 0, { block: '속성 상세·리뷰 전문은 API에 없어 수동 보강 10분' }),
+      S('gpo-2', '경쟁사 3곳 갭 분석 — 카테고리·속성·리뷰 속도(90일)·게시물 활동 (Places API)', 'setup', 'auto', 0, { block: '루틴이 places.js로 평점·리뷰 수·최근 리뷰 날짜·카테고리·웹사이트 유무를 뽑는다. 속성 상세·게시물 활동은 API에 없어 수동 보강 10분' }),
       S('gpo-3', '콘텐츠 팩 — 카테고리 교정안·설명 750자(한/영)·서비스 20개·Q&A 10세트·첫 게시물 4건', 'setup', 'ai', 20, { verify: true }),
       S('gpo-4', 'Before 스크린샷 → 프로필에 적용 → After 스크린샷', 'setup', 'david', 30, { block: 'GBP API 승인 전엔 손으로 입력', next: 'GBP API 승인(재신청: BestLoanUSA 재인증 후 david@ 또는 BizHigher 프로필 60일) → 설명·서비스·속성 자동 반영' }),
       S('gpo-5', 'Before/After 리포트 PDF + 4주 후 성과 리포트 리마인더', 'setup', 'ai', 5, { verify: true }),
@@ -108,7 +108,7 @@ export const PLAYBOOK = {
       S('post-1', 'IG·FB 페이지 접근 — Meta Business Suite 파트너 권한 또는 예약 툴 연결', 'onboarding', 'customer', 10, { block: 'Meta API 없이도 Business Suite 예약 발행은 가능. 고객이 파트너 추가해야 함' }),
       S('post-2', '월간 캘린더 8건 초안 — 주제·캡션 한/영·CTA·사진 촬영 가이드', 'monthly', 'ai', 15, { verify: true }),
       S('post-3', '고객 캘린더 승인 (월 1회, 기한 내 무응답 시 승인 간주 — 2026-10-15 확정)', 'monthly', 'customer', 0, { block: '약관 문구 작성 필요(§19-12)', next: '/portal 승인 페이지 + 무응답 자동 승인' }),
-      S('post-4', '이미지 제작 — 고객 사진 + 템플릿 조판 (한글 텍스트는 PIL 오버레이)', 'weekly', 'auto', 0, { block: 'Canva 생성 쿼터·Higgsfield 크레딧 비용. 고객 사진 없으면 품질 저하' }),
+      S('post-4', '이미지 제작 — 고객 사진 + 템플릿 조판 (한글 텍스트는 PIL 오버레이)', 'weekly', 'auto', 0, { block: '루틴이 fal.ai 배경 + 한글 조판(creative.js)으로 제작, 검증 큐에서 확인. 고객 사진 있으면 그걸 배경으로 — 없으면 생성 이미지라 품질 편차' }),
       S('post-5', 'GBP 게시 — 주 2회', 'weekly', 'david', 10, { block: 'GBP API 신청 거절(2026-10-07). 지금은 앱에서 붙여넣기 또는 Publer류 예약 툴($10~30/월)', next: 'GBP API 재신청 통과 → 완전 자동' }),
       S('post-6', 'IG·FB 게시 — 주 2회', 'weekly', 'david', 10, { block: 'Meta API 앱 심사 전 → Business Suite 예약 발행 수동', next: '예약 툴 도입 시 GBP와 함께 한 번에 예약' }),
       S('post-7', '월간 게시·조회 리포트', 'monthly', 'david', 10, { block: 'GBP 인사이트는 API 없이 화면 캡처', next: 'GBP API' }),
@@ -129,7 +129,7 @@ export const PLAYBOOK = {
     name: '광고 소재 (Premium 20장/월)', steps: [
       S('ac-1', '크리에이티브 브리프 — 컨셉 3방향, 시즌·프로모션 반영(월 1회)', 'monthly', 'ai', 5, { verify: true }),
       S('ac-2', '카피 — 헤드라인 5·본문 2·CTA 한/영, 광고 정책 검사', 'monthly', 'auto', 0),
-      S('ac-3', '이미지 — 매장 실사진 합성(배경 제거) 또는 생성, 1:1·9:16·1.91:1 규격, 수량 30~50% 여유', 'monthly', 'auto', 0, { block: 'Higgsfield 크레딧 비용·Canva 쿼터. fal.ai 미구축(§19-5)' }),
+      S('ac-3', '이미지 — 매장 실사진 합성(배경 제거) 또는 생성, 1:1·9:16·1.91:1 규격, 수량 30~50% 여유', 'monthly', 'auto', 0, { block: '루틴이 fal.ai(FAL_KEY) 배경 생성 + 한글 조판으로 3규격 제작, 검증 큐에서 확인. 매장 실사진 합성은 David 세션' }),
       S('ac-4', 'David 큐레이션 — 20장 선별 (검수가 아니라 선별)', 'monthly', 'david', 15, { verify: true }),
       S('ac-5', '규격별 폴더 + 카피 문서 + 업로드 가이드 → Drive → Gmail 초안', 'monthly', 'auto', 2),
     ],

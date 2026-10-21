@@ -299,9 +299,9 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 ### 12-2. AI 실행 루틴 (2026-10-21)
 
 - claude.ai/code Routine "BizHigher AI 실행 루틴", `CRON_TZ=America/Los_Angeles 23 7 * * *`(매일 LA 7:23), 매번 새 세션, Gmail 커넥터 포함. 코드·절차는 `automation/ai-runner/README.md`
-- 흐름: `runner.js queue`(관리자 API `GET /admin/api/runner/queue` — 같은 서비스 앞 단계가 끝난 AI 단계만) → 플레이북대로 텍스트 결과물 생성 → `submit`(verify면 검증 큐, 아니면 done) → 발송 대기 결과물은 Gmail **초안** + `drafted` 기록 → 작업별 메모
-- 루틴은 **텍스트 결과물만** 만든다. 파일·이미지·영상·웹사이트 빌드 단계는 기획안만 올리고 David 세션(fulfillment 스킬)이 마무리한다. 외부 키(Places·GSC) 없는 단계는 건너뛰고 메모
-- 환경 비밀 `BIZHIGHER_ADMIN_PASSWORD`(= Cloudflare `ADMIN_PASSWORD`). 없으면 루틴이 첫 줄에서 멈추고 그 사실을 보고한다
+- 흐름: `runner.js queue`(관리자 API `GET /admin/api/runner/queue` — 같은 서비스 앞 단계가 끝난 AI 단계만) → 플레이북대로 결과물 생성 → `submit`(verify면 검증 큐, 아니면 done) → 발송 대기 결과물은 `draft`(Resend로 **David 메일**에 고객용 초안 본문, 고객에게는 안 감) → 작업별 메모. 루틴 세션에는 Gmail 커넥터를 붙일 수 없어(조직 정책) Resend 경로를 쓴다
+- **2026-10-21 확장**: 경쟁사 갭 분석은 `places.js competitors`(실시간 조회만, 저장 금지), 광고 소재·게시물 이미지는 `creative.js gen→compose→upload`(fal.ai flux/schnell 배경 + Playwright 한글 조판 1:1·9:16·1.91:1 → D1 `assets` BLOB → `/a/{id}.jpg`, `functions/a/[id].js`) → `submit --kind images`로 검증 큐에 이미지 그리드. 영상·웹사이트 빌드·PDF·인쇄물·실사진 합성은 여전히 기획안만 올리고 David 세션이 마무리
+- `bizhigher` 환경변수: `BIZHIGHER_ADMIN_PASSWORD`(= Cloudflare `ADMIN_PASSWORD`, 없으면 첫 줄에서 멈춤) · `FAL_KEY` · `GOOGLE_PLACES_API_KEY`. 이미지 저장은 D1이라 R2 바인딩은 아직 불필요(물량 늘면 `R2_ASSETS`로 이전)
 - 수동 경로는 그대로 남아 있다: 고객 여정 "AI 실행 지시 복사" → claude.ai fulfillment 스킬
 
 ### 12-1. 관리자 페이지 `/admin/` (2026-10-05 1단계)
@@ -447,7 +447,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 2. **블로그 루틴 프롬프트의 캘린더 경로 수정** (§9)
 3. **BizHigher 자체 GBP 등록** — DBA 취득 대기. 취득 후 주소 숨김 SAB 등록 + 영상 인증 콘텐츠 팩 제작
 4. **파운딩 고객 10곳 영업 실행** (FOUNDING20) — 미착수
-5. **fal.ai 계정 + 숏폼 영상 파이프라인** — 미구축. 순수 종량제라 **선불 $50 + 자동 충전 OFF**로 시작하기로 함. Higgsfield 유료 전환은 보류
+5. **fal.ai** — 2026-10-21 `FAL_KEY` 연결, 정지 이미지(광고 소재·게시물)는 루틴이 만든다(§12-2). **숏폼 영상 파이프라인은 미구축**. 선불 $50 + 자동 충전 OFF 유지. Higgsfield 유료 전환은 보류
 6. **광고 셋업 상품의 GA4/GTM 템플릿화** — 미착수
 7. **무료 홍보 채널 등록 실행** — 체크리스트 완성, 실제 등록은 David 몫
 8. **블로그 스크린샷 삽입** — David가 스크린샷을 보내면 기존 글 4편에 삽입하는 워크플로우, 대기 중

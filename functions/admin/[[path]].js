@@ -19,8 +19,11 @@
  *   POST /admin/api/demo {slug} · /admin/api/demo/clear
  *   GET  /admin/api/runner/queue              AI 실행 루틴용: AI가 지금 할 수 있는 단계 + 고객 컨텍스트 + Gmail 초안 대기 결과물
  *   POST /admin/api/deliverables/:id/drafted  루틴이 Gmail 초안을 만든 뒤 기록
+ *   POST /admin/api/deliverables/:id/draft-to-david  고객용 초안 본문을 Resend로 David(NOTIFY_EMAIL)에게 보낸다 — 고객 발송 아님, David가 전달
+ *   POST /admin/api/assets {job_id, task_id, label, content_type, base64}  이미지 저장 → 공개 URL /a/{id}.jpg
  */
 import { authenticate, login, logoutCookie } from './_auth.js';
+import { notify, esc as escHtml } from '../api/_notify.js';
 import { ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady } from '../api/_orders.js';
 import { PLAYBOOK, COMMON_ONBOARDING, WHO, PHASES, tasksFor, summarize } from '../api/_playbook.js';
 import { appHtml, loginHtml } from './_ui.js';
@@ -212,7 +215,7 @@ async function api(env, method, seg, body, url) {
     }
     if (sub === 'result') {
       // AI(fulfillment 스킬·루틴)가 결과물을 붙이고 검증을 요청한다
-      const kind = ['text', 'html', 'link'].includes(body.kind) ? body.kind : (body.url && !body.text ? 'link' : 'text');
+      const kind = ['text', 'html', 'link', 'images'].includes(body.kind) ? body.kind : (body.url && !body.text ? 'link' : 'text');
       const checks = Array.isArray(body.checks) ? body.checks.slice(0, 6).map((c) => String(c).slice(0, 200)) : [];
       await db
         .prepare(`UPDATE job_tasks SET result_kind = ?, result_text = ?, result_url = ?, checks = ?, self_check = ?, status = 'review', requested_at = datetime('now') WHERE id = ?`)
@@ -254,6 +257,32 @@ async function api(env, method, seg, body, url) {
     }
     const drafts = (await db.prepare(`SELECT d.*, j.business, j.customer_email, j.service_name FROM deliverables d JOIN jobs j ON j.id = d.job_id WHERE d.sent_at IS NULL AND d.drafted_at IS NULL ORDER BY d.id ASC LIMIT 20`).all()).results || [];
     return { items, pendingDrafts: drafts, rules: ['고객에게 자동 발송 금지 — Gmail 초안까지', 'verify 단계는 status review, 아니면 done', '경쟁사 갭 분석 선행(노출·SEO)', '리뷰 대가·게이팅·가짜 리뷰 금지', '의료·치과 환자 암시 금지', '실행 플랜은 180일', '웹 산출물 360px 실측'] };
+  }
+  if (res === 'assets' && method === 'POST') {
+    const b64 = String(body.base64 || '');
+    if (!b64) throw bad('base64 가 비어 있습니다');
+    const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    if (bin.byteLength > 900000) throw bad('이미지가 900KB를 넘습니다 — JPEG 품질을 낮추세요');
+    const ct = ['image/jpeg', 'image/png', 'image/webp'].includes(body.content_type) ? body.content_type : 'image/jpeg';
+    const aid = [...crypto.getRandomValues(new Uint8Array(16))].map((x) => 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[x % 62]).join('');
+    await db.prepare(`INSERT INTO assets (id, job_id, task_id, content_type, bytes, label, data) VALUES (?,?,?,?,?,?,?)`).bind(aid, Number(body.job_id) || null, Number(body.task_id) || null, ct, bin.byteLength, String(body.label || '').slice(0, 200), bin.buffer).run();
+    const ext = ct === 'image/png' ? 'png' : ct === 'image/webp' ? 'webp' : 'jpg';
+    return { id: aid, url: `${url.origin}/a/${aid}.${ext}` };
+  }
+  if (res === 'deliverables' && id && sub === 'draft-to-david' && method === 'POST') {
+    const d = await db.prepare(`SELECT d.*, j.business, j.customer_email, j.service_name FROM deliverables d JOIN jobs j ON j.id = d.job_id WHERE d.id = ?`).bind(Number(id)).first();
+    if (!d) return undefined;
+    if (!env.RESEND_API_KEY) throw bad('RESEND_API_KEY 가 없어 초안을 보낼 수 없습니다');
+    const subject = `[초안 → 고객에게 전달] [BizHigher] ${d.service_name || ''} 결과물이 도착했습니다 — ${d.business || ''}`;
+    const bodyText = String(body.text || '').slice(0, 20000);
+    await notify(env, subject, [
+      ['받는 고객', escHtml(d.customer_email || '(이메일 없음)')],
+      ['결과물', d.url ? `<a href="${escHtml(d.url)}">${escHtml(d.title)}</a>` : escHtml(d.title)],
+      ['본문 (복사해 고객에게 보내세요)', `<pre style="white-space:pre-wrap;font:inherit">${escHtml(bodyText)}</pre>`],
+    ]);
+    await db.prepare(`UPDATE deliverables SET drafted_at = datetime('now') WHERE id = ?`).bind(d.id).run();
+    await addEvent(db, d.job_id, 'deliverable', null, null, `✉ 고객용 초안을 David 메일로 전달 — ${d.title}`);
+    return {};
   }
   if (res === 'deliverables' && id && sub === 'drafted' && method === 'POST') {
     const d = await db.prepare(`SELECT * FROM deliverables WHERE id = ?`).bind(Number(id)).first();
@@ -451,7 +480,7 @@ function aiBrief(job, intake, order, aiPending, url) {
     lines.push(`- [task ${t.id}] ${t.service_name} — ${t.title}${t.verify ? ' (David 검증 필요 → status review)' : ' (검증 불필요 → status done)'}${t.revise_note ? '\n  수정 요청: ' + t.revise_note : ''}`);
   }
   lines.push('', '## 결과물 올리는 법 (둘 중 하나)');
-  lines.push(`1) API: POST ${origin}/admin/api/tasks/{task_id}/result  body {"kind":"text|html|link","text":"결과물 본문","url":"Drive/프리뷰 링크","checks":["David 확인 포인트 1","2","3"],"self_check":"금지 표현 0건 · 가격 0건 …"} (관리자 로그인 쿠키 필요)`);
+  lines.push(`1) API: POST ${origin}/admin/api/tasks/{task_id}/result  body {"kind":"text|html|link|images","text":"결과물 본문(images면 /a/….jpg URL 한 줄씩)","url":"Drive/프리뷰 링크","checks":["David 확인 포인트 1","2","3"],"self_check":"금지 표현 0건 · 가격 0건 …"} (관리자 로그인 쿠키 필요)`);
   lines.push(`2) D1 bizhigher-db: UPDATE job_tasks SET status='review', result_kind=?, result_text=?, result_url=?, checks=?(JSON), self_check=?, requested_at=datetime('now') WHERE id={task_id}; 검증 불필요 단계는 status='done', done_at=datetime('now')`);
   lines.push('', '규칙: 고객 자동 발송 금지(Gmail 초안까지) · 경쟁사 갭 분석 선행 · 리뷰 대가·가짜 리뷰 금지 · 의료업 환자 암시 금지 · 실행 플랜은 180일 · 웹 산출물 360px 실측 (CLAUDE.md §12)');
   return lines.join('\n');

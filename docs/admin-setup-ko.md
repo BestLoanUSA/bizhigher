@@ -74,7 +74,7 @@ Cloudflare 환경변수에 추가:
 
 검증 큐에 올라오려면 단계(`job_tasks`)에 결과물을 붙이고 상태를 `review`로 바꾼다. 둘 중 하나:
 
-- API: `POST /admin/api/tasks/{task_id}/result` with `{"kind":"text|html|link","text":"…","url":"…","checks":["확인 포인트 1","2","3"],"self_check":"금지 표현 0건 …"}` (관리자 로그인 쿠키 필요)
+- API: `POST /admin/api/tasks/{task_id}/result` with `{"kind":"text|html|link|images","text":"…","url":"…","checks":["확인 포인트 1","2","3"],"self_check":"금지 표현 0건 …"}` (관리자 로그인 쿠키 필요). `images`면 `text`에 한 줄씩 넣은 이미지 URL(`/a/….jpg`, `POST /admin/api/assets`로 올린 것)이 검증 큐에 그리드로 보인다|html|link","text":"…","url":"…","checks":["확인 포인트 1","2","3"],"self_check":"금지 표현 0건 …"}` (관리자 로그인 쿠키 필요)
 - D1 직접: `UPDATE job_tasks SET status='review', result_kind=?, result_text=?, result_url=?, checks=?(JSON 배열), self_check=?, requested_at=datetime('now') WHERE id=?`
 
 승인되면 `deliverables`에 행이 생기고 `sent_at`이 비어 있다 = **발송 대기**. fulfillment 루틴은 이 행을 보고 Gmail 초안을 만들고, David가 보낸 뒤 "보냈음"을 누른다. 수정 요청은 `revise_note`에 들어가고 상태가 `doing`으로 돌아간다.
