@@ -386,6 +386,16 @@ img { max-width: 100%; display: block; }
 }
 .input { border: 1.5px solid var(--line); border-radius: 12px; padding: 16px 18px; font-size: 16px; font-family: inherit; color: var(--ink-900); background: #fff; width: 100%; transition: border-color .15s ease, box-shadow .15s ease; }
 .input:focus { outline: none; border-color: var(--blue-600); box-shadow: 0 0 0 3px rgba(10, 77, 245, 0.12); }
+.file-box { display: flex; flex-direction: column; gap: 6px; border: 1.5px dashed var(--line); border-radius: 12px; padding: 14px 16px; cursor: pointer; background: #FAFBFD; }
+.file-box:hover { border-color: var(--blue-600); }
+.file-box input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.file-title { font-weight: 700; font-size: 15px; color: var(--ink-900); }
+.file-sub { font-size: 13px; color: var(--ink-600, #6B7280); line-height: 1.5; }
+.file-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.file-list:empty { display: none; }
+.file-chip { display: inline-flex; align-items: center; gap: 6px; background: #EEF2FF; color: var(--navy-900, #0A1B4D); border-radius: 999px; padding: 5px 10px; font-size: 13px; max-width: 100%; }
+.file-chip small { color: #6B7280; }
+.file-chip b { cursor: pointer; padding: 0 2px; font-size: 15px; line-height: 1; }
 .form-msg { display: none; border-radius: 12px; padding: 16px 18px; font-size: 15px; font-weight: 600; margin-top: 4px; }
 .form-msg.success { display: block; background: #E7F7EE; color: #0B7A3E; }
 .form-msg.error { display: block; background: #FDEBEA; color: var(--red-600); }

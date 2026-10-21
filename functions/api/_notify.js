@@ -7,7 +7,7 @@
  *                    bizhigher.com 도메인 인증 후 "BizHigher 알림 <alerts@bizhigher.com>" 권장)
  */
 
-export async function notify(env, subject, rows) {
+export async function notify(env, subject, rows, opts = {}) {
   if (!env.RESEND_API_KEY) return;
   const to = env.NOTIFY_EMAIL || 'maxinchoi@gmail.com';
   const from = env.NOTIFY_FROM || 'BizHigher <onboarding@resend.dev>';
@@ -24,7 +24,7 @@ export async function notify(env, subject, rows) {
     <div style="font-size:18px;font-weight:800;margin-bottom:4px;">Biz<span style="color:#0A4DF5;">Higher</span></div>
     <h2 style="font-size:17px;margin:14px 0;">${esc(subject)}</h2>
     <table style="width:100%;border-collapse:collapse;background:#F6F7F9;border-radius:12px;">${table}</table>
-    <p style="font-size:12px;color:#9CA3AF;margin-top:16px;">bizhigher.com 자동 알림 · 상세 내역은 Claude에게 "리드/주문 보여줘"라고 물어보세요.</p>
+    <p style="font-size:12px;color:#9CA3AF;margin-top:16px;">${esc(opts.footer || 'bizhigher.com 자동 알림 — David 전용 메일입니다. 고객에게는 발송되지 않습니다.')}</p>
   </div>`;
 
   try {

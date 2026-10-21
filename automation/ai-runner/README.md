@@ -4,7 +4,7 @@
 
 ## 어디서 도나
 
-claude.ai/code **Routine** "BizHigher AI 실행 루틴" — `bizhigher` 환경에서 매일 LA 아침 7:23에 새 세션이 열려 저장소를 클론하고 아래 순서로 돌고 끝난다.
+claude.ai/code **Routine** "BizHigher AI 실행 루틴" — `bizhigher` 환경에서 LA 7:23부터 2시간마다(21:23까지, 하루 8회) 새 세션이 열려 저장소를 클론하고 아래 순서로 돌고 끝난다. David가 검증 큐에서 승인하면 다음 AI 단계는 다음 실행(최대 2시간 뒤)에 만들어진다.
 
 1. `node automation/ai-runner/runner.js queue` — 관리자 API에서 "AI가 지금 할 수 있는 단계"(같은 서비스의 앞 단계가 끝난 것만)와 고객 컨텍스트(질문지·프로필·이미 만든 결과물·David 수정 요청)를 받는다
 2. 단계마다 fulfillment 스킬의 플레이북대로 결과물을 만든다 → `submit`으로 올린다. `verify=1`이면 검증 큐(review)로, 아니면 `--done`으로 바로 완료
@@ -28,7 +28,7 @@ node automation/ai-runner/creative.js compose --bg bg.jpg --headline "가을 안
 node automation/ai-runner/creative.js upload --file out/oct-feed.jpg --job 5 --task 123 --label "피드 1:1"   # → https://bizhigher.com/a/….jpg
 ```
 
-이미지 규칙: fal.ai 프롬프트에 **사람 얼굴·글자·로고·브랜드명을 넣지 않는다**(글자는 compose가 얹는다). 고객이 보낸 매장 사진이 있으면 생성 대신 그 사진을 `--bg`로 쓴다. 한 장당 fal.ai 비용은 flux/schnell 기준 약 $0.003, 업로드는 900KB 제한.
+이미지 규칙: fal.ai 프롬프트에 **사람 얼굴·글자·로고·브랜드명을 넣지 않는다**(글자는 compose가 얹는다). 고객이 질문지에 첨부한 매장 사진(`job.intake.notes`의 "── 첨부 파일 ──" 블록, `/a/….jpg`)이 있으면 생성 대신 그 사진을 내려받아 `--bg`로 쓴다. 한 장당 fal.ai 비용은 flux/schnell 기준 약 $0.003, 업로드는 900KB 제한.
 
 ## 루틴이 하지 않는 것 (David 또는 스킬 세션이 한다)
 
