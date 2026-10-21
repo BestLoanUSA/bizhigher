@@ -294,6 +294,16 @@ export async function attachIntake(db, intake, { deliveryDays } = {}) {
       .first();
   }
   const due = addBusinessDays(new Date(), deliveryDays || 3);
+  if (!job && email) {
+    // 결제 없는 재제출: 같은 이메일로 30일 안에 만든 작업이 이미 질문지를 갖고 있으면 그 작업의 질문지를 최신 것으로 바꾼다 (작업을 또 만들지 않는다)
+    const prev = await db.prepare(`SELECT * FROM jobs WHERE lower(customer_email) = ? AND created_at >= datetime('now','-30 days') AND status NOT IN ('done') ORDER BY id DESC LIMIT 1`).bind(email).first();
+    if (prev) {
+      await db.prepare(`UPDATE jobs SET intake_id = ?, updated_at = datetime('now') WHERE id = ?`).bind(intake.id, prev.id).run();
+      await addEvent(db, prev.id, 'system', prev.status, prev.status, `질문지 #${intake.id} 다시 제출됨 — 이전 질문지 #${prev.intake_id || '-'} 대신 이 내용을 씁니다`);
+      await db.prepare(`UPDATE job_tasks SET status = 'done', done_at = COALESCE(done_at, datetime('now')) WHERE job_id = ? AND key = 'ob-2'`).bind(prev.id).run();
+      return prev.id;
+    }
+  }
   if (job) {
     await db
       .prepare(
