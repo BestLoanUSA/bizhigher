@@ -16,7 +16,7 @@
  *   POST /admin/api/jobs/from-intake          {intake_id}
  *   GET  /admin/api/orders · intakes · leads · reports · playbook?slug=
  *   GET/POST /admin/api/settings              자동 승인 규칙 등 {key: value}
- *   POST /admin/api/demo {slug} · /admin/api/demo/clear
+ *   POST /admin/api/demo {only?: 'newoptix', fresh?: true} · /admin/api/demo/clear — only 는 업체 키워드로 1곳만, fresh 는 미리 채운 단계 없이 "방금 결제한" 상태
  *   GET  /admin/api/runner/queue              AI 실행 루틴용: AI가 지금 할 수 있는 단계 + 고객 컨텍스트 + Gmail 초안 대기 결과물
  *   POST /admin/api/deliverables/:id/drafted  루틴이 Gmail 초안을 만든 뒤 기록
  *   POST /admin/api/deliverables/:id/draft-to-david  고객용 초안 본문을 Resend로 David(NOTIFY_EMAIL)에게 보낸다 — 고객 발송 아님, David가 전달
@@ -429,7 +429,15 @@ async function api(env, method, seg, body, url) {
   if (res === 'demo' && method === 'POST') {
     const catalog = await loadCatalog(env, url.toString());
     const made = [];
-    for (const d of demoCustomers()) made.push(await seedDemo(db, catalog, d));
+    const only = String(body.only || '').toLowerCase();
+    let list = demoCustomers();
+    if (only) list = list.filter((d) => d.business.toLowerCase().includes(only) || d.slug.includes(only));
+    if (!list.length) throw bad('해당 데모 고객이 없습니다: ' + only);
+    for (const d of list) {
+      // fresh: 결제 직후처럼 온보딩부터 전부 비운다 — 루틴이 처음부터 처리하는 것을 보기 위함
+      const x = body.fresh ? { ...d, daysAgo: 0, done: [], doneResults: {}, doing: [], review: {} } : d;
+      made.push(await seedDemo(db, catalog, x));
+    }
     return { jobs: made };
   }
 
