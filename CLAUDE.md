@@ -80,6 +80,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | 서비스 페이지 검색용 가이드·추가 FAQ | `content/services/{slug}.md` — 질문형 `##` 섹션 + `## 자주 묻는 질문`. 가격은 여기 쓰지 않는다(`services.json`이 원본) |
 | 무료 도구 `/tools/` | 목록·외부 도구 `data/tools.json` · 화면 `src/tools/{slug}.html` · 동작 `src/tools/{slug}.js`(+`common.js`) · 서버 `functions/api/tools/[tool].js`(공용 `_shared.js`) · 설명·FAQ `content/tools/{slug}.md` (§5-1) |
 | 결제 후 질문지 첨부(사진·로고·PDF) | 화면 `build.js`의 `/thanks/` 폼(`file-box`) · 서버 `functions/api/upload.js`(R2 `R2_ASSETS` 필수, 파일당 10MB, IP·일 30개) · 공개 URL `/a/{id}.{ext}`(`functions/a/[id].js`, SVG·PDF는 CSP sandbox). URL은 질문지 `notes` 끝 "── 첨부 파일 ──" 블록에 들어가 관리자·루틴(`job.intake.notes`)이 본다 |
+| 결제 후 질문지 "구글에서 내 가게 찾기" | `functions/api/place-lookup.js`(Places Text Search, IP·이메일 하루 10회 `intake-place`) · 화면은 `build.js` `/thanks/` 폼 상단 `place-box`. 고객이 고르면 상호·전화·링크가 채워지고 주소·카테고리·영업시간·평점·place_id·지도 링크가 `notes` 맨 앞 "── 구글 프로필 공개 정보 ──" 블록으로 들어간다(고객 본인 가게 정보라 저장 OK). `?email=&business=&contact=&phone=`로 미리 채우기 가능(데모가 쓴다) |
 | 진단 채점 로직 | `functions/api/_engine.js` |
 | 리포트 디자인 | `functions/report/[id].js` |
 | GBP 리뷰 답글·게시물 자동화 실험 | `automation/gbp/` (README 참고. API 승인 전엔 `--dry-run`만) |
@@ -301,7 +302,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 
 - claude.ai/code Routine "BizHigher AI 실행 루틴", `CRON_TZ=America/Los_Angeles 23 7-21/2 * * *`(LA 7:23부터 2시간마다, 21:23까지 하루 8회 — 2026-10-21 David 결정. 승인 뒤 다음 AI 단계가 2시간 안에 열린다), 매번 새 세션, Gmail 커넥터 없음(조직 정책). 할 일이 없는 실행은 약 30초·$0.15. 코드·절차는 `automation/ai-runner/README.md`
 - 흐름: `runner.js queue`(관리자 API `GET /admin/api/runner/queue` — 같은 서비스 앞 단계가 끝난 AI 단계만) → 플레이북대로 결과물 생성 → `submit`(verify면 검증 큐, 아니면 done) → 발송 대기 결과물은 `draft`(Resend로 **David 메일**에 고객용 초안 본문, 고객에게는 안 감) → 작업별 메모. 루틴 세션에는 Gmail 커넥터를 붙일 수 없어(조직 정책) Resend 경로를 쓴다
-- **2026-10-21 확장**: 경쟁사 갭 분석은 `places.js competitors`(실시간 조회만, 저장 금지), 광고 소재·게시물 이미지는 `creative.js gen→compose→upload`(fal.ai flux/schnell 배경 + Playwright 한글 조판 1:1·9:16·1.91:1 → D1 `assets` BLOB → `/a/{id}.jpg`, `functions/a/[id].js`) → `submit --kind images`로 검증 큐에 이미지 그리드. 영상·웹사이트 빌드·PDF·인쇄물·실사진 합성은 여전히 기획안만 올리고 David 세션이 마무리
+- **2026-10-21 확장**: 우리 가게 공개 정보는 `places.js lookup`(고객 프로필 단계와 "GBP·구글 프로필 확인" 수정 요청에서 — 주소·전화·웹사이트·카테고리·영업시간·평점·리뷰 수·place_id·지도 링크·사진 수·소개문을 "(Places 공개 정보, 날짜)" 표시로 채운다), 경쟁사 갭 분석은 `places.js competitors`(실시간 조회만, 저장 금지), 광고 소재·게시물 이미지는 `creative.js gen→compose→upload`(fal.ai flux/schnell 배경 + Playwright 한글 조판 1:1·9:16·1.91:1 → D1 `assets` BLOB → `/a/{id}.jpg`, `functions/a/[id].js`) → `submit --kind images`로 검증 큐에 이미지 그리드. 영상·웹사이트 빌드·PDF·인쇄물·실사진 합성은 여전히 기획안만 올리고 David 세션이 마무리
 - `bizhigher` 환경변수: `BIZHIGHER_ADMIN_PASSWORD`(= Cloudflare `ADMIN_PASSWORD`, 없으면 첫 줄에서 멈춤) · `FAL_KEY` · `GOOGLE_PLACES_API_KEY`. 이미지는 Pages R2 바인딩 `R2_ASSETS`(버킷 `bizhigher-assets`)에 본문, D1 `assets`에 메타·`r2_key`. 바인딩이 없으면 D1 BLOB 폴백. 서빙은 둘 다 `/a/{id}.jpg`(`functions/a/[id].js`)
 - 수동 경로는 그대로 남아 있다: 고객 여정 "AI 실행 지시 복사" → claude.ai fulfillment 스킬
 
@@ -315,7 +316,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 - 상품 매핑은 빌드가 쓰는 `dist/data/stripe-links.json`(Payment Link URL → slug)을 웹훅이 `env.ASSETS`로 읽는다. **새 Stripe 링크를 `services.json`에 넣으면 자동 반영**, 손으로 매핑하지 않는다
 - 월 분납 2회차 `invoice.paid`가 오면 타임라인에 "웹사이트 제작 시작 가능" 메모가 자동으로 붙는다(§4)
 - 결과물은 이 페이지가 만들지 않는다 — fulfillment 스킬이 만들고 Drive 링크를 여기 붙인다. 고객 자동 발송 금지는 그대로
-- **서비스 파이프라인(2026-10-15)**: 작업이 생기면 `_playbook.js`의 단계가 `job_tasks`로 펼쳐진다. 단계마다 🟢자동 / 🟡AI+검수 / 🔵David 수동 / 🟠고객 대기 / 🔴막힘과 David 분, 검증 필수 표시. 단계 상태는 대기→진행→검증 대기→완료(막힘·해당 없음). 플레이북 탭은 작업 없이 상품별 자동화 지도를 보여준다. 관제탑 하단 데모 버튼 2개(2026-10-21): "데모: New Optix Premium 새 주문 1곳"은 결제 직후 상태(단계 전부 비움)라 루틴이 처음부터 처리하는 것을 볼 때 쓴다 · "데모 고객 4곳 (진행 중 상태)"는 화면 확인용으로 단계가 미리 채워져 있다. 둘 다 실제 결제 없이 같은 코드 경로(업체명에 "(데모)", "데모 삭제"로 제거). API는 `POST /admin/api/demo {only, fresh}`
+- **서비스 파이프라인(2026-10-15)**: 작업이 생기면 `_playbook.js`의 단계가 `job_tasks`로 펼쳐진다. 단계마다 🟢자동 / 🟡AI+검수 / 🔵David 수동 / 🟠고객 대기 / 🔴막힘과 David 분, 검증 필수 표시. 단계 상태는 대기→진행→검증 대기→완료(막힘·해당 없음). 플레이북 탭은 작업 없이 상품별 자동화 지도를 보여준다. 관제탑 하단 데모 버튼 2개(2026-10-21): "데모: New Optix Premium 새 주문 1곳"은 결제 직후 상태(단계 전부 비움, **질문지 없음**)라 실제 고객처럼 David가 `/thanks/` 질문지(데모 이메일 미리 채워진 링크가 열림)를 써서 붙여야 ob-3부터 루틴이 돈다 · "데모 고객 4곳 (진행 중 상태)"는 화면 확인용으로 단계가 미리 채워져 있다. 둘 다 실제 결제 없이 같은 코드 경로(업체명에 "(데모)", "데모 삭제"로 제거). API는 `POST /admin/api/demo {only, fresh}`
 - **자동화 현황과 병목은 `docs/automation-map-ko.md`.** Premium 12개월 1곳 = 83단계, 자동+AI 46%, David 셋업 21h + 월 14h(목표선 §15의 7~14배). 상위 병목: 광고 운영 수동(5.4h/월) · 로컬 등록 120곳(10h) · GBP API 거절 · 고객 대기 14단계. 플레이북 숫자를 바꾸면 문서 §7 표를 다시 생성한다
 - **AI 단계는 저절로 돌지 않는다(2026-10-21 확인).** 관리자 페이지는 추적기이고 실행기가 아니다. AI 차례(`who` auto·ai, status todo·doing)인 단계는 (a) 고객 여정의 "AI 실행 지시 복사" → claude.ai fulfillment 스킬에 붙여넣기, 또는 (b) 루틴(§19-16)이 실행해 `job_tasks`에 결과물을 붙여야 움직인다. 관제탑 "AI 차례인데 멈춤" 타일과 고객 보드 "AI n일 멈춤" 배지가 이걸 잡는다. 스킬에 넣을 연동 문구는 `docs/fulfillment-skill-addendum-ko.md`
 - 완료된 AI 단계는 "AI가 했음"에서 펼쳐 결과물을 보고 **수정 요청(다시 열림)** 또는 **직접 고치기**(result_text·url 편집)가 된다. 검증 불필요 단계도 `result_text`에 한 일을 남기는 것이 규칙
