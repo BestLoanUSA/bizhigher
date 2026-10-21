@@ -427,14 +427,16 @@ async function api(env, method, seg, body, url) {
 
   /* 데모 */
   if (res === 'demo' && method === 'POST' && id === 'clear') {
-    const jobs = (await db.prepare(`SELECT id, order_id, intake_id FROM jobs WHERE business LIKE '%(데모)%'`).all()).results || [];
+    // 업체명에 (데모)가 있거나, 데모 이메일(@….example)로 만들어진 작업(질문지 재제출로 생긴 것 포함)
+    const jobs = (await db.prepare(`SELECT id, order_id, intake_id FROM jobs WHERE business LIKE '%(데모)%' OR lower(customer_email) LIKE '%@%.example'`).all()).results || [];
     for (const j of jobs) {
       await db.batch([
         db.prepare(`DELETE FROM job_tasks WHERE job_id = ?`).bind(j.id), db.prepare(`DELETE FROM job_events WHERE job_id = ?`).bind(j.id), db.prepare(`DELETE FROM deliverables WHERE job_id = ?`).bind(j.id),
         db.prepare(`DELETE FROM payments WHERE order_id = ?`).bind(j.order_id || -1), db.prepare(`DELETE FROM orders WHERE id = ? AND stripe_session_id LIKE 'demo_%'`).bind(j.order_id || -1), db.prepare(`DELETE FROM jobs WHERE id = ?`).bind(j.id),
       ]);
-      if (j.intake_id) await safeRun(db, `DELETE FROM intakes WHERE id = ? AND business LIKE '%(데모)%'`, j.intake_id);
+      if (j.intake_id) await safeRun(db, `DELETE FROM intakes WHERE id = ? AND (business LIKE '%(데모)%' OR lower(email) LIKE '%@%.example')`, j.intake_id);
     }
+    await safeRun(db, `DELETE FROM intakes WHERE lower(email) LIKE '%@%.example'`);
     return { removed: jobs.length };
   }
   if (res === 'demo' && method === 'POST') {
