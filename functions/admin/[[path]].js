@@ -265,9 +265,12 @@ async function api(env, method, seg, body, url) {
     if (bin.byteLength > 900000) throw bad('이미지가 900KB를 넘습니다 — JPEG 품질을 낮추세요');
     const ct = ['image/jpeg', 'image/png', 'image/webp'].includes(body.content_type) ? body.content_type : 'image/jpeg';
     const aid = [...crypto.getRandomValues(new Uint8Array(16))].map((x) => 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[x % 62]).join('');
-    await db.prepare(`INSERT INTO assets (id, job_id, task_id, content_type, bytes, label, data) VALUES (?,?,?,?,?,?,?)`).bind(aid, Number(body.job_id) || null, Number(body.task_id) || null, ct, bin.byteLength, String(body.label || '').slice(0, 200), bin.buffer).run();
     const ext = ct === 'image/png' ? 'png' : ct === 'image/webp' ? 'webp' : 'jpg';
-    return { id: aid, url: `${url.origin}/a/${aid}.${ext}` };
+    // R2 바인딩(R2_ASSETS)이 있으면 객체 저장소에, 없으면 D1 BLOB 에 — 서빙(/a/)이 둘 다 읽는다
+    let r2Key = null;
+    if (env.R2_ASSETS) { r2Key = `a/${aid}.${ext}`; await env.R2_ASSETS.put(r2Key, bin, { httpMetadata: { contentType: ct, cacheControl: 'public, max-age=31536000, immutable' } }); }
+    await db.prepare(`INSERT INTO assets (id, job_id, task_id, content_type, bytes, label, data, r2_key) VALUES (?,?,?,?,?,?,?,?)`).bind(aid, Number(body.job_id) || null, Number(body.task_id) || null, ct, bin.byteLength, String(body.label || '').slice(0, 200), r2Key ? null : bin.buffer, r2Key).run();
+    return { id: aid, url: `${url.origin}/a/${aid}.${ext}`, store: r2Key ? 'r2' : 'd1' };
   }
   if (res === 'deliverables' && id && sub === 'draft-to-david' && method === 'POST') {
     const d = await db.prepare(`SELECT d.*, j.business, j.customer_email, j.service_name FROM deliverables d JOIN jobs j ON j.id = d.job_id WHERE d.id = ?`).bind(Number(id)).first();

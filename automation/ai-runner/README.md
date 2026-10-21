@@ -49,7 +49,7 @@ node automation/ai-runner/creative.js upload --file out/oct-feed.jpg --job 5 --t
 
 ## 저장 위치
 
-생성 이미지는 D1 `assets` 테이블(BLOB)에 들어가고 `functions/a/[id].js`가 `/a/{id}.jpg`로 서빙한다. R2 버킷은 아직 쓰지 않는다 — 물량이 늘면 `R2_ASSETS` 바인딩으로 옮긴다.
+Pages 프로젝트에 R2 바인딩 `R2_ASSETS`(버킷 `bizhigher-assets`, 2026-10-21 생성)가 있으면 이미지 본문은 R2 객체 `a/{id}.jpg`에, 메타(업체·단계·라벨·크기·`r2_key`)는 D1 `assets`에 들어간다. 바인딩이 없으면 본문까지 D1 BLOB. 둘 다 `functions/a/[id].js`가 `/a/{id}.jpg`로 서빙하므로 URL은 같다. 버킷 공개 액세스는 켜지 않는다.
 
 ## 로컬 확인
 

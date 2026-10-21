@@ -135,6 +135,7 @@ import { tasksFor } from './_playbook.js';
 // 기존 테이블에 나중에 추가된 컬럼 — CREATE TABLE IF NOT EXISTS 는 컬럼을 못 더하므로 PRAGMA 로 확인 후 ALTER
 const EXTRA_COLUMNS = {
   deliverables: [['drafted_at', 'TEXT']], // Gmail 초안이 만들어진 시각 (루틴이 기록)
+  assets: [['r2_key', 'TEXT']],           // R2 에 넣었으면 객체 키(a/{id}.jpg). 없으면 data(BLOB) 가 D1 에 있다
   job_tasks: [
     ['result_kind', 'TEXT'],      // text | html | link
     ['result_text', 'TEXT'],      // 페이지 안에서 보여줄 결과물 본문(텍스트/HTML)

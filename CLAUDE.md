@@ -301,7 +301,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 - claude.ai/code Routine "BizHigher AI 실행 루틴", `CRON_TZ=America/Los_Angeles 23 7 * * *`(매일 LA 7:23), 매번 새 세션, Gmail 커넥터 포함. 코드·절차는 `automation/ai-runner/README.md`
 - 흐름: `runner.js queue`(관리자 API `GET /admin/api/runner/queue` — 같은 서비스 앞 단계가 끝난 AI 단계만) → 플레이북대로 결과물 생성 → `submit`(verify면 검증 큐, 아니면 done) → 발송 대기 결과물은 `draft`(Resend로 **David 메일**에 고객용 초안 본문, 고객에게는 안 감) → 작업별 메모. 루틴 세션에는 Gmail 커넥터를 붙일 수 없어(조직 정책) Resend 경로를 쓴다
 - **2026-10-21 확장**: 경쟁사 갭 분석은 `places.js competitors`(실시간 조회만, 저장 금지), 광고 소재·게시물 이미지는 `creative.js gen→compose→upload`(fal.ai flux/schnell 배경 + Playwright 한글 조판 1:1·9:16·1.91:1 → D1 `assets` BLOB → `/a/{id}.jpg`, `functions/a/[id].js`) → `submit --kind images`로 검증 큐에 이미지 그리드. 영상·웹사이트 빌드·PDF·인쇄물·실사진 합성은 여전히 기획안만 올리고 David 세션이 마무리
-- `bizhigher` 환경변수: `BIZHIGHER_ADMIN_PASSWORD`(= Cloudflare `ADMIN_PASSWORD`, 없으면 첫 줄에서 멈춤) · `FAL_KEY` · `GOOGLE_PLACES_API_KEY`. 이미지 저장은 D1이라 R2 바인딩은 아직 불필요(물량 늘면 `R2_ASSETS`로 이전)
+- `bizhigher` 환경변수: `BIZHIGHER_ADMIN_PASSWORD`(= Cloudflare `ADMIN_PASSWORD`, 없으면 첫 줄에서 멈춤) · `FAL_KEY` · `GOOGLE_PLACES_API_KEY`. 이미지는 Pages R2 바인딩 `R2_ASSETS`(버킷 `bizhigher-assets`)에 본문, D1 `assets`에 메타·`r2_key`. 바인딩이 없으면 D1 BLOB 폴백. 서빙은 둘 다 `/a/{id}.jpg`(`functions/a/[id].js`)
 - 수동 경로는 그대로 남아 있다: 고객 여정 "AI 실행 지시 복사" → claude.ai fulfillment 스킬
 
 ### 12-1. 관리자 페이지 `/admin/` (2026-10-05 1단계)
