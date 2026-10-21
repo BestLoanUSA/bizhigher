@@ -176,7 +176,9 @@ async function api(env, method, seg, body, url) {
     if (!t) return undefined;
     const note = String(body.note || '').trim().slice(0, 4000);
     if (sub === 'approve') {
-      await db.prepare(`UPDATE job_tasks SET status = 'done', done_at = datetime('now'), decided_at = datetime('now'), note = CASE WHEN ? != '' THEN ? ELSE note END WHERE id = ?`).bind(note, note, t.id).run();
+      // 승인 메모는 결과물에 "[David 승인 메모]"로 덧붙여 후속 단계·루틴이 반드시 읽게 한다
+      await db.prepare(`UPDATE job_tasks SET status = 'done', done_at = datetime('now'), decided_at = datetime('now'), note = CASE WHEN ? != '' THEN ? ELSE note END,
+        result_text = CASE WHEN ? != '' THEN COALESCE(result_text, '') || char(10) || char(10) || '[David 승인 메모] ' || ? ELSE result_text END WHERE id = ?`).bind(note, note, note, note, t.id).run();
       // 결과물 링크가 있으면 결과물 목록에 올리고 "발송 대기"로. Gmail 초안은 fulfillment 루틴이 이 행을 보고 만든다(고객 자동 발송 금지 §12)
       if (t.result_url || t.result_text) await db.prepare(`INSERT INTO deliverables (job_id, title, url) VALUES (?, ?, ?)`).bind(t.job_id, t.title.slice(0, 200), t.result_url || '').run();
       await addEvent(db, t.job_id, 'task', null, null, `✔ 승인 — ${t.title}${note ? ' · ' + note : ''}`);

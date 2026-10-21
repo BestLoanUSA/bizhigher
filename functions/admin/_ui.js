@@ -350,6 +350,9 @@ async function review() {
     $('#rv-approve').onclick = async () => { const b = $('#rv-approve'); b.disabled = true; try { const r = await api('tasks/' + cur.id + '/approve', { note: ($('#rv-note') || {}).value || '' }); after(r, '승인됨 · ' + (cur.business || '').replace(' (데모)', '') + ' → 결과물 등록 · 발송 대기'); } catch (e) { toast('오류: ' + e.message); b.disabled = false; } };
     $('#rv-revise').onclick = () => { const p = $('#rv-revise-panel'); p.style.display = p.style.display === 'none' ? '' : 'none'; if (p.style.display !== 'none') $('#rv-revise-text').focus(); };
     $('#rv-revise-send').onclick = async () => { try { const r = await api('tasks/' + cur.id + '/revise', { note: $('#rv-revise-text').value }); after(r, '재작성 요청됨 · AI가 고치면 큐로 돌아옵니다'); } catch (e) { toast('오류: ' + e.message); } };
+    $('#rv-edit').onclick = () => { const b = $('#rv-editbox'); b.style.display = b.style.display === 'none' ? '' : 'none'; if (b.style.display !== 'none') $('#rv-edit-text').focus(); };
+    $('#rv-edit-cancel').onclick = () => { $('#rv-editbox').style.display = 'none'; };
+    $('#rv-edit-save').onclick = async () => { try { await api('tasks/' + cur.id + '/edit', { text: $('#rv-edit-text').value, url: $('#rv-edit-url').value }); toast('결과물 저장됨'); review(); } catch (e) { toast('오류: ' + e.message); } };
     $('#rv-reject').onclick = async () => { const note = prompt('반려 사유 (선택)') ; if (note === null) return; try { const r = await api('tasks/' + cur.id + '/reject', { note }); after(r, '반려됨 · 타임라인에 기록'); } catch (e) { toast('오류: ' + e.message); } };
     app.querySelectorAll('[data-rtab]').forEach((b) => b.onclick = () => { rvTab = Number(b.dataset.rtab); review(); });
   }
@@ -369,7 +372,9 @@ function reviewCard(t) {
     '<div class="b"><h1 style="margin:0;font-size:19px">' + esc(t.title) + '</h1>' + (t.revise_note ? '<div class="alert">이전 수정 요청: ' + esc(t.revise_note) + '</div>' : '') + preview +
       (checks.length ? '<div class="cks">' + checks.map((c) => '<label><input type="checkbox"><span>' + esc(c) + '</span></label>').join('') + '</div>' : '') +
       (t.self_check ? '<div class="muted" style="font-size:12px">AI 자기 점검: ' + esc(t.self_check) + '</div>' : '') +
-      '<input class="in" id="rv-note" placeholder="승인 메모 (선택 — 타임라인에 남음)"></div>' +
+      '<div id="rv-editbox" style="display:none" class="frm"><label style="font-weight:700;font-size:13.5px">결과물 직접 고치기 — 저장하면 이 내용이 결과물이 됩니다</label><textarea class="in" id="rv-edit-text" style="min-height:220px;font-size:13.5px">' + esc(t.result_text || '') + '</textarea><div class="h"><input class="in" id="rv-edit-url" placeholder="링크" value="' + esc(url) + '"><button class="btn sm" id="rv-edit-save">저장</button><button class="btn sm ghost" id="rv-edit-cancel">취소</button></div></div>' +
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn ghost sm" id="rv-edit">✎ 직접 고치기</button><span class="muted" style="font-size:12px">작은 수정은 여기서 바로. 다시 만들게 하려면 아래 "수정 요청"</span></div>' +
+      '<input class="in" id="rv-note" placeholder="승인 메모 (선택) — 결과물 끝에 [David 승인 메모]로 붙고 타임라인에 남음"></div>' +
     '<div class="f"><button class="btn lg" id="rv-approve" style="flex:1 1 220px">승인 → 결과물 등록 · 발송 대기 · 다음 건</button><button class="btn lg ghost" id="rv-revise">수정 요청 (AI 재작성)</button><button class="btn lg ghost danger" id="rv-reject">반려</button>' +
       '<span class="muted" style="font-size:12px;flex-basis:100%">승인 후 자동: 결과물 목록 등록 → Gmail 초안은 fulfillment 루틴이 생성(발송은 David) → 타임라인 기록 → 다음 단계가 내 차례로</span></div>' +
     '<div id="rv-revise-panel" style="display:none;padding:12px 18px;border-top:1px solid var(--line-2)"><div class="frm"><label for="rv-revise-text" style="font-weight:700;font-size:13.5px">무엇을 고칠까요? (AI가 바로 다시 씁니다)</label><textarea class="in" id="rv-revise-text" placeholder="예: 영문 설명이 너무 딱딱해요. 가족 손님 느낌으로."></textarea><div><button class="btn" id="rv-revise-send">재작성 요청</button></div></div></div></div>';
