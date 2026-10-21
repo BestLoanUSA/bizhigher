@@ -29,6 +29,7 @@
 
 | 상태 | 제목 | slug |
 |---|---|---|
+| ✅ 2026-10-20 | 가게 이메일·문자 마케팅 입문 — 단골에게 다시 오게 하는 법 | email-sms-marketing-basics |
 | ✅ 2026-10-19 | 리뷰 요청 QR 코드, 어디에 붙여야 효과가 있을까 | review-qr-code-placement |
 | ✅ 2026-10-14 | 영업시간·휴무일 변경, 구글 프로필에 제대로 반영하는 법 | google-business-profile-hours-update |
 | ✅ 2026-10-13 | 구글 프로필 Q&A가 사라진 뒤 — 손님 질문에 미리 답해두는 법 | google-business-profile-qa-removed |
@@ -59,7 +60,6 @@
 
 | 상태 | 제목 | 카테고리 | related |
 |---|---|---|---|
-| ⬜ | 가게 이메일·문자 마케팅 입문 — 단골에게 다시 오게 하는 법 | 콘텐츠·SNS | seo-blog-pack |
 | ⬜ | 랜딩페이지와 홈페이지, 광고를 돌릴 때 뭐가 다를까 | 웹사이트 | local-landing-pack |
 | ⬜ | 광고 성과 읽는 법 — 클릭수 말고 봐야 할 숫자 3가지 | 광고 | ad-creative-pack |
 
