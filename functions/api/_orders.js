@@ -185,7 +185,8 @@ export function currentPhaseTasks(tasks) {
  *  (2026-10-21) phase 전체가 아니라 서비스 단위로 본다 — 한 서비스의 셋업이 David 차례에서 멈춰 있어도 다른 서비스의 월간 단계는 돈다 */
 export function aiReady(tasks) {
   const all = tasks || [];
-  if (all.some((x) => x.phase === 'onboarding' && !CLOSED.has(x.status))) return [];
+  // 공통 온보딩(ob-*: 결제·질문지·프로필·자료·킥오프)만 전체 게이트. 서비스별 온보딩(gpo-1 초대, ads-1 계정 등)은 그 서비스 안에서만 막는다
+  if (all.some((x) => x.service === 'common' && !CLOSED.has(x.status))) return [];
   return all.filter((t) => {
     if (!(t.who === 'auto' || t.who === 'ai') || !(t.status === 'todo' || t.status === 'doing')) return false;
     return !all.some((x) => x.service === t.service && x.sort < t.sort && !CLOSED.has(x.status));
