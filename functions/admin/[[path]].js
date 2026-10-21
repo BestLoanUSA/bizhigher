@@ -41,18 +41,18 @@ export async function onRequest(context) {
   if (path === 'login' && request.method === 'POST') {
     const form = await request.formData();
     const cookie = await login(form.get('password'), env);
-    if (!cookie) return body {"kind":"text|html|link|images","text":"결과물 본문(images면 /a/….jpg URL 한 줄씩)"(loginHtml({ error: '비밀번호가 맞지 않습니다.' }), 401);
+    if (!cookie) return html(loginHtml({ error: '비밀번호가 맞지 않습니다.' }), 401);
     return new Response(null, { status: 303, headers: { Location: '/admin/', 'Set-Cookie': cookie, ...NOINDEX } });
   }
   if (path === 'logout') return new Response(null, { status: 303, headers: { Location: '/admin/', 'Set-Cookie': logoutCookie(), ...NOINDEX } });
 
   if (!auth.ok) {
     if (path.startsWith('api')) return json({ ok: false, error: 'unauthorized' }, 401);
-    if (auth.mode === 'unconfigured') return body {"kind":"text|html|link|images","text":"결과물 본문(images면 /a/….jpg URL 한 줄씩)"(loginHtml({ unconfigured: true }), 503);
-    return body {"kind":"text|html|link|images","text":"결과물 본문(images면 /a/….jpg URL 한 줄씩)"(loginHtml({}), 401);
+    if (auth.mode === 'unconfigured') return html(loginHtml({ unconfigured: true }), 503);
+    return html(loginHtml({}), 401);
   }
-  if (!env.DB) return path.startsWith('api') ? json({ ok: false, error: 'DB 바인딩 없음 (프리뷰 환경)' }, 503) : body {"kind":"text|html|link|images","text":"결과물 본문(images면 /a/….jpg URL 한 줄씩)"(appHtml({ user: auth.user, noDb: true }));
-  if (path === '') return body {"kind":"text|html|link|images","text":"결과물 본문(images면 /a/….jpg URL 한 줄씩)"(appHtml({ user: auth.user }));
+  if (!env.DB) return path.startsWith('api') ? json({ ok: false, error: 'DB 바인딩 없음 (프리뷰 환경)' }, 503) : html(appHtml({ user: auth.user, noDb: true }));
+  if (path === '') return html(appHtml({ user: auth.user }));
   if (!path.startsWith('api')) return new Response('not found', { status: 404, headers: NOINDEX });
 
   try {
@@ -215,7 +215,7 @@ async function api(env, method, seg, body, url) {
     }
     if (sub === 'result') {
       // AI(fulfillment 스킬·루틴)가 결과물을 붙이고 검증을 요청한다
-      const kind = ['text', 'body {"kind":"text|html|link|images","text":"결과물 본문(images면 /a/….jpg URL 한 줄씩)"', 'link', 'images'].includes(body.kind) ? body.kind : (body.url && !body.text ? 'link' : 'text');
+      const kind = ['text', 'html', 'link', 'images'].includes(body.kind) ? body.kind : (body.url && !body.text ? 'link' : 'text');
       const checks = Array.isArray(body.checks) ? body.checks.slice(0, 6).map((c) => String(c).slice(0, 200)) : [];
       await db
         .prepare(`UPDATE job_tasks SET result_kind = ?, result_text = ?, result_url = ?, checks = ?, self_check = ?, status = 'review', requested_at = datetime('now') WHERE id = ?`)
@@ -480,7 +480,7 @@ function aiBrief(job, intake, order, aiPending, url) {
     lines.push(`- [task ${t.id}] ${t.service_name} — ${t.title}${t.verify ? ' (David 검증 필요 → status review)' : ' (검증 불필요 → status done)'}${t.revise_note ? '\n  수정 요청: ' + t.revise_note : ''}`);
   }
   lines.push('', '## 결과물 올리는 법 (둘 중 하나)');
-  lines.push(`1) API: POST ${origin}/admin/api/tasks/{task_id}/result  body {"kind":"text|html|link|images","text":"결과물 본문(images면 /a/….jpg URL 한 줄씩)"|html|link","text":"결과물 본문","url":"Drive/프리뷰 링크","checks":["David 확인 포인트 1","2","3"],"self_check":"금지 표현 0건 · 가격 0건 …"} (관리자 로그인 쿠키 필요)`);
+  lines.push(`1) API: POST ${origin}/admin/api/tasks/{task_id}/result  body {"kind":"text|html|link|images","text":"결과물 본문(images면 /a/….jpg URL 한 줄씩)","url":"Drive/프리뷰 링크","checks":["David 확인 포인트 1","2","3"],"self_check":"금지 표현 0건 · 가격 0건 …"} (관리자 로그인 쿠키 필요)`);
   lines.push(`2) D1 bizhigher-db: UPDATE job_tasks SET status='review', result_kind=?, result_text=?, result_url=?, checks=?(JSON), self_check=?, requested_at=datetime('now') WHERE id={task_id}; 검증 불필요 단계는 status='done', done_at=datetime('now')`);
   lines.push('', '규칙: 고객 자동 발송 금지(Gmail 초안까지) · 경쟁사 갭 분석 선행 · 리뷰 대가·가짜 리뷰 금지 · 의료업 환자 암시 금지 · 실행 플랜은 180일 · 웹 산출물 360px 실측 (CLAUDE.md §12)');
   return lines.join('\n');
@@ -577,4 +577,4 @@ async function safeInsertIntake(db, i) { try { const r = await db.prepare(`INSER
 const colCache = {};
 async function hasColumn(db, table, col) { if (!colCache[table]) { try { colCache[table] = ((await db.prepare(`PRAGMA table_info(${table})`).all()).results || []).map((r) => r.name); } catch { colCache[table] = []; } } return colCache[table].includes(col); }
 function json(obj, status = 200) { return new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', ...NOINDEX } }); }
-function body {"kind":"text|html|link|images","text":"결과물 본문(images면 /a/….jpg URL 한 줄씩)"(body, status = 200) { return new Response(body, { status, headers: { 'Content-Type': 'text/html; charset=utf-8', ...NOINDEX } }); }
+function html(body, status = 200) { return new Response(body, { status, headers: { 'Content-Type': 'text/html; charset=utf-8', ...NOINDEX } }); }
