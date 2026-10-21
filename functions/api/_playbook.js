@@ -81,9 +81,9 @@ export const PLAYBOOK = {
   'ads-setup': {
     name: '광고 셋업', steps: [
       S('ads-1', 'BizHigher MCC 아래 고객 Google Ads 계정 생성 + 고객 카드 등록(결제 프로필은 고객 명의) · Meta는 Business Manager 파트너 권한', 'onboarding', 'customer', 10, { block: '결정(2026-10-15): MCC 방식. 광고비는 고객 카드로 직접 결제(상품 정책). Meta는 비즈니스 인증 선행' }),
-      S('ads-2', '계정 구조·캠페인 설계안 (검색·로컬·리마케팅, 예산 배분)', 'setup', 'ai', 15, { verify: true }),
-      S('ads-3', 'Google Ads 캠페인 구축 + 전환 연결', 'setup', 'david', 90, { next: 'Google Ads API 개발자 토큰(기본 액세스) + MCC → 캠페인 생성 자동화' }),
-      S('ads-4', 'Meta 픽셀·전환 API 연결 + 캠페인 구축', 'setup', 'david', 90, { block: 'Meta 마케팅 API는 앱 심사 6~8주(§15) → 당분간 수동', next: 'Meta 앱 심사 통과' }),
+      S('ads-2', '캠페인 설계안 + Google Ads Editor 가져오기 CSV(캠페인·광고그룹·키워드·제외어·RSA 광고) + Meta 캠페인 설정표', 'setup', 'ai', 15, { verify: true }),
+      S('ads-3', 'Google Ads — Ads Editor 로 CSV 가져오기 → 검토 → 게시 + 전환 연결', 'setup', 'david', 25, { block: 'CSV 가져오기 15분 + 전환 연결 10분. 구축을 손으로 하면 90분', next: 'Google Ads API 개발자 토큰(기본 액세스) + MCC → 일시정지 상태로 자동 생성' }),
+      S('ads-4', 'Meta — 설정표대로 캠페인 복제·픽셀 연결', 'setup', 'david', 40, { block: 'Meta 마케팅 API는 앱 심사 6~8주(§15) → 당분간 수동. 설정표·카피·소재는 ads-2·ac-3 산출물 재사용', next: 'Meta 앱 심사 통과' }),
       S('ads-5', '전환 테스트 완료 리포트', 'setup', 'ai', 5, { verify: true }),
     ],
   },
@@ -92,7 +92,7 @@ export const PLAYBOOK = {
       S('llp-1', '도시 목록 확정 — 고객 승인 (기존 페이지 제외)', 'setup', 'customer', 5),
       S('llp-2', '도시별 페이지 작성 — 타이틀·메타·H1·지역 컨텍스트(실제 랜드마크 확인)·FAQ 3개+스키마·내부 링크 맵', 'setup', 'ai', 20, { verify: true, block: '도시 간 중복률 검사(doorway 방지)는 자동' }),
       S('llp-3', '적용 — BizHigher 제작 사이트면 빌드·배포 자동, 외부 사이트면 HTML 전달', 'setup', 'auto', 0, { block: '외부 사이트는 고객이 올려야 함 → 고객 대기' }),
-      S('llp-4', '360px 실측 + 사이트맵 갱신 + 구글 등록 가이드', 'setup', 'auto', 5, { verify: true }),
+      S('llp-4', '자동 QA(qa.js: 360/768/1280 스크린샷·속도·링크·폼) + 사이트맵 갱신 + 구글 등록 가이드', 'setup', 'auto', 5, { verify: true }),
     ],
   },
   'website': {
@@ -100,7 +100,7 @@ export const PLAYBOOK = {
       S('web-1', '웹사이트 질문지(도메인·참고 사이트·페이지·기능) + 사진·로고', 'onboarding', 'customer', 0, { block: '월 분납 플랜은 2회차 납부 후 착수(§4)' }),
       S('web-2', '사이트 생성 — 정적 빌드, 한/영, 기본 SEO·스키마, GBP 연결, Cloudflare Pages 배포', 'setup', 'ai', 60, { verify: true, block: '맞춤형(예약·주문)은 외부 툴 연동이 수동' }),
       S('web-3', '도메인 연결 — 고객 등록대행사 DNS 변경 (안내문 제공)', 'setup', 'customer', 15, { block: '고객이 DNS를 못 만지면 David가 원격 안내 30분' }),
-      S('web-4', '360px 실측·속도·폼 테스트 → 수정 1회 반영 → 인도', 'setup', 'david', 30, { verify: true }),
+      S('web-4', '자동 QA 리포트(qa.js: 360/768/1280 스크린샷·속도·링크·폼) → David 검토 → 수정 1회 반영 → 인도', 'setup', 'ai', 10, { verify: true, block: '리포트의 "수정할 것"이 비면 인도. 수정은 cp-2 경로' }),
     ],
   },
   'gbp-posting': {

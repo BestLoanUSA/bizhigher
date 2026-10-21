@@ -25,6 +25,7 @@ node automation/ai-runner/runner.js draft --job 5 --file body.txt              #
 node automation/ai-runner/runner.js draft --deliverable 7 --file body.txt      # 결과물 1건만
 node automation/ai-runner/runner.js note --job 5 --text "…"
 
+node automation/ai-runner/qa.js --url https://고객사이트 --out qa --name home   # 360/768/1280 스크린샷·속도·링크·폼 → qa/home-report.md + qa/home-montage.jpg (upload 로 올려 submit --kind images)
 node automation/ai-runner/places.js lookup --query "New Optix Garden Grove CA" [--pick 2]      # 우리 가게 공개 정보 전부 (후보 여러 곳이면 --pick)
 node automation/ai-runner/places.js competitors --query "optical store Garden Grove CA" [--me ChIJ…] [--n 3]
 node automation/ai-runner/creative.js gen --prompt "modern optical shop interior, warm light, no text, no people" --out bg.jpg [--size square_hd|1024x1024]
