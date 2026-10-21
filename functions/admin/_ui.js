@@ -306,13 +306,16 @@ function aiItem(t, showWho) {
   const head = '<span style="color:#0B9E58;font-weight:800">✓</span><span class="m">' + esc(t.title) + (has ? '<span class="more">내용 보기 ▾</span>' : '') + '<small>' + esc(t.service_name) + (showWho ? ' · ' + esc(w.label) : '') + ' · ' + day(t.done_at) + (t.note ? ' · ' + esc(t.note) : '') + '</small></span>';
   if (!has) return '<div class="li">' + head + '</div>';
   const body = (t.result_url ? '<div style="margin-top:6px"><a class="btn ghost sm" target="_blank" href="' + esc(t.result_url) + '">' + (/drive\.google/.test(t.result_url) ? 'Drive에서 열기' : '열기') + ' ↗</a> <span class="muted" style="font-size:12px">' + esc(t.result_url) + '</span></div>' : '') +
-    (t.result_kind === 'images' ? '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;margin-top:6px">' + ((t.result_text || '').match(/https?:\/\/\S+\.(?:jpe?g|png|webp)/gi) || []).map((u) => '<a href="' + esc(u) + '" target="_blank"><img src="' + esc(u) + '" alt="" style="width:100%;border-radius:8px;border:1px solid var(--line);display:block"></a>').join('') + '</div>' : '') +
+    (t.result_kind === 'images' || t.result_kind === 'video' ? '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;margin-top:6px">' + mediaUrls(t.result_text).map((u) => mediaTag(u, 8)).join('') + '</div>' : '') +
     (t.result_text ? (t.result_kind === 'html' ? '<div class="frame" style="margin-top:6px"><iframe sandbox="" srcdoc="' + esc(t.result_text) + '" title="결과물"></iframe></div>' : '<div class="res">' + esc(t.result_text) + '</div>') : '') +
     (t.self_check ? '<div class="muted" style="font-size:12px;margin-top:4px">AI 자기 점검: ' + esc(t.self_check) + '</div>' : '') +
     '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button class="btn ghost sm" data-reopen="' + t.id + '">수정 요청 (AI 재작업)</button><button class="btn ghost sm" data-edit="' + t.id + '">직접 고치기</button></div>' +
     '<div data-editbox="' + t.id + '" style="display:none;margin-top:8px" class="frm"><textarea class="in" style="min-height:140px;font-size:13px">' + esc(t.result_text || '') + '</textarea><div class="h"><input class="in" placeholder="링크" value="' + esc(t.result_url || '') + '"><button class="btn sm" data-editsave="' + t.id + '">저장</button></div></div>';
   return '<details class="ai"><summary class="li">' + head + '</summary><div style="padding:0 0 8px 26px">' + body + '</div></details>';
 }
+/* 결과물 본문에서 이미지·영상 URL 추출 + 태그 (영상은 재생 가능) */
+function mediaUrls(s) { return (s || '').match(/https?:\/\/\S+\.(?:jpe?g|png|webp|gif|mp4|webm)/gi) || []; }
+function mediaTag(u, r) { return /\.(mp4|webm)$/i.test(u) ? '<video src="' + esc(u) + '" controls preload="metadata" playsinline style="width:100%;border-radius:' + r + 'px;border:1px solid var(--line);display:block;background:#000"></video>' : '<a href="' + esc(u) + '" target="_blank"><img src="' + esc(u) + '" alt="" style="width:100%;border-radius:' + r + 'px;border:1px solid var(--line);display:block"></a>'; }
 function linkify(s) { return esc(s || '').replace(/(https?:\/\/[^\s,]+)/g, '<a target="_blank" href="$1">$1</a>'); }
 
 function taskList(tasks, who, phases, taskStatuses, editable, hl) {
@@ -373,8 +376,8 @@ function reviewCard(t) {
   let preview = '';
   if (t.result_kind === 'html' && t.result_text) preview = '<div class="frame"><iframe sandbox="" srcdoc="' + esc(t.result_text) + '" title="결과물 미리보기"></iframe></div>';
   else if (url && embeddable) preview = '<div class="frame"><iframe src="' + esc(url) + '" title="결과물 미리보기" loading="lazy"></iframe></div>';
-  const imgs = (t.result_text || '').match(/https?:\/\/\S+\.(?:jpe?g|png|webp)/gi) || [];
-  if (t.result_kind === 'images' && imgs.length) preview += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px">' + imgs.map((u) => '<a href="' + esc(u) + '" target="_blank"><img src="' + esc(u) + '" alt="" style="width:100%;border-radius:10px;border:1px solid var(--line);display:block"></a>').join('') + '</div>';
+  const imgs = mediaUrls(t.result_text);
+  if ((t.result_kind === 'images' || t.result_kind === 'video') && imgs.length) preview += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px">' + imgs.map((u) => mediaTag(u, 10)).join('') + '</div>';
   if (t.result_text && t.result_kind !== 'html') preview += '<div class="prev">' + esc(t.result_text) + '</div>';
   if (url) preview += '<div><a class="btn ghost sm" target="_blank" href="' + esc(url) + '">' + (/drive\.google/.test(url) ? 'Drive에서 열기' : /\.pdf($|\?)/i.test(url) ? 'PDF 열기' : '새 탭에서 열기') + ' ↗</a> <span class="muted" style="font-size:12px">' + esc(url) + '</span></div>';
   if (!preview) preview = '<div class="prev muted">결과물이 아직 붙지 않았습니다. 결과물이 Drive에 있으면 고객 여정 화면에서 링크를 추가하세요.</div>';

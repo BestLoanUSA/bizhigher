@@ -25,7 +25,7 @@
 import { authenticate, login, logoutCookie } from './_auth.js';
 import { notify, esc as escHtml } from '../api/_notify.js';
 import { ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady } from '../api/_orders.js';
-import { PLAYBOOK, COMMON_ONBOARDING, WHO, PHASES, tasksFor, summarize } from '../api/_playbook.js';
+import { PLAYBOOK, COMMON_ONBOARDING, WHO, PHASES, tasksFor, summarize, DELIVER_KEYS } from '../api/_playbook.js';
 import { appHtml, loginHtml } from './_ui.js';
 
 export const TASK_STATUSES = [['todo', '대기'], ['doing', '진행'], ['review', '검증 대기'], ['done', '완료'], ['blocked', '막힘'], ['skipped', '해당 없음']];
@@ -58,7 +58,9 @@ export async function onRequest(context) {
   try {
     await ensureSchema(env.DB);
     const seg = path.split('/').slice(1);
-    const body = request.method === 'POST' ? await request.json().catch(() => ({})) : {};
+    const isMultipart = (request.headers.get('content-type') || '').includes('multipart/form-data');
+    const body = request.method === 'POST' && !isMultipart ? await request.json().catch(() => ({})) : {};
+    if (isMultipart) body.__form = await request.formData().catch(() => null); // 자산 업로드(영상·큰 파일)
     const out = await api(env, request.method, seg, body, url);
     if (out === undefined) return json({ ok: false, error: 'not found' }, 404);
     return json({ ok: true, ...out });
@@ -183,7 +185,7 @@ async function api(env, method, seg, body, url) {
       await db.prepare(`UPDATE job_tasks SET status = 'done', done_at = datetime('now'), decided_at = datetime('now'), note = CASE WHEN ? != '' THEN ? ELSE note END,
         result_text = CASE WHEN ? != '' THEN COALESCE(result_text, '') || char(10) || char(10) || '[David 승인 메모] ' || ? ELSE result_text END WHERE id = ?`).bind(note, note, note, note, t.id).run();
       // 결과물 링크가 있으면 결과물 목록에 올리고 "발송 대기"로. Gmail 초안은 fulfillment 루틴이 이 행을 보고 만든다(고객 자동 발송 금지 §12)
-      if (t.result_url || t.result_text) await db.prepare(`INSERT INTO deliverables (job_id, title, url) VALUES (?, ?, ?)`).bind(t.job_id, t.title.slice(0, 200), t.result_url || '').run();
+      if (DELIVER_KEYS.has(t.key)) await ensureDeliverable(db, t); // 고객에게 가는 결과물인 단계만 — 내부 작업물은 올리지 않는다
       await addEvent(db, t.job_id, 'task', null, null, `✔ 승인 — ${t.title}${note ? ' · ' + note : ''}`);
       await autoAdvance(db, t.job_id);
       return { next: await nextReview(db, t.id) };
@@ -225,7 +227,7 @@ async function api(env, method, seg, body, url) {
     }
     if (sub === 'result') {
       // AI(fulfillment 스킬·루틴)가 결과물을 붙이고 검증을 요청한다
-      const kind = ['text', 'html', 'link', 'images'].includes(body.kind) ? body.kind : (body.url && !body.text ? 'link' : 'text');
+      const kind = ['text', 'html', 'link', 'images', 'video'].includes(body.kind) ? body.kind : (body.url && !body.text ? 'link' : 'text');
       const checks = Array.isArray(body.checks) ? body.checks.slice(0, 6).map((c) => String(c).slice(0, 200)) : [];
       await db
         .prepare(`UPDATE job_tasks SET result_kind = ?, result_text = ?, result_url = ?, checks = ?, self_check = ?, status = 'review', requested_at = datetime('now') WHERE id = ?`)
@@ -239,7 +241,7 @@ async function api(env, method, seg, body, url) {
       if (!TASK_STATUSES.some(([k]) => k === to)) throw bad('잘못된 단계 상태');
       await db.prepare(`UPDATE job_tasks SET status = ?, done_at = CASE WHEN ? = 'done' THEN datetime('now') ELSE done_at END WHERE id = ?`).bind(to, to, t.id).run();
       if (note) await db.prepare(`UPDATE job_tasks SET note = ? WHERE id = ?`).bind(note, t.id).run();
-      if (to === 'done') { await addEvent(db, t.job_id, 'task', null, null, `✔ ${t.title}${t.who === 'customer' && note ? ' — 받은 것: ' + note : ''}`); await autoAdvance(db, t.job_id); }
+      if (to === 'done') { if (DELIVER_KEYS.has(t.key)) await ensureDeliverable(db, t); await addEvent(db, t.job_id, 'task', null, null, `✔ ${t.title}${t.who === 'customer' && note ? ' — 받은 것: ' + note : ''}`); await autoAdvance(db, t.job_id); }
       else if (to === 'review') await addEvent(db, t.job_id, 'task', null, null, `👀 검증 요청 — ${t.title}`);
       else if (to === 'blocked') await addEvent(db, t.job_id, 'task', null, null, `⛔ 막힘 — ${t.title}`);
       return {};
@@ -254,7 +256,7 @@ async function api(env, method, seg, body, url) {
     const tmap = await tasksByJob(db, jobs.map((j) => j.id));
     const items = [];
     for (const j of jobs) {
-      const ready = aiReady(tmap[j.id] || []);
+      const ready = aiReady(await syncPlaybook(db, j, tmap[j.id] || []));
       if (!ready.length) continue;
       const intake = j.intake_id ? await db.prepare(`SELECT * FROM intakes WHERE id = ?`).bind(j.intake_id).first() : null;
       const profile = j.customer_email ? await safeFirst(db, `SELECT * FROM customer_profiles WHERE lower(email) = ? ORDER BY rowid DESC LIMIT 1`, j.customer_email.toLowerCase()) : null;
@@ -269,18 +271,46 @@ async function api(env, method, seg, body, url) {
     return { items, pendingDrafts: drafts, rules: ['고객에게 자동 발송 금지 — Gmail 초안까지', 'verify 단계는 status review, 아니면 done', '경쟁사 갭 분석 선행(노출·SEO)', '리뷰 대가·게이팅·가짜 리뷰 금지', '의료·치과 환자 암시 금지', '실행 플랜은 180일', '웹 산출물 360px 실측'] };
   }
   if (res === 'assets' && method === 'POST') {
-    const b64 = String(body.base64 || '');
-    if (!b64) throw bad('base64 가 비어 있습니다');
-    const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-    if (bin.byteLength > 900000) throw bad('이미지가 900KB를 넘습니다 — JPEG 품질을 낮추세요');
-    const ct = ['image/jpeg', 'image/png', 'image/webp'].includes(body.content_type) ? body.content_type : 'image/jpeg';
+    const TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'video/mp4': 'mp4', 'video/webm': 'webm', 'application/pdf': 'pdf' };
+    let bin, ctIn, label, jobIn, taskIn;
+    if (body.__form) {
+      const form = body.__form;
+      const f = form.get('file');
+      if (!f || typeof f === 'string' || !f.size) throw bad('file 이 비어 있습니다');
+      bin = new Uint8Array(await f.arrayBuffer()); ctIn = f.type; label = String(form.get('label') || f.name || ''); jobIn = form.get('job_id'); taskIn = form.get('task_id');
+    } else {
+      const b64 = String(body.base64 || '');
+      if (!b64) throw bad('base64 가 비어 있습니다');
+      bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)); ctIn = body.content_type; label = String(body.label || ''); jobIn = body.job_id; taskIn = body.task_id;
+    }
+    const max = env.R2_ASSETS ? 60 * 1024 * 1024 : 900000;
+    if (bin.byteLength > max) throw bad(env.R2_ASSETS ? '파일이 60MB를 넘습니다' : '이미지가 900KB를 넘습니다 — R2 바인딩이 없어 D1에 저장합니다');
+    const ct = TYPES[ctIn] ? ctIn : 'image/jpeg';
+    body.job_id = jobIn; body.task_id = taskIn; body.label = label;
     const aid = [...crypto.getRandomValues(new Uint8Array(16))].map((x) => 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[x % 62]).join('');
-    const ext = ct === 'image/png' ? 'png' : ct === 'image/webp' ? 'webp' : 'jpg';
+    const ext = TYPES[ct];
     // R2 바인딩(R2_ASSETS)이 있으면 객체 저장소에, 없으면 D1 BLOB 에 — 서빙(/a/)이 둘 다 읽는다
     let r2Key = null;
     if (env.R2_ASSETS) { r2Key = `a/${aid}.${ext}`; await env.R2_ASSETS.put(r2Key, bin, { httpMetadata: { contentType: ct, cacheControl: 'public, max-age=31536000, immutable' } }); }
     await db.prepare(`INSERT INTO assets (id, job_id, task_id, content_type, bytes, label, data, r2_key) VALUES (?,?,?,?,?,?,?,?)`).bind(aid, Number(body.job_id) || null, Number(body.task_id) || null, ct, bin.byteLength, String(body.label || '').slice(0, 200), r2Key ? null : bin.buffer, r2Key).run();
     return { id: aid, url: `${url.origin}/a/${aid}.${ext}`, store: r2Key ? 'r2' : 'd1' };
+  }
+  if (res === 'jobs' && id && sub === 'draft-batch' && method === 'POST') {
+    // 한 작업의 초안 대기 결과물을 한 통으로 David 메일에 — 결과물마다 메일이 가던 것을 묶는다 (2026-10-21)
+    const j = await db.prepare(`SELECT * FROM jobs WHERE id = ?`).bind(Number(id)).first();
+    if (!j) return undefined;
+    if (!env.RESEND_API_KEY) throw bad('RESEND_API_KEY 가 없어 초안을 보낼 수 없습니다');
+    const ds = (await db.prepare(`SELECT * FROM deliverables WHERE job_id = ? AND sent_at IS NULL AND drafted_at IS NULL ORDER BY id ASC`).bind(j.id).all()).results || [];
+    if (!ds.length) throw bad('초안 대기 결과물이 없습니다');
+    const subject = `[초안 → 고객에게 전달] ${j.business || ''} — 결과물 ${ds.length}건`;
+    await notify(env, subject, [
+      ['받는 고객', escHtml(j.customer_email || '(이메일 없음)')],
+      ['결과물 ' + ds.length + '건', ds.map((d) => (d.url ? `<a href="${escHtml(d.url)}">${escHtml(d.title)}</a>` : escHtml(d.title) + ' <span style="color:#6b7280">(관리자 페이지에서 확인)</span>')).join('<br>')],
+      ['본문 (복사해 고객에게 보내세요)', `<pre style="white-space:pre-wrap;font:inherit">${escHtml(String(body.text || '').slice(0, 20000))}</pre>`],
+    ], { footer: 'David 전용 초안 메일입니다 — 고객에게는 자동 발송되지 않습니다. 위 본문만 복사해 보내고 관리자 페이지에서 "보냈음"을 누르세요.' });
+    await db.prepare(`UPDATE deliverables SET drafted_at = datetime('now') WHERE job_id = ? AND sent_at IS NULL AND drafted_at IS NULL`).bind(j.id).run();
+    await addEvent(db, j.id, 'deliverable', null, null, `✉ 고객용 초안(결과물 ${ds.length}건 묶음)을 David 메일로 전달`);
+    return { count: ds.length };
   }
   if (res === 'deliverables' && id && sub === 'draft-to-david' && method === 'POST') {
     const d = await db.prepare(`SELECT d.*, j.business, j.customer_email, j.service_name FROM deliverables d JOIN jobs j ON j.id = d.job_id WHERE d.id = ?`).bind(Number(id)).first();
@@ -344,7 +374,7 @@ async function api(env, method, seg, body, url) {
     const intake = job.intake_id ? await db.prepare(`SELECT * FROM intakes WHERE id = ?`).bind(job.intake_id).first() : null;
     const events = (await db.prepare(`SELECT * FROM job_events WHERE job_id = ? ORDER BY id DESC LIMIT 60`).bind(job.id).all()).results;
     const deliverables = (await db.prepare(`SELECT * FROM deliverables WHERE job_id = ? ORDER BY id ASC`).bind(job.id).all()).results;
-    const tasks = ((await db.prepare(`SELECT * FROM job_tasks WHERE job_id = ? ORDER BY sort ASC, id ASC`).bind(job.id).all()).results || []).map((t) => ({ ...t, checks: parseJson(t.checks, []) }));
+    const tasks = await syncPlaybook(db, job, ((await db.prepare(`SELECT * FROM job_tasks WHERE job_id = ? ORDER BY sort ASC, id ASC`).bind(job.id).all()).results || []).map((t) => ({ ...t, checks: parseJson(t.checks, []) })));
     const history = job.customer_email ? (await db.prepare(`SELECT id, business, service_name, service_slug, status, created_at FROM jobs WHERE lower(customer_email) = ? AND id != ? ORDER BY id DESC LIMIT 10`).bind(job.customer_email.toLowerCase(), job.id).all()).results : [];
     const intakeCandidates = !job.intake_id && job.customer_email ? await safeAll(db, `SELECT id, service, business, contact_name, created_at FROM intakes WHERE lower(email) = ? AND id NOT IN (SELECT intake_id FROM jobs WHERE intake_id IS NOT NULL) ORDER BY id DESC LIMIT 5`, job.customer_email.toLowerCase()) : [];
 
@@ -592,6 +622,31 @@ async function seedDemo(db, catalog, d) {
   }
   if (d.done.length) await db.prepare(`UPDATE jobs SET status = 'working' WHERE id = ? AND status IN ('new','info')`).bind(jobId).run();
   return jobId;
+}
+
+/* 플레이북이 바뀌어 더는 '막힘'이 아닌 단계를 풀어 준다 (예: fal.ai 연결로 sv-2, 마스터 목록 작성으로 lls-1). 작업을 열거나 루틴 큐를 뽑을 때 호출 */
+async function syncPlaybook(db, job, tasks) {
+  const blocked = (tasks || []).filter((t) => t.status === 'blocked');
+  if (!blocked.length) return tasks;
+  let defs = [];
+  try { defs = tasksFor(job.service_slug || ''); } catch { return tasks; }
+  const byKey = new Map(defs.map((d) => [d.k, d]));
+  for (const t of blocked) {
+    const d = byKey.get(t.key);
+    if (!d || d.who === 'blocked') continue;
+    await db.prepare(`UPDATE job_tasks SET status = 'todo', who = ?, block = ?, next = ? WHERE id = ?`).bind(d.who, d.block || '', d.next || '', t.id).run();
+    await addEvent(db, job.id, 'task', null, null, `🔓 막힘 해제 — ${t.title} (플레이북 갱신 → ${(WHO[d.who] && WHO[d.who].label) || d.who})`);
+    Object.assign(t, { status: 'todo', who: d.who, block: d.block || '', next: d.next || '' });
+  }
+  return tasks;
+}
+
+/* 결과물 목록에 1번만 올린다 (같은 작업·같은 제목이 있으면 건너뜀) */
+async function ensureDeliverable(db, t) {
+  const dup = await db.prepare(`SELECT id FROM deliverables WHERE job_id = ? AND title = ? LIMIT 1`).bind(t.job_id, t.title.slice(0, 200)).first();
+  if (dup) return dup.id;
+  const r = await db.prepare(`INSERT INTO deliverables (job_id, title, url) VALUES (?, ?, ?)`).bind(t.job_id, t.title.slice(0, 200), t.result_url || '').run();
+  return r.meta && r.meta.last_row_id;
 }
 
 /* ---------- 유틸 ---------- */
