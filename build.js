@@ -2386,10 +2386,12 @@ async function uploadAll(email, btn) {
   for (var i = 0; i < picked.length; i++) {
     btn.textContent = '첨부 올리는 중 ' + (i + 1) + '/' + picked.length + '...';
     if (picked[i].size > 10 * 1024 * 1024) throw new Error('too_large:' + picked[i].name);
+    if (picked[i]._url) { urls.push(picked[i].name + ' → ' + picked[i]._url); continue; } // 이전 시도에서 이미 올라간 파일은 다시 올리지 않는다
     var fd = new FormData(); fd.append('file', picked[i]); fd.append('email', email || '');
     var r = await fetch('/api/upload', { method: 'POST', body: fd });
     var j = await r.json().catch(function () { return {}; });
     if (!r.ok || !j.ok) throw new Error('upload:' + (j.error || r.status) + ':' + picked[i].name);
+    picked[i]._url = j.url;
     urls.push(picked[i].name + ' → ' + j.url);
   }
   return urls;
