@@ -2267,6 +2267,65 @@ ${relatedPosts.length ? `
 
 /* ---------- 페이지: 주문 완료 + 인테이크 ---------- */
 
+function thanksDonePage() {
+  return head({
+    title: '질문지를 받았습니다 — 이제 이렇게 진행됩니다 | BizHigher',
+    description: '질문지 제출이 완료되었습니다. 확인 연락, 첫 결과물, 180일 운영까지 앞으로의 진행 순서를 안내합니다.',
+    pathName: '/thanks/done/',
+    noindex: true,
+  }) + nav('') + `
+<section class="audit-hero">
+  <div class="container-narrow">
+    <p class="eyebrow">질문지 제출 완료 ✓</p>
+    <h1 class="h1" style="font-size:40px;"><span id="done-biz">사장님</span>, 잘 받았습니다!</h1>
+    <p class="hero-sub">지금부터 <b>딜리버리 기한이 시작</b>됩니다. 이 페이지는 북마크해 두시면 진행 순서를 언제든 다시 볼 수 있습니다.<span id="done-files"></span></p>
+  </div>
+</section>
+<section class="section section-gray">
+  <div class="container">
+    <h2 class="h2">이제 이렇게 진행됩니다</h2>
+    <div class="grid4">
+      <div class="step-card"><span class="proc-num">1</span><p class="tl-tag">24시간 안</p><h3 class="h3">확인 연락</h3><p class="body-sm">담당자 휴대폰·이메일로 연락드립니다. 빠진 정보가 있으면 그때 여쭙고, 바로 작업을 시작합니다.</p></div>
+      <div class="step-card"><span class="proc-num">2</span><p class="tl-tag">첫 며칠</p><h3 class="h3">경쟁사 분석 → 첫 결과물</h3><p class="body-sm">같은 동네 경쟁 가게 3곳과 비교해 무엇이 부족한지 먼저 잡고, 상품별 기한(영업일) 안에 첫 결과물을 이메일로 보내드립니다.</p></div>
+      <div class="step-card"><span class="proc-num">3</span><p class="tl-tag">받으신 뒤</p><h3 class="h3">검토·수정</h3><p class="body-sm">결과물 이메일에 회신으로 수정을 요청하세요. 수정 1회는 무료입니다. 결과물에는 사용 가이드가 함께 갑니다.</p></div>
+      <div class="step-card" id="done-step4"><span class="proc-num">4</span><p class="tl-tag">180일</p><h3 class="h3">월 1회 승인, 나머지는 자동</h3><p class="body-sm">패키지는 매달 게시물·광고 문구 캘린더를 한 번에 보내드리고, 승인하시면 나머지는 저희가 운영합니다. 월간 리포트로 숫자를 확인하세요.</p></div>
+    </div>
+  </div>
+</section>
+<section class="section">
+  <div class="container-narrow">
+    <h2 class="h2">미리 해 두시면 더 빨라집니다</h2>
+    <div class="audit-form" style="margin-top:20px;box-shadow:none;border:1px solid var(--line);">
+      <div>
+        <p style="font-weight:800;color:var(--navy-900,#0A1B4D);font-size:16px;margin-bottom:6px;">1. 구글 비즈니스 프로필 관리자 초대</p>
+        <p class="body-sm">구글 지도 정보 정리·리뷰 답글·게시물은 프로필 안에서 작업합니다. 프로필 <b>소유자 계정</b>으로 로그인해 <b>사용자 추가 → hello@bizhigher.com → 관리자</b>로 초대해 주세요. 초대가 오면 저희가 수락합니다. (소유권은 사장님께 그대로 남습니다)</p>
+      </div>
+      <div style="margin-top:14px;">
+        <p style="font-weight:800;color:var(--navy-900,#0A1B4D);font-size:16px;margin-bottom:6px;">2. 사진·자료는 언제든 더 보내주세요</p>
+        <p class="body-sm">매장·상품 사진, 로고 원본, 메뉴판은 많을수록 결과물이 좋아집니다. hello@bizhigher.com 으로 보내시면 같은 작업에 붙여 둡니다.</p>
+      </div>
+      <div style="margin-top:14px;">
+        <p style="font-weight:800;color:var(--navy-900,#0A1B4D);font-size:16px;margin-bottom:6px;">3. 광고·웹사이트 접근 권한</p>
+        <p class="body-sm">광고 계정, 도메인, 웹사이트 로그인이 필요한 상품은 확인 연락 때 담당자가 한 번에 안내해 드립니다. 미리 준비하지 않으셔도 됩니다.</p>
+      </div>
+    </div>
+    <p class="note-text">궁금한 점은 언제든 hello@bizhigher.com · 이 안내는 이메일로도 보내드립니다.</p>
+  </div>
+</section>
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  var b = (q.get('b') || '').trim();
+  if (b) document.getElementById('done-biz').textContent = b + ' 사장님';
+  var n = Number(q.get('files') || 0);
+  if (n > 0) document.getElementById('done-files').textContent = ' 첨부하신 사진·파일 ' + n + '개도 잘 받았습니다.';
+  var svc = q.get('service') || '';
+  if (svc.indexOf('local-') !== 0) { var s4 = document.getElementById('done-step4'); if (s4) s4.style.display = 'none'; }
+})();
+</script>
+` + FOOTER_BASE; // 결제 고객 페이지 — 무료 진단 CTA 띠는 넣지 않는다
+}
+
 function thanksPage() {
   return head({
     title: '주문 완료 — 작업 정보를 알려주세요 | BizHigher',
@@ -2297,7 +2356,7 @@ function thanksPage() {
       <label class="file-box" id="file-box">
         <input type="file" id="intake-files" multiple accept="image/*,.pdf,.svg,.heic">
         <span class="file-title">📎 사진·로고·메뉴판 첨부 (선택)</span>
-        <span class="file-sub">매장 외관·내부·대표 상품 사진, 로고 파일, 메뉴판 PDF — 최대 10개, 개당 10MB. 사진이 있으면 결과물 품질이 크게 좋아집니다.</span>
+        <span class="file-sub">매장 외관·내부·대표 상품 사진, 로고 파일, 메뉴판 PDF — 최대 30개, 개당 10MB. 사진이 있으면 결과물 품질이 크게 좋아집니다.</span>
         <span class="file-list" id="file-list"></span>
       </label>
 
@@ -2376,7 +2435,7 @@ if (svc.indexOf('website') === 0 || (svc.indexOf('local-') === 0 && (svc.indexOf
 var picked = [];
 var fileInput = document.getElementById('intake-files');
 fileInput.addEventListener('change', function () {
-  picked = picked.concat(Array.prototype.slice.call(fileInput.files)).slice(0, 10);
+  picked = picked.concat(Array.prototype.slice.call(fileInput.files)).slice(0, 30);
   fileInput.value = '';
   renderFiles();
 });
@@ -2437,10 +2496,8 @@ document.getElementById('intake-form').addEventListener('submit', async function
     if (!res.ok) throw new Error('server');
     progress(100, '제출 완료', false);
     setTimeout(progressOff, 900);
-    msg.className = 'form-msg success';
-    msg.textContent = '제출 완료! 곧 확인 연락을 드리고 작업을 시작하겠습니다.' + (uploaded.length ? ' 첨부 ' + uploaded.length + '개도 잘 받았습니다.' : '');
     btn.textContent = '제출 완료 ✓';
-    msg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    location.href = '/thanks/done/?service=' + encodeURIComponent(svc) + '&files=' + uploaded.length + '&b=' + encodeURIComponent((body.business || '').slice(0, 60));
   } catch (err) {
     progressOff();
     msg.className = 'form-msg error';
@@ -3921,6 +3978,7 @@ write('services/index.html', servicesPage());
 write('pricing/index.html', pricingPage());
 write('free-audit/index.html', auditPage());
 write('thanks/index.html', thanksPage());
+write('thanks/done/index.html', thanksDonePage());
 DATA.services.forEach((s) => write(`service/${s.slug}/index.html`, servicePage(s, POSTS)));
 DATA.packages.forEach((p) => write(`package/${p.slug}/index.html`, packagePage(p)));
 write('404.html', notFoundPage());

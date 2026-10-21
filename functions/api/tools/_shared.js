@@ -29,7 +29,7 @@ export const LIMITS = {
   // 로컬 순위의 1단계(가게 찾기)는 횟수 안내 대상이 아닌 보조 한도
   'local-rank-find': { perUser: 6, global: 500 },
   // 결제 후 질문지 첨부(functions/api/upload.js) — 도구가 아니라 안내 대상 아님
-  'intake-upload': { perUser: 120, global: 3000 },   // 질문지 첨부 10개 × 재시도 여유. 실패한 제출을 다시 시도해도 막히지 않게
+  'intake-upload': { perUser: 200, global: 5000 },   // 질문지 첨부 10개 × 재시도 여유. 실패한 제출을 다시 시도해도 막히지 않게
   'intake-place': { perUser: 10, global: 500 },   // 질문지 "구글에서 내 가게 찾기"(functions/api/place-lookup.js)
   'competitor-find': { perUser: 6, global: 300 },
 };

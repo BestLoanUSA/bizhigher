@@ -90,7 +90,7 @@
       <label class="file-box" id="file-box">
         <input type="file" id="intake-files" multiple accept="image/*,.pdf,.svg,.heic">
         <span class="file-title">📎 사진·로고·메뉴판 첨부 (선택)</span>
-        <span class="file-sub">매장 외관·내부·대표 상품 사진, 로고 파일, 메뉴판 PDF — 최대 10개, 개당 10MB. 사진이 있으면 결과물 품질이 크게 좋아집니다.</span>
+        <span class="file-sub">매장 외관·내부·대표 상품 사진, 로고 파일, 메뉴판 PDF — 최대 30개, 개당 10MB. 사진이 있으면 결과물 품질이 크게 좋아집니다.</span>
         <span class="file-list" id="file-list"></span>
       </label>
 
@@ -169,7 +169,7 @@ if (svc.indexOf('website') === 0 || (svc.indexOf('local-') === 0 && (svc.indexOf
 var picked = [];
 var fileInput = document.getElementById('intake-files');
 fileInput.addEventListener('change', function () {
-  picked = picked.concat(Array.prototype.slice.call(fileInput.files)).slice(0, 10);
+  picked = picked.concat(Array.prototype.slice.call(fileInput.files)).slice(0, 30);
   fileInput.value = '';
   renderFiles();
 });
@@ -230,10 +230,8 @@ document.getElementById('intake-form').addEventListener('submit', async function
     if (!res.ok) throw new Error('server');
     progress(100, '제출 완료', false);
     setTimeout(progressOff, 900);
-    msg.className = 'form-msg success';
-    msg.textContent = '제출 완료! 곧 확인 연락을 드리고 작업을 시작하겠습니다.' + (uploaded.length ? ' 첨부 ' + uploaded.length + '개도 잘 받았습니다.' : '');
     btn.textContent = '제출 완료 ✓';
-    msg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    location.href = '/thanks/done/?service=' + encodeURIComponent(svc) + '&files=' + uploaded.length + '&b=' + encodeURIComponent((body.business || '').slice(0, 60));
   } catch (err) {
     progressOff();
     msg.className = 'form-msg error';
