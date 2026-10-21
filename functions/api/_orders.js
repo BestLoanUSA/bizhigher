@@ -168,6 +168,15 @@ export function currentPhaseTasks(tasks) {
   return open.filter((t) => t.phase === ph);
 }
 
+/** AI가 지금 할 수 있는 단계 — 같은 서비스 안에서 앞선 단계가 모두 끝난 AI(auto·ai) 단계 (지금 phase 기준) */
+export function aiReady(tasks) {
+  const cur = currentPhaseTasks(tasks);
+  return cur.filter((t) => {
+    if (!(t.who === 'auto' || t.who === 'ai') || !(t.status === 'todo' || t.status === 'doing')) return false;
+    return !(tasks || []).some((x) => x.service === t.service && x.sort < t.sort && !CLOSED.has(x.status));
+  });
+}
+
 /** 다음에 공을 든 사람과 단계 — sort 순으로 첫 미완료 */
 export function nextAction(tasks) {
   const open = (tasks || []).filter((t) => !CLOSED.has(t.status));

@@ -76,6 +76,12 @@ pre.notes{white-space:pre-wrap;font:inherit;font-size:13.5px;background:var(--bg
 .pill.new{background:#FEE2E2;color:var(--red)}.pill.info{background:var(--amber-bg);color:var(--amber)}.pill.working{background:var(--blue-50);color:var(--blue)}.pill.qa{background:var(--purple-bg);color:var(--purple)}.pill.ready{background:#D1FAE5;color:#047857}.pill.done{background:#E5E7EB;color:var(--ink-600)}.pill.hold{background:#F3F4F6;color:var(--ink-400)}
 .pill.active,.pill.paid{background:#D1FAE5;color:#047857}.pill.past_due,.pill.incomplete{background:#FEE2E2;color:var(--red)}.pill.canceled,.pill.refunded{background:#E5E7EB;color:var(--ink-600)}
 .login{max-width:360px;margin:14vh auto 0;padding:0 16px}.login .sec{padding:24px}
+.aibox{background:#F0FDF4;border:1px solid #86EFAC;border-radius:14px;padding:12px 14px;margin-bottom:14px}.aibox.stuck{background:#FEF2F2;border-color:#FCA5A5}.aibox .h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:800;font-size:14px}.aibox .h small{font-weight:500;color:var(--ink-600);font-size:12px}
+.sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 10px}@media(min-width:720px){.sum{grid-template-columns:repeat(6,1fr)}}.sum div{background:var(--bg);border-radius:10px;padding:8px 10px}.sum b{display:block;font-size:18px}.sum span{font-size:11.5px;color:var(--ink-600)}
+.res{margin-top:6px;border:1px solid var(--line);border-radius:10px;background:#FAFAFB;padding:10px 12px;font-size:13px;white-space:pre-wrap;max-height:260px;overflow:auto}
+details.ai>summary{cursor:pointer;list-style:none}details.ai>summary::-webkit-details-marker{display:none}details.ai>summary .more{font-size:11.5px;color:var(--blue);margin-left:4px}
+.badge-stuck{display:inline-block;padding:2px 7px;border-radius:6px;background:#FEE2E2;color:var(--red);font-size:11px;font-weight:800;margin-left:6px;vertical-align:middle}
+
 `;
 
 const FONT = `<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">`;
@@ -121,6 +127,7 @@ let WHO = {}, STATUSES = [], TASK_STATUSES = [];
 const stLabel = (k) => (STATUSES.find((s) => s[0] === k) || [k, k])[1];
 const stPill = (k) => '<span class="pill ' + esc(k) + '">' + esc(stLabel(k)) + '</span>';
 const oPill = (k) => k ? '<span class="pill ' + esc(k) + '">' + esc({ paid: '결제됨', active: '구독 중', past_due: '미납', canceled: '해지', refunded: '환불', incomplete: '미완료' }[k] || k) + '</span>' : '';
+async function copyText(text) { try { await navigator.clipboard.writeText(text); return true; } catch { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); return true; } catch { return false; } finally { ta.remove(); } } }
 function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 2200); }
 async function api(path, body) {
   const r = await fetch('/admin/api/' + path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {});
@@ -171,6 +178,7 @@ async function tower() {
       '<a class="big" href="#/review"><span class="l">오늘 내 차례</span><span class="n">' + todo.length + '<small>건 · 예상 ' + hrs(d.todoMin) + '</small></span><span style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">' + ['검증', '승인', '직접'].map((k) => '<span class="chip">' + k + ' ' + todo.filter((t) => t.kind === k).length + '</span>').join('') + '</span></a>' +
       tile(d.aiDone24h, 'AI가 끝냄 (24시간)', '단계 · 고객 ' + d.aiDoneJobs + '곳', 'var(--green)', '#/customers') +
       tile(d.customerWait, '고객 차례', '고객 ' + d.customerWaitJobs + '곳 · 리마인더 자동', 'var(--amber)', '#/customers?f=customer') +
+      tile(d.aiStuck, 'AI 차례인데 멈춤', d.aiPending + '단계 대기 · 지시서 복사해 실행', d.aiStuck ? 'var(--red)' : 'inherit', '#/customers?f=stuck') +
       tile(d.blocked, '막힌 고객', d.blockedTasks + '단계 · GBP API · fal.ai 등', d.blocked ? 'var(--red)' : 'inherit', '#/customers?f=blocked') +
       tile(money(d.monthRevenueCents), '이달 입금 · 활성 구독', '구독 ' + d.activeSubs + ' · MRR ' + money(d.mrrCents), 'inherit', '#/more') +
     '</section>' +
@@ -203,7 +211,7 @@ function custRow(c) {
   const nextText = n ? (n.who === 'customer' ? '고객: ' : n.who === 'auto' || (n.who === 'ai' && n.status !== 'review') ? 'AI: ' : '') + n.title + (n.min && n.who !== 'customer' ? ' (' + n.min + '분)' : '') : '전부 완료';
   const barColor = c.pct >= 90 ? '#0B9E58' : c.counts.customer && !isMine(c) ? '#F59E0B' : '#0A4DF5';
   return '<a class="cust" href="#/jobs/' + c.id + '"><span class="av" style="background:' + avColor(c.business) + '">' + esc(initial(c.business)) + '</span>' +
-    '<span class="nm"><b>' + esc(c.business) + '</b><span>' + esc(c.service_name) + ' · D+' + c.day + '</span></span>' +
+    '<span class="nm"><b>' + esc(c.business) + (c.aiStuck ? '<span class="badge-stuck">AI ' + c.stuckDays + '일 멈춤</span>' : '') + '</b><span>' + esc(c.service_name) + ' · D+' + c.day + '</span></span>' +
     '<span class="pr"><span class="t"><span>' + esc(c.phase) + '</span><b>' + c.pct + '%</b></span><span class="bar"><i style="width:' + c.pct + '%;background:' + barColor + '"></i><em style="left:10%"></em><em style="left:40%"></em></span><span style="display:flex;gap:4px">' + c.dots.map((x) => '<i class="dot s" style="background:' + x + '"></i>').join('') + '</span></span>' +
     '<span class="nx"><span>다음</span><b><i class="dot s" style="background:' + nextColor + '"></i>' + esc(nextText) + '</b></span>' + dueHtml(c.dueInfo) + '</a>';
 }
@@ -212,19 +220,20 @@ function custRow(c) {
 async function customers() {
   const f = qs().get('f') || 'open';
   const d = await api('tower?sort=' + towerSort + '&scope=all'); if (!d) return;
-  const rows = d.customers.filter((c) => f === 'all' || (f === 'open' && c.status !== 'done' && c.status !== 'hold') || (f === 'customer' && c.counts.customer) || (f === 'blocked' && c.counts.blockedAll) || (f === 'done' && (c.status === 'done' || c.status === 'hold')));
-  app.innerHTML = '<h1>고객</h1><div class="sec"><div class="sec-h"><div class="chips">' + [['open', '진행 중'], ['customer', '고객 차례'], ['blocked', '막힘'], ['done', '완료·보류'], ['all', '전체']].map(([k, l]) => '<a href="#/customers?f=' + k + '" class="' + (f === k ? 'on' : '') + '">' + l + '</a>').join('') + '</div><span class="sp" style="flex:1"></span><div class="chips"><button data-s="due" class="' + (towerSort === 'due' ? 'on' : '') + '">마감 순</button><button data-s="progress" class="' + (towerSort === 'progress' ? 'on' : '') + '">진행률 낮은 순</button></div></div>' + legendHtml() + (rows.length ? rows.map(custRow).join('') : '<div class="empty">없음</div>') + '</div>';
+  const rows = d.customers.filter((c) => f === 'all' || (f === 'open' && c.status !== 'done' && c.status !== 'hold') || (f === 'customer' && c.counts.customer) || (f === 'blocked' && c.counts.blockedAll) || (f === 'stuck' && c.aiStuck) || (f === 'done' && (c.status === 'done' || c.status === 'hold')));
+  app.innerHTML = '<h1>고객</h1><div class="sec"><div class="sec-h"><div class="chips">' + [['open', '진행 중'], ['stuck', 'AI 멈춤'], ['customer', '고객 차례'], ['blocked', '막힘'], ['done', '완료·보류'], ['all', '전체']].map(([k, l]) => '<a href="#/customers?f=' + k + '" class="' + (f === k ? 'on' : '') + '">' + l + '</a>').join('') + '</div><span class="sp" style="flex:1"></span><div class="chips"><button data-s="due" class="' + (towerSort === 'due' ? 'on' : '') + '">마감 순</button><button data-s="progress" class="' + (towerSort === 'progress' ? 'on' : '') + '">진행률 낮은 순</button></div></div>' + legendHtml() + (rows.length ? rows.map(custRow).join('') : '<div class="empty">없음</div>') + '</div>';
   app.querySelectorAll('[data-s]').forEach((b) => b.onclick = () => { towerSort = b.dataset.s; try { localStorage.setItem('bh.sort', towerSort); } catch {} customers(); });
 }
 
 /* ---------- 고객 여정 ---------- */
 async function journey(id) {
   const d = await api('jobs/' + id); if (!d) return;
-  const { job, order, payments, intake, events, deliverables, tasks, lanes, services, milestones, next, summary, history, intakeCandidates } = d;
+  const { job, order, payments, intake, events, deliverables, tasks, lanes, services, milestones, next, summary, history, intakeCandidates, aiPending, stuck, stuckDays, brief, progressSummary: ps } = d;
+  const isAiNext = next && (next.who === 'auto' || (next.who === 'ai' && next.status !== 'review'));
   const hl = qs().get('task');
   const biz = job.business || (order && order.customer_name) || '(업체명 없음)';
   const msState = { done: ['#0B9E58', '#0B9E58', '✓', '#111318'], now: ['#0A4DF5', '#BFDBFE', '', '#0A4DF5'], todo: ['#ffffff', '#D1D5DB', '', '#6B7280'], skip: ['#ffffff', '#E5E7EB', '–', '#9CA3AF'] };
-  const nowCard = next ? '<div class="now"><span class="l">지금 할 일</span><span class="t">' + esc(next.title) + '</span><span class="d">' + (next.who === 'customer' ? '고객이 해야 합니다. 리마인더는 자동으로 나갑니다.' : next.status === 'review' ? 'AI가 만든 결과물을 보고 승인하면 다음 단계가 올라옵니다.' + (next.min ? ' 약 ' + next.min + '분.' : '') : next.who === 'david' ? 'David가 직접 하는 단계입니다.' + (next.min ? ' 약 ' + next.min + '분.' : '') : next.status === 'blocked' || next.who === 'blocked' ? '외부 승인·결정이 필요해 멈춰 있습니다.' : 'AI가 진행 중입니다. 끝나면 검증 큐에 올라옵니다.') + '</span>' +
+  const nowCard = next && isAiNext ? '<div class="now" style="background:' + (stuck ? '#7F1D1D' : 'var(--navy)') + '"><span class="l">지금 할 일 — AI 차례' + (stuck ? ' · ' + stuckDays + '일째 멈춤' : '') + '</span><span class="t">' + esc(next.title) + '</span><span class="d">AI 단계는 저절로 돌지 않습니다. 아래 버튼으로 지시서를 복사해 claude.ai(fulfillment)에 붙여넣으면 AI가 이 작업의 AI 단계 ' + aiPending.length + '개를 만들어 검증 큐에 올립니다.</span><button class="btn lg white" id="copy-brief">AI 실행 지시 복사 (' + aiPending.length + '단계)</button><span class="s">루틴이 붙으면 이 단계는 매일 자동으로 돕니다 (CLAUDE.md §19-16)</span></div>' : next ? '<div class="now"><span class="l">지금 할 일</span><span class="t">' + esc(next.title) + '</span><span class="d">' + (next.who === 'customer' ? '고객이 해야 합니다. 리마인더는 자동으로 나갑니다.' : next.status === 'review' ? 'AI가 만든 결과물을 보고 승인하면 다음 단계가 올라옵니다.' + (next.min ? ' 약 ' + next.min + '분.' : '') : next.who === 'david' ? 'David가 직접 하는 단계입니다.' + (next.min ? ' 약 ' + next.min + '분.' : '') : next.status === 'blocked' || next.who === 'blocked' ? '외부 승인·결정이 필요해 멈춰 있습니다.' : 'AI가 진행 중입니다. 끝나면 검증 큐에 올라옵니다.') + '</span>' +
     (next.status === 'review' ? '<a class="btn lg white" href="#/review?task=' + next.id + '">검증 시작 →</a>' : next.who === 'david' && next.status !== 'blocked' ? '<button class="btn lg white" data-done="' + next.id + '">끝냈어요 ✓</button>' : '') +
     '<span class="s">' + (next.status === 'review' ? '승인하면 → 결과물 목록 등록 · 발송 대기 · 타임라인 기록 · 다음 단계가 내 차례로' : '완료 처리하면 다음 단계가 자동으로 올라옵니다') + '</span></div>' : '<div class="now"><span class="l">지금 할 일</span><span class="t">없음 — 모든 단계가 끝났습니다</span></div>';
 
@@ -236,8 +245,15 @@ async function journey(id) {
       '<div class="ms"><div class="ln"><i style="width:' + Math.max(0, Math.min(100, (milestones.filter((m) => m.state === 'done').length / 5) * 100)) + '%"></i></div><div class="g">' + milestones.map((m, i) => { const s = msState[m.state] || msState.todo; return '<div><span class="c" style="background:' + s[0] + ';border-color:' + s[1] + '">' + (s[2] || (i + 1)) + '</span><span class="l" style="color:' + s[3] + '">' + esc(m.label) + '</span><span class="s">' + esc(m.sub || '') + '</span></div>'; }).join('') + '</div></div></section>' +
 
     nowCard +
+    '<section class="sec"><div class="sec-h"><h2>어디까지 됐나</h2><span class="m">단계 ' + tasks.length + '개 중</span></div>' +
+      '<div class="sum"><div><b style="color:var(--green)">' + ps.done + '</b><span>완료</span></div><div><b style="color:var(--purple)">' + ps.review + '</b><span>검증 대기</span></div><div><b>' + ps.remaining + '</b><span>남음</span></div><div><b style="color:var(--green)">' + (ps.byOwner.auto.done + ps.byOwner.ai.done) + '/' + (ps.byOwner.auto.done + ps.byOwner.ai.done + ps.byOwner.auto.left + ps.byOwner.ai.left) + '</b><span>AI 단계</span></div><div><b style="color:var(--blue)">' + ps.byOwner.david.done + '/' + (ps.byOwner.david.done + ps.byOwner.david.left) + '</b><span>David 단계</span></div><div><b style="color:var(--amber)">' + ps.byOwner.customer.done + '/' + (ps.byOwner.customer.done + ps.byOwner.customer.left) + '</b><span>고객 단계</span></div></div>' +
+      '<div style="display:flex;flex-direction:column;gap:6px">' + ps.byPhase.map((p) => '<div style="display:flex;align-items:center;gap:10px;font-size:13px"><span style="width:150px;flex:0 0 150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(p.label.split(' — ')[0]) + '</span><span class="bar" style="flex:1;height:8px"><i style="width:' + Math.round((p.done / p.total) * 100) + '%;background:' + (p.done === p.total ? '#0B9E58' : '#0A4DF5') + '"></i></span><span style="width:60px;text-align:right;font-weight:700">' + p.done + '/' + p.total + '</span></div>').join('') + '</div>' +
+      '<details style="margin-top:10px"><summary class="ph" style="border-top:0;padding-top:4px">완료된 것 ' + ps.done + '개 — 내용 보기</summary>' + tasks.filter((t) => t.status === 'done' || t.status === 'skipped').map((t) => aiItem(t, true)).join('') + '</details>' +
+      '<details style="margin-top:4px"><summary class="ph" style="border-top:0;padding-top:4px">남은 것 ' + (ps.remaining + ps.review) + '개 — 누가 하나</summary>' + tasks.filter((t) => t.status !== 'done' && t.status !== 'skipped').map((t) => '<div class="li"><span class="ic">' + ((WHO[t.who] || {}).icon || '') + '</span><span class="m">' + esc(t.title) + '<small>' + esc(t.service_name) + ' · ' + esc((WHO[t.who] || {}).label || t.who) + (t.status === 'review' ? ' · 검증 대기' : t.status === 'doing' ? ' · 진행 중' : t.status === 'blocked' ? ' · 막힘' : '') + (t.david_min ? ' · ' + t.david_min + '분' : '') + '</small></span></div>').join('') + '</details>' +
+    '</section>' +
+    (aiPending.length ? '<div class="aibox' + (stuck ? ' stuck' : '') + '"><div class="h">AI가 할 차례 ' + aiPending.length + '단계' + (stuck ? '<span class="badge-stuck">' + stuckDays + '일째 멈춤</span>' : '') + '<small>저절로 돌지 않음 — 지시서를 복사해 claude.ai에 붙여넣거나 루틴이 실행</small><span style="flex:1"></span><button class="btn sm" id="copy-brief-2">지시서 복사</button></div>' + aiPending.map((t) => '<div class="li"><span class="ic">' + ((WHO[t.who] || {}).icon || '') + '</span><span class="m">' + esc(t.title) + '<small>' + esc(t.service_name) + (t.revise_note ? ' · 수정 요청: ' + esc(t.revise_note) : '') + (t.status === 'doing' ? ' · 진행 중' : '') + '</small></span></div>').join('') + '</div>' : '') +
     '<section class="lanes">' +
-      '<div class="lane" style="border-color:#0B9E58"><div class="h">AI가 했음 <small>최근 7일 · 내 시간 0분</small></div>' + (lanes.ai.length ? lanes.ai.map((t) => '<div class="li"><span style="color:#0B9E58;font-weight:800">✓</span><span class="m">' + esc(t.title) + '<small>' + esc(t.service_name) + ' · ' + day(t.done_at) + '</small></span></div>').join('') : '<div class="muted" style="padding:8px 0">아직 없음</div>') + '</div>' +
+      '<div class="lane" style="border-color:#0B9E58"><div class="h">AI가 했음 <small>최근 7일 · 눌러서 내용 확인·수정</small></div>' + (lanes.ai.length ? lanes.ai.map((t) => aiItem(t, false)).join('') : '<div class="muted" style="padding:8px 0">아직 없음</div>') + '</div>' +
       '<div class="lane mine"><div class="h" style="color:#0A4DF5">내 차례 <small>' + lanes.mine.length + '단계 · ' + lanes.mine.reduce((a, t) => a + (t.david_min || 0), 0) + '분</small></div>' + (lanes.mine.length ? lanes.mine.map((t) => '<div class="li">' + kindTag(t.status === 'review' ? (t.verify ? '검증' : '승인') : '직접') + '<span class="m">' + esc(t.title) + '<small>' + esc(t.service_name) + (t.david_min ? ' · ' + t.david_min + '분' : '') + '</small></span>' + (t.status === 'review' ? '<a class="btn sm" href="#/review?task=' + t.id + '">' + (t.verify ? '검증' : '승인') + '</a>' : '<button class="btn sm ghost" data-done="' + t.id + '">완료</button>') + '</div>').join('') : '<div class="muted" style="padding:8px 0">지금은 없음</div>') + '</div>' +
       '<div class="lane" style="border-color:#F59E0B"><div class="h" style="color:#B45309">고객 차례 <small>' + lanes.customer.length + '건 · 리마인더 자동</small></div>' + (lanes.customer.length ? lanes.customer.map((t) => '<div class="li"><span class="m">' + esc(t.title) + '<small>' + esc(t.service_name) + (t.block ? ' · ' + esc(t.block) : '') + '</small></span><button class="btn sm ghost" data-done="' + t.id + '">받았음</button></div>').join('') : '<div class="muted" style="padding:8px 0">기다리는 것 없음</div>') +
         (lanes.blocked.length ? '<div class="h" style="color:#D3382F;margin-top:10px">막힘 <small>' + lanes.blocked.length + '</small></div>' + lanes.blocked.map((t) => '<div class="li"><span class="m">' + esc(t.title) + '<small>' + esc(t.block || '') + '</small></span></div>').join('') : '') + '</div>' +
@@ -259,6 +275,10 @@ async function journey(id) {
 
   const reload = () => journey(id);
   const act = async (fn, msg) => { try { await fn(); toast(msg); reload(); } catch (e) { toast('오류: ' + e.message); } };
+  for (const bid of ['copy-brief', 'copy-brief-2']) { const b = $('#' + bid); if (b) b.onclick = async () => toast((await copyText(brief)) ? '지시서 복사됨 — claude.ai에 붙여넣으세요' : '복사 실패 — 아래 지시서를 직접 선택하세요'); }
+  app.querySelectorAll('[data-reopen]').forEach((b) => b.onclick = () => { const note = prompt('무엇을 고칠까요? (AI가 다시 합니다)'); if (!note) return; act(() => api('tasks/' + b.dataset.reopen + '/reopen', { note }), '다시 열림 — AI 차례로'); });
+  app.querySelectorAll('[data-edit]').forEach((b) => b.onclick = () => { const box = app.querySelector('[data-editbox="' + b.dataset.edit + '"]'); box.style.display = box.style.display === 'none' ? '' : 'none'; });
+  app.querySelectorAll('[data-editsave]').forEach((b) => b.onclick = () => { const box = app.querySelector('[data-editbox="' + b.dataset.editsave + '"]'); act(() => api('tasks/' + b.dataset.editsave + '/edit', { text: box.querySelector('textarea').value, url: box.querySelector('input').value }), '결과물 저장'); });
   app.querySelectorAll('[data-done]').forEach((b) => b.onclick = () => act(() => api('tasks/' + b.dataset.done + '/status', { status: 'done' }), '완료 — 다음 단계로'));
   app.querySelectorAll('select[data-task]').forEach((sel) => sel.onchange = () => act(() => api('tasks/' + sel.dataset.task + '/status', { status: sel.value }), '단계 저장'));
   app.querySelectorAll('[data-sent]').forEach((b) => b.onclick = () => act(() => api('jobs/' + id + '/deliverable/' + b.dataset.sent, { sent: b.dataset.v === '1' }), '저장'));
@@ -272,6 +292,19 @@ async function journey(id) {
   if (hl) { const el = app.querySelector('.tk.hl'); if (el) setTimeout(() => el.scrollIntoView({ block: 'center' }), 50); }
 }
 function kv(k, v) { return '<dt>' + k + '</dt><dd>' + (v || '<span class="muted">—</span>') + '</dd>'; }
+/* 완료된 단계 1건 — 결과물 펼쳐 보기 + 수정 요청 + 직접 고치기 */
+function aiItem(t, showWho) {
+  const has = !!(t.result_text || t.result_url);
+  const w = WHO[t.who] || { icon: '', label: t.who };
+  const head = '<span style="color:#0B9E58;font-weight:800">✓</span><span class="m">' + esc(t.title) + (has ? '<span class="more">내용 보기 ▾</span>' : '') + '<small>' + esc(t.service_name) + (showWho ? ' · ' + esc(w.label) : '') + ' · ' + day(t.done_at) + (t.note ? ' · ' + esc(t.note) : '') + '</small></span>';
+  if (!has) return '<div class="li">' + head + '</div>';
+  const body = (t.result_url ? '<div style="margin-top:6px"><a class="btn ghost sm" target="_blank" href="' + esc(t.result_url) + '">' + (/drive\.google/.test(t.result_url) ? 'Drive에서 열기' : '열기') + ' ↗</a> <span class="muted" style="font-size:12px">' + esc(t.result_url) + '</span></div>' : '') +
+    (t.result_text ? (t.result_kind === 'html' ? '<div class="frame" style="margin-top:6px"><iframe sandbox="" srcdoc="' + esc(t.result_text) + '" title="결과물"></iframe></div>' : '<div class="res">' + esc(t.result_text) + '</div>') : '') +
+    (t.self_check ? '<div class="muted" style="font-size:12px;margin-top:4px">AI 자기 점검: ' + esc(t.self_check) + '</div>' : '') +
+    '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button class="btn ghost sm" data-reopen="' + t.id + '">수정 요청 (AI 재작업)</button><button class="btn ghost sm" data-edit="' + t.id + '">직접 고치기</button></div>' +
+    '<div data-editbox="' + t.id + '" style="display:none;margin-top:8px" class="frm"><textarea class="in" style="min-height:140px;font-size:13px">' + esc(t.result_text || '') + '</textarea><div class="h"><input class="in" placeholder="링크" value="' + esc(t.result_url || '') + '"><button class="btn sm" data-editsave="' + t.id + '">저장</button></div></div>';
+  return '<details class="ai"><summary class="li">' + head + '</summary><div style="padding:0 0 8px 26px">' + body + '</div></details>';
+}
 function linkify(s) { return esc(s || '').replace(/(https?:\/\/[^\s,]+)/g, '<a target="_blank" href="$1">$1</a>'); }
 
 function taskList(tasks, who, phases, taskStatuses, editable, hl) {
