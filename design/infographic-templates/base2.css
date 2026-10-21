@@ -10,3 +10,6 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:46px;letter-spaci
 .foot{position:absolute;left:84px;right:84px;bottom:36px;display:flex;justify-content:space-between;align-items:center;font-size:13px;letter-spacing:.3em;color:#9AA1B2;font-weight:500}
 .foot b{color:var(--ink);font-weight:700}
 .foot:before{content:"";position:absolute;left:0;right:0;top:-18px;height:1px;background:var(--hair)}
+.tag{position:absolute;right:84px;top:66px;font-size:13px;letter-spacing:.22em;color:var(--sub);border:1px solid var(--hair);padding:6px 12px;border-radius:999px;font-weight:500}
+.note{position:absolute;left:84px;bottom:66px;font-size:14px;color:#8A93A8}
+svg text{font-family:'Noto Sans KR',sans-serif}
