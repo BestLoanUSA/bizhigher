@@ -53,6 +53,7 @@
 - 한/영 가게 소개문 생성기 (무료, 이메일만 입력): https://bizhigher.com/tools/bilingual-intro/ — 한국어로 쓴 가게 소개를 구글 프로필 규격(750자)에 맞는 자연스러운 영어·한국어 소개로 다듬습니다.
 
 ## 블로그 (한인 비즈니스 마케팅 가이드)
+- 가게 이메일·문자 마케팅 입문 — 단골에게 다시 오게 하는 법: https://bizhigher.com/blog/email-sms-marketing-basics/
 - 리뷰 요청 QR 코드, 어디에 붙여야 효과가 있을까: https://bizhigher.com/blog/review-qr-code-placement/
 - 영업시간·휴무일 변경, 구글 프로필에 제대로 반영하는 법: https://bizhigher.com/blog/google-business-profile-hours-update/
 - 구글 프로필 Q&A가 사라진 뒤 — 손님 질문에 미리 답해두는 법: https://bizhigher.com/blog/google-business-profile-qa-removed/
