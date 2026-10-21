@@ -386,6 +386,17 @@ img { max-width: 100%; display: block; }
 }
 .input { border: 1.5px solid var(--line); border-radius: 12px; padding: 16px 18px; font-size: 16px; font-family: inherit; color: var(--ink-900); background: #fff; width: 100%; transition: border-color .15s ease, box-shadow .15s ease; }
 .input:focus { outline: none; border-color: var(--blue-600); box-shadow: 0 0 0 3px rgba(10, 77, 245, 0.12); }
+.form-sec { font-weight: 800; color: var(--navy-900, #0A1B4D); font-size: 14px; margin: 6px 0 -4px; }
+/* 제출 진행 — BizHigher 로고가 왼쪽부터 파란색으로 차오른다 */
+.bh-loader { display: none; flex-direction: column; align-items: center; gap: 6px; padding: 10px 0 2px; }
+.bh-loader.on { display: flex; }
+.bh-word { position: relative; font-size: 26px; font-weight: 800; letter-spacing: -0.02em; color: #D1D5DB; line-height: 1.2; padding-right: 3px; }
+.bh-word::before { content: attr(data-text); }
+.bh-fill { position: absolute; left: 0; top: 0; height: 100%; overflow: hidden; white-space: nowrap; color: var(--blue-600); width: 0; transition: width .4s ease; }
+.bh-loader.busy .bh-fill { animation: bh-pulse 1.1s ease-in-out infinite; }
+@keyframes bh-pulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+.bh-step { font-size: 13px; color: var(--ink-600, #6B7280); text-align: center; }
+@media (prefers-reduced-motion: reduce) { .bh-fill { transition: none; } .bh-loader.busy .bh-fill { animation: none; } }
 .place-box { border: 1.5px solid var(--line); border-radius: 12px; padding: 14px 16px; background: #F7FAFF; }
 .place-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
 .place-list:empty { display: none; }

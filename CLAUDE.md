@@ -80,6 +80,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | 서비스 페이지 검색용 가이드·추가 FAQ | `content/services/{slug}.md` — 질문형 `##` 섹션 + `## 자주 묻는 질문`. 가격은 여기 쓰지 않는다(`services.json`이 원본) |
 | 무료 도구 `/tools/` | 목록·외부 도구 `data/tools.json` · 화면 `src/tools/{slug}.html` · 동작 `src/tools/{slug}.js`(+`common.js`) · 서버 `functions/api/tools/[tool].js`(공용 `_shared.js`) · 설명·FAQ `content/tools/{slug}.md` (§5-1) |
 | 결제 후 질문지 첨부(사진·로고·PDF) | 화면 `build.js`의 `/thanks/` 폼(`file-box`) · 서버 `functions/api/upload.js`(R2 `R2_ASSETS` 필수, 파일당 10MB, IP·일 30개) · 공개 URL `/a/{id}.{ext}`(`functions/a/[id].js`, SVG·PDF는 CSP sandbox). URL은 질문지 `notes` 끝 "── 첨부 파일 ──" 블록에 들어가 관리자·루틴(`job.intake.notes`)이 본다 |
+| 질문지 제출 완료 페이지 `/thanks/done/` | `build.js`의 `thanksDonePage()` — 제출 후 리다이렉트(`?service=&files=&b=`). 진행 순서 4단계(패키지가 아니면 4단계 숨김)·미리 준비할 것(GBP 관리자 초대 hello@)·무료 진단 CTA 없음(`FOOTER_BASE`). 첨부는 최대 30개 |
 | 결제 후 질문지 "구글에서 내 가게 찾기" | `functions/api/place-lookup.js`(Places Text Search, IP·이메일 하루 10회 `intake-place`) · 화면은 `build.js` `/thanks/` 폼 상단 `place-box`. 고객이 고르면 상호·전화·링크가 채워지고 주소·카테고리·영업시간·평점·place_id·지도 링크가 `notes` 맨 앞 "── 구글 프로필 공개 정보 ──" 블록으로 들어간다(고객 본인 가게 정보라 저장 OK). `?email=&business=&contact=&phone=`로 미리 채우기 가능(데모가 쓴다) |
 | 진단 채점 로직 | `functions/api/_engine.js` |
 | 리포트 디자인 | `functions/report/[id].js` |
