@@ -206,6 +206,16 @@ async function api(env, method, seg, body, url) {
       await addEvent(db, t.job_id, 'task', null, null, `✎ 결과물 직접 수정 — ${t.title}`);
       return {};
     }
+    if (sub === 'note') {
+      await db.prepare(`UPDATE job_tasks SET note = ? WHERE id = ?`).bind(String(body.note || '').slice(0, 2000), t.id).run();
+      return {};
+    }
+    if (sub === 'undo') {
+      // "받았음"·"완료"를 되돌린다 — 다시 대기로. 타임라인에 남긴다
+      await db.prepare(`UPDATE job_tasks SET status = 'todo', done_at = NULL WHERE id = ?`).bind(t.id).run();
+      await addEvent(db, t.job_id, 'task', null, null, `↩ 완료 취소 — ${t.title}${note ? ': ' + note : ''}`);
+      return {};
+    }
     if (sub === 'reopen') {
       // 완료된 AI 단계를 다시 열어 수정 요청
       if (!note) throw bad('무엇을 고칠지 적어 주세요');
@@ -229,7 +239,7 @@ async function api(env, method, seg, body, url) {
       if (!TASK_STATUSES.some(([k]) => k === to)) throw bad('잘못된 단계 상태');
       await db.prepare(`UPDATE job_tasks SET status = ?, done_at = CASE WHEN ? = 'done' THEN datetime('now') ELSE done_at END WHERE id = ?`).bind(to, to, t.id).run();
       if (note) await db.prepare(`UPDATE job_tasks SET note = ? WHERE id = ?`).bind(note, t.id).run();
-      if (to === 'done') { await addEvent(db, t.job_id, 'task', null, null, `✔ ${t.title}`); await autoAdvance(db, t.job_id); }
+      if (to === 'done') { await addEvent(db, t.job_id, 'task', null, null, `✔ ${t.title}${t.who === 'customer' && note ? ' — 받은 것: ' + note : ''}`); await autoAdvance(db, t.job_id); }
       else if (to === 'review') await addEvent(db, t.job_id, 'task', null, null, `👀 검증 요청 — ${t.title}`);
       else if (to === 'blocked') await addEvent(db, t.job_id, 'task', null, null, `⛔ 막힘 — ${t.title}`);
       return {};
@@ -346,6 +356,7 @@ async function api(env, method, seg, body, url) {
       ai: tasks.filter((t) => CLOSED.has(t.status) && t.who !== 'david' && t.who !== 'customer' && (t.done_at || '') >= since).slice(-8),
       mine: tasks.filter((t) => t.status === 'review' || (t.who === 'david' && t.status === 'doing') || (cur.includes(t) && t.who === 'david' && t.status === 'todo')).slice(0, 8),
       customer: cur.filter((t) => t.who === 'customer' && t.status !== 'blocked').slice(0, 8),
+      received: tasks.filter((t) => t.who === 'customer' && t.status === 'done').sort((a, b) => String(b.done_at || '').localeCompare(String(a.done_at || ''))).slice(0, 12),
       blocked: tasks.filter((t) => t.status === 'blocked').slice(0, 8),
     };
     // 서비스별 진행
