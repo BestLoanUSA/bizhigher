@@ -61,7 +61,7 @@ export const PLAYBOOK = {
   },
   'local-listing-setup': {
     name: '로컬 등록 셋업', steps: [
-      S('lls-1', '디렉토리 마스터 목록(등록 URL·인증 방식·자동화 가능 여부) 확정', 'setup', 'blocked', 0, { block: 'CLAUDE.md §19-10 미작성. 이게 없으면 120곳은 손으로 못 한다', next: '목록 작성 → 등록 가능 여부별로 자동/반자동/수동 분류' }),
+      S('lls-1', '디렉토리 마스터 목록(등록 URL·인증 방식·자동화 가능 여부) 확정', 'setup', 'auto', 0, { block: 'docs/listings-master-30-ko.md(2026-10-21) 기준. 업종별 추가 디렉토리는 루틴이 보강해 lls-3 NAP 문서에 붙인다' }),
       S('lls-2', '고객 전용 인증 이메일 발급 — {고객}@listings.bizhigher.com (Cloudflare Email Routing)', 'setup', 'david', 5, { next: 'Cloudflare API로 자동 발급' }),
       S('lls-3', 'NAP 표준 문서·설명문·카테고리·사진 세트 준비', 'setup', 'ai', 5, { verify: true }),
       S('lls-4', 'Bing Places — GBP 가져오기', 'setup', 'david', 10),
@@ -171,7 +171,7 @@ export const PLAYBOOK = {
   'shortform-video': {
     name: '숏폼 영상 (Premium 4편/월)', steps: [
       S('sv-1', '월초 기획안 4편 — 훅·장면·자막·음악 → 고객 승인', 'monthly', 'customer', 10, { verify: true }),
-      S('sv-2', '영상 생성 — 매장 사진·영상 기반, 자막·로고·음악 편집, 릴스·틱톡·쇼츠 규격', 'monthly', 'blocked', 0, { block: 'fal.ai 미구축(§19-5, 선불 $50·자동충전 OFF로 시작 예정). Higgsfield는 편당 비용 큼', next: 'fal.ai 계정 + 템플릿 파이프라인 → AI+검수' }),
+      S('sv-2', '영상 생성 — 고객 매장 사진으로 5초 클립(릴스·틱톡·쇼츠 9:16), 자막·로고·음악은 David 편집', 'monthly', 'auto', 0, { block: '루틴이 fal.ai 이미지→영상(Kling 2.1, 편당 약 $0.25~0.5)으로 클립을 만든다(creative.js video). 자막·로고·음악 합성은 sv-3에서 David(CapCut)', next: '자막 자동 합성(drawtext 지원 ffmpeg) → 편집까지 자동' }),
       S('sv-3', 'David 검수 (톤·사실·자막 오탈자)', 'monthly', 'david', 20, { verify: true }),
       S('sv-4', '게시 — 릴스·틱톡·쇼츠', 'monthly', 'david', 20, { block: '세 플랫폼 모두 앱 심사 없이는 API 게시 불가', next: '예약 툴(Publer·Later류)로 한 번에 예약' }),
     ],
@@ -201,6 +201,9 @@ const GIFTS = {
 };
 
 /** slug(서비스 또는 패키지-기간) → 적용할 서비스 slug 목록 */
+/* 승인·완료 시 "결과물 · 발송" 목록(고객 전달)에 올라가는 단계 — 나머지는 내부 작업물이라 올리지 않는다 (2026-10-21: 매 단계마다 초안 메일이 가던 문제) */
+export const DELIVER_KEYS = new Set(['ob-5', 'gpo-5', 'qr-3', 'lls-7', 'ads-5', 'llp-4', 'web-4', 'post-2', 'post-7', 'rr-7', 'ac-5', 'cp-2', 'mr-4', 'seo-3', 'seo-4', 'seo-8', 'sv-2', 'am-5', 'llc-2']);
+
 export function servicesFor(slug) {
   if (!slug) return [];
   const m = /^(local-(?:starter|growth|premium))(?:-(monthly|six|annual|installment))?$/.exec(slug);

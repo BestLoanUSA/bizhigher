@@ -11,7 +11,7 @@ const HEADERS = (ct) => {
 };
 
 export async function onRequestGet({ params, env }) {
-  const id = String(params.id || '').replace(/\.(jpe?g|png|webp|gif|heic|svg|pdf)$/i, '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 32);
+  const id = String(params.id || '').replace(/\.(jpe?g|png|webp|gif|heic|svg|pdf|mp4|webm)$/i, '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 32);
   if (!id || !env.DB) return new Response('not found', { status: 404 });
   const row = await env.DB.prepare('SELECT data, content_type, r2_key FROM assets WHERE id = ?').bind(id).first().catch(() => null);
   if (!row) return new Response('not found', { status: 404 });

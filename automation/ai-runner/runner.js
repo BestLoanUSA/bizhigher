@@ -6,7 +6,8 @@
  *   node automation/ai-runner/runner.js queue [--limit 20]                 # 할 단계 + 고객 컨텍스트 + Gmail 초안 대기 (JSON)
  *   node automation/ai-runner/runner.js submit --task 123 --file out.md [--url https://…] [--kind text|html|link]
  *                                              [--checks "포인트1|포인트2|포인트3"] [--self-check "…"] [--done]   # 기본 검증 큐(review), --done 이면 바로 완료(verify=0 단계)
- *   node automation/ai-runner/runner.js draft --deliverable 7 --file body.txt    # 고객용 초안 본문을 Resend로 David 메일에 보낸다(고객 발송 아님) + drafted 기록
+ *   node automation/ai-runner/runner.js draft --job 5 --file body.txt            # 그 작업의 초안 대기 결과물 전부를 한 통으로 David 메일에(고객 발송 아님) + drafted 기록
+ *   node automation/ai-runner/runner.js draft --deliverable 7 --file body.txt    # 결과물 1건만
  *   node automation/ai-runner/runner.js drafted --deliverable 7 [--note "초안 제목"]   # Gmail 초안을 다른 경로로 만든 뒤 기록만
  *   node automation/ai-runner/runner.js note --job 5 --text "…"                      # 타임라인 메모
  *
@@ -63,10 +64,16 @@ async function api(path, body) {
     console.log(`완료: task ${id}`);
     return;
   }
-  if (cmd === 'draft') { // Resend → David(NOTIFY_EMAIL). 고객에게는 가지 않는다
-    const id = Number(opt('deliverable'));
+  if (cmd === 'draft') { // Resend → David(NOTIFY_EMAIL). 고객에게는 가지 않는다. --job 이면 그 작업의 초안 대기 결과물을 한 통으로 묶는다
     const file = opt('file');
-    if (!id || !file) throw new Error('--deliverable ID --file body.txt 가 필요합니다');
+    if (!file) throw new Error('--file body.txt 가 필요합니다');
+    if (opt('job')) {
+      const r = await api(`jobs/${Number(opt('job'))}/draft-batch`, { text: fs.readFileSync(file, 'utf8') });
+      console.log(`전달: job ${opt('job')} 결과물 ${r.count}건을 한 통으로 David 메일로`);
+      return;
+    }
+    const id = Number(opt('deliverable'));
+    if (!id) throw new Error('--job ID 또는 --deliverable ID 가 필요합니다');
     await api(`deliverables/${id}/draft-to-david`, { text: fs.readFileSync(file, 'utf8') });
     console.log(`전달: deliverable ${id} 초안을 David 메일로`);
     return;

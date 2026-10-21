@@ -303,7 +303,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 
 - claude.ai/code Routine "BizHigher AI 실행 루틴", `CRON_TZ=America/Los_Angeles 23 7-21/2 * * *`(LA 7:23부터 2시간마다, 21:23까지 하루 8회 — 2026-10-21 David 결정. 승인 뒤 다음 AI 단계가 2시간 안에 열린다), 매번 새 세션, Gmail 커넥터 없음(조직 정책). 할 일이 없는 실행은 약 30초·$0.15. 코드·절차는 `automation/ai-runner/README.md`
 - 흐름: `runner.js queue`(관리자 API `GET /admin/api/runner/queue` — 같은 서비스 앞 단계가 끝난 AI 단계만) → 플레이북대로 결과물 생성 → `submit`(verify면 검증 큐, 아니면 done) → 발송 대기 결과물은 `draft`(Resend로 **David 메일**에 고객용 초안 본문, 고객에게는 안 감) → 작업별 메모. 루틴 세션에는 Gmail 커넥터를 붙일 수 없어(조직 정책) Resend 경로를 쓴다
-- **2026-10-21 확장**: 우리 가게 공개 정보는 `places.js lookup`(고객 프로필 단계와 "GBP·구글 프로필 확인" 수정 요청에서 — 주소·전화·웹사이트·카테고리·영업시간·평점·리뷰 수·place_id·지도 링크·사진 수·소개문을 "(Places 공개 정보, 날짜)" 표시로 채운다), 경쟁사 갭 분석은 `places.js competitors`(실시간 조회만, 저장 금지), 광고 소재·게시물 이미지는 `creative.js gen→compose→upload`(fal.ai flux/schnell 배경 + Playwright 한글 조판 1:1·9:16·1.91:1 → D1 `assets` BLOB → `/a/{id}.jpg`, `functions/a/[id].js`) → `submit --kind images`로 검증 큐에 이미지 그리드. 영상·웹사이트 빌드·PDF·인쇄물·실사진 합성은 여전히 기획안만 올리고 David 세션이 마무리
+- **2026-10-21 확장**: 우리 가게 공개 정보는 `places.js lookup`(고객 프로필 단계와 "GBP·구글 프로필 확인" 수정 요청에서 — 주소·전화·웹사이트·카테고리·영업시간·평점·리뷰 수·place_id·지도 링크·사진 수·소개문을 "(Places 공개 정보, 날짜)" 표시로 채운다), 경쟁사 갭 분석은 `places.js competitors`(실시간 조회만, 저장 금지), 광고 소재·게시물 이미지는 `creative.js gen→compose→upload`(fal.ai flux/schnell 배경 + Playwright 한글 조판 1:1·9:16·1.91:1 → D1 `assets` BLOB → `/a/{id}.jpg`, `functions/a/[id].js`) → `submit --kind images`로 검증 큐에 이미지 그리드. 숏폼 영상은 `creative.js video`(고객 사진 1장 → fal.ai Kling 2.1 이미지→영상 5초 클립, 편당 약 $0.25~0.5, `sv-2` auto)로 클립까지 루틴이 만들고 자막·로고·음악 편집은 David(sv-3). 웹사이트 빌드·PDF·인쇄물·실사진 합성은 여전히 기획안만 올리고 David 세션이 마무리. 자산 업로드는 multipart(R2 60MB, mp4·webm·pdf 포함)
 - `bizhigher` 환경변수: `BIZHIGHER_ADMIN_PASSWORD`(= Cloudflare `ADMIN_PASSWORD`, 없으면 첫 줄에서 멈춤) · `FAL_KEY` · `GOOGLE_PLACES_API_KEY`. 이미지는 Pages R2 바인딩 `R2_ASSETS`(버킷 `bizhigher-assets`)에 본문, D1 `assets`에 메타·`r2_key`. 바인딩이 없으면 D1 BLOB 폴백. 서빙은 둘 다 `/a/{id}.jpg`(`functions/a/[id].js`)
 - 수동 경로는 그대로 남아 있다: 고객 여정 "AI 실행 지시 복사" → claude.ai fulfillment 스킬
 
@@ -311,7 +311,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 
 - 폰 우선(360px). **2026-10-19 재설계**(디자인 캔버스 https://claude.ai/artifact/8kp9pBHEQuy9JkeWNB3tAA): 탭은 관제탑 · 검증 큐 · 고객 · 리드 · 플레이북 · 더보기. 원칙은 "지금 내가 누를 버튼 하나가 가장 크다", 색 = 공을 든 사람(🟢 AI · 🔵 David · 🟠 고객 · 🔴 막힘). 화면 설명과 AI가 결과물을 붙이는 법은 `docs/admin-setup-ko.md`
 - 진행률 = 단계마다 10점 + David 분/2 가중 합산(`jobProgress`, `_orders.js`), 검증 대기는 70%로 침. 고객 대기·막힘 집계는 "지금 단계"(가장 앞선 미완료 phase, `currentPhaseTasks`)만 센다. 정렬은 마감 순 / 진행률 낮은 순
-- 검증 큐: `job_tasks.status='review'` + `result_kind/result_text/result_url/checks/self_check`. 승인 → done + `deliverables` 행(발송 대기), 수정 요청 → doing + `revise_note`, 반려 → todo. 자동 승인 규칙은 `settings.admin.autoRules`(지금은 전부 끔 — David 결정 ③). 결과물 미리보기는 페이지 안(텍스트·샌드박스 HTML·bizhigher 도메인 임베드), Drive·PDF는 링크
+- 검증 큐: `job_tasks.status='review'` + `result_kind/result_text/result_url/checks/self_check`. 승인 → done. **`deliverables` 행(발송 대기)은 `_playbook.js`의 `DELIVER_KEYS`에 있는 고객 전달 단계만** 만든다(2026-10-21 — 내부 작업물마다 초안 메일이 가던 문제). 루틴은 작업 단위로 묶어 한 통(`draft --job`)을 David 메일에 보낸다, 수정 요청 → doing + `revise_note`, 반려 → todo. 자동 승인 규칙은 `settings.admin.autoRules`(지금은 전부 끔 — David 결정 ③). 결과물 미리보기는 페이지 안(텍스트·샌드박스 HTML·bizhigher 도메인 임베드), Drive·PDF는 링크
 - 작업 상태 파이프라인(고정): **신규 → 정보 확인 → 제작 중 → QA 대기 → 발송 대기 → 완료**, 별도로 **보류**. 바꾸는 쪽은 `JOB_STATUSES`(`_orders.js`) 하나
 - 결제(`checkout.session.completed`) → 주문 + 작업(신규). 질문지 제출 → 같은 이메일(30일 내)의 작업에 연결하고 **정보 확인**으로, 마감일은 `data/services.json`의 `delivery`(영업일)로 계산. 질문지가 먼저 오면 질문지만으로 작업을 만들고 결제가 오면 합친다. **질문지 재제출(2026-10-21)**: 같은 이메일의 작업이 30일 안에 있고 이미 질문지를 갖고 있으면 새 작업을 만들지 않고 그 작업의 질문지를 최신 것으로 바꾼다(타임라인에 "다시 제출됨"). "데모 삭제"는 업체명 (데모)뿐 아니라 데모 이메일(`@….example`)로 생긴 작업·질문지까지 지운다
 - 상품 매핑은 빌드가 쓰는 `dist/data/stripe-links.json`(Payment Link URL → slug)을 웹훅이 `env.ASSETS`로 읽는다. **새 Stripe 링크를 `services.json`에 넣으면 자동 반영**, 손으로 매핑하지 않는다
@@ -450,12 +450,12 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 2. **블로그 루틴 프롬프트의 캘린더 경로 수정** (§9)
 3. **BizHigher 자체 GBP 등록** — DBA 취득 대기. 취득 후 주소 숨김 SAB 등록 + 영상 인증 콘텐츠 팩 제작
 4. **파운딩 고객 10곳 영업 실행** (FOUNDING20) — 미착수
-5. **fal.ai** — 2026-10-21 `FAL_KEY` 연결, 정지 이미지(광고 소재·게시물)는 루틴이 만든다(§12-2). **숏폼 영상 파이프라인은 미구축**. 선불 $50 + 자동 충전 OFF 유지. Higgsfield 유료 전환은 보류
+5. **fal.ai** — 2026-10-21 `FAL_KEY` 연결. 정지 이미지(광고 소재·게시물)와 숏폼 클립(이미지→영상 5초)은 루틴이 만든다(§12-2). **자막·로고·음악 합성은 아직 David 편집**(Playwright ffmpeg에 drawtext 없음). 선불 $50 + 자동 충전 OFF 유지. Higgsfield 유료 전환은 보류
 6. **광고 셋업 상품의 GA4/GTM 템플릿화** — 미착수
 7. **무료 홍보 채널 등록 실행** — 체크리스트 완성, 실제 등록은 David 몫
 8. **블로그 스크린샷 삽입** — David가 스크린샷을 보내면 기존 글 4편에 삽입하는 워크플로우, 대기 중
 9. **사이트 구축 현황 문서 갱신** — v22 이후 변경분(180일 통일, 추천 엔진 현행화, 발행 아키텍처) 미반영
-10. **30곳 디렉토리 마스터 목록** — 등록 URL·인증 방식·자동화 가능 여부. 미작성 (§15)
+10. ~~30곳 디렉토리 마스터 목록~~ → 2026-10-21 `docs/listings-master-30-ko.md`(핵심 5·애그리게이터 4·일반 12·한인 6·업종별). 시티에이션 빌더 업체 선정은 §19-13
 11. **반자동 등록의 고객당 실소요 시간** — 1~1.5시간은 추정치. 1~2곳 실측 필요 (§15)
 12. 포스팅 3채널 최종 확정 / 예약 발행 툴 선정 / 승인 큐 형태 / 무응답 자동 승인 약관 문구 / 월간 리포트 지표 정의 / GBP API 신청 계정 (§15)
 13. **로컬 등록 실행** — 핵심 30곳 마스터 목록(Claude in Chrome 보조 입력용) + 일회성 시티에이션 빌더 업체 선정. `docs/automation-map-ko.md` §3
