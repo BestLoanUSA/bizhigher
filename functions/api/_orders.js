@@ -181,12 +181,14 @@ export function currentPhaseTasks(tasks) {
   return open.filter((t) => t.phase === ph);
 }
 
-/** AI가 지금 할 수 있는 단계 — 같은 서비스 안에서 앞선 단계가 모두 끝난 AI(auto·ai) 단계 (지금 phase 기준) */
+/** AI가 지금 할 수 있는 단계 — 온보딩이 끝났고, 같은 서비스 안에서 앞선 단계가 모두 끝난 AI(auto·ai) 단계.
+ *  (2026-10-21) phase 전체가 아니라 서비스 단위로 본다 — 한 서비스의 셋업이 David 차례에서 멈춰 있어도 다른 서비스의 월간 단계는 돈다 */
 export function aiReady(tasks) {
-  const cur = currentPhaseTasks(tasks);
-  return cur.filter((t) => {
+  const all = tasks || [];
+  if (all.some((x) => x.phase === 'onboarding' && !CLOSED.has(x.status))) return [];
+  return all.filter((t) => {
     if (!(t.who === 'auto' || t.who === 'ai') || !(t.status === 'todo' || t.status === 'doing')) return false;
-    return !(tasks || []).some((x) => x.service === t.service && x.sort < t.sort && !CLOSED.has(x.status));
+    return !all.some((x) => x.service === t.service && x.sort < t.sort && !CLOSED.has(x.status));
   });
 }
 

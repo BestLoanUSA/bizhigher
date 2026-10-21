@@ -256,7 +256,7 @@ async function api(env, method, seg, body, url) {
     const tmap = await tasksByJob(db, jobs.map((j) => j.id));
     const items = [];
     for (const j of jobs) {
-      const ready = aiReady(tmap[j.id] || []);
+      const ready = aiReady(await syncPlaybook(db, j, tmap[j.id] || []));
       if (!ready.length) continue;
       const intake = j.intake_id ? await db.prepare(`SELECT * FROM intakes WHERE id = ?`).bind(j.intake_id).first() : null;
       const profile = j.customer_email ? await safeFirst(db, `SELECT * FROM customer_profiles WHERE lower(email) = ? ORDER BY rowid DESC LIMIT 1`, j.customer_email.toLowerCase()) : null;
@@ -374,7 +374,7 @@ async function api(env, method, seg, body, url) {
     const intake = job.intake_id ? await db.prepare(`SELECT * FROM intakes WHERE id = ?`).bind(job.intake_id).first() : null;
     const events = (await db.prepare(`SELECT * FROM job_events WHERE job_id = ? ORDER BY id DESC LIMIT 60`).bind(job.id).all()).results;
     const deliverables = (await db.prepare(`SELECT * FROM deliverables WHERE job_id = ? ORDER BY id ASC`).bind(job.id).all()).results;
-    const tasks = ((await db.prepare(`SELECT * FROM job_tasks WHERE job_id = ? ORDER BY sort ASC, id ASC`).bind(job.id).all()).results || []).map((t) => ({ ...t, checks: parseJson(t.checks, []) }));
+    const tasks = await syncPlaybook(db, job, ((await db.prepare(`SELECT * FROM job_tasks WHERE job_id = ? ORDER BY sort ASC, id ASC`).bind(job.id).all()).results || []).map((t) => ({ ...t, checks: parseJson(t.checks, []) })));
     const history = job.customer_email ? (await db.prepare(`SELECT id, business, service_name, service_slug, status, created_at FROM jobs WHERE lower(customer_email) = ? AND id != ? ORDER BY id DESC LIMIT 10`).bind(job.customer_email.toLowerCase(), job.id).all()).results : [];
     const intakeCandidates = !job.intake_id && job.customer_email ? await safeAll(db, `SELECT id, service, business, contact_name, created_at FROM intakes WHERE lower(email) = ? AND id NOT IN (SELECT intake_id FROM jobs WHERE intake_id IS NOT NULL) ORDER BY id DESC LIMIT 5`, job.customer_email.toLowerCase()) : [];
 
@@ -622,6 +622,23 @@ async function seedDemo(db, catalog, d) {
   }
   if (d.done.length) await db.prepare(`UPDATE jobs SET status = 'working' WHERE id = ? AND status IN ('new','info')`).bind(jobId).run();
   return jobId;
+}
+
+/* 플레이북이 바뀌어 더는 '막힘'이 아닌 단계를 풀어 준다 (예: fal.ai 연결로 sv-2, 마스터 목록 작성으로 lls-1). 작업을 열거나 루틴 큐를 뽑을 때 호출 */
+async function syncPlaybook(db, job, tasks) {
+  const blocked = (tasks || []).filter((t) => t.status === 'blocked');
+  if (!blocked.length) return tasks;
+  let defs = [];
+  try { defs = tasksFor(job.service_slug || ''); } catch { return tasks; }
+  const byKey = new Map(defs.map((d) => [d.k, d]));
+  for (const t of blocked) {
+    const d = byKey.get(t.key);
+    if (!d || d.who === 'blocked') continue;
+    await db.prepare(`UPDATE job_tasks SET status = 'todo', who = ?, block = ?, next = ? WHERE id = ?`).bind(d.who, d.block || '', d.next || '', t.id).run();
+    await addEvent(db, job.id, 'task', null, null, `🔓 막힘 해제 — ${t.title} (플레이북 갱신 → ${(WHO[d.who] && WHO[d.who].label) || d.who})`);
+    Object.assign(t, { status: 'todo', who: d.who, block: d.block || '', next: d.next || '' });
+  }
+  return tasks;
 }
 
 /* 결과물 목록에 1번만 올린다 (같은 작업·같은 제목이 있으면 건너뜀) */
