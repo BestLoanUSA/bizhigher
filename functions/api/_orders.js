@@ -134,7 +134,8 @@ import { tasksFor } from './_playbook.js';
 
 // 기존 테이블에 나중에 추가된 컬럼 — CREATE TABLE IF NOT EXISTS 는 컬럼을 못 더하므로 PRAGMA 로 확인 후 ALTER
 const EXTRA_COLUMNS = {
-  deliverables: [['drafted_at', 'TEXT']], // Gmail 초안이 만들어진 시각 (루틴이 기록)
+  jobs: [['portal_token', 'TEXT']],        // 고객 결과물 페이지 /c/{token} (없으면 처음 열 때 생성)
+  deliverables: [['drafted_at', 'TEXT'], ['task_id', 'INTEGER'], ['kind', 'TEXT'], ['summary', 'TEXT'], ['needs_approval', 'INTEGER'], ['approved_at', 'TEXT'], ['revise_note', 'TEXT'], ['packet_id', 'TEXT']], // 고객 페이지·묶음 발송·승인
   assets: [['r2_key', 'TEXT']],           // R2 에 넣었으면 객체 키(a/{id}.jpg). 없으면 data(BLOB) 가 D1 에 있다
   job_tasks: [
     ['result_kind', 'TEXT'],      // text | html | link
@@ -158,6 +159,15 @@ export async function ensureSchema(db) {
     for (const [name, type] of cols) if (!have.has(name)) await db.prepare(`ALTER TABLE ${table} ADD COLUMN ${name} ${type}`).run();
   }
   schemaReady = true;
+}
+
+/* 고객 결과물 페이지 토큰 — 없으면 만든다 */
+export async function ensurePortalToken(db, job) {
+  if (job.portal_token) return job.portal_token;
+  const t = [...crypto.getRandomValues(new Uint8Array(24))].map((x) => 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[x % 62]).join('');
+  await db.prepare(`UPDATE jobs SET portal_token = ? WHERE id = ? AND portal_token IS NULL`).bind(t, job.id).run();
+  const row = await db.prepare(`SELECT portal_token FROM jobs WHERE id = ?`).bind(job.id).first();
+  return (row && row.portal_token) || t;
 }
 
 /* ---------- 진행률·다음 할 일 (관제탑·여정 화면이 쓴다) ---------- */

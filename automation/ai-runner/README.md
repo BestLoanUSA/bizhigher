@@ -13,7 +13,7 @@ claude.ai/code **Routine** "BizHigher AI 실행 루틴" — `bizhigher` 환경�
    - **경쟁사 갭 분석**(`gpo-2` 등 노출·SEO 선행 단계): `places.js competitors --query "업종 도시" --me {place_id}` 결과 표를 그대로 결과물에 넣는다. 실시간 조회만 하고 저장·재게시하지 않는다
    - **영상** 단계(`sv-2`): 고객이 첨부한 매장 사진 1장을 `creative.js video --image {URL} --crop 9:16 --out clip.mp4` → fal.ai Kling 2.1 이미지→영상 5초 클립(1~3분 소요, 편당 약 $0.25~0.5) → `upload` → `submit --kind video`. 자막·로고·음악은 David가 편집(sv-3)
    - **이미지** 단계(`ac-3` 광고 소재, `post-4` 게시물 이미지): `creative.js gen`(fal.ai 배경) → `compose`(한글 헤드라인·CTA·브랜드 조판, 1:1·9:16·1.91:1) → `upload`(공개 URL `/a/….jpg`) → URL 목록을 `submit --kind images`. 검증 큐에서 이미지 그리드로 보인다
-3. **발송 대기** 결과물(`deliverables.sent_at IS NULL AND drafted_at IS NULL`)은 작업(job)별로 묶어 고객용 초안 본문 한 통을 써서 `draft --job N --file body.txt` — Resend로 **David 메일(NOTIFY_EMAIL)** 에 간다. 발송 대기 행은 플레이북 `DELIVER_KEYS` 단계(킥오프 메일·리포트·캘린더·인쇄 파일 등 고객에게 실제로 가는 것)만 생긴다. 고객에게는 아무것도 가지 않는다. David가 읽고 고객에게 전달한 뒤 관리자 페이지에서 "보냈음"
+3. **전달 대기** 결과물(`deliverables.sent_at IS NULL`, 요약 없음)은 `pendingDrafts`로 온다. 루틴은 결과물마다 **고객용 요약 2~4문장**을 써서 `summary --deliverable N --file s.txt` 로 저장만 한다 — 메일은 보내지 않는다. 전달 대기 행은 플레이북 `DELIVER_KEYS` 단계(킥오프·리포트·캘린더·인쇄 파일 등 고객에게 실제로 가는 것)만 생긴다. 발송은 David가 관리자 고객 여정의 **"고객에게 묶음 보내기"** 를 눌렀을 때 한 통(고객 페이지 `/c/{token}` 링크 + 목록·요약 + 승인 요청)으로 간다. `APPROVAL_KEYS`(post-2·seo-3·ac-5·sv-2) 결과물은 고객 페이지에 [이대로 진행]/[수정 요청] 버튼이 붙고, 승인하면 같은 서비스의 다음 고객 차례 단계가 완료되며 수정 요청은 그 단계를 `doing` + `revise_note`로 되돌려 다음 루틴이 다시 만든다
 4. 작업마다 한 줄 메모(`note`)를 남기고 요약을 출력한다
 
 ## 명령 모음
@@ -21,8 +21,8 @@ claude.ai/code **Routine** "BizHigher AI 실행 루틴" — `bizhigher` 환경�
 ```bash
 node automation/ai-runner/runner.js queue [--limit 12]
 node automation/ai-runner/runner.js submit --task 123 --file out.md [--kind text|html|link|images] [--url …] [--checks "a|b|c"] [--self-check "…"] [--done]
-node automation/ai-runner/runner.js draft --job 5 --file body.txt              # 그 작업의 초안 대기 결과물을 한 통으로 David 메일에 (RESEND_API_KEY 필요)
-node automation/ai-runner/runner.js draft --deliverable 7 --file body.txt      # 결과물 1건만
+node automation/ai-runner/runner.js summary --deliverable 7 --file s.txt      # 결과물의 고객용 요약 저장 (고객 페이지·묶음 메일에 쓰임, 메일 없음)
+node automation/ai-runner/runner.js draft --job 5 --file body.txt              # (구) 작업 단위 초안을 David 메일에 — 이제는 summary 를 쓴다
 node automation/ai-runner/runner.js note --job 5 --text "…"
 
 node automation/ai-runner/qa.js --url https://고객사이트 --out qa --name home   # 360/768/1280 스크린샷·속도·링크·폼 → qa/home-report.md + qa/home-montage.jpg (upload 로 올려 submit --kind images)
@@ -51,7 +51,7 @@ node automation/ai-runner/creative.js video --image https://bizhigher.com/a/고�
 | `GOOGLE_PLACES_API_KEY` | Cloudflare의 같은 키 | 갭 분석 단계는 건너뜀 |
 | `BIZHIGHER_ADMIN_URL` | 선택. 기본 `https://bizhigher.com` | |
 
-초안 메일은 Cloudflare 쪽 `RESEND_API_KEY`·`NOTIFY_EMAIL`을 쓴다(무료 진단 알림과 같은 설정). 루틴 세션에는 Gmail 커넥터를 붙일 수 없어(조직 정책) 이 경로로 대체했다.
+고객 묶음 메일은 Cloudflare 쪽 `RESEND_API_KEY`를 쓰고 발신은 `CUSTOMER_FROM`(없으면 `NOTIFY_FROM`), David 에게 BCC(`NOTIFY_EMAIL`). 루틴은 메일을 보내지 않는다 — 버튼은 David 만 누른다(§12 자동 발송 금지).
 
 ## 저장 위치
 

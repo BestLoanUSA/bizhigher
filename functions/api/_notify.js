@@ -41,6 +41,16 @@ export async function notify(env, subject, rows, opts = {}) {
   }
 }
 
+/* 임의 수신자에게 보내기 — 고객 묶음 발송(관리자 "고객에게 보내기" 버튼)에만 쓴다. 자동 발송 금지 원칙은 그대로(§12) */
+export async function sendEmail(env, { to, subject, html, from, bcc }) {
+  if (!env.RESEND_API_KEY || !to) return false;
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.RESEND_API_KEY}` },
+    body: JSON.stringify({ from: from || env.CUSTOMER_FROM || env.NOTIFY_FROM || 'BizHigher <onboarding@resend.dev>', to, bcc: bcc || undefined, subject, html }),
+  }).catch(() => null);
+  return !!(res && res.ok);
+}
+
 export function esc(str) {
   return String(str ?? '')
     .replace(/&/g, '&amp;')

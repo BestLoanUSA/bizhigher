@@ -6,7 +6,8 @@
  *   node automation/ai-runner/runner.js queue [--limit 20]                 # 할 단계 + 고객 컨텍스트 + Gmail 초안 대기 (JSON)
  *   node automation/ai-runner/runner.js submit --task 123 --file out.md [--url https://…] [--kind text|html|link]
  *                                              [--checks "포인트1|포인트2|포인트3"] [--self-check "…"] [--done]   # 기본 검증 큐(review), --done 이면 바로 완료(verify=0 단계)
- *   node automation/ai-runner/runner.js draft --job 5 --file body.txt            # 그 작업의 초안 대기 결과물 전부를 한 통으로 David 메일에(고객 발송 아님) + drafted 기록
+ *   node automation/ai-runner/runner.js summary --deliverable 7 --file s.txt      # 결과물의 고객용 요약 저장 (고객 페이지·묶음 메일에 쓰임). 메일은 보내지 않는다
+ *   node automation/ai-runner/runner.js draft --job 5 --file body.txt            # (구) 작업 단위 초안을 David 메일에 — 이제 summary 를 쓴다
  *   node automation/ai-runner/runner.js draft --deliverable 7 --file body.txt    # 결과물 1건만
  *   node automation/ai-runner/runner.js drafted --deliverable 7 [--note "초안 제목"]   # Gmail 초안을 다른 경로로 만든 뒤 기록만
  *   node automation/ai-runner/runner.js note --job 5 --text "…"                      # 타임라인 메모
@@ -62,6 +63,13 @@ async function api(path, body) {
     const id = Number(opt('task'));
     await api(`tasks/${id}/status`, { status: 'done', note: opt('note', '') });
     console.log(`완료: task ${id}`);
+    return;
+  }
+  if (cmd === 'summary') { // 결과물의 고객용 요약(2~4문장) — 발송은 David 가 관리자에서 묶음으로
+    const id = Number(opt('deliverable')); const file = opt('file');
+    if (!id || !file) throw new Error('--deliverable ID --file summary.txt 가 필요합니다');
+    await api(`deliverables/${id}/summary`, { text: fs.readFileSync(file, 'utf8') });
+    console.log(`요약 저장: deliverable ${id}`);
     return;
   }
   if (cmd === 'draft') { // Resend → David(NOTIFY_EMAIL). 고객에게는 가지 않는다. --job 이면 그 작업의 초안 대기 결과물을 한 통으로 묶는다
