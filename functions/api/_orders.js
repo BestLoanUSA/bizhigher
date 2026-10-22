@@ -170,6 +170,24 @@ export async function ensurePortalToken(db, job) {
   return (row && row.portal_token) || t;
 }
 
+/* 결과물 승인 — 고객 페이지 클릭·7일 무응답 간주 둘 다 이 함수. 같은 서비스의 다음 "고객 차례" 단계를 완료로 */
+export async function approveDeliverable(db, d, { source, note }) {
+  await db.prepare(`UPDATE deliverables SET approved_at = datetime('now'), revise_note = NULL WHERE id = ?`).bind(d.id).run();
+  const task = d.task_id ? await db.prepare(`SELECT id, service, sort FROM job_tasks WHERE id = ?`).bind(d.task_id).first() : null;
+  if (task) {
+    const nxt = await db.prepare(`SELECT id FROM job_tasks WHERE job_id = ? AND service = ? AND sort > ? AND who = 'customer' AND status = 'todo' ORDER BY sort ASC LIMIT 1`).bind(d.job_id, task.service, task.sort).first();
+    if (nxt) await db.prepare(`UPDATE job_tasks SET status = 'done', done_at = datetime('now'), note = ? WHERE id = ?`).bind(note, nxt.id).run();
+  }
+  await addEvent(db, d.job_id, 'customer', null, null, `${source === 'auto' ? '⏱ 7일 무응답 → 승인 간주(약관 §2)' : '👍 고객 승인 (고객 페이지)'} — ${d.title}`);
+}
+
+/* 7일 무응답 승인 간주 (약관 §2) — 보낸 지 7일 지난 승인 대기 결과물. 루틴 큐·관제탑을 열 때 돈다. 수정 요청이 걸린 건 건드리지 않는다 */
+export async function sweepAutoApprovals(db) {
+  const rows = (await db.prepare(`SELECT d.* FROM deliverables d JOIN jobs j ON j.id = d.job_id WHERE d.needs_approval = 1 AND d.approved_at IS NULL AND (d.revise_note IS NULL OR d.revise_note = '') AND d.sent_at IS NOT NULL AND d.sent_at <= datetime('now', '-7 days') AND j.status NOT IN ('done','hold') LIMIT 50`).all()).results || [];
+  for (const d of rows) await approveDeliverable(db, d, { source: 'auto', note: '7일 무응답 — 승인 간주(약관)' });
+  return rows.length;
+}
+
 /* ---------- 진행률·다음 할 일 (관제탑·여정 화면이 쓴다) ---------- */
 
 const CLOSED = new Set(['done', 'skipped']);

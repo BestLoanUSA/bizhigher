@@ -22,6 +22,7 @@ claude.ai/code **Routine** "BizHigher AI 실행 루틴" — `bizhigher` 환경�
 node automation/ai-runner/runner.js queue [--limit 12]
 node automation/ai-runner/runner.js submit --task 123 --file out.md [--kind text|html|link|images] [--url …] [--checks "a|b|c"] [--self-check "…"] [--done]
 node automation/ai-runner/runner.js summary --deliverable 7 --file s.txt      # 결과물의 고객용 요약 저장 (고객 페이지·묶음 메일에 쓰임, 메일 없음)
+# submit 응답에 autoApproved 가 오면 관리자 자동 승인 규칙(검증 큐 탭)에 걸려 바로 완료된 것 — 큐에 올라가지 않는다. 출력: "→ 자동 승인(규칙키)"
 node automation/ai-runner/runner.js draft --job 5 --file body.txt              # (구) 작업 단위 초안을 David 메일에 — 이제는 summary 를 쓴다
 node automation/ai-runner/runner.js note --job 5 --text "…"
 
