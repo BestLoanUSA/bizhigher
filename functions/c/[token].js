@@ -4,7 +4,7 @@
  * 보여 주는 것: 고객에게 전달된(sent_at) 결과물만. ?preview=1 은 David 미리보기(전달 전 것도 표시).
  * 승인이 필요한 결과물(needs_approval)은 [승인] / [수정 요청] 버튼 → job_tasks 에 반영돼 루틴이 다음 단계를 돈다.
  */
-import { ensureSchema, addEvent } from '../api/_orders.js';
+import { ensureSchema, addEvent, approveDeliverable } from '../api/_orders.js';
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const MEDIA_RE = /https?:\/\/\S+\.(?:jpe?g|png|webp|gif|mp4|webm)/gi;
@@ -94,13 +94,7 @@ export async function onRequestPost({ params, env, request }) {
   if (!d || !d.needs_approval) return html('bad request', 400);
   const db = env.DB;
   if (action === 'approve') {
-    await db.prepare(`UPDATE deliverables SET approved_at = datetime('now'), revise_note = NULL WHERE id = ?`).bind(d.id).run();
-    // 같은 서비스의 다음 "고객 차례" 단계(예: post-3 캘린더 승인)를 완료로
-    if (d.task) {
-      const nxt = await db.prepare(`SELECT id FROM job_tasks WHERE job_id = ? AND service = ? AND sort > ? AND who = 'customer' AND status = 'todo' ORDER BY sort ASC LIMIT 1`).bind(data.job.id, d.task.service, d.task.sort).first();
-      if (nxt) await db.prepare(`UPDATE job_tasks SET status = 'done', done_at = datetime('now'), note = ? WHERE id = ?`).bind('고객 페이지에서 승인', nxt.id).run();
-    }
-    await addEvent(db, data.job.id, 'customer', null, null, `👍 고객 승인 (고객 페이지) — ${d.title}`);
+    await approveDeliverable(db, d, { source: 'customer', note: '고객 페이지에서 승인' });
     return Response.redirect(new URL(`/c/${params.token}?ok=approve`, request.url).toString(), 303);
   }
   if (action === 'revise') {

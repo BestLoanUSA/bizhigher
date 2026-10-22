@@ -24,7 +24,7 @@
  */
 import { authenticate, login, logoutCookie } from './_auth.js';
 import { notify, sendEmail, esc as escHtml } from '../api/_notify.js';
-import { ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady, ensurePortalToken } from '../api/_orders.js';
+import { ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady, ensurePortalToken, sweepAutoApprovals } from '../api/_orders.js';
 import { PLAYBOOK, COMMON_ONBOARDING, WHO, PHASES, tasksFor, summarize, DELIVER_KEYS, APPROVAL_KEYS } from '../api/_playbook.js';
 import { appHtml, loginHtml } from './_ui.js';
 
@@ -169,10 +169,11 @@ async function api(env, method, seg, body, url) {
 
   /* 검증 큐 */
   if (res === 'review' && method === 'GET') {
+    const swept = await sweepAutoApprovals(db);
     const rows = (await db.prepare(`SELECT t.*, j.business, j.due_date, j.service_name job_service FROM job_tasks t JOIN jobs j ON j.id = t.job_id WHERE t.status = 'review' AND j.status NOT IN ('done','hold') ORDER BY COALESCE(j.due_date,'9999') ASC, t.requested_at ASC, t.id ASC`).all()).results || [];
     const items = rows.map((t) => ({ ...t, checks: parseJson(t.checks, []), kind: t.verify ? '검증' : '승인', dueInfo: dueLabel(t.due_date) }));
     const settings = await getSettings(db);
-    return { items, totalMin: items.reduce((a, t) => a + (t.david_min || 0), 0), autoRules: settings.autoRules || defaultAutoRules(), who: WHO };
+    return { items, totalMin: items.reduce((a, t) => a + (t.david_min || 0), 0), autoRules: settings.autoRules || defaultAutoRules(), who: WHO, swept };
   }
 
   /* 단계 액션 */
@@ -229,10 +230,20 @@ async function api(env, method, seg, body, url) {
       // AI(fulfillment 스킬·루틴)가 결과물을 붙이고 검증을 요청한다
       const kind = ['text', 'html', 'link', 'images', 'video'].includes(body.kind) ? body.kind : (body.url && !body.text ? 'link' : 'text');
       const checks = Array.isArray(body.checks) ? body.checks.slice(0, 6).map((c) => String(c).slice(0, 200)) : [];
+      const text = String(body.text || '').slice(0, 200000); const selfCheck = String(body.self_check || '').slice(0, 500);
       await db
         .prepare(`UPDATE job_tasks SET result_kind = ?, result_text = ?, result_url = ?, checks = ?, self_check = ?, status = 'review', requested_at = datetime('now') WHERE id = ?`)
-        .bind(kind, String(body.text || '').slice(0, 200000), String(body.url || '').slice(0, 1000), JSON.stringify(checks), String(body.self_check || '').slice(0, 500), t.id)
+        .bind(kind, text, String(body.url || '').slice(0, 1000), JSON.stringify(checks), selfCheck, t.id)
         .run();
+      // 자동 승인 규칙(검증 큐 탭에서 켜고 끔) — 켜진 규칙의 단계는 큐를 건너뛴다
+      const rule = await autoRuleFor(db, { ...t, result_text: text, self_check: selfCheck });
+      if (rule) {
+        await db.prepare(`UPDATE job_tasks SET status = 'done', done_at = datetime('now'), decided_at = datetime('now'), note = ? WHERE id = ?`).bind('자동 승인 — 규칙: ' + rule.label, t.id).run();
+        if (DELIVER_KEYS.has(t.key)) await ensureDeliverable(db, t);
+        await addEvent(db, t.job_id, 'task', null, null, `✅ 자동 승인(${rule.label}) — ${t.title}`);
+        await autoAdvance(db, t.job_id);
+        return { autoApproved: true, rule: rule.key };
+      }
       await addEvent(db, t.job_id, 'task', null, null, `👀 검증 요청 — ${t.title}`);
       return {};
     }
@@ -251,6 +262,7 @@ async function api(env, method, seg, body, url) {
 
   /* AI 실행 루틴 큐 */
   if (res === 'runner' && id === 'queue' && method === 'GET') {
+    await sweepAutoApprovals(db);
     const limit = Math.min(50, Number(url.searchParams.get('limit')) || 20);
     const jobs = (await db.prepare(`SELECT j.*, o.service_name o_service_name, o.customer_name FROM jobs j LEFT JOIN orders o ON o.id = j.order_id WHERE j.status NOT IN ('done','hold') ORDER BY COALESCE(j.due_date,'9999') ASC, j.id ASC LIMIT 200`).all()).results || [];
     const tmap = await tasksByJob(db, jobs.map((j) => j.id));
@@ -268,7 +280,7 @@ async function api(env, method, seg, body, url) {
       }
     }
     // 고객용 요약(summary)이 없는 결과물 — 루틴이 요약만 쓴다. 발송은 David가 관리자 "고객에게 묶음 보내기"로 (고객 페이지 /c/{token})
-    const drafts = (await db.prepare(`SELECT d.*, j.business, j.customer_email, j.service_name, t.result_kind, substr(t.result_text, 1, 3000) AS result_text FROM deliverables d JOIN jobs j ON j.id = d.job_id LEFT JOIN job_tasks t ON t.id = d.task_id WHERE d.sent_at IS NULL AND (d.summary IS NULL OR d.summary = '') ORDER BY d.id ASC LIMIT 20`).all()).results || [];
+    const drafts = (await db.prepare(`SELECT d.*, j.business, j.customer_email, j.service_name, t.result_kind, substr(t.result_text, 1, 3000) AS result_text FROM deliverables d JOIN jobs j ON j.id = d.job_id LEFT JOIN job_tasks t ON t.id = d.task_id WHERE d.sent_at IS NULL AND (d.summary IS NULL OR d.summary = '') AND j.status NOT IN ('done','hold') AND (COALESCE(t.result_text,'') != '' OR COALESCE(d.url,'') != '') ORDER BY d.id ASC LIMIT 20`).all()).results || [];
     return { items, pendingDrafts: drafts, rules: ['고객에게 자동 발송 금지 — Gmail 초안까지', 'verify 단계는 status review, 아니면 done', '경쟁사 갭 분석 선행(노출·SEO)', '리뷰 대가·게이팅·가짜 리뷰 금지', '의료·치과 환자 암시 금지', '실행 플랜은 180일', '웹 산출물 360px 실측'] };
   }
   if (res === 'assets' && method === 'POST') {
@@ -580,19 +592,36 @@ function aiBrief(job, intake, order, aiPending, url) {
 }
 
 /* ---------- 설정 ---------- */
+/* 자동 승인 규칙 — 켜진 규칙의 단계는 검증 큐를 건너뛰고 바로 완료된다(타임라인에 "자동 승인"). 고객에게 가는 것은 어차피 "묶음 보내기" 전에 David가 미리보기로 한 번 더 본다.
+ * 2026-10-22 David 결정(B-2): 위험 낮은 것부터 켠다 — 기본 on 4개. 나머지는 관리자 검증 큐 탭에서 켜고 끈다. guard 가 있으면 결과물이 그 조건을 만족할 때만 */
+const AUTO_RULES_VERSION = 2;
 function defaultAutoRules() {
   return [
-    { key: 'review-auto', label: '별 4~5 일반 리뷰 답글', desc: '위험 단어 없음 · 리뷰어 언어로 2~4문장', on: false },
-    { key: 'post-image', label: '게시물 이미지 (고객 사진 + 템플릿)', desc: '텍스트 오버레이 오탈자 자동 검사', on: false },
-    { key: 'ad-copy', label: '광고 카피 (정책 검사 통과분)', desc: '최상급·의료·금융 표현 필터', on: false },
-    { key: 'body-text', label: '블로그·게시물 본문', desc: '금지 표현·가격·경쟁사 상호 0건일 때', on: false },
-    { key: 'report', label: '월간 리포트', desc: '숫자 검증 필요 — 당분간 끔', on: false },
+    { key: 'kickoff', label: '킥오프 안내 메일 (ob-5)', desc: '템플릿 기반 · 어차피 묶음 보내기 전에 미리보기로 봄', tasks: ['ob-5'], on: true },
+    { key: 'nap-docs', label: 'NAP 표준 문서·등록 리포트 (lls-3·lls-7)', desc: '질문지·Places 공개 정보 그대로 정리한 것', tasks: ['lls-3', 'lls-7'], on: true },
+    { key: 'review-auto', label: '별 4~5 일반 리뷰 답글 (rr-1·rr-7)', desc: '"사람 승인 필요" 표시가 하나도 없을 때만. 별 1~3·환불·위생·법적은 큐로', tasks: ['rr-1', 'rr-7'], guard: 'no-human-flag', on: true },
+    { key: 'creative-brief', label: '크리에이티브 브리프 (ac-1)', desc: '내부 기획 문서 · 소재는 별도 검수', tasks: ['ac-1'], on: true },
+    { key: 'profile', label: '고객 프로필 (ob-3)', desc: '뒤 단계가 전부 이걸 읽으므로 당분간 David가 본다', tasks: ['ob-3'], on: false },
+    { key: 'body-text', label: '블로그·게시물·콘텐츠 팩 본문 (gpo-3·llp-2·seo-4·post-2)', desc: '금지 표현·가격 언급 0건(self_check)일 때만', tasks: ['gpo-3', 'llp-2', 'seo-4', 'post-2'], guard: 'clean-self-check', on: false },
+    { key: 'ad-copy', label: '광고 설계안·CSV (ads-2)', desc: '예산·키워드가 돈과 직결 — 당분간 끔', tasks: ['ads-2'], on: false },
+    { key: 'report', label: '리포트류 (gpo-5·mr-4·am-5·ads-5·rr-7 제외)', desc: '숫자 검증 필요 — 당분간 끔', tasks: ['gpo-5', 'mr-4', 'am-5', 'ads-5'], on: false },
+    { key: 'qa', label: 'QA 리포트·인쇄 PDF (web-4·llp-4·qr-3)', desc: 'David가 수정 목록을 보고 고쳐야 하는 단계라 끔', tasks: ['web-4', 'llp-4', 'qr-3'], on: false },
   ];
+}
+function ruleGuardOk(rule, t) {
+  const text = String(t.result_text || '') + '\n' + String(t.self_check || '');
+  if (rule.guard === 'no-human-flag') return !/사람 승인 필요|HUMAN|\[확인 필요\]/.test(text) || /사람 승인 필요\s*0\s*건/.test(text);
+  if (rule.guard === 'clean-self-check') return /금지 표현\s*0\s*건/.test(text) && /가격 언급\s*0\s*건/.test(text) && !/\[확인 필요\]/.test(text);
+  return true;
+}
+async function autoRuleFor(db, t) {
+  const s = await getSettings(db);
+  return (s.autoRules || []).find((r) => r.on && Array.isArray(r.tasks) && r.tasks.includes(t.key) && ruleGuardOk(r, t)) || null;
 }
 async function getSettings(db) {
   const row = await db.prepare(`SELECT value FROM settings WHERE key = 'admin'`).first();
   const s = row ? parseJson(row.value, {}) : {};
-  if (!s.autoRules) s.autoRules = defaultAutoRules();
+  if (!s.autoRules || s.autoRulesVersion !== AUTO_RULES_VERSION) { s.autoRules = defaultAutoRules(); s.autoRulesVersion = AUTO_RULES_VERSION; }
   return s;
 }
 

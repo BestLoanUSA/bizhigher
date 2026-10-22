@@ -54,9 +54,9 @@ async function api(path, body) {
     if (!id || !file) throw new Error('--task ID --file path 가 필요합니다');
     const text = fs.readFileSync(file, 'utf8');
     const checks = (opt('checks', '') || '').split('|').map((s) => s.trim()).filter(Boolean);
-    await api(`tasks/${id}/result`, { kind: opt('kind', opt('url') && text.trim().length < 400 ? 'link' : 'text'), text, url: opt('url', ''), checks, self_check: opt('self-check', '') });
-    if (args.includes('--done')) await api(`tasks/${id}/status`, { status: 'done' }); // verify=0 단계: 검증 없이 완료
-    console.log(`올림: task ${id} (${text.length}자)${args.includes('--done') ? ' → 완료' : ' → 검증 큐'}`);
+    const r = await api(`tasks/${id}/result`, { kind: opt('kind', opt('url') && text.trim().length < 400 ? 'link' : 'text'), text, url: opt('url', ''), checks, self_check: opt('self-check', '') });
+    if (args.includes('--done') && !(r && r.autoApproved)) await api(`tasks/${id}/status`, { status: 'done' }); // verify=0 단계: 검증 없이 완료
+    console.log(`올림: task ${id} (${text.length}자)${r && r.autoApproved ? ' → 자동 승인(' + r.rule + ')' : args.includes('--done') ? ' → 완료' : ' → 검증 큐'}`);
     return;
   }
   if (cmd === 'done') { // verify=0 단계: 결과 올린 뒤 완료 처리

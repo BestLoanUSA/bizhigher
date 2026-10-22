@@ -358,7 +358,7 @@ async function review() {
     '<section class="two"><div class="main">' + (cur ? reviewCard(cur) : '<div class="sec" style="padding:36px 20px;text-align:center"><div style="font-size:40px;font-weight:800;color:var(--green)">0</div><div style="font-weight:700;font-size:16px">검증할 것이 없습니다</div><div class="muted" style="margin-top:4px">AI가 만든 결과물이 생기면 여기 올라옵니다. 발송 대기 결과물은 각 고객의 "결과물 · 발송"에서 보세요.</div><a class="btn" style="margin-top:14px" href="#/">관제탑으로</a></div>') +
     '</div><div class="side">' +
       '<div class="sec"><div class="sec-h"><h2>큐 — 마감 순</h2></div>' + (d.items.length ? d.items.map((t, i) => { const [bg, fg] = toneBtn(t.kind, i); return '<a class="qi" href="#/review?task=' + t.id + '"><span class="n" style="background:' + bg + ';color:' + fg + '">' + (i + 1) + '</span><span class="m"><b>' + esc((t.business || '').replace(' (데모)', '')) + '</b> · ' + esc(t.service_name) + '<small>' + esc(t.title) + ' · ' + (t.david_min || 0) + '분 · ' + esc(t.dueInfo.label || '') + '</small></span></a>'; }).join('') : '<div class="muted">비어 있음</div>') + '</div>' +
-      '<div class="sec"><div class="sec-h"><h2>자동 승인 (검수 없이 내보냄)</h2></div><div class="muted" style="font-size:12px;padding-bottom:4px">위험이 낮은 유형부터 켠다. 켜면 큐에 안 올라오고 타임라인에만 남는다. (2026-10-15 결정: 처음엔 전부 David가 본다)</div>' + d.autoRules.map((r) => '<label class="sw"><input type="checkbox" data-rule="' + esc(r.key) + '"' + (r.on ? ' checked' : '') + '><span style="flex:1">' + esc(r.label) + '<small>' + esc(r.desc) + '</small></span></label>').join('') + '</div>' +
+      '<div class="sec"><div class="sec-h"><h2>자동 승인 (검수 없이 내보냄)</h2></div><div class="muted" style="font-size:12px;padding-bottom:4px">켜면 그 단계는 큐에 안 올라오고 바로 완료되며 타임라인에 "자동 승인"으로 남는다. 고객에게 가는 것은 묶음 보내기 전 미리보기로 한 번 더 본다. (2026-10-22: 위험 낮은 4개부터 켬)</div>' + d.autoRules.map((r) => '<label class="sw"><input type="checkbox" data-rule="' + esc(r.key) + '"' + (r.on ? ' checked' : '') + '><span style="flex:1">' + esc(r.label) + '<small>' + esc(r.desc) + '</small></span></label>').join('') + '</div>' +
     '</div></section>';
   if (cur) {
     const after = (r, msg) => { toast(msg); updateReviewCount(); location.hash = r.next ? '#/review?task=' + r.next : '#/review'; if (!r.next || String(r.next) === want) review(); };
@@ -371,7 +371,7 @@ async function review() {
     $('#rv-reject').onclick = async () => { const note = prompt('반려 사유 (선택)') ; if (note === null) return; try { const r = await api('tasks/' + cur.id + '/reject', { note }); after(r, '반려됨 · 타임라인에 기록'); } catch (e) { toast('오류: ' + e.message); } };
     app.querySelectorAll('[data-rtab]').forEach((b) => b.onclick = () => { rvTab = Number(b.dataset.rtab); review(); });
   }
-  app.querySelectorAll('[data-rule]').forEach((cb) => cb.onchange = async () => { const rules = d.autoRules.map((r) => ({ ...r, on: r.key === cb.dataset.rule ? cb.checked : r.on })); try { await api('settings', { settings: { autoRules: rules } }); toast('저장'); } catch (e) { toast('오류: ' + e.message); } });
+  app.querySelectorAll('[data-rule]').forEach((cb) => cb.onchange = async () => { const rules = d.autoRules.map((r) => ({ ...r, on: r.key === cb.dataset.rule ? cb.checked : r.on })); try { await api('settings', { settings: { autoRules: rules, autoRulesVersion: 2 } }); toast('저장'); } catch (e) { toast('오류: ' + e.message); } });
 }
 function reviewCard(t) {
   const checks = t.checks || [];
