@@ -8,6 +8,9 @@
  *   node automation/ai-runner/sites.js render --spec spec.json --out preview  # 로컬 확인용 (관리자 API 없이)
  *   node automation/ai-runner/sites.js domains                                # 모든 사이트의 {slug}.sites.bizhigher.com 등록 상태 확인·보정 (배포 없이)
  *   node automation/ai-runner/sites.js needs-deploy                           # "yes …"/"no …" — 템플릿·라우터·CLI(automation/sites, sites.js)가 마지막 배포 뒤 바뀌었으면 yes (루틴이 매 실행 확인)
+ *   node automation/ai-runner/sites.js prep --spec spec.json [--out spec.json] [--job N --task N] [--no-enhance] [--no-gen]
+ *                                                                              # 사진 준비(v3): 작은 사진(가로 900px 미만)은 fal.ai 로 업스케일 → /a/ 업로드 → 스펙 URL 교체(photo_meta 기록),
+ *                                                                              #   갤러리가 3장 미만이면 업종 분위기 이미지를 생성해 gallery_generated 에 채운다(사람·글자 없음, 화면에 "연출 이미지" 표시). FAL_KEY 없으면 크기 보고만
  *
  * 환경변수: BIZHIGHER_ADMIN_PASSWORD(spec·build), CLOUDFLARE_API_TOKEN·CLOUDFLARE_ACCOUNT_ID(deploy), SITES_PROJECT(기본 bizhigher-sites)
  */
@@ -62,6 +65,39 @@ async function ensurePreviewDomain(slug) {
   out.push(c && c.ok ? 'DNS 생성' : `DNS 실패 ${(cj.errors || []).map((e) => e.message).join(';').slice(0, 120)}`);
   return out.join(' · ');
 }
+/* ---------- 사진 준비(prep) 헬퍼 ---------- */
+const FAL = (model, body) => fetch('https://fal.run/' + model, { method: 'POST', headers: { Authorization: 'Key ' + process.env.FAL_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(async (r) => { if (!r.ok) throw new Error('fal.ai ' + r.status + ': ' + (await r.text()).slice(0, 200)); return r.json(); });
+/** JPEG·PNG·WebP 머리에서 가로·세로 읽기 (라이브러리 없이) */
+function imageSize(buf) {
+  if (buf[0] === 0x89 && buf[1] === 0x50) return { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20), type: 'png' };
+  if (buf[0] === 0xff && buf[1] === 0xd8) { let i = 2; while (i < buf.length) { if (buf[i] !== 0xff) { i++; continue; } const m = buf[i + 1]; if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc) return { h: buf.readUInt16BE(i + 5), w: buf.readUInt16BE(i + 7), type: 'jpeg' }; i += 2 + buf.readUInt16BE(i + 2); } }
+  if (buf.slice(0, 4).toString() === 'RIFF' && buf.slice(8, 12).toString() === 'WEBP') { const c = buf.slice(12, 16).toString(); if (c === 'VP8X') return { w: 1 + buf.readUIntLE(24, 3), h: 1 + buf.readUIntLE(27, 3), type: 'webp' }; if (c === 'VP8 ') return { w: buf.readUInt16LE(26) & 0x3fff, h: buf.readUInt16LE(28) & 0x3fff, type: 'webp' }; }
+  return null;
+}
+async function uploadFile(file, { job, task, label } = {}) {
+  if (!cookie) await login();
+  const ext = (file.split('.').pop() || '').toLowerCase();
+  const ct = { png: 'image/png', webp: 'image/webp' }[ext] || 'image/jpeg';
+  const fd = new FormData();
+  fd.append('file', new Blob([fs.readFileSync(file)], { type: ct }), path.basename(file));
+  if (job) fd.append('job_id', String(job)); if (task) fd.append('task_id', String(task)); fd.append('label', label || path.basename(file));
+  const res = await fetch(BASE + '/admin/api/assets', { method: 'POST', headers: { cookie }, body: fd });
+  const j = await res.json().catch(() => ({}));
+  if (!j.ok) throw new Error('업로드 실패: ' + (j.error || res.status));
+  return j.url;
+}
+async function fetchBuf(url) { const r = await fetch(url); if (!r.ok) throw new Error(`${url} → ${r.status}`); return Buffer.from(await r.arrayBuffer()); }
+/** 스펙의 사진 자리 전부 — [객체, 키] 쌍으로 */
+function photoSlots(spec) {
+  const out = [];
+  if (spec.hero && spec.hero.photo) out.push([spec.hero, 'photo', 'hero']);
+  if (spec.about && spec.about.photo) out.push([spec.about, 'photo', 'about']);
+  (spec.gallery || []).forEach((u, i) => { if (u) out.push([spec.gallery, i, 'gallery' + (i + 1)]); });
+  (spec.services || []).forEach((x, i) => { if (x && x.photo) out.push([x, 'photo', 'service' + (i + 1)]); });
+  return out;
+}
+const AMBIANCE = (spec) => `interior of a ${spec.category_en || spec.category || 'small local business'}, ${spec.address && spec.address.city ? 'in ' + spec.address.city + ', ' : ''}warm natural light, clean and inviting, editorial photography, shallow depth of field, no people, no text, no logos, photorealistic`;
+
 function writeSite(outDir, slug, files) {
   const dir = path.join(outDir, slug); fs.mkdirSync(dir, { recursive: true });
   for (const [name, body] of Object.entries(files)) fs.writeFileSync(path.join(dir, name), body);
@@ -118,6 +154,51 @@ function writeSite(outDir, slug, files) {
     for (const slug of slugs) console.log(`  ${slug}: ${await ensurePreviewDomain(slug)} · https://${PROJECT}.pages.dev/${slug}/`);
     return;
   }
+  if (cmd === 'prep') {
+    const file = opt('spec'); if (!file) throw new Error('--spec spec.json 필요');
+    const spec = JSON.parse(fs.readFileSync(file, 'utf8')); const out = opt('out', file);
+    const job = opt('job'), task = opt('task'); const hasFal = !!process.env.FAL_KEY;
+    const tmp = fs.mkdtempSync(path.join(require('os').tmpdir(), 'prep-'));
+    spec.photo_meta = spec.photo_meta || {};
+    const report = { checked: 0, enhanced: 0, generated: 0, skipped: [], errors: [] };
+    const MIN_W = Number(opt('min-width', '900'));
+    if (!args.includes('--no-enhance')) {
+      for (const [obj, key, label] of photoSlots(spec)) {
+        const url = obj[key]; if (!/^https?:\/\//.test(url)) continue;
+        if (spec.photo_meta[url] && spec.photo_meta[url].from) { report.skipped.push(label + ': 이미 보정본'); continue; }
+        try {
+          const buf = await fetchBuf(url); const sz = imageSize(buf); report.checked++;
+          if (!sz) { report.skipped.push(label + ': 크기 판독 불가'); continue; }
+          spec.photo_meta[url] = { w: sz.w, h: sz.h };
+          if (sz.w >= MIN_W) { continue; }
+          if (!hasFal) { report.skipped.push(`${label}: ${sz.w}px — FAL_KEY 없어 업스케일 생략`); continue; }
+          const model = opt('model', 'fal-ai/aura-sr');
+          const j = await FAL(model, { image_url: url, upscaling_factor: 4 });
+          const img = j.image || (j.images && j.images[0]); if (!img || !img.url) throw new Error('fal 응답에 이미지 없음');
+          const local = path.join(tmp, label + '.jpg'); fs.writeFileSync(local, await fetchBuf(img.url));
+          const nu = await uploadFile(local, { job, task, label: `보정 ${label} (${sz.w}→${img.width || '?'}px)` });
+          spec.photo_meta[nu] = { w: img.width || sz.w * 4, h: img.height || sz.h * 4, from: url };
+          obj[key] = nu; report.enhanced++;
+        } catch (e) { report.errors.push(`${label}: ${e.message}`); }
+      }
+    }
+    const gal = (spec.gallery || []).filter(Boolean); const gen = spec.gallery_generated || [];
+    if (!args.includes('--no-gen') && gal.length + gen.length < 3) {
+      if (!hasFal) report.skipped.push(`갤러리 ${gal.length}장 — FAL_KEY 없어 분위기 이미지 생성 생략`);
+      else for (let n = gal.length + gen.length; n < 4; n++) {
+        try {
+          const j = await FAL(opt('gen-model', 'fal-ai/flux/schnell'), { prompt: AMBIANCE(spec), image_size: 'landscape_4_3', num_images: 1, output_format: 'jpeg', enable_safety_checker: true, seed: 1000 + n });
+          const img = j.images && j.images[0]; if (!img || !img.url) throw new Error('fal 응답에 이미지 없음');
+          const local = path.join(tmp, `ambiance${n}.jpg`); fs.writeFileSync(local, await fetchBuf(img.url));
+          gen.push(await uploadFile(local, { job, task, label: `분위기 이미지 ${n + 1} (생성)` })); report.generated++;
+        } catch (e) { report.errors.push('생성: ' + e.message); break; }
+      }
+      spec.gallery_generated = gen;
+    }
+    fs.writeFileSync(out, JSON.stringify(spec, null, 2));
+    console.log(JSON.stringify({ out, ...report }));
+    return;
+  }
   if (cmd === 'needs-deploy') {
     const { sites } = await api('sites');
     if (!sites.length) { console.log('no — 등록된 사이트 없음'); return; }
@@ -134,5 +215,5 @@ function writeSite(outDir, slug, files) {
     if (!sites.length) console.log('등록된 사이트 없음');
     return;
   }
-  console.log('사용법: sites.js spec|build|deploy|render|domains|needs-deploy  (파일 머리 주석 참고)'); process.exit(1);
+  console.log('사용법: sites.js spec|build|deploy|render|domains|needs-deploy|prep  (파일 머리 주석 참고)'); process.exit(1);
 })().catch((e) => { console.error('오류:', e.message); process.exit(1); });
