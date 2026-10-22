@@ -87,6 +87,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | GBP 리뷰 답글·게시물 자동화 실험 | `automation/gbp/` (README 참고. API 승인 전엔 `--dry-run`만) |
 | 고객 결과물 페이지 `/c/{token}` | `functions/c/[token].js` — 묶음 메일·승인 흐름은 §12-3 |
 | 새 리뷰 감시·답글 과제 | `functions/api/_reviews.js` (§12-4) — 위험 단어 목록 `RISK`, 쿨다운 20시간 |
+| 고객 웹사이트 템플릿·빌드·호스팅 | 템플릿 `automation/sites/render.js` · 라우터 `automation/sites/worker.js` · CLI `automation/ai-runner/sites.js` · 스펙 API `functions/admin/[[path]].js`(`sites`) · 설계 `docs/customer-sites-design-ko.md` (§12-5) |
 | 관리자 페이지 `/admin/` | `functions/admin/` (화면 `_ui.js`, API `[[path]].js`, 인증 `_auth.js`). 설정 안내 `docs/admin-setup-ko.md` |
 | Stripe 결제 → 주문·작업 기록 | `functions/api/stripe-webhook.js` + 공용 `functions/api/_orders.js` |
 | 서비스별 작업 단계·자동화 수준(플레이북) | `functions/api/_playbook.js` — 관리자 파이프라인·플레이북 탭·`docs/automation-map-ko.md`의 단일 소스 |
@@ -191,6 +192,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | `deliverables` 추가 열 | `task_id`·`kind`·`summary`·`needs_approval`·`approved_at`·`revise_note`·`packet_id` — 고객 페이지·묶음 발송·승인(§12-3). `jobs.portal_token`도 같이 | `_orders.js EXTRA_COLUMNS` |
 | `tool_usage` | 무료 도구 하루 사용 횟수 (일자·IP 해시·도구) — 자동 생성 | `functions/api/tools/_shared.js` |
 | `review_seen` · `review_sync` | 본 리뷰의 키 해시·별점, 작업별 마지막 Places 확인 시각 — 자동 생성 | `functions/api/_reviews.js` (§12-4) |
+| `sites` | 고객 웹사이트 스펙 JSON(작업당 1행, slug·domain·live·version) — 자동 생성 | `sites.js` · 관리자 `sites` API (§12-5) |
 
 `orders` 이하 6개 테이블은 `functions/api/_orders.js`의 `ensureSchema()`가 **없으면 자동 생성**한다(`CREATE TABLE IF NOT EXISTS`). 손으로 SQL을 돌릴 필요 없다. 기존 3개 테이블은 이 코드가 만들지 않았으므로 관리자 API는 `PRAGMA table_info`로 컬럼 유무를 확인하고 쓴다.
 
@@ -207,6 +209,7 @@ Cloudflare 프로젝트 → Settings → Environment variables (Production).
 | `CLAUDE_MODEL` | 선택 | 기본 `claude-haiku-4-5` |
 | `RESEND_API_KEY` · `NOTIFY_EMAIL` · `NOTIFY_FROM` | 선택 | 이메일 알림이 안 간다. 알림 메일은 전부 David 전용이며 푸터에 그렇게 적힌다(`_notify.js`). 고객에게는 어떤 메일도 자동으로 가지 않는다 |
 | `CUSTOMER_FROM` | 선택 | 고객 묶음 메일 발신 주소(예 `BizHigher <hello@bizhigher.com>`, Resend 도메인 인증 필요). 없으면 `NOTIFY_FROM` |
+| `CLOUDFLARE_API_TOKEN` · `CLOUDFLARE_ACCOUNT_ID` · `SITES_PROJECT` | 선택 | 고객 도메인을 Pages 프로젝트에 자동 추가(§12-5). 없으면 D1 기록만 하고 David가 대시보드에서 추가. 같은 두 변수가 `bizhigher` 루틴 환경에도 있어야 배포가 된다 |
 | `ADMIN_PASSWORD` | 관리자 페이지 필수 | `/admin/`이 503으로 잠긴다 |
 | `ADMIN_ACCESS_TEAM` · `ADMIN_ACCESS_AUD` | 선택 | Cloudflare Access로 바꿀 때. 둘 다 있으면 Access 토큰 검증 |
 | `STRIPE_WEBHOOK_SECRET` | 주문 기록 필수 | 웹훅이 503, 결제가 관리자 페이지에 안 뜬다 |
@@ -319,6 +322,15 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 - **처음 보는 작업은 기준선만** 기록한다(옛 리뷰에 과제 안 만듦 — 백로그는 rr-1). 이후 새 리뷰마다 `job_tasks`에 `rr-live` 단계(service `review-live`, sort 9000 고정 → 서로·rr-2~6에 막히지 않음, who ai, verify 1)를 만든다. 리뷰 원문은 그 단계의 `note`에. 별 1~3 또는 환불·위생·법적·직원 언급(`RISK`)이면 제목에 "⚠ 사람 승인 필요"
 - 루틴이 답글 초안을 써서 검증 큐로 → **David가 GBP에 붙여넣고 "승인" = 게시했음**(리뷰당 2분). 자동 승인 규칙 대상이 아니다(게시가 사람 손이므로). GBP API 승인 후 별 4~5는 자동 게시로 바꾼다
 - 한계: Places는 "관련도 높은" 리뷰 최대 5개만 준다 — 리뷰가 많은 가게는 놓칠 수 있다. 저장은 `review_seen`(키 해시·별점)·`review_sync`(마지막 확인)뿐, 본문은 고객 자신의 작업 안에만(§14 재게시 아님). 로컬 테스트는 `--binding PLACES_MOCK='{json}'`
+
+### 12-5. 고객 웹사이트 자동 제작·호스팅 (2026-10-22 David 승인, 1단계)
+
+- 구조: **Cloudflare Pages 프로젝트 1개 `bizhigher-sites`** 에 고객 사이트가 `{slug}/` 폴더로 들어가고 `_worker.js` 가 Host 로 폴더를 고른다. 대시보드엔 한 줄만. 원본은 **D1 `sites`(스펙 JSON)**, 저장소에 고객 사이트 파일을 두지 않는다. 설계·대안 비교·함정은 `docs/customer-sites-design-ko.md`
+- 흐름: web-2(AI) 질문지·사진·Places 공개 정보 → 스펙 JSON(`sites.js spec --job`) → `sites.js build`(관리자 `GET sites` → 전 고객 렌더 + `_worker.js`) → `sites.js deploy`(wrangler pages deploy) → 임시 주소 `https://{slug}.sites.bizhigher.com`(noindex) 을 검증 큐에 → web-3 고객이 CNAME → `bizhigher-sites.pages.dev` → 관리자 고객 여정 "웹사이트 → 연결"(`POST sites/:slug/domain`, `CLOUDFLARE_API_TOKEN` 있으면 Pages 도메인도 추가) → 다음 빌드부터 canonical·색인 허용
+- 템플릿 원칙: 360px 우선 · JS 없이 전부 보임 · 빈 값은 섹션 숨김(지어내지 않음) · 리뷰 본문 없음(별점·수·링크만) · `lang: ko-en` 이면 `_en` 키로 토글. 템플릿을 고치면 다음 빌드에서 **전 고객 사이트가 함께** 바뀐다
+- 호스팅 준비(David 1회): Pages 프로젝트 `bizhigher-sites`(Direct Upload) + API 토큰(Pages Edit · DNS Edit bizhigher.com · Account Read) → `bizhigher` 환경 `CLOUDFLARE_API_TOKEN`·`CLOUDFLARE_ACCOUNT_ID`. 없으면 루틴은 스펙 저장까지만 하고 "[배포 대기 — Cloudflare 토큰 필요]"
+- 비용: 정적 무료·무제한, 라우터 호출 무료 하루 10만(넘으면 Workers Paid $5/월). 프로젝트당 도메인 100개(고객 40~50곳) → 넘으면 `bizhigher-sites-2`
+- 2단계 예정: 비즈니스 등급(5페이지·문의 폼·블로그), 수정 요청 → 스펙 패치 → 재배포 루프, 고객 페이지 임베드
 
 ### 12-3. 고객 메일 정책 — 최소·묶음 (2026-10-21 David 결정)
 

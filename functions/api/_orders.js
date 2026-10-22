@@ -109,6 +109,19 @@ const SCHEMA = [
     created_at TEXT DEFAULT (datetime('now'))
   )`,
   `CREATE INDEX IF NOT EXISTS idx_job_tasks_job ON job_tasks(job_id)`,
+  // 고객 웹사이트 스펙 (docs/customer-sites-design-ko.md) — 원본은 이 행, 파일은 루틴이 빌드·배포
+  `CREATE TABLE IF NOT EXISTS sites (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_id INTEGER,
+    slug TEXT UNIQUE,
+    spec TEXT,
+    domain TEXT,
+    live INTEGER DEFAULT 0,
+    version INTEGER DEFAULT 1,
+    updated_at TEXT DEFAULT (datetime('now')),
+    published_at TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`,
   `CREATE TABLE IF NOT EXISTS assets (
     id TEXT PRIMARY KEY,
     job_id INTEGER,

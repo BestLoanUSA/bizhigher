@@ -262,6 +262,55 @@ async function api(env, method, seg, body, url) {
   }
 
   /* AI 실행 루틴 큐 */
+  /* 고객 웹사이트 스펙 — 루틴 sites.js 가 spec(저장)·build(전체 읽기)에 쓴다. 설계 docs/customer-sites-design-ko.md */
+  if (res === 'sites' && !id && method === 'GET') {
+    const sites = (await db.prepare(`SELECT s.*, j.business FROM sites s LEFT JOIN jobs j ON j.id = s.job_id ORDER BY s.id ASC`).all()).results || [];
+    return { sites: sites.map((s) => ({ ...s, spec: parseJson(s.spec, {}) })) };
+  }
+  if (res === 'sites' && !id && method === 'POST') {
+    const jobId = Number(body.job_id); const spec = body.spec && typeof body.spec === 'object' ? body.spec : null;
+    if (!jobId || !spec) throw bad('job_id 와 spec(JSON) 이 필요합니다');
+    if (!spec.name) throw bad('spec.name(상호)이 필요합니다');
+    const job = await db.prepare(`SELECT * FROM jobs WHERE id = ?`).bind(jobId).first();
+    if (!job) throw bad('작업이 없습니다');
+    const existing = await db.prepare(`SELECT * FROM sites WHERE job_id = ?`).bind(jobId).first();
+    const slugify = (x) => String(x || '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+    let slug = existing ? existing.slug : slugify(spec.slug || spec.name) || ('site-' + jobId);
+    if (!existing) { // 다른 작업과 겹치면 뒤에 번호
+      let n = 1; const base = slug;
+      while (await db.prepare(`SELECT id FROM sites WHERE slug = ?`).bind(slug).first()) slug = `${base}-${++n}`;
+    }
+    spec.slug = slug;
+    const text = JSON.stringify(spec).slice(0, 400000);
+    if (existing) await db.prepare(`UPDATE sites SET spec = ?, version = version + 1, updated_at = datetime('now') WHERE id = ?`).bind(text, existing.id).run();
+    else await db.prepare(`INSERT INTO sites (job_id, slug, spec) VALUES (?, ?, ?)`).bind(jobId, slug, text).run();
+    const row = await db.prepare(`SELECT * FROM sites WHERE slug = ?`).bind(slug).first();
+    await addEvent(db, jobId, 'task', null, null, `🌐 사이트 스펙 ${existing ? '갱신 v' + row.version : '생성'} — https://${slug}.sites.bizhigher.com`);
+    return { slug, version: row.version, domain: row.domain || '', live: !!row.live, preview_url: `https://${slug}.sites.bizhigher.com` };
+  }
+  if (res === 'sites' && id && method === 'GET') {
+    const s = await db.prepare(`SELECT * FROM sites WHERE slug = ? OR job_id = ?`).bind(String(id), Number(id) || 0).first();
+    return s ? { ...s, spec: parseJson(s.spec, {}) } : undefined;
+  }
+  if (res === 'sites' && id && sub === 'domain' && method === 'POST') {
+    // 고객 도메인 등록: D1 에 기록(+live). Pages 프로젝트에 도메인 추가는 CLOUDFLARE_API_TOKEN 이 있을 때만 시도 (없으면 David 가 대시보드에서 추가)
+    const s = await db.prepare(`SELECT * FROM sites WHERE slug = ?`).bind(String(id)).first();
+    if (!s) return undefined;
+    const domain = String(body.domain || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/^www\./, '');
+    if (domain && !/^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain)) throw bad('도메인 형식이 아닙니다');
+    let cf = 'skipped';
+    if (domain && env.CLOUDFLARE_API_TOKEN && env.CLOUDFLARE_ACCOUNT_ID) {
+      const project = env.SITES_PROJECT || 'bizhigher-sites';
+      for (const d of [domain, 'www.' + domain]) {
+        const r = await fetch(`https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/pages/projects/${project}/domains`, { method: 'POST', headers: { Authorization: `Bearer ${env.CLOUDFLARE_API_TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ name: d }) }).catch(() => null);
+        cf = r && (r.ok || r.status === 409) ? 'added' : `error ${r ? r.status : 'network'}`;
+        if (!r || !(r.ok || r.status === 409)) break;
+      }
+    }
+    await db.prepare(`UPDATE sites SET domain = ?, live = ?, updated_at = datetime('now') WHERE id = ?`).bind(domain || null, domain && body.live !== false ? 1 : 0, s.id).run();
+    await addEvent(db, s.job_id, 'task', null, null, domain ? `🌐 도메인 연결 ${domain} (Pages: ${cf}) — 다음 빌드부터 색인 허용` : '🌐 도메인 해제');
+    return { domain, live: !!(domain && body.live !== false), cloudflare: cf };
+  }
   if (res === 'reviews' && id === 'sync' && method === 'POST') {
     // 새 리뷰 확인 (Places, 작업당 하루 1회 · force 면 즉시). 검증 큐 탭 버튼과 루틴 큐가 부른다
     return await syncReviews(db, env, { force: !!body.force });
@@ -478,7 +527,8 @@ async function api(env, method, seg, body, url) {
       byPhase: PHASES.map(([k, l]) => ({ key: k, label: l, done: tasks.filter((t) => t.phase === k && CLOSED.has(t.status)).length, total: tasks.filter((t) => t.phase === k).length })).filter((p) => p.total),
     };
     const portal = `${url.origin}/c/${await ensurePortalToken(db, job)}`;
-    return { portal, job: { ...job, pct, phase: jobPhase(job, tasks), dueInfo: dueLabel(job.due_date), day: job.created_at ? Math.max(1, Math.floor((Date.now() - new Date(job.created_at.replace(' ', 'T') + 'Z').getTime()) / 864e5) + 1) : 1 }, order, payments, intake, events, deliverables, tasks, lanes, services, milestones, next: nextAction(tasks), summary: { ...summary, bottlenecks: undefined }, history, intakeCandidates, aiPending, stuck, stuckDays, lastMove, brief, progressSummary, who: WHO, phases: PHASES, taskStatuses: TASK_STATUSES, statuses: JOB_STATUSES };
+    const siteRow = await db.prepare(`SELECT slug, domain, live, version, updated_at FROM sites WHERE job_id = ?`).bind(job.id).first().catch(() => null);
+    return { portal, site: siteRow ? { ...siteRow, preview_url: `https://${siteRow.slug}.sites.bizhigher.com` } : null, job: { ...job, pct, phase: jobPhase(job, tasks), dueInfo: dueLabel(job.due_date), day: job.created_at ? Math.max(1, Math.floor((Date.now() - new Date(job.created_at.replace(' ', 'T') + 'Z').getTime()) / 864e5) + 1) : 1 }, order, payments, intake, events, deliverables, tasks, lanes, services, milestones, next: nextAction(tasks), summary: { ...summary, bottlenecks: undefined }, history, intakeCandidates, aiPending, stuck, stuckDays, lastMove, brief, progressSummary, who: WHO, phases: PHASES, taskStatuses: TASK_STATUSES, statuses: JOB_STATUSES };
   }
 
   if (res === 'jobs' && id && method === 'POST') {
