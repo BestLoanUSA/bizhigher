@@ -95,6 +95,8 @@ function writeSite(outDir, slug, files) {
     const worker = fs.readFileSync(path.join(__dirname, '../sites/worker.js'), 'utf8').replace(/\/\*__DOMAINS__\*\/\{\}\/\*__END__\*\//, JSON.stringify(domains));
     fs.writeFileSync(path.join(out, '_worker.js'), worker);
     fs.writeFileSync(path.join(out, 'index.html'), '<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex"><title>BizHigher Sites</title>');
+    // 404.html 이 없으면 Pages 가 SPA 모드로 모든 미지 경로에 루트 index.html 을 200 으로 준다 → 반드시 둔다
+    fs.writeFileSync(path.join(out, '404.html'), '<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex"><title>Not found</title><p style="font-family:sans-serif;padding:40px">페이지를 찾을 수 없습니다.</p>');
     console.log(`빌드: 사이트 ${sites.length}곳, 도메인 ${Object.keys(domains).length}개 → ${out}/`);
     return;
   }
