@@ -89,6 +89,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | 새 리뷰 감시·답글 과제 | `functions/api/_reviews.js` (§12-4) — 위험 단어 목록 `RISK`, 쿨다운 20시간 |
 | 고객 웹사이트 템플릿·빌드·호스팅 | 템플릿 `automation/sites/render.js` · 라우터 `automation/sites/worker.js` · CLI `automation/ai-runner/sites.js` · 스펙 API `functions/admin/[[path]].js`(`sites`) · 설계 `docs/customer-sites-design-ko.md` (§12-5) |
 | 결과물 품질용 마케팅·SEO·블로그 지침(가져온 스킬) | `.claude/skills/*/SKILL.md` — marketingskills·claude-seo·claude-blog 에서 골라 복사(MIT, 출처·갱신법은 그 폴더 README). 단계별 어떤 스킬을 읽는지 `docs/skills-map-ko.md`. 파이썬 도구 단계는 건너뛰고 지침만 쓴다 |
+| 템플릿·랜딩·홈·관리자 **디자인을 코드로 고칠 때** | `.claude/skills/frontend-design/SKILL.md`(Anthropic 공식, Apache 2.0) 를 먼저 읽는다 — 팔레트·타이포·레이아웃 계획을 브리프와 대조한 뒤 구현. 루틴 결과물(스펙 JSON)에는 적용되지 않는다 |
 | 관리자 페이지 `/admin/` | `functions/admin/` (화면 `_ui.js`, API `[[path]].js`, 인증 `_auth.js`). 설정 안내 `docs/admin-setup-ko.md` |
 | Stripe 결제 → 주문·작업 기록 | `functions/api/stripe-webhook.js` + 공용 `functions/api/_orders.js` |
 | 서비스별 작업 단계·자동화 수준(플레이북) | `functions/api/_playbook.js` — 관리자 파이프라인·플레이북 탭·`docs/automation-map-ko.md`의 단일 소스 |

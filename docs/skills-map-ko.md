@@ -27,6 +27,7 @@
 | sv-1 영상 기획안 | `video` · `social` | 훅·장면·자막 구조 |
 | mr-4 월간 리포트 | `copy-editing` | 숫자 해석 문장 |
 | cp-2 사이트 수정 | `copy-editing` | |
+| **코드를 직접 쓰는 디자인 작업**(David 세션): 사이트 템플릿 `automation/sites/render.js` 개정 · 랜딩페이지 빌드(llp-3) · bizhigher.com 페이지 · 관리자 화면 | `frontend-design` | 템플릿 티 나는 기본값 피하기, 타이포·팔레트 계획 → 브리프 대조 → 구현 → 자기 비평. 루틴 단계가 아니라 **템플릿·페이지를 고치는 사람(세션)이 읽는다** |
 | 킥오프·고객 요약(ob-5, summary) | `emails` · `copy-editing` | 짧고 사실만 |
 
 파이썬 도구가 필요한 지시(`python3 …`, `uv run`, `scripts/`)는 건너뛴다. 사이트 QA(web-4·llp-4)는 스킬이 아니라 `qa.js` 가 Unlighthouse 를 돌린다.
