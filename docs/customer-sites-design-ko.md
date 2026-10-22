@@ -62,7 +62,7 @@
 
 ## 5. 주소·색인
 
-- 임시: `https://{slug}.sites.bizhigher.com` — 빌드가 `<meta name="robots" content="noindex">` + robots.txt Disallow. 검증·고객 확인용
+- 임시: **`https://bizhigher-sites.pages.dev/{slug}/`** 는 배포 즉시 항상 열린다(관리자 "미리보기 열기"·검증 큐 임베드가 이 주소). `https://{slug}.sites.bizhigher.com` 은 `sites.js deploy` 가 Pages 커스텀 도메인 + DNS CNAME 으로 자동 등록한다(토큰에 Zone Read 가 없으면 DNS 는 못 만들고 상태를 출력). 둘 다 `<meta name="robots" content="noindex">` + robots.txt Disallow
 - 고객 도메인 연결(web-3): 고객 등록대행사에서 CNAME `@`/`www` → `bizhigher-sites.pages.dev` (또는 Cloudflare로 네임서버 이전). 그다음 `POST sites/:slug/domain` 이 Pages 프로젝트에 도메인을 추가하고 `live=1` → 다음 빌드부터 색인 허용·sitemap·canonical 이 그 도메인
 - 임시 주소는 도메인 연결 후에도 살아 있되 canonical 은 고객 도메인
 
