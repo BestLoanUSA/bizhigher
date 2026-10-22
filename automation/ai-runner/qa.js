@@ -3,8 +3,10 @@
  * 사이트 QA 자동화 — 360/768/1280 스크린샷 · 속도 · 가로 넘침 · 링크 · 폼 점검 → 리포트(md) + 몽타주(jpg)
  * (David 차례였던 web-4 "360px 실측·속도·폼 테스트"를 루틴이 먼저 돌리고 David 는 리포트만 본다. 의존성 없음 — Playwright 는 환경 것)
  *
- *   node automation/ai-runner/qa.js --url https://example.com [--out qa] [--name home] [--links 40]
+ *   node automation/ai-runner/qa.js --url https://example.com [--out qa] [--name home] [--links 40] [--no-lighthouse] [--routes 8]
  *   → qa/{name}-360.jpg · -768.jpg · -1280.jpg · {name}-montage.jpg · {name}-report.md · 요약 JSON(stdout)
+ *   https 주소면 Unlighthouse(사이트 전체 Lighthouse, MIT)도 돌려 페이지별 성능·접근성·권장사항·SEO 점수와 떨어진 항목을 리포트에 붙인다(최대 --routes 페이지, 약 1~2분).
+ *   file:// 주소나 --no-lighthouse 면 건너뛴다. 임시 주소(noindex)는 SEO 점수가 "is-crawlable" 때문에 낮게 나오므로 그 항목은 제외하고 읽는다.
  *   업로드는 creative.js upload --file qa/{name}-montage.jpg 로.
  */
 const fs = require('fs');
@@ -12,6 +14,35 @@ const path = require('path');
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i > -1 && args[i + 1] != null && !args[i + 1].startsWith('--') ? args[i + 1] : d; };
 const VIEWS = [['360', 360, 780, true], ['768', 768, 1024, false], ['1280', 1280, 800, false]];
+const UNLIGHTHOUSE_VERSION = '0.19.1';
+
+/* Unlighthouse — 사이트 전체 Lighthouse. 결과: { routes: [{path, scores:{perf,a11y,bp,seo}, lcp, cls, tbt, fails:[…]}], note } 또는 { error } */
+async function runLighthouse(url, out, name, maxRoutes) {
+  const { execFileSync } = require('child_process');
+  const dir = path.resolve(out, `ul-${name}`); fs.mkdirSync(dir, { recursive: true });
+  const exe = process.env.PLAYWRIGHT_CHROMIUM || (fs.existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined);
+  const cfg = { site: url, scanner: { samples: 1, device: 'mobile', throttle: false, maxRoutes, robotsTxt: false, sitemap: true, crawler: true }, chrome: { useSystem: true }, puppeteerOptions: { ...(exe ? { executablePath: exe } : {}), args: ['--no-sandbox', '--ignore-certificate-errors'] }, ci: { reporter: 'jsonExpanded' }, outputPath: './out', debug: false };
+  fs.writeFileSync(path.join(dir, 'unlighthouse.config.ts'), 'export default ' + JSON.stringify(cfg));
+  try { execFileSync('npx', ['--yes', `unlighthouse-ci@${UNLIGHTHOUSE_VERSION}`, '--site', url, '--reporter', 'jsonExpanded', '--no-cache'], { cwd: dir, stdio: ['ignore', 'pipe', 'pipe'], timeout: 420000, env: { ...process.env, CI: '1' } }); }
+  catch (e) { if (!fs.existsSync(path.join(dir, 'out', 'ci-result.json'))) return { error: 'Unlighthouse 실패: ' + String(e.stderr || e.message).split('\n').filter((l) => /ERROR|Error/.test(l)).slice(-2).join(' ').slice(0, 240) }; }
+  let rows; try { rows = JSON.parse(fs.readFileSync(path.join(dir, 'out', 'ci-result.json'), 'utf8')); } catch (e) { return { error: 'Unlighthouse 결과 없음' }; }
+  const list = Array.isArray(rows) ? rows : Array.isArray(rows && rows.routes) ? rows.routes : []; // 0.19: { summary, routes[], metadata }
+  const routes = list.map((r) => {
+    const c = r.categories || {}; const m = r.metrics || {};
+    const row = { path: r.path, scores: { perf: c.performance && c.performance.score, a11y: c.accessibility && c.accessibility.score, bp: c['best-practices'] && c['best-practices'].score, seo: c.seo && c.seo.score }, lcp: m['largest-contentful-paint'] && m['largest-contentful-paint'].displayValue, cls: m['cumulative-layout-shift'] && m['cumulative-layout-shift'].displayValue, tbt: m['total-blocking-time'] && m['total-blocking-time'].displayValue, fails: [] };
+    // 떨어진 항목(가중치 있는 감사 중 0.9 미만) — 페이지별 lighthouse.json 에서. noindex 임시 주소의 is-crawlable 은 제외
+    try {
+      const rel = r.path === '/' ? '' : r.path.replace(/^\/|\/$/g, '');
+      const lh = JSON.parse(fs.readFileSync(path.join(dir, 'out', 'reports', rel, 'lighthouse.json'), 'utf8'));
+      for (const cat of ['seo', 'accessibility', 'best-practices', 'performance']) for (const ref of (lh.categories[cat] || { auditRefs: [] }).auditRefs) {
+        const a = lh.audits[ref.id]; if (!a || ref.weight <= 0 || a.score === null || a.score >= 0.9 || ref.id === 'is-crawlable') continue;
+        row.fails.push(`${cat === 'best-practices' ? '권장' : cat === 'accessibility' ? '접근성' : cat === 'seo' ? 'SEO' : '성능'}: ${a.title}${a.displayValue ? ' (' + a.displayValue + ')' : ''}`);
+      }
+    } catch {}
+    return row;
+  });
+  return { routes, dir };
+}
 
 (async () => {
   const url = opt('url'); if (!url) throw new Error('--url 필요');
@@ -73,6 +104,15 @@ const VIEWS = [['360', 360, 780, true], ['768', 768, 1024, false], ['1280', 1280
   }
   // 문제 목록
   const v = result.views['360'] || {};
+  // Unlighthouse — https 주소일 때만(file:// 미리보기는 건너뜀)
+  let lh = null;
+  if (/^https?:\/\//.test(url) && !args.includes('--no-lighthouse')) { lh = await runLighthouse(url, out, name, Number(opt('routes', 8))); if (lh.error) result.issues.push('Lighthouse 미실행 — ' + lh.error); }
+  if (lh && lh.routes) {
+    const pct = (x) => (x == null ? '-' : Math.round(x * 100));
+    for (const r of lh.routes) { if (r.scores.perf != null && r.scores.perf < 0.7) result.issues.push(`${r.path} 성능 ${pct(r.scores.perf)}점 (LCP ${r.lcp || '-'}, TBT ${r.tbt || '-'})`); if (r.scores.a11y != null && r.scores.a11y < 0.9) result.issues.push(`${r.path} 접근성 ${pct(r.scores.a11y)}점 — ${r.fails.filter((f) => f.startsWith('접근성')).slice(0, 2).join('; ')}`); }
+    const uniqFails = [...new Set(lh.routes.flatMap((r) => r.fails))];
+    if (uniqFails.length) result.issues.push(`Lighthouse 지적 ${uniqFails.length}건: ${uniqFails.slice(0, 4).join(' · ')}${uniqFails.length > 4 ? ' …' : ''}`);
+  }
   if (v.status && v.status >= 400) result.issues.push(`페이지 응답 ${v.status}`);
   if (v.overflow) result.issues.push(`360px 가로 넘침 (scrollWidth ${v.scrollWidth} > ${v.innerWidth}) — 반드시 수정`);
   if (!v.viewportMeta) result.issues.push('viewport 메타 태그 없음 — 모바일에서 축소되어 보임');
@@ -104,7 +144,8 @@ const VIEWS = [['360', 360, 780, true], ['768', 768, 1024, false], ['1280', 1280
     '', `제목: ${v.title || '-'}`, `설명: ${(v.description || '-').slice(0, 160)}`, `H1: ${v.h1} · 이미지 ${v.imgTotal}(alt 없음 ${v.imgNoAlt}) · 전화 링크 ${v.tel ? '있음' : '없음'} · 지도 링크 ${v.maps ? '있음' : '없음'}`,
     `폼: ${result.forms.length ? result.forms.map((f) => `${f.id} (필드 ${f.fields}, 필수 ${f.required}, 제출 버튼 ${f.submit ? '있음' : '없음'})`).join(' / ') : '없음'}`,
     `링크 점검: ${result.links.checked}개 중 깨짐 ${result.links.broken.length}개${result.links.broken.length ? ' — ' + result.links.broken.map((b) => `${b.url} (${b.status})`).join(', ') : ''}`,
+    ...(lh && lh.routes ? ['', `## Lighthouse (Unlighthouse ${UNLIGHTHOUSE_VERSION}, 모바일, ${lh.routes.length}페이지)`, '| 페이지 | 성능 | 접근성 | 권장사항 | SEO | LCP | CLS | TBT |', '|---|---|---|---|---|---|---|---|', ...lh.routes.map((r) => { const p = (x) => (x == null ? '-' : Math.round(x * 100)); return `| ${r.path} | ${p(r.scores.perf)} | ${p(r.scores.a11y)} | ${p(r.scores.bp)} | ${p(r.scores.seo)} | ${r.lcp || '-'} | ${r.cls || '-'} | ${r.tbt || '-'} |`; }), '', '떨어진 항목(페이지별):', ...lh.routes.map((r) => `- ${r.path}: ${r.fails.length ? r.fails.join(' · ') : '없음'}`), '※ 임시 주소(noindex)는 SEO 의 "색인 차단" 항목을 뺀 점수로 읽는다. 도메인 연결 후 다시 돌리면 올라간다'] : []),
     '', '※ 속도 수치는 실행 환경(클라우드 세션 프록시)의 영향을 받는다 — 전후 비교·상대 비교용. 절대값은 PageSpeed Insights 로 확인', '', '## 수정할 것', ...(result.issues.length ? result.issues.map((i) => '- ' + i) : ['- 없음 — 인도 가능']), '', `몽타주: ${montage}`].join('\n');
   fs.writeFileSync(path.join(out, `${name}-report.md`), md);
-  console.log(JSON.stringify({ report: path.join(out, `${name}-report.md`), montage, issues: result.issues, lcp360: v.lcp, overflow360: !!v.overflow, broken: result.links.broken.length }));
+  console.log(JSON.stringify({ report: path.join(out, `${name}-report.md`), montage, issues: result.issues, lcp360: v.lcp, overflow360: !!v.overflow, broken: result.links.broken.length, lighthouse: lh && lh.routes ? lh.routes.map((r) => ({ path: r.path, perf: r.scores.perf, a11y: r.scores.a11y, bp: r.scores.bp, seo: r.scores.seo })) : null }));
 })().catch((e) => { console.error('오류:', e.message); process.exit(1); });

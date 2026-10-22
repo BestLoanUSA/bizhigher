@@ -88,6 +88,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | 고객 결과물 페이지 `/c/{token}` | `functions/c/[token].js` — 묶음 메일·승인 흐름은 §12-3 |
 | 새 리뷰 감시·답글 과제 | `functions/api/_reviews.js` (§12-4) — 위험 단어 목록 `RISK`, 쿨다운 20시간 |
 | 고객 웹사이트 템플릿·빌드·호스팅 | 템플릿 `automation/sites/render.js` · 라우터 `automation/sites/worker.js` · CLI `automation/ai-runner/sites.js` · 스펙 API `functions/admin/[[path]].js`(`sites`) · 설계 `docs/customer-sites-design-ko.md` (§12-5) |
+| 결과물 품질용 마케팅·SEO·블로그 지침(가져온 스킬) | `.claude/skills/*/SKILL.md` — marketingskills·claude-seo·claude-blog 에서 골라 복사(MIT, 출처·갱신법은 그 폴더 README). 단계별 어떤 스킬을 읽는지 `docs/skills-map-ko.md`. 파이썬 도구 단계는 건너뛰고 지침만 쓴다 |
 | 관리자 페이지 `/admin/` | `functions/admin/` (화면 `_ui.js`, API `[[path]].js`, 인증 `_auth.js`). 설정 안내 `docs/admin-setup-ko.md` |
 | Stripe 결제 → 주문·작업 기록 | `functions/api/stripe-webhook.js` + 공용 `functions/api/_orders.js` |
 | 서비스별 작업 단계·자동화 수준(플레이북) | `functions/api/_playbook.js` — 관리자 파이프라인·플레이북 탭·`docs/automation-map-ko.md`의 단일 소스 |
@@ -314,7 +315,8 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 - 흐름: `runner.js queue`(관리자 API `GET /admin/api/runner/queue` — 같은 서비스 앞 단계가 끝난 AI 단계만) → 플레이북대로 결과물 생성 → `submit`(verify면 검증 큐, 아니면 done) → 전달 대기 결과물은 `summary`(고객용 요약 2~4문장 저장, 메일 없음) → 작업별 메모. 발송은 §12-3
 - **2026-10-21 확장**: 우리 가게 공개 정보는 `places.js lookup`(고객 프로필 단계와 "GBP·구글 프로필 확인" 수정 요청에서 — 주소·전화·웹사이트·카테고리·영업시간·평점·리뷰 수·place_id·지도 링크·사진 수·소개문을 "(Places 공개 정보, 날짜)" 표시로 채운다), 경쟁사 갭 분석은 `places.js competitors`(실시간 조회만, 저장 금지), 광고 소재·게시물 이미지는 `creative.js gen→compose→upload`(fal.ai flux/schnell 배경 + Playwright 한글 조판 1:1·9:16·1.91:1 → D1 `assets` BLOB → `/a/{id}.jpg`, `functions/a/[id].js`) → `submit --kind images`로 검증 큐에 이미지 그리드. 숏폼 영상은 `creative.js video`(고객 사진 1장 → fal.ai Kling 2.1 이미지→영상 5초 클립, 편당 약 $0.25~0.5, `sv-2` auto)로 클립을 만들고 `creative.js caption`(자막 `|` 구분 자동 배분·`*강조*`·로고·브랜드·CTA·선택 음악 → Playwright 투명 PNG + 시스템 ffmpeg overlay, 2026-10-22)으로 완성본 mp4 까지 루틴이 만든다. David 는 sv-3 에서 확인만. 웹사이트 빌드·PDF·인쇄물·실사진 합성은 여전히 기획안만 올리고 David 세션이 마무리. 자산 업로드는 multipart(R2 60MB, mp4·webm·pdf 포함)
 - `bizhigher` 환경변수: `BIZHIGHER_ADMIN_PASSWORD`(= Cloudflare `ADMIN_PASSWORD`, 없으면 첫 줄에서 멈춤) · `FAL_KEY` · `GOOGLE_PLACES_API_KEY`. 이미지는 Pages R2 바인딩 `R2_ASSETS`(버킷 `bizhigher-assets`)에 본문, D1 `assets`에 메타·`r2_key`. 바인딩이 없으면 D1 BLOB 폴백. 서빙은 둘 다 `/a/{id}.jpg`(`functions/a/[id].js`)
-- 사이트 QA는 `qa.js --url …`(360/768/1280 스크린샷·LCP·전송량·가로 넘침·링크·폼·터치 대상 → 리포트 md + 몽타주 jpg). `web-4`·`llp-4`가 이걸 쓴다. 속도 수치는 세션 프록시 영향이 커 상대 비교용. 광고 셋업 `ads-2`는 Google Ads Editor 가져오기 CSV + Meta 설정표까지 만들어 David 구축 시간을 90분 → 25/40분으로
+- 사이트 QA는 `qa.js --url …`(360/768/1280 스크린샷·LCP·전송량·가로 넘침·링크·폼·터치 대상 → 리포트 md + 몽타주 jpg). https 주소면 **Unlighthouse**(사이트 전체 Lighthouse, 2026-10-22)도 돌려 페이지별 성능·접근성·권장사항·SEO 점수와 떨어진 항목을 붙인다(`--no-lighthouse` 로 끔, 임시 주소는 noindex 라 SEO 의 색인 항목 제외). `web-4`·`llp-4`가 이걸 쓴다. 속도 수치는 세션 프록시 영향이 커 상대 비교용. 광고 셋업 `ads-2`는 Google Ads Editor 가져오기 CSV + Meta 설정표까지 만들어 David 구축 시간을 90분 → 25/40분으로
+- **가져온 스킬(2026-10-22)**: `.claude/skills/` 에 marketingskills·claude-seo·claude-blog 의 지침 40개(MIT). 루틴은 `docs/skills-map-ko.md` 대로 단계마다 해당 SKILL.md 를 읽고 쓴다(파이썬 도구 단계 제외, 우리 규칙 우선)
 - 수동 경로는 그대로 남아 있다: 고객 여정 "AI 실행 지시 복사" → claude.ai fulfillment 스킬. 스킬에는 2026-10-21 기준 연동 섹션이 들어가 있고, 추가분은 `docs/fulfillment-skill-addendum-ko.md` v2
 
 ### 12-4. 새 리뷰 감시 — Places 공개 리뷰 (2026-10-22 B-3, GBP API 전 임시)
