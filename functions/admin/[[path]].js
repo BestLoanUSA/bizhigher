@@ -432,7 +432,8 @@ async function api(env, method, seg, body, url) {
     // 레인은 "지금 단계"(가장 앞선 미완료 phase)만 보여준다 — 먼 미래의 단계는 아래 서비스별 진행과 전체 단계에서 본다
     const cur = currentPhaseTasks(tasks);
     const lanes = {
-      ai: tasks.filter((t) => CLOSED.has(t.status) && t.who !== 'david' && t.who !== 'customer' && (t.done_at || '') >= since).slice(-8),
+      // 최근 완료 순 12개 (플레이북 순서가 아니라 시간 순 — 방금 끝난 게 맨 위)
+      ai: tasks.filter((t) => CLOSED.has(t.status) && t.who !== 'david' && t.who !== 'customer' && (t.done_at || '') >= since).sort((a, b) => String(b.done_at || '').localeCompare(String(a.done_at || ''))).slice(0, 12),
       mine: tasks.filter((t) => t.status === 'review' || (t.who === 'david' && t.status === 'doing') || (cur.includes(t) && t.who === 'david' && t.status === 'todo')).slice(0, 8),
       customer: cur.filter((t) => t.who === 'customer' && t.status !== 'blocked').slice(0, 8),
       received: tasks.filter((t) => t.who === 'customer' && t.status === 'done').sort((a, b) => String(b.done_at || '').localeCompare(String(a.done_at || ''))).slice(0, 12),
