@@ -7,7 +7,7 @@
 import { ensureSchema, addEvent, approveDeliverable } from '../api/_orders.js';
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-const MEDIA_RE = /https?:\/\/\S+\.(?:jpe?g|png|webp|gif|mp4|webm)/gi;
+const EMBED_RE = /^https:\/\/([a-z0-9-]+\.)*(bizhigher-sites\.pages\.dev|sites\.bizhigher\.com|bizhigher\.com)(\/|$)/i;
 
 async function load(env, token) {
   const t = String(token || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40);
@@ -22,22 +22,29 @@ async function load(env, token) {
   return { job, ds: ds.map((d) => ({ ...d, task: byId.get(d.task_id) || null })) };
 }
 
+/* 결과물 본문 — 관리자 공용 미리보기(_ui.js previewHtml)와 같은 규칙: 종류와 상관없이 이미지·영상·PDF·우리 사이트를 그 자리에서 */
 function body(d) {
   const k = d.kind || (d.task && d.task.result_kind) || (d.url ? 'link' : 'text');
   const text = (d.task ? d.task.result_text || '' : '').replace(/\n+\[David 승인 메모\][^\n]*/g, '').trim(); // David 내부 메모는 고객에게 보이지 않는다
   const url = d.url || (d.task && d.task.result_url) || '';
+  const all = (text + '\n' + url).match(/https?:\/\/[^\s<>"')\]]+/g) || [];
+  const uniq = [...new Set(all.map((u) => u.replace(/[.,;:!?]+$/, '')))];
+  const isMedia = (u) => /\.(jpe?g|png|webp|gif|mp4|webm|pdf)(\?|$)/i.test(u);
+  const imgs = uniq.filter((u) => /\.(jpe?g|png|webp|gif)(\?|$)/i.test(u));
+  const vids = uniq.filter((u) => /\.(mp4|webm)(\?|$)/i.test(u));
+  const pdfs = uniq.filter((u) => /\.pdf(\?|$)/i.test(u));
+  const sites = uniq.filter((u) => EMBED_RE.test(u) && !isMedia(u) && !/\/a\//.test(u));
   let html = '';
-  if (k === 'images' || k === 'video') {
-    const urls = text.match(MEDIA_RE) || [];
-    html += '<div class="grid">' + urls.map((u) => /\.(mp4|webm)$/i.test(u) ? `<video src="${esc(u)}" controls playsinline preload="metadata"></video>` : `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="" loading="lazy"></a>`).join('') + '</div>';
-    const rest = text.split('\n').filter((l) => !/https?:\/\/\S+\.(?:jpe?g|png|webp|gif|mp4|webm)/i.test(l)).join('\n').trim();
-    if (rest) html += `<pre>${esc(rest.slice(0, 6000))}</pre>`;
-  } else if (k === 'html' && text) {
-    html += `<iframe sandbox="" srcdoc="${esc(text.slice(0, 200000))}" style="width:100%;height:520px;border:1px solid #e5e7eb;border-radius:12px;background:#fff"></iframe>`;
-  } else if (text) {
-    html += `<pre>${esc(text.slice(0, 12000))}</pre>`;
+  if (k === 'html' && text) html += `<iframe sandbox="" srcdoc="${esc(text.slice(0, 200000))}" style="width:100%;height:520px;border:1px solid #e5e7eb;border-radius:12px;background:#fff"></iframe>`;
+  if (imgs.length) html += '<div class="grid">' + imgs.slice(0, 24).map((u) => `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="" loading="lazy"></a>`).join('') + '</div>';
+  if (vids.length) html += '<div class="grid">' + vids.slice(0, 6).map((u) => `<video src="${esc(u)}" controls playsinline preload="metadata"></video>`).join('') + '</div>';
+  for (const u of pdfs.slice(0, 3)) html += `<object data="${esc(u)}" type="application/pdf" style="width:100%;height:480px;border:1px solid #e5e7eb;border-radius:12px;margin:8px 0"><a class="btn ghost" href="${esc(u)}" target="_blank" rel="noopener">PDF 열기 →</a></object>`;
+  for (const u of sites.slice(0, 1)) html += `<iframe src="${esc(u)}" title="사이트 미리보기" loading="lazy" style="width:100%;height:560px;border:1px solid #e5e7eb;border-radius:12px;background:#fff;margin:8px 0"></iframe><p><a class="btn" href="${esc(u)}" target="_blank" rel="noopener">사이트 열기 →</a></p>`;
+  if (text && k !== 'html') {
+    const rest = text.split('\n').filter((l) => !(imgs.concat(vids).some((u) => l.includes(u)) && l.trim().length < 200)).join('\n').trim(); // 이미지 주소만 있는 줄은 숨김
+    if (rest) html += `<pre>${esc(rest.slice(0, 12000))}</pre>`;
   }
-  if (url) html += `<p><a class="btn ghost" href="${esc(url)}" target="_blank" rel="noopener">파일·링크 열기 →</a></p>`;
+  if (url && !imgs.includes(url) && !vids.includes(url) && !pdfs.includes(url) && !sites.includes(url)) html += `<p><a class="btn ghost" href="${esc(url)}" target="_blank" rel="noopener">파일·링크 열기 →</a></p>`;
   return html || '<p class="muted">내용은 담당자 안내 메일을 참고해 주세요.</p>';
 }
 

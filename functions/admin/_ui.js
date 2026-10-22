@@ -311,9 +311,7 @@ function aiItem(t, showWho) {
   const w = WHO[t.who] || { icon: '', label: t.who };
   const head = '<span style="color:#0B9E58;font-weight:800">✓</span><span class="m">' + esc(t.title) + (has ? '<span class="more">내용 보기 ▾</span>' : '') + '<small>' + esc(t.service_name) + (showWho ? ' · ' + esc(w.label) : '') + ' · ' + day(t.done_at) + (t.note ? ' · ' + esc(t.note) : '') + '</small></span>';
   if (!has) return '<div class="li">' + head + '</div>';
-  const body = (t.result_url ? '<div style="margin-top:6px"><a class="btn ghost sm" target="_blank" href="' + esc(t.result_url) + '">' + (/drive\.google/.test(t.result_url) ? 'Drive에서 열기' : '열기') + ' ↗</a> <span class="muted" style="font-size:12px">' + esc(t.result_url) + '</span></div>' : '') +
-    (t.result_kind === 'images' || t.result_kind === 'video' ? '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;margin-top:6px">' + mediaUrls(t.result_text).map((u) => mediaTag(u, 8)).join('') + '</div>' : '') +
-    (t.result_text ? (t.result_kind === 'html' ? '<div class="frame" style="margin-top:6px"><iframe sandbox="" srcdoc="' + esc(t.result_text) + '" title="결과물"></iframe></div>' : '<div class="res">' + esc(t.result_text) + '</div>') : '') +
+  const body = '<div style="margin-top:6px">' + previewHtml(t, { radius: 8, cell: 120, siteH: 420 }) + '</div>' +
     (t.self_check ? '<div class="muted" style="font-size:12px;margin-top:4px">AI 자기 점검: ' + esc(t.self_check) + '</div>' : '') +
     '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button class="btn ghost sm" data-reopen="' + t.id + '">수정 요청 (AI 재작업)</button><button class="btn ghost sm" data-edit="' + t.id + '">직접 고치기</button></div>' +
     '<div data-editbox="' + t.id + '" style="display:none;margin-top:8px" class="frm"><textarea class="in" style="min-height:140px;font-size:13px">' + esc(t.result_text || '') + '</textarea><div class="h"><input class="in" placeholder="링크" value="' + esc(t.result_url || '') + '"><button class="btn sm" data-editsave="' + t.id + '">저장</button></div></div>';
@@ -321,6 +319,28 @@ function aiItem(t, showWho) {
 }
 /* 결과물 본문에서 이미지·영상 URL 추출 + 태그 (영상은 재생 가능) */
 function mediaUrls(s) { return (s || '').match(/https?:\/\/\S+\.(?:jpe?g|png|webp|gif|mp4|webm)/gi) || []; }
+/* 공용 결과물 미리보기 — 검증 큐·AI가 했음·고객 전달 전부 이걸 쓴다. 종류 표시와 상관없이 본문·링크에서 이미지·영상·PDF·우리 사이트 주소를 찾아 그 자리에서 보여준다 */
+const EMBED_RE = /^https:\/\/([a-z0-9-]+\.)*(bizhigher-site\.pages\.dev|bizhigher-sites\.pages\.dev|bizhigher\.com)(\/|$)/i;
+function previewHtml(t, opt) {
+  opt = opt || {}; const r = opt.radius || 10; const text = t.result_text || ''; const url = t.result_url || '';
+  const all = (text + '\n' + url).match(/https?:\/\/[^\s<>"')\]]+/g) || [];
+  const uniq = [...new Set(all.map((u) => u.replace(/[.,;:!?]+$/, '')))];
+  const imgs = uniq.filter((u) => /\.(jpe?g|png|webp|gif)(\?|$)/i.test(u));
+  const vids = uniq.filter((u) => /\.(mp4|webm)(\?|$)/i.test(u));
+  const pdfs = uniq.filter((u) => /\.pdf(\?|$)/i.test(u));
+  const sites = uniq.filter((u) => EMBED_RE.test(u) && !/\.(jpe?g|png|webp|gif|mp4|webm|pdf)(\?|$)/i.test(u) && !/\/a\//.test(u));
+  const drive = uniq.filter((u) => /drive\.google|docs\.google/.test(u));
+  let out = '';
+  if (t.result_kind === 'html' && text) out += '<div class="frame"><iframe sandbox="" srcdoc="' + esc(text) + '" title="결과물"></iframe></div>';
+  if (imgs.length) out += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(' + (opt.cell || 140) + 'px,1fr));gap:8px;margin:6px 0">' + imgs.slice(0, 24).map((u) => mediaTag(u, r)).join('') + '</div>';
+  if (vids.length) out += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin:6px 0">' + vids.slice(0, 6).map((u) => mediaTag(u, r)).join('') + '</div>';
+  pdfs.slice(0, 3).forEach((u) => { out += '<div class="frame" style="margin:6px 0"><object data="' + esc(u) + '" type="application/pdf" style="width:100%;height:480px;border:1px solid var(--line);border-radius:' + r + 'px"><a class="btn ghost sm" target="_blank" href="' + esc(u) + '">PDF 열기 ↗</a></object></div>'; });
+  sites.slice(0, 2).forEach((u) => { out += '<div class="frame" style="margin:6px 0"><iframe src="' + esc(u) + '" title="사이트 미리보기" loading="lazy" style="width:100%;height:' + (opt.siteH || 560) + 'px;border:1px solid var(--line);border-radius:' + r + 'px;background:#fff"></iframe></div><div style="margin:4px 0 8px"><a class="btn ghost sm" target="_blank" href="' + esc(u) + '">새 탭에서 열기 ↗</a> <span class="muted" style="font-size:12px">' + esc(u) + '</span></div>'; });
+  drive.slice(0, 4).forEach((u) => { out += '<div style="margin:4px 0"><a class="btn ghost sm" target="_blank" href="' + esc(u) + '">Drive에서 열기 ↗</a> <span class="muted" style="font-size:12px">' + esc(u) + '</span></div>'; });
+  if (url && !imgs.includes(url) && !vids.includes(url) && !pdfs.includes(url) && !sites.includes(url) && !drive.includes(url)) out += '<div style="margin:4px 0"><a class="btn ghost sm" target="_blank" href="' + esc(url) + '">' + (/\.pdf($|\?)/i.test(url) ? 'PDF 열기' : '열기') + ' ↗</a> <span class="muted" style="font-size:12px">' + esc(url) + '</span></div>';
+  if (text && t.result_kind !== 'html') out += '<div class="' + (opt.textClass || 'res') + '">' + linkify(text) + '</div>';
+  return out;
+}
 function mediaTag(u, r) { return /\.(mp4|webm)$/i.test(u) ? '<video src="' + esc(u) + '" controls preload="metadata" playsinline style="width:100%;border-radius:' + r + 'px;border:1px solid var(--line);display:block;background:#000"></video>' : '<a href="' + esc(u) + '" target="_blank"><img src="' + esc(u) + '" alt="" style="width:100%;border-radius:' + r + 'px;border:1px solid var(--line);display:block"></a>'; }
 function linkify(s) { return esc(s || '').replace(/(https?:\/\/[^\s,]+)/g, '<a target="_blank" href="$1">$1</a>'); }
 
@@ -380,13 +400,7 @@ function reviewCard(t) {
   const checks = t.checks || [];
   const url = t.result_url || '';
   const embeddable = /^https:\/\/([a-z0-9-]+\.)*(bizhigher-site\.pages\.dev|bizhigher-sites\.pages\.dev|bizhigher\.com)(\/|$)/i.test(url);
-  let preview = '';
-  if (t.result_kind === 'html' && t.result_text) preview = '<div class="frame"><iframe sandbox="" srcdoc="' + esc(t.result_text) + '" title="결과물 미리보기"></iframe></div>';
-  else if (url && embeddable) preview = '<div class="frame"><iframe src="' + esc(url) + '" title="결과물 미리보기" loading="lazy"></iframe></div>';
-  const imgs = mediaUrls(t.result_text);
-  if ((t.result_kind === 'images' || t.result_kind === 'video') && imgs.length) preview += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px">' + imgs.map((u) => mediaTag(u, 10)).join('') + '</div>';
-  if (t.result_text && t.result_kind !== 'html') preview += '<div class="prev">' + esc(t.result_text) + '</div>';
-  if (url) preview += '<div><a class="btn ghost sm" target="_blank" href="' + esc(url) + '">' + (/drive\.google/.test(url) ? 'Drive에서 열기' : /\.pdf($|\?)/i.test(url) ? 'PDF 열기' : '새 탭에서 열기') + ' ↗</a> <span class="muted" style="font-size:12px">' + esc(url) + '</span></div>';
+  let preview = previewHtml(t, { radius: 10, cell: 160, siteH: 600, textClass: 'prev' });
   if (!preview) preview = '<div class="prev muted">결과물이 아직 붙지 않았습니다. 결과물이 Drive에 있으면 고객 여정 화면에서 링크를 추가하세요.</div>';
   return '<div class="rv"><div class="h">' + kindTag(t.kind) + '<b>' + esc((t.business || '').replace(' (데모)', '')) + '</b><span class="muted">·</span><span>' + esc(t.service_name) + '</span><span class="sp" style="flex:1"></span><span class="muted" style="font-size:12px">AI 생성 ' + when(t.requested_at) + ' · 예상 ' + (t.david_min || 0) + '분 · 마감 ' + dueHtml(t.dueInfo) + '</span></div>' +
     '<div class="b"><h1 style="margin:0;font-size:19px">' + esc(t.title) + '</h1>' + (t.revise_note ? '<div class="alert">이전 수정 요청: ' + esc(t.revise_note) + '</div>' : '') + (t.key === 'rr-live' && t.note ? '<div class="prev" style="background:#FFFBEB;white-space:pre-wrap">' + esc(t.note) + '</div><div class="muted" style="font-size:12px">아래 답글을 복사해 GBP 앱·웹에서 이 리뷰에 붙여넣고 게시한 뒤 "승인"을 누르세요. 고치고 싶으면 "직접 고치기"로 수정 후 게시.</div>' : '') + preview +
