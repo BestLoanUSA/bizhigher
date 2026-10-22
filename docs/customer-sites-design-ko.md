@@ -37,20 +37,28 @@
 | D1 | `sites` | id · job_id · slug · spec(JSON) · domain · live(0/1) · version · updated_at · published_at |
 | 플레이북 | `web-2` | "사이트 스펙 작성 → 빌드·배포 → 임시 주소 검증 큐" (AI 60분 → 15분) |
 
-## 4. 스펙 JSON (AI가 질문지에서 뽑아 쓰는 것)
+## 4. 스펙 JSON (AI가 질문지에서 뽑아 쓰는 것) — 템플릿 v2 (2026-10-22)
 
 ```json
 {
   "slug": "newoptix", "lang": "ko-en", "tier": "onepage",
   "name": "New Optix", "name_ko": "뉴옵틱스 안경", "tagline": "가든그로브 한인 안경점 · 검안 포함", "tagline_en": "…",
-  "category": "안경점", "phone": "(714) 555-1234", "email": "", "address": { "line1": "9876 Garden Grove Blvd", "city": "Garden Grove", "state": "CA", "zip": "92844" },
-  "maps_url": "https://maps.google.com/?cid=…", "place_id": "ChIJ…", "review_url": "https://search.google.com/local/writereview?placeid=…",
-  "hours": [{ "days": "월–금", "time": "10:00–19:00" }, { "days": "토", "time": "10:00–17:00" }, { "days": "일", "time": "휴무" }],
-  "hero": { "photo": "https://bizhigher.com/a/….jpg", "headline": "…", "sub": "…", "headline_en": "…", "sub_en": "…" },
-  "about": { "title": "…", "text": "…", "text_en": "…", "photo": "…" },
-  "services": [{ "name": "…", "name_en": "…", "desc": "…", "desc_en": "…", "price": "$149~", "photo": "…" }],
-  "highlights": [{ "title": "…", "text": "…", "title_en": "…", "text_en": "…" }],
+  "category": "안경점", "category_en": "Optometry", "since": 2012, "phone": "(714) 555-1234", "email": "", "address": { "line1": "9876 Garden Grove Blvd", "city": "Garden Grove", "state": "CA", "zip": "92844" },
+  "maps_url": "https://maps.google.com/?cid=…", "place_id": "ChIJ…", "review_url": "https://search.google.com/local/writereview?placeid=…", "rating": 4.7, "review_count": 128,
+  "hours": [{ "days": "월–금", "time": "10:00–19:00" }, { "days": "토", "time": "10:00–17:00" }, { "days": "일", "time": "휴무" }], "hours_note": "공휴일은 전화로 확인",
+  "hero": { "photo": "https://bizhigher.com/a/….jpg", "headline": "오늘 검안, 이틀 안에 새 안경", "em": "이틀 안에", "sub": "…", "headline_en": "…", "em_en": "two days", "sub_en": "…", "badge": "한국어 상담", "badge_sub": "보험 안경 OK" },
+  "stats": [{ "value": "14+", "label": "years", "label_ko": "년 운영" }],
+  "promo": { "title": "처음 오시는 분, 검안 $59", "text": "…", "href": "tel:…", "cta": "지금 예약", "title_en": "…", "text_en": "…", "cta_en": "…" },
+  "services_title": "…", "services_intro": "…", "services": [{ "name": "…", "name_en": "…", "desc": "…", "desc_en": "…", "price": "$149~", "photo": "…" }],
+  "highlights_title": "…", "highlights": [{ "title": "…", "text": "…", "title_en": "…", "text_en": "…" }],
+  "brands": ["Ray-Ban", "Zeiss"],
   "gallery": ["https://…jpg"],
+  "steps_title": "…", "steps": [{ "title": "전화 또는 방문", "text": "…", "title_en": "…", "text_en": "…" }],
+  "reviews_title": "…", "review_themes": ["친절한 한국어 상담", "보험 처리가 빠름"],
+  "about": { "title": "…", "text": "…", "text_en": "…", "photo": "…" },
+  "visit_title": "…", "map_embed": "",
+  "faq": [{ "q": "…", "a": "…", "q_en": "…", "a_en": "…" }],
+  "closing": "궁금한 점은 전화 한 통이면 됩니다.", "closing_en": "…",
   "social": { "instagram": "", "facebook": "", "yelp": "" },
   "theme": { "color": "#0A4DF5", "mood": "clean" },
   "seo": { "title": "…", "description": "…(155자)", "keywords": "…" },
@@ -58,7 +66,11 @@
 }
 ```
 
-규칙: 사진은 질문지 첨부(`/a/…`) 또는 fal 생성본만. 가격·영업시간은 질문지·Places 공개 정보에서만(없으면 비움, 지어내지 않음). 리뷰 본문은 넣지 않는다(§14) — 별점·리뷰 수와 "리뷰 보기" 링크만. 의료업은 환자 암시 표현 금지. `lang`이 `ko-en`이면 `_en` 키를 채우고 템플릿이 토글을 보여준다.
+**섹션은 값이 있을 때만 나온다** (순서): 나브 → 히어로(아이브로우 업종·도시·설립, 헤드라인 + `em` 강조 단어 이탤릭, 서브, 버튼, 통계 행 `stats` 없으면 평점·리뷰 수·운영 연수로 자동) → 프로모 밴드 `promo` → 서비스 그리드(`services` 7개 이상이면 4열) → 왜 우리(`highlights` 최대 4) → 브랜드 칩 `brands` → 갤러리(`gallery` 3장 이상) → 이용 단계 `steps`(최대 4) → 리뷰 요약(`rating` 있을 때, `review_themes` 는 **고객이 질문지에서 말한 "손님이 자주 칭찬하는 점"** 만 — Places 리뷰 본문에서 뽑지 않는다) → 소개 `about` → 오시는 길(주소·전화·시간표·`hours_note`·`map_embed` 없으면 지도 열기 카드) → FAQ(`faq`, FAQPage 스키마 자동) → 마무리 CTA 밴드 `closing` → 푸터(시간·서비스·바로가기·SNS) + 폰 하단 고정 전화·길찾기 바.
+
+**무드 `theme.mood`** (없으면 업종으로 자동, `render.js moodFor`): `clean`(흰 바탕·브랜드 색 강조 — 전문직·의료·안경·학원), `warm`(종이색 바탕·네이비 버튼·틸 강조 — 식당·카페·뷰티·꽃집), `luxe`(다크 바탕·골드 강조 — 부동산·융자·법률·보험·스파·주얼리). `theme.color` 는 clean 에서 강조색, warm·luxe 에서는 기본값(#0A4DF5)이 아닐 때만 강조색을 덮어쓴다. 서체: 제목 Fraunces(+warm·luxe 는 Noto Serif KR), 본문 Inter·Pretendard. 섹션 88px 리듬, 스크롤 연출은 JS 가 켜진 뒤에만(기본 표시, 3초 폴백, reduced-motion 존중).
+
+규칙: 사진은 질문지 첨부(`/a/…`) 또는 fal 생성본만. 가격·영업시간·수치(`stats`·`since`)는 질문지·Places 공개 정보에서만(없으면 비움, 지어내지 않음). 리뷰 본문은 넣지 않는다(§14) — 별점·리뷰 수와 "리뷰 보기" 링크만. 의료업은 환자 암시 표현 금지. `lang`이 `ko-en`이면 `_en` 키를 채우고 템플릿이 토글을 보여준다. 헤드라인은 기능이 아니라 **손님이 얻는 것**(속도·편안함·결과)으로 8~14자, `em` 은 그 안의 2~4자.
 
 ## 5. 주소·색인
 
