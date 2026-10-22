@@ -441,6 +441,7 @@ async function api(env, method, seg, body, url) {
 
   /* 설정 */
   if (res === 'settings' && method === 'GET') return { settings: await getSettings(db) };
+  if (res === 'settings' && method === 'GET') return { settings: await getSettings(db) };
   if (res === 'settings' && method === 'POST') {
     const cur = await getSettings(db);
     const next = { ...cur, ...(body.settings || {}) };
