@@ -285,8 +285,8 @@ async function api(env, method, seg, body, url) {
     if (existing) await db.prepare(`UPDATE sites SET spec = ?, version = version + 1, updated_at = datetime('now') WHERE id = ?`).bind(text, existing.id).run();
     else await db.prepare(`INSERT INTO sites (job_id, slug, spec) VALUES (?, ?, ?)`).bind(jobId, slug, text).run();
     const row = await db.prepare(`SELECT * FROM sites WHERE slug = ?`).bind(slug).first();
-    await addEvent(db, jobId, 'task', null, null, `🌐 사이트 스펙 ${existing ? '갱신 v' + row.version : '생성'} — https://${slug}.sites.bizhigher.com`);
-    return { slug, version: row.version, domain: row.domain || '', live: !!row.live, preview_url: `https://${slug}.sites.bizhigher.com` };
+    await addEvent(db, jobId, 'task', null, null, `🌐 사이트 스펙 ${existing ? '갱신 v' + row.version : '생성'} — https://${env.SITES_PROJECT || 'bizhigher-sites'}.pages.dev/${slug}/`);
+    return { slug, version: row.version, domain: row.domain || '', live: !!row.live, preview_url: `https://${env.SITES_PROJECT || 'bizhigher-sites'}.pages.dev/${slug}/`, preview_host: `https://${slug}.sites.bizhigher.com` };
   }
   if (res === 'sites' && id && method === 'GET') {
     const s = await db.prepare(`SELECT * FROM sites WHERE slug = ? OR job_id = ?`).bind(String(id), Number(id) || 0).first();
@@ -528,7 +528,7 @@ async function api(env, method, seg, body, url) {
     };
     const portal = `${url.origin}/c/${await ensurePortalToken(db, job)}`;
     const siteRow = await db.prepare(`SELECT slug, domain, live, version, updated_at FROM sites WHERE job_id = ?`).bind(job.id).first().catch(() => null);
-    return { portal, site: siteRow ? { ...siteRow, preview_url: `https://${siteRow.slug}.sites.bizhigher.com` } : null, job: { ...job, pct, phase: jobPhase(job, tasks), dueInfo: dueLabel(job.due_date), day: job.created_at ? Math.max(1, Math.floor((Date.now() - new Date(job.created_at.replace(' ', 'T') + 'Z').getTime()) / 864e5) + 1) : 1 }, order, payments, intake, events, deliverables, tasks, lanes, services, milestones, next: nextAction(tasks), summary: { ...summary, bottlenecks: undefined }, history, intakeCandidates, aiPending, stuck, stuckDays, lastMove, brief, progressSummary, who: WHO, phases: PHASES, taskStatuses: TASK_STATUSES, statuses: JOB_STATUSES };
+    return { portal, site: siteRow ? { ...siteRow, preview_url: `https://${env.SITES_PROJECT || 'bizhigher-sites'}.pages.dev/${siteRow.slug}/`, preview_host: `https://${siteRow.slug}.sites.bizhigher.com` } : null, job: { ...job, pct, phase: jobPhase(job, tasks), dueInfo: dueLabel(job.due_date), day: job.created_at ? Math.max(1, Math.floor((Date.now() - new Date(job.created_at.replace(' ', 'T') + 'Z').getTime()) / 864e5) + 1) : 1 }, order, payments, intake, events, deliverables, tasks, lanes, services, milestones, next: nextAction(tasks), summary: { ...summary, bottlenecks: undefined }, history, intakeCandidates, aiPending, stuck, stuckDays, lastMove, brief, progressSummary, who: WHO, phases: PHASES, taskStatuses: TASK_STATUSES, statuses: JOB_STATUSES };
   }
 
   if (res === 'jobs' && id && method === 'POST') {

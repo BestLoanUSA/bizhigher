@@ -31,6 +31,7 @@ node automation/ai-runner/qa.js --url https://고객사이트 --out qa --name ho
 node automation/ai-runner/sites.js spec --job 28 --file spec.json           # 고객 사이트 스펙 저장 → slug·미리보기 주소 (web-2)
 node automation/ai-runner/sites.js build && node automation/ai-runner/sites.js deploy   # 전 고객 렌더 + 라우터 → Pages 프로젝트 bizhigher-sites (CLOUDFLARE_API_TOKEN·ACCOUNT_ID 필요)
 node automation/ai-runner/sites.js render --spec spec.json --out preview     # 로컬 확인 (관리자 API 없이)
+node automation/ai-runner/sites.js domains                                   # 서브도메인 {slug}.sites.bizhigher.com 등록 상태 확인·보정 (매 실행 1회)
 node automation/ai-runner/places.js lookup --query "New Optix Garden Grove CA" [--pick 2]      # 우리 가게 공개 정보 전부 (후보 여러 곳이면 --pick)
 node automation/ai-runner/places.js competitors --query "optical store Garden Grove CA" [--me ChIJ…] [--n 3]
 node automation/ai-runner/creative.js gen --prompt "modern optical shop interior, warm light, no text, no people" --out bg.jpg [--size square_hd|1024x1024]

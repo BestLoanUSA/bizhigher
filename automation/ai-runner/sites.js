@@ -6,6 +6,7 @@
  *   node automation/ai-runner/sites.js build [--out sites-build]              # 관리자 API의 모든 사이트를 렌더 + _worker.js
  *   node automation/ai-runner/sites.js deploy [--dir sites-build]             # wrangler pages deploy (CLOUDFLARE_API_TOKEN·CLOUDFLARE_ACCOUNT_ID 필요)
  *   node automation/ai-runner/sites.js render --spec spec.json --out preview  # 로컬 확인용 (관리자 API 없이)
+ *   node automation/ai-runner/sites.js domains                                # 모든 사이트의 {slug}.sites.bizhigher.com 등록 상태 확인·보정 (배포 없이)
  *
  * 환경변수: BIZHIGHER_ADMIN_PASSWORD(spec·build), CLOUDFLARE_API_TOKEN·CLOUDFLARE_ACCOUNT_ID(deploy), SITES_PROJECT(기본 bizhigher-sites)
  */
@@ -34,6 +35,28 @@ async function api(p, body) {
   if (!r.ok || j.ok === false) throw new Error(`${p}: ${j.error || r.status}`);
   return j;
 }
+const CF = 'https://api.cloudflare.com/client/v4';
+const cfHeaders = () => ({ Authorization: `Bearer ${process.env.CLOUDFLARE_API_TOKEN}`, 'Content-Type': 'application/json' });
+const PREVIEW_ZONE = process.env.SITES_ZONE || 'bizhigher.com';
+/** {slug}.sites.{zone} 을 Pages 프로젝트 도메인으로 추가하고 DNS CNAME 을 만든다. 반환: 상태 문자열 */
+async function ensurePreviewDomain(slug) {
+  const host = `${slug}.sites.${PREVIEW_ZONE}`; const acct = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const out = [];
+  const r = await fetch(`${CF}/accounts/${acct}/pages/projects/${PROJECT}/domains`, { method: 'POST', headers: cfHeaders(), body: JSON.stringify({ name: host }) }).catch(() => null);
+  const j = r ? await r.json().catch(() => ({})) : {};
+  const dup = r && !r.ok && JSON.stringify(j).includes('already'); // 8000013 등 "already exists"
+  out.push(r && (r.ok || dup) ? 'Pages 도메인 OK' : `Pages 도메인 실패 ${r ? r.status : 'network'} ${(j.errors || []).map((e) => e.message).join(';').slice(0, 120)}`);
+  // DNS: zone id → CNAME 존재 확인 → 없으면 생성 (proxied)
+  const z = await fetch(`${CF}/zones?name=${PREVIEW_ZONE}`, { headers: cfHeaders() }).then((x) => x.json()).catch(() => null);
+  const zoneId = z && z.result && z.result[0] && z.result[0].id;
+  if (!zoneId) { out.push('DNS: zone 조회 불가(토큰에 Zone Read 필요)'); return out.join(' · '); }
+  const ex = await fetch(`${CF}/zones/${zoneId}/dns_records?type=CNAME&name=${host}`, { headers: cfHeaders() }).then((x) => x.json()).catch(() => null);
+  if (ex && ex.result && ex.result.length) { out.push('DNS OK'); return out.join(' · '); }
+  const c = await fetch(`${CF}/zones/${zoneId}/dns_records`, { method: 'POST', headers: cfHeaders(), body: JSON.stringify({ type: 'CNAME', name: host, content: `${PROJECT}.pages.dev`, proxied: true, ttl: 1 }) }).catch(() => null);
+  const cj = c ? await c.json().catch(() => ({})) : {};
+  out.push(c && c.ok ? 'DNS 생성' : `DNS 실패 ${(cj.errors || []).map((e) => e.message).join(';').slice(0, 120)}`);
+  return out.join(' · ');
+}
 function writeSite(outDir, slug, files) {
   const dir = path.join(outDir, slug); fs.mkdirSync(dir, { recursive: true });
   for (const [name, body] of Object.entries(files)) fs.writeFileSync(path.join(dir, name), body);
@@ -46,6 +69,7 @@ function writeSite(outDir, slug, files) {
     const spec = JSON.parse(fs.readFileSync(file, 'utf8'));
     const r = await api('sites', { job_id: job, spec });
     console.log(`저장: ${r.slug} (v${r.version}) → 미리보기 ${r.preview_url}${r.domain ? ' · 도메인 ' + r.domain : ''}`);
+    console.log(`  (배포 후 항상 열리는 주소: https://${PROJECT}.pages.dev/${r.slug}/ — 서브도메인은 deploy 가 등록)`);
     return;
   }
   if (cmd === 'render') {
@@ -81,7 +105,17 @@ function writeSite(outDir, slug, files) {
     const outp = execSync(`npx --yes wrangler@3 pages deploy "${dir}" --project-name "${PROJECT}" --branch main --commit-dirty=true`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
     const m = /https:\/\/[a-z0-9.-]+\.pages\.dev/.exec(outp);
     console.log(`배포 완료: ${PROJECT}${m ? ' · ' + m[0] : ''}`);
+    // 임시 주소 {slug}.sites.bizhigher.com — Pages 커스텀 도메인 + DNS CNAME (이미 있으면 그대로). 실패해도 pages.dev 경로는 항상 열린다
+    const slugs = fs.readdirSync(dir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name);
+    for (const slug of slugs) console.log(`  ${slug}: ${await ensurePreviewDomain(slug)} · https://${PROJECT}.pages.dev/${slug}/`);
     return;
   }
-  console.log('사용법: sites.js spec|build|deploy|render  (파일 머리 주석 참고)'); process.exit(1);
+  if (cmd === 'domains') {
+    if (!process.env.CLOUDFLARE_API_TOKEN || !process.env.CLOUDFLARE_ACCOUNT_ID) throw new Error('CLOUDFLARE_API_TOKEN·CLOUDFLARE_ACCOUNT_ID 가 없습니다');
+    const { sites } = await api('sites');
+    for (const s of sites) console.log(`  ${s.slug}: ${await ensurePreviewDomain(s.slug)}`);
+    if (!sites.length) console.log('등록된 사이트 없음');
+    return;
+  }
+  console.log('사용법: sites.js spec|build|deploy|render|domains  (파일 머리 주석 참고)'); process.exit(1);
 })().catch((e) => { console.error('오류:', e.message); process.exit(1); });
