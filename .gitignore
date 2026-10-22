@@ -5,3 +5,10 @@ automation/gbp/calendar-*.json
 
 # wrangler 로컬 상태
 .wrangler/
+
+# 프로모 영상 템플릿(Remotion) — 의존성·렌더 중간물·내려받은 폰트는 커밋하지 않는다
+automation/video/node_modules/
+automation/video/out/
+automation/video/public/_run-*/
+automation/video/public/*.ttf
+automation/video/.remotion*

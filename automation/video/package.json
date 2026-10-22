@@ -1,0 +1,17 @@
+{
+  "name": "bizhigher-video",
+  "private": true,
+  "description": "고객 프로모 영상 템플릿 (Remotion). creative.js promo 가 이 폴더에서 렌더한다 — README.md",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts Promo out/promo.mp4 --props=props.json"
+  },
+  "dependencies": {
+    "@remotion/bundler": "4.0.538",
+    "@remotion/cli": "4.0.538",
+    "@remotion/renderer": "4.0.538",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.538"
+  }
+}
