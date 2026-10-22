@@ -53,6 +53,8 @@
 - 한/영 가게 소개문 생성기 (무료, 이메일만 입력): https://bizhigher.com/tools/bilingual-intro/ — 한국어로 쓴 가게 소개를 구글 프로필 규격(750자)에 맞는 자연스러운 영어·한국어 소개로 다듬습니다.
 
 ## 블로그 (한인 비즈니스 마케팅 가이드)
+- 가게 광고 완전 가이드 — 시작 예산부터 성과 읽기, 시즌 운영까지: https://bizhigher.com/blog/ads-hub/
+- 광고 성과 읽는 법 — 클릭수 말고 봐야 할 숫자 3가지: https://bizhigher.com/blog/ad-performance-metrics-guide/
 - 랜딩페이지와 홈페이지, 광고를 돌릴 때 뭐가 다를까: https://bizhigher.com/blog/landing-page-vs-homepage-for-ads/
 - 가게 이메일·문자 마케팅 입문 — 단골에게 다시 오게 하는 법: https://bizhigher.com/blog/email-sms-marketing-basics/
 - 리뷰 요청 QR 코드, 어디에 붙여야 효과가 있을까: https://bizhigher.com/blog/review-qr-code-placement/
