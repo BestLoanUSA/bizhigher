@@ -22,6 +22,7 @@ claude.ai/code **Routine** "BizHigher AI 실행 루틴" — `bizhigher` 환경�
 node automation/ai-runner/runner.js queue [--limit 12]
 node automation/ai-runner/runner.js submit --task 123 --file out.md [--kind text|html|link|images] [--url …] [--checks "a|b|c"] [--self-check "…"] [--done]
 node automation/ai-runner/runner.js summary --deliverable 7 --file s.txt      # 결과물의 고객용 요약 저장 (고객 페이지·묶음 메일에 쓰임, 메일 없음)
+# rr-live 단계(제목 "답글 ★n …"): task.note 에 리뷰 원문이 있다. 리뷰어 언어로 답글 2~4문장을 써서 submit (--done 없이 → David 가 GBP 에 붙여넣고 "승인" = 게시). queue 응답의 reviewSync 가 그날의 리뷰 확인 결과
 # submit 응답에 autoApproved 가 오면 관리자 자동 승인 규칙(검증 큐 탭)에 걸려 바로 완료된 것 — 큐에 올라가지 않는다. 출력: "→ 자동 승인(규칙키)"
 node automation/ai-runner/runner.js draft --job 5 --file body.txt              # (구) 작업 단위 초안을 David 메일에 — 이제는 summary 를 쓴다
 node automation/ai-runner/runner.js note --job 5 --text "…"
