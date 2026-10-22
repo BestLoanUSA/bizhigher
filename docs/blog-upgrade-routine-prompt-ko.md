@@ -2,8 +2,8 @@
 
 claude.ai 루틴 설정 (직접 등록):
 
-- 이름: `BizHigher 블로그 화목 업그레이드`
-- cron: `CRON_TZ=America/Los_Angeles 0 7 * * 2,4` (화·목 LA 아침 7시)
+- 이름: `BizHigher 블로그 화목토 업그레이드`
+- cron: `CRON_TZ=America/Los_Angeles 0 7 * * 2,4,6` (화·목·토 LA 아침 7시)
 - 저장소: `BestLoanUSA/bizhigher`, 새 세션, 웹 검색 허용
 - 발행 루틴(월·수·금)과 요일이 겹치지 않는다. 같은 파일 동시 수정 충돌 방지
 
