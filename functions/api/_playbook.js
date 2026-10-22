@@ -171,7 +171,7 @@ export const PLAYBOOK = {
   'shortform-video': {
     name: '숏폼 영상 (Premium 4편/월)', steps: [
       S('sv-1', '월초 기획안 4편 — 훅·장면·자막·음악 → 고객 승인', 'monthly', 'customer', 10, { verify: true }),
-      S('sv-2', '영상 생성 — 고객 매장 사진으로 5초 클립(릴스·틱톡·쇼츠 9:16) + 자막·로고·CTA 자동 합성', 'monthly', 'auto', 0, { block: '루틴이 fal.ai 이미지→영상(Kling 2.1, 편당 약 $0.25~0.5)으로 클립을 만들고(creative.js video) 기획안 자막·로고·CTA 를 Playwright+ffmpeg 로 얹는다(creative.js caption). 음악은 고객이 준 mp3 가 있을 때만', next: '배경음악 라이브러리(저작권 프리) 자동 선택' }),
+      S('sv-2', '영상 생성 — 고객 매장 사진으로 5초 클립(릴스·틱톡·쇼츠 9:16) + 자막·로고·CTA 자동 합성, 사이트 스펙이 있으면 20초 스토리 완성본(Remotion)까지', 'monthly', 'auto', 0, { block: '루틴이 fal.ai 이미지→영상(Kling 2.1, 편당 약 $0.25~0.5)으로 클립을 만들고(creative.js video) 기획안 자막·로고·CTA 를 Playwright+ffmpeg 로 얹는다(creative.js caption). 사이트 스펙이 있는 고객은 creative.js promo 로 훅→서비스→왜 우리→엔드카드 20초 완성본도 렌더(비용 0). 음악은 고객이 준 mp3 가 있을 때만', next: '메뉴 리빌·비포/애프터 템플릿, 배경음악 라이브러리(저작권 프리) 자동 선택' }),
       S('sv-3', 'David 확인 (자막 타이밍·오탈자·톤) — 재편집은 수정 요청으로', 'monthly', 'david', 5, { verify: true }),
       S('sv-4', '게시 — 릴스·틱톡·쇼츠', 'monthly', 'david', 20, { block: '세 플랫폼 모두 앱 심사 없이는 API 게시 불가', next: '예약 툴(Publer·Later류)로 한 번에 예약' }),
     ],

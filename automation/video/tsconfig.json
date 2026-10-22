@@ -1,0 +1,1 @@
+{ "compilerOptions": { "jsx": "react-jsx", "esModuleInterop": true, "resolveJsonModule": true, "moduleResolution": "node", "target": "es2020", "module": "esnext", "strict": false, "skipLibCheck": true, "noEmit": true } }
