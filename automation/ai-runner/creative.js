@@ -9,7 +9,11 @@
  *   node automation/ai-runner/creative.js upload --file a.jpg|clip.mp4 [--job 1] [--task 12] [--label "…"]
  *       관리자 API 에 올려 공개 URL(/a/…) 을 받는다 (BIZHIGHER_ADMIN_URL · BIZHIGHER_ADMIN_PASSWORD). R2 가 있으면 60MB 까지
  *   node automation/ai-runner/creative.js video --image 고객사진URL또는파일 [--crop 9:16] [--prompt "subtle camera push-in…"] [--duration 5] --out clip.mp4 [--job 1 --task 12]
- *       fal.ai 이미지→영상(기본 Kling 2.1 standard, 편당 약 $0.25~0.5, 1~3분 소요). 사람 얼굴 클로즈업·글자가 큰 사진은 피한다. 자막·로고·음악은 David 가 편집
+ *       fal.ai 이미지→영상(기본 Kling 2.1 standard, 편당 약 $0.25~0.5, 1~3분 소요). 사람 얼굴 클로즈업·글자가 큰 사진은 피한다
+ *   node automation/ai-runner/creative.js caption --video clip.mp4 --text "훅 문장|둘째 자막|셋째 자막" [--captions captions.json] [--brand "New Optix"] [--logo logo.png|URL] [--color "#0A4DF5"] [--music bgm.mp3] [--cta "지금 예약 (714) 555-0142"] --out final.mp4
+ *       자막·로고·CTA 를 Playwright 로 투명 PNG 에 그려 시스템 ffmpeg(overlay·libx264)로 클립에 얹는다 — sv-3 의 David 편집을 "확인"으로 줄이는 명령.
+ *       --text 는 | 로 나눈 자막을 길이에 비례해 자동 배분(사이 0.1초), --captions 는 [{start,end,text}] 로 직접 지정. *단어* 는 브랜드 색 강조. 음악은 --music(mp3) 이 있을 때만, 끝 1초 페이드.
+ *       Playwright 번들 ffmpeg 에는 overlay 가 없으므로 /usr/bin/ffmpeg(또는 FFMPEG 환경변수)를 쓴다 — 없으면 오류로 멈춘다
  */
 const fs = require('fs');
 const path = require('path');
@@ -150,6 +154,93 @@ async function video() {
   console.log(JSON.stringify({ out, bytes: bin.length, model, request_id: q.request_id, source: image }));
 }
 
+/* ---------- 자막·로고 합성 (sv-3 축소) ---------- */
+function ffmpegBin() {
+  const c = [process.env.FFMPEG, '/usr/bin/ffmpeg', '/usr/local/bin/ffmpeg'].filter(Boolean);
+  for (const b of c) if (fs.existsSync(b)) return b;
+  throw new Error('overlay 를 지원하는 ffmpeg 가 없습니다 (/usr/bin/ffmpeg). Playwright 번들 ffmpeg 는 자막 합성에 못 씁니다');
+}
+function probe(file) {
+  const { execFileSync } = require('child_process');
+  const out = execFileSync(ffmpegBin(), ['-hide_banner', '-i', file], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).toString();
+  return out;
+}
+function probeInfo(file) {
+  let txt = ''; try { probe(file); } catch (e) { txt = String(e.stderr || e.stdout || e.message || ''); }
+  const d = /Duration:\s*(\d+):(\d+):(\d+\.?\d*)/.exec(txt); const wh = /Video:.*?\s(\d{2,5})x(\d{2,5})/.exec(txt);
+  if (!d || !wh) throw new Error('영상 정보를 읽지 못했습니다: ' + file);
+  return { duration: Number(d[1]) * 3600 + Number(d[2]) * 60 + Number(d[3]), w: Number(wh[1]), h: Number(wh[2]), hasAudio: /Audio:/.test(txt) };
+}
+/* 자막 문장을 길이 비례로 시간 배분 */
+function autoTimes(lines, duration, gap = 0.1) {
+  const lens = lines.map((l) => Math.max(4, l.replace(/\*/g, '').length)); const total = lens.reduce((a, b) => a + b, 0);
+  const usable = duration - gap * lines.length; let t = 0.05;
+  return lines.map((text, i) => { const len = Math.max(1.2, (lens[i] / total) * usable); const c = { start: +t.toFixed(2), end: +Math.min(duration, t + len).toFixed(2), text }; t += len + gap; return c; });
+}
+const mark = (txt, color) => esc(txt).replace(/\*([^*]+)\*/g, `<b style="color:${color}">$1</b>`);
+function overlayHtml({ w, h, text, brand, logo, color, cta, pos }) {
+  const tall = h > w * 1.3; const base = Math.round(w / 1080 * 100) / 100; // 1080 기준 배율
+  const fs_ = Math.round((tall ? 64 : 52) * base), pad = Math.round(56 * base), bottom = Math.round((tall ? h * 0.2 : h * 0.12));
+  return `<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700;900&display=swap">
+<style>*{box-sizing:border-box;margin:0}html,body{width:${w}px;height:${h}px;background:transparent;overflow:hidden;font-family:'Noto Sans KR',sans-serif;color:#fff}
+.br{position:absolute;top:${pad}px;left:${pad}px;display:flex;align-items:center;gap:${Math.round(14 * base)}px;font-weight:700;font-size:${Math.round(30 * base)}px;text-shadow:0 2px 10px rgba(0,0,0,.55)}.br img{height:${Math.round(64 * base)}px;width:auto;border-radius:${Math.round(14 * base)}px;background:#fff;padding:${Math.round(6 * base)}px;box-shadow:0 4px 16px rgba(0,0,0,.35)}
+.cap{position:absolute;left:${pad}px;right:${pad}px;${pos === 'center' ? 'top:50%;transform:translateY(-50%);' : `bottom:${bottom}px;`}text-align:center}
+.cap span{display:inline;background:rgba(0,0,0,.62);color:#fff;font-weight:900;font-size:${fs_}px;line-height:1.5;padding:${Math.round(6 * base)}px ${Math.round(18 * base)}px;border-radius:${Math.round(14 * base)}px;box-decoration-break:clone;-webkit-box-decoration-break:clone;word-break:keep-all;letter-spacing:-.01em}
+.cta{position:absolute;left:${pad}px;right:${pad}px;bottom:${Math.round(bottom * 0.45)}px;text-align:center}.cta span{display:inline-block;background:${color};color:#fff;font-weight:700;font-size:${Math.round(34 * base)}px;padding:${Math.round(14 * base)}px ${Math.round(30 * base)}px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+</style></head><body>
+${brand || logo ? `<div class="br">${logo ? `<img src="${esc(logo)}" alt="">` : ''}${brand ? `<span>${esc(brand)}</span>` : ''}</div>` : ''}
+${text ? `<div class="cap"><span>${mark(text, color)}</span></div>` : ''}
+${cta ? `<div class="cta"><span>${esc(cta)}</span></div>` : ''}
+</body></html>`;
+}
+async function caption() {
+  const video = opt('video'); const out = opt('out', 'final.mp4');
+  if (!video || !fs.existsSync(video)) throw new Error('--video 파일 없음');
+  const ff = ffmpegBin(); const info = probeInfo(video);
+  const brand = opt('brand', ''); let logo = opt('logo', ''); const color = opt('color', '#0A4DF5'); const cta = opt('cta', ''); const music = opt('music', ''); const pos = opt('pos', 'bottom');
+  let caps = [];
+  if (opt('captions')) caps = JSON.parse(fs.readFileSync(opt('captions'), 'utf8'));
+  else if (opt('text')) caps = autoTimes(opt('text').split('|').map((x) => x.trim()).filter(Boolean), info.duration);
+  caps = caps.filter((c) => c && c.text && c.end > c.start).slice(0, 12);
+  const tmp = fs.mkdtempSync(path.join(require('os').tmpdir(), 'cap-'));
+  if (logo && /^https?:\/\//.test(logo)) { const b = Buffer.from(await (await fetch(logo)).arrayBuffer()); const lp = path.join(tmp, 'logo.' + (/\.png(\?|$)/i.test(logo) ? 'png' : 'jpg')); fs.writeFileSync(lp, b); logo = lp; }
+  if (logo && fs.existsSync(logo)) logo = 'data:image/' + (logo.endsWith('.png') ? 'png' : 'jpeg') + ';base64,' + fs.readFileSync(logo).toString('base64');
+  // Playwright 로 투명 PNG — 자막마다 1장(로고·브랜드 포함) + 자막 없는 구간용 1장(로고·CTA만)
+  const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+  const exe = process.env.PLAYWRIGHT_CHROMIUM || (fs.existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined);
+  const b = await chromium.launch(exe ? { executablePath: exe } : {});
+  const page = await b.newPage({ viewport: { width: info.w, height: info.h }, deviceScaleFactor: 1 });
+  const shots = [];
+  const render = async (i, text) => { await page.setContent(overlayHtml({ w: info.w, h: info.h, text, brand, logo, color, cta, pos }), { waitUntil: 'networkidle' }); await page.evaluate(() => document.fonts.ready); await page.waitForTimeout(150); const f = path.join(tmp, `ov${i}.png`); await page.screenshot({ path: f, omitBackground: true }); return f; };
+  const basePng = (brand || logo || cta) ? await render('base', '') : null;
+  for (let i = 0; i < caps.length; i++) shots.push({ file: await render(i, caps[i].text), ...caps[i] });
+  await b.close();
+  // ffmpeg: 기본 오버레이(전 구간) → 자막 오버레이(구간별, 0.25초 페이드) → 음악
+  const args = ['-y', '-hide_banner', '-loglevel', 'error', '-i', video];
+  const inputs = []; if (basePng) { args.push('-loop', '1', '-framerate', '30', '-i', basePng); inputs.push({ kind: 'base' }); }
+  for (const s of shots) { args.push('-loop', '1', '-framerate', '30', '-i', s.file); inputs.push(s); }
+  if (music) { if (!fs.existsSync(music)) throw new Error('--music 파일 없음'); args.push('-i', music); }
+  const fc = []; let cur = '[0:v]';
+  inputs.forEach((inp, i) => {
+    const idx = i + 1; const lbl = `[o${i}]`, outl = `[v${i}]`;
+    if (inp.kind === 'base') fc.push(`[${idx}:v]format=rgba${lbl}`, `${cur}${lbl}overlay=0:0:shortest=1${outl}`);
+    else { const fd = Math.min(0.25, (inp.end - inp.start) / 3).toFixed(2); fc.push(`[${idx}:v]format=rgba,fade=t=in:st=${inp.start}:d=${fd}:alpha=1,fade=t=out:st=${(inp.end - fd).toFixed(2)}:d=${fd}:alpha=1${lbl}`, `${cur}${lbl}overlay=0:0:shortest=1:enable='between(t,${inp.start},${inp.end})'${outl}`); }
+    cur = outl;
+  });
+  const musicIdx = inputs.length + 1;
+  if (music) fc.push(`[${musicIdx}:a]afade=t=in:st=0:d=0.5,afade=t=out:st=${Math.max(0, info.duration - 1).toFixed(2)}:d=1,volume=0.9[a]`);
+  if (fc.length) args.push('-filter_complex', fc.join(';'), '-map', cur); else args.push('-map', '0:v');
+  if (music) args.push('-map', '[a]', '-shortest'); else if (info.hasAudio) args.push('-map', '0:a?');
+  args.push('-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-pix_fmt', 'yuv420p', '-r', '30', '-movflags', '+faststart');
+  if (music || info.hasAudio) args.push('-c:a', 'aac', '-b:a', '128k');
+  args.push('-t', String(info.duration), out);
+  const { execFileSync } = require('child_process');
+  try { execFileSync(ff, args, { stdio: ['ignore', 'pipe', 'pipe'] }); } catch (e) { throw new Error('ffmpeg 합성 실패: ' + String(e.stderr || e.message).slice(-600)); }
+  const done = probeInfo(out);
+  console.log(JSON.stringify({ out, bytes: fs.statSync(out).size, duration: done.duration, size: `${done.w}x${done.h}`, captions: shots.map((s) => [s.start, s.end, s.text]), brand: !!(brand || logo), cta: !!cta, music: !!music }));
+}
+
 async function upload() {
   const file = opt('file'); if (!file || !fs.existsSync(file)) throw new Error('--file 없음');
   console.log(await uploadFile(file, { job: opt('job'), task: opt('task'), label: opt('label') }));
@@ -160,6 +251,7 @@ async function upload() {
   if (cmd === 'compose') return compose();
   if (cmd === 'upload') return upload();
   if (cmd === 'video') return video();
+  if (cmd === 'caption') return caption();
   if (cmd === 'crop') return cropImage(opt('image'), opt('ratio', '9:16'), opt('out', 'cropped.jpg')).then((o) => console.log(o));
-  console.log('사용법: gen --prompt … --out bg.jpg | compose --bg bg.jpg --headline … --out dir | upload --file a.jpg [--job N --task N] | video --image 사진URL또는파일 [--crop 9:16] [--prompt …] [--duration 5] --out clip.mp4 [--job N --task N] | crop --image a.jpg --ratio 9:16 --out b.jpg');
+  console.log('사용법: gen --prompt … --out bg.jpg | compose --bg bg.jpg --headline … --out dir | upload --file a.jpg [--job N --task N] | video --image 사진URL또는파일 [--crop 9:16] [--prompt …] [--duration 5] --out clip.mp4 [--job N --task N] | caption --video clip.mp4 --text "자막1|자막2" [--brand …] [--logo …] [--cta …] [--music bgm.mp3] --out final.mp4 | crop --image a.jpg --ratio 9:16 --out b.jpg');
 })().catch((e) => { console.error('오류:', e.message); process.exit(1); });
