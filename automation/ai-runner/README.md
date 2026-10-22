@@ -28,7 +28,7 @@ node automation/ai-runner/runner.js draft --job 5 --file body.txt              #
 node automation/ai-runner/runner.js note --job 5 --text "…"
 
 node automation/ai-runner/creative.js caption --video clip.mp4 --text "훅|자막2|자막3" --brand "New Optix" [--logo URL] [--cta "지금 예약 (714) …"] [--music bgm.mp3] --out final.mp4   # 자막·로고·CTA 합성(Playwright PNG + /usr/bin/ffmpeg overlay). *단어* 는 브랜드 색 강조. sv-2 완성본
-node automation/ai-runner/qa.js --url https://고객사이트 --out qa --name home   # 360/768/1280 스크린샷·속도·링크·폼 → qa/home-report.md + qa/home-montage.jpg (upload 로 올려 submit --kind images)
+node automation/ai-runner/qa.js --url https://고객사이트 --out qa --name home   # 360/768/1280 스크린샷·속도·링크·폼 + Unlighthouse(사이트 전체 Lighthouse 점수·지적 항목, https 만, --no-lighthouse 로 끔) → qa/home-report.md + qa/home-montage.jpg (upload 로 올려 submit --kind images)
 node automation/ai-runner/sites.js prep --spec spec.json [--job 28 --task 12]  # 사진 준비(v3): 900px 미만 업스케일 → /a/ 교체, 갤러리 3장 미만이면 분위기 이미지 생성(gallery_generated). FAL_KEY 없으면 크기 보고만. spec 저장 전에
 node automation/ai-runner/sites.js spec --job 28 --file spec.json           # 고객 사이트 스펙 저장 → slug·미리보기 주소 + 바뀐 키 (web-2 첫 생성)
 node automation/ai-runner/sites.js patch --job 28 --file patch.json [--note …]  # 수정 요청 반영: 바뀐 키만 깊은 병합(null 은 삭제) → 새 버전. 전체 재작성 금지
