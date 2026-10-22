@@ -71,6 +71,9 @@ function normalize(spec) {
   arr('gallery', (u) => /^https?:\/\//.test(u)); arr('faq', (x) => x && x.q && x.a); arr('steps', (x) => x && x.title);
   arr('stats', (x) => x && x.value && x.label); arr('review_themes', (x) => typeof x === 'string' && x.trim()); arr('brands', (x) => typeof x === 'string' && x.trim());
   arr('gallery_generated', (u) => /^https?:\/\//.test(u));
+  arr("posts", (p) => p && p.title && p.slug);
+  s.contact = s.contact || {};
+  s.tier = s.tier === "business" ? "business" : "onepage";
   s.hero = s.hero || {}; s.about = s.about || {}; s.social = s.social || {}; s.theme = s.theme || {}; s.seo = s.seo || {}; s.cta = s.cta || {}; s.promo = s.promo || {};
   s.theme.color = /^#[0-9a-f]{6}$/i.test(s.theme.color || '') ? s.theme.color : '#0A4DF5';
   return s;
@@ -205,31 +208,113 @@ ${style === 'bold' ? `.hero .wrap{grid-template-columns:1fr;gap:28px}.hero .phot
 `;
 
 /* ---------- 페이지 ---------- */
-function page(s, { canonical, noindex }) {
-  const style = styleFor(s); const k = tokens(s, style);
+/* ---------- 페이지 공통 ---------- */
+function ctx(spec, { canonical, noindex }) {
+  const s = spec; const style = styleFor(s); const k = tokens(s, style);
   const name = pick(s, s, 'name').main || s.name;
-  const title = s.seo.title || `${name} — ${s.tagline || s.category || ''}`.replace(/ — $/, '');
-  const desc = s.seo.description || s.tagline || '';
   const phone = s.phone || ''; const addr = addressLine(s.address); const maps = mapsHref(s);
-  const toggle = s.lang === 'ko-en';
-  const year = new Date().getFullYear();
-  const btns = (cls) => `${phone ? `<a class="btn primary" href="${telHref(phone)}">📞 ${L(s, '전화하기', 'Call ' + phone)}</a>` : ''}${s.cta.booking_url ? `<a class="btn ${cls || 'outline'}" href="${esc(s.cta.booking_url)}" target="_blank" rel="noopener">${L(s, '온라인 예약', 'Book online')}</a>` : ''}${addr ? `<a class="btn ${cls || 'outline'}" href="${esc(maps)}" target="_blank" rel="noopener">📍 ${L(s, '길찾기', 'Get directions')}</a>` : ''}`;
-  const stats = s.stats.length ? s.stats : [s.rating ? { value: `${s.rating}★`, label: 'Google', label_ko: '구글 평점' } : null, s.review_count ? { value: String(s.review_count), label: 'reviews', label_ko: '리뷰' } : null, s.since ? { value: `${Math.max(1, year - Number(s.since))}+`, label: 'years', label_ko: '년 운영' } : null].filter(Boolean);
-  const navLinks = [s.services.length && ['#services', '서비스', 'Services'], s.about.text && ['#about', '소개', 'About'], s.faq.length && ['#faq', '자주 묻는 질문', 'FAQ'], (addr || s.hours.length) && ['#visit', '오시는 길', 'Visit']].filter(Boolean);
-  const gallery = [...s.gallery, ...s.gallery_generated.filter((u) => !s.gallery.includes(u))];
+  const toggle = s.lang === 'ko-en'; const year = new Date().getFullYear();
+  const business = s.tier === 'business';
+  const posts = business ? (s.posts || []).filter((p) => p && p.title && p.slug) : [];
   const ht = s.hours.length ? hoursTable(s.hours) : null;
   const tz = s.timezone || TZ[(s.address.state || '').toUpperCase()] || 'America/Los_Angeles';
+  const gallery = [...s.gallery, ...s.gallery_generated.filter((u) => !s.gallery.includes(u))];
+  const stats = s.stats.length ? s.stats : [s.rating ? { value: `${s.rating}★`, label: 'Google', label_ko: '구글 평점' } : null, s.review_count ? { value: String(s.review_count), label: 'reviews', label_ko: '리뷰' } : null, s.since ? { value: `${Math.max(1, year - Number(s.since))}+`, label: 'years', label_ko: '년 운영' } : null].filter(Boolean);
+  // 페이지 목록 (비즈니스 등급) — [경로, ko, en]. 원페이지는 앵커
+  const pages = business
+    ? [['', '홈', 'Home'], s.services.length && ['services/', '서비스', 'Services'], (s.about.text || s.highlights.length || s.steps.length) && ['about/', '소개', 'About'], gallery.length >= 3 && ['gallery/', '갤러리', 'Gallery'], posts.length && ['blog/', '소식', 'Blog'], ['contact/', '오시는 길·문의', 'Visit & Contact']].filter(Boolean)
+    : [s.services.length && ['#services', '서비스', 'Services'], s.about.text && ['#about', '소개', 'About'], s.faq.length && ['#faq', '자주 묻는 질문', 'FAQ'], (addr || s.hours.length) && ['#visit', '오시는 길', 'Visit']].filter(Boolean);
+  const contactOn = !!(s.contact && s.contact.form) || business;
+  return { s, style, k, name, phone, addr, maps, toggle, year, business, posts, ht, tz, gallery, stats, pages, canonical, noindex, contactOn };
+}
+/* 현재 페이지 깊이(0=루트, 1=/x/, 2=/x/y/)에서 사이트 내 경로로 가는 상대 링크 — pages.dev 하위 경로와 서브도메인 둘 다에서 동작 */
+const rel = (depth, p) => (p.startsWith('#') ? (depth ? '../'.repeat(depth) + p : p) : '../'.repeat(depth) + p);
+
+function btns(c, cls, depth = 0) {
+  const { s, phone, addr, maps } = c;
+  return `${phone ? `<a class="btn primary" href="${telHref(phone)}">📞 ${L(s, '전화하기', 'Call ' + phone)}</a>` : ''}${s.cta.booking_url ? `<a class="btn ${cls || 'outline'}" href="${esc(s.cta.booking_url)}" target="_blank" rel="noopener">${L(s, '온라인 예약', 'Book online')}</a>` : ''}${addr ? `<a class="btn ${cls || 'outline'}" href="${esc(maps)}" target="_blank" rel="noopener">📍 ${L(s, '길찾기', 'Get directions')}</a>` : c.contactOn && c.business ? `<a class="btn ${cls || 'outline'}" href="${rel(depth, 'contact/')}">${L(s, '문의하기', 'Contact us')}</a>` : ''}`;
+}
+
+/* ---------- 섹션 ---------- */
+const sec = {
+  hero(c, depth, compact) {
+    const { s, name, stats, toggle } = c; let i = 0; const IN = () => ` in" style="--i:${i++}`;
+    return `<section class="hero${s.hero.video ? ' has-video' : ''}" id="top">${s.hero.video ? `<div class="hero-video"><video autoplay muted loop playsinline ${s.hero.photo ? `poster="${esc(s.hero.photo)}"` : ''}><source src="${esc(s.hero.video)}" type="video/mp4"></video></div>` : ''}<div class="wrap">
+  <div class="copy">
+    ${s.category ? `<span class="eyebrow${IN()}">${t(s, s, 'category')}${s.address.city ? ' · ' + esc(s.address.city) : ''}${s.since ? ` · ${L(s, '설립 ' + s.since, 'since ' + s.since)}` : ''}</span>` : ''}
+    <h1 class="${IN()}">${s.hero.headline ? emph(s) : esc(name)}</h1>
+    ${s.hero.sub || s.tagline ? `<p class="lead${IN()}">${s.hero.sub ? t(s, s.hero, 'sub') : t(s, s, 'tagline')}</p>` : ''}
+    <div class="cta${IN()}">${btns(c, '', depth)}</div>
+    ${stats.length ? `<ul class="stats${IN()}">${stats.slice(0, 4).map((x) => `<li><b data-count="${esc(x.value)}">${esc(x.value)}</b><span>${s.lang === 'en' ? esc(x.label) : toggle ? `<span data-ko="${esc(x.label_ko || x.label)}" data-en="${esc(x.label)}">${esc(x.label_ko || x.label)}</span>` : esc(x.label_ko || x.label)}</span></li>`).join('')}</ul>` : ''}
+  </div>
+  ${s.hero.photo && !s.hero.video ? `<div class="photo${IN()}"><div class="frame"><img class="px" data-px=".12" src="${esc(s.hero.photo)}" alt="${esc(name)}" fetchpriority="high"><div class="glare"></div></div>${s.rating ? `<div class="chip a">${G_LOGO}<span class="st">${stars(s.rating)}</span><span><b>${esc(s.rating)} ${L(s, '구글 평점', 'on Google')}</b>${s.review_count ? `${esc(s.review_count)} ${L(s, '리뷰', 'reviews')}` : ''}</span></div>` : ''}${s.hero.badge ? `<div class="chip b"><span><b>${t(s, s.hero, 'badge')}</b>${s.hero.badge_sub ? t(s, s.hero, 'badge_sub') : ''}</span></div>` : ''}</div>` : ''}
+</div>${s.promo.title && !compact ? sec.wave(c) : ''}</section>`;
+  },
+  wave(c) { return c.k.wave ? `<svg class="wave" viewBox="0 0 1440 46" preserveAspectRatio="none" aria-hidden="true"><path d="M0,20 C240,46 480,0 720,18 C960,36 1200,10 1440,24 L1440,46 L0,46 Z" fill="${c.k.band}"/></svg>` : ''; },
+  promo(c) { const { s } = c; return s.promo.title ? `<div class="band"><div class="wrap"><div><span class="eyebrow">${L(s, '지금', 'Our specialty')}</span><h2>${t(s, s.promo, 'title')}</h2>${s.promo.text ? `<p>${t(s, s.promo, 'text')}</p>` : ''}</div>${s.promo.href ? `<a class="btn accent" href="${esc(s.promo.href)}">${s.promo.cta ? t(s, s.promo, 'cta') : L(s, '자세히', 'Learn more')} →</a>` : ''}</div></div>` : ''; },
+  services(c, depth, { max = 12, more = false, full = false } = {}) {
+    const { s, name } = c; if (!s.services.length) return '';
+    const list = s.services.slice(0, max);
+    return `<section id="services"><div class="wrap"><div class="sec-h center rv"><span class="eyebrow">${L(s, '서비스', 'What we do')}</span><h2>${s.services_title ? t(s, s, 'services_title') : L(s, '한 곳에서 해결하는 서비스', 'Everything you need, under one roof')}</h2>${s.services_intro ? `<p>${t(s, s, 'services_intro')}</p>` : ''}</div>
+<div class="grid${list.length >= 7 ? ' four' : ''}">${list.map((x, n) => `<div class="card rv tilt"${full ? ` id="svc-${n + 1}"` : ''}>${x.photo ? `<img src="${esc(x.photo)}" alt="${esc(x.name)}" loading="lazy">` : `<div class="ic">${String(n + 1).padStart(2, '0')}</div>`}<h3>${t(s, x, 'name')}</h3>${x.desc ? `<p>${t(s, x, 'desc')}</p>` : ''}${full && x.detail ? `<p style="margin-top:8px">${t(s, x, 'detail').replace(/\n/g, '<br>')}</p>` : ''}${x.price ? `<span class="price">${esc(x.price)}</span>` : ''}</div>`).join('')}</div>${more && s.services.length > max ? `<p style="text-align:center;margin-top:22px"><a class="btn outline" href="${rel(depth, 'services/')}">${L(s, '서비스 전체 보기', 'See all services')} →</a></p>` : ''}</div></section>`;
+  },
+  highlights(c) { const { s, name } = c; return s.highlights.length ? `<section class="tint"><div class="wrap"><div class="sec-h center rv"><span class="eyebrow">${L(s, '왜 ' + name, 'Why ' + name)}</span><h2>${s.highlights_title ? t(s, s, 'highlights_title') : L(s, '손님이 다시 찾는 이유', 'Why neighbors keep coming back')}</h2></div><div class="why">${s.highlights.slice(0, 4).map((h) => `<div class="rv"><b>${t(s, h, 'title')}</b><span>${t(s, h, 'text')}</span></div>`).join('')}</div></div></section>` : ''; },
+  brands(c) { const { s } = c; return s.brands.length ? `<section><div class="wrap"><div class="sec-h rv"><span class="eyebrow">${L(s, '취급 브랜드', 'Brands we carry')}</span><h2>${s.brands_title ? t(s, s, 'brands_title') : L(s, '믿을 수 있는 브랜드만', 'Trusted names only')}</h2></div><div class="brands rv">${s.brands.slice(0, 24).map((b) => `<span>${esc(b)}</span>`).join('')}</div></div></section>` : ''; },
+  galleryStrip(c, depth, more) { const { s, gallery } = c; return gallery.length >= 3 ? `<section class="tint"><div class="wrap"><div class="sec-h rv"><span class="eyebrow">${L(s, '매장', 'Gallery')}</span><h2>${L(s, '직접 보시면 압니다', 'Come see for yourself')}</h2></div></div><div class="marq rv"><div class="track">${[...gallery.slice(0, 8), ...gallery.slice(0, 8)].map((u) => `<img src="${esc(u)}" alt="" loading="lazy">`).join('')}</div></div>${s.gallery_generated.length ? `<div class="wrap"><p class="gen-note">${L(s, '일부 이미지는 분위기 연출용 이미지입니다.', 'Some images are illustrative.')}</p></div>` : ''}${more ? `<div class="wrap"><p style="text-align:center;margin-top:18px"><a class="btn outline" href="${rel(depth, 'gallery/')}">${L(s, '사진 전체 보기', 'See all photos')} →</a></p></div>` : ''}</section>` : ''; },
+  galleryGrid(c) { const { s, gallery } = c; return gallery.length ? `<section><div class="wrap"><div class="gal-grid">${gallery.slice(0, 40).map((u) => `<a href="${esc(u)}" target="_blank" rel="noopener" class="rv"><img src="${esc(u)}" alt="" loading="lazy"></a>`).join('')}</div>${s.gallery_generated.length ? `<p class="gen-note">${L(s, '일부 이미지는 분위기 연출용 이미지입니다.', 'Some images are illustrative.')}</p>` : ''}</div></section>` : ''; },
+  steps(c) { const { s } = c; return s.steps.length ? `<section><div class="wrap"><div class="sec-h center rv"><span class="eyebrow">${L(s, '이용 방법', 'How it works')}</span><h2>${s.steps_title ? t(s, s, 'steps_title') : L(s, '네 단계면 끝납니다', 'Four easy steps')}</h2></div><div class="steps">${s.steps.slice(0, 4).map((x, n) => `<div class="rv"><i>${n + 1}</i><b>${t(s, x, 'title')}</b>${x.text ? `<span>${t(s, x, 'text')}</span>` : ''}</div>`).join('')}</div></div></section>` : ''; },
+  reviews(c) { const { s, maps } = c; return s.rating ? `<section class="tint"><div class="wrap"><div class="reviews"><div class="score rv"><b data-count="${esc(s.rating)}">${esc(s.rating)}</b><div class="st">${stars(s.rating)}</div><small>${G_LOGO} ${s.review_count ? `${esc(s.review_count)} ${L(s, '구글 리뷰', 'reviews on Google')}` : 'Google'}</small><a class="btn outline sm" href="${esc(s.review_url || maps)}" target="_blank" rel="noopener">${L(s, '구글에서 리뷰 보기', 'Read reviews on Google')}</a></div><div class="rv"><span class="eyebrow">${L(s, '손님 이야기', 'What customers mention most')}</span><h2>${s.reviews_title ? t(s, s, 'reviews_title') : L(s, '한 번 오신 분이 다시 오십니다', 'People come back — and bring friends')}</h2>${s.review_themes.length ? `<ul class="themes">${s.review_themes.slice(0, 5).map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div></div></div></section>` : ''; },
+  about(c) { const { s, name } = c; return s.about.text ? `<section id="about"><div class="wrap"><div class="about">${s.about.photo ? `<div class="frame rv"><img class="px" data-px=".08" src="${esc(s.about.photo)}" alt="${esc(name)}" loading="lazy"></div>` : ''}<div class="rv"><span class="eyebrow">${L(s, '소개', 'About')}</span><h2>${s.about.title ? t(s, s.about, 'title') : esc(name)}</h2><p>${t(s, s.about, 'text').replace(/\n/g, '<br>')}</p></div></div></div></section>` : ''; },
+  visit(c, depth) {
+    const { s, addr, phone, maps, name } = c; if (!(addr || s.hours.length)) return '';
+    return `<section class="tint" id="visit"><div class="wrap"><div class="visit"><div class="rv"><span class="eyebrow">${L(s, '오시는 길', 'Visit us')}</span><h2>${s.visit_title ? t(s, s, 'visit_title') : L(s, (s.address.city || '') + '에서 뵙겠습니다', 'Find us in ' + (s.address.city || 'town'))}</h2>${addr ? `<p class="addr">📍 <a href="${esc(maps)}" target="_blank" rel="noopener">${esc(addr)}</a></p>` : ''}${phone ? `<p class="addr">📞 <a href="${telHref(phone)}">${esc(phone)}</a></p>` : ''}${s.email ? `<p class="addr">✉️ <a href="mailto:${esc(s.email)}">${esc(s.email)}</a></p>` : ''}${s.hours.length ? `<ul class="hours">${s.hours.map((h) => { const tm = h.time || (h.open && h.close ? h.open + ' – ' + h.close : ''); const closed = /휴무|closed/i.test(tm); return `<li data-days="${esc(h.days)}"><b>${esc(h.days)}</b><span class="${closed ? 'closed' : ''}">${esc(tm)}</span></li>`; }).join('')}</ul>` : ''}${s.hours_note ? `<p style="color:var(--ink3);font-size:14px;margin-top:10px">${t(s, s, 'hours_note')}</p>` : ''}<div class="cta" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">${btns(c, '', depth)}</div></div><div class="mapcard rv">${s.map_embed ? `<iframe src="${esc(s.map_embed)}" style="width:100%;height:100%;min-height:260px;border:0;border-radius:20px" loading="lazy" title="map"></iframe>` : `<div><p style="font-weight:600">${esc(addr || name)}</p><a class="btn primary" href="${esc(maps)}" target="_blank" rel="noopener">${L(s, '구글 지도에서 열기', 'Open in Google Maps')}</a></div>`}</div></div></div></section>`;
+  },
+  faq(c) { const { s } = c; return s.faq.length ? `<section id="faq"><div class="wrap"><div class="sec-h center rv"><span class="eyebrow">FAQ</span><h2>${L(s, '자주 묻는 질문', 'Frequently asked questions')}</h2></div><div class="faq">${s.faq.slice(0, 10).map((f) => `<details class="rv"><summary>${t(s, f, 'q')}</summary><div class="a">${t(s, f, 'a')}</div></details>`).join('')}</div></div></section>` : ''; },
+  ctab(c, depth) { const { s, phone, addr } = c; return phone || addr || c.contactOn ? `<div class="ctab"><div class="wrap"><h2>${s.closing ? t(s, s, 'closing') : L(s, '궁금한 점은 전화 한 통이면 됩니다.', 'Questions? One call and we will take it from there.')}</h2><div class="btns">${btns(c, 'outline', depth)}</div></div></div>` : ''; },
+  /* 문의 폼 — 정적 사이트에서 bizhigher.com 의 Functions 로 POST (JS 없이도 동작). 스팸: 허니팟 + 작성 시간 */
+  contact(c, depth) {
+    const { s, canonical } = c; if (!c.contactOn) return '';
+    const ret = canonical + (c.business ? 'contact/' : '') + '?sent=1';
+    return `<section id="contact"><div class="wrap"><div class="contact"><div class="rv"><span class="eyebrow">${L(s, '문의', 'Contact')}</span><h2>${s.contact && s.contact.title ? t(s, s.contact, 'title') : L(s, '궁금한 점을 남겨 주세요', 'Send us a message')}</h2><p class="lead">${s.contact && s.contact.text ? t(s, s.contact, 'text') : L(s, '영업시간 안에 확인하고 연락드립니다. 급하시면 전화가 가장 빠릅니다.', 'We read messages during business hours. For anything urgent, a call is fastest.')}</p></div>
+<form class="cform rv" method="post" action="${esc(CONTACT_ENDPOINT)}" data-sent="${esc(s.lang === 'en' ? 'Thanks — we received your message and will get back to you during business hours.' : '문의가 접수되었습니다. 영업시간 안에 연락드리겠습니다.')}">
+<input type="hidden" name="slug" value="${esc(s.slug)}"><input type="hidden" name="return_to" value="${esc(ret)}"><input type="hidden" name="_t" value="${Date.now()}"><div class="hp" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+<label>${L(s, '이름', 'Name')}<input name="name" required maxlength="80" autocomplete="name"></label>
+<div class="two"><label>${L(s, '전화', 'Phone')}<input name="phone" type="tel" maxlength="40" autocomplete="tel"></label><label>${L(s, '이메일', 'Email')}<input name="email" type="email" maxlength="120" autocomplete="email"></label></div>
+<label>${L(s, '문의 내용', 'Message')}<textarea name="message" required maxlength="2000" rows="5"></textarea></label>
+<button class="btn primary" type="submit">${L(s, '보내기', 'Send')}</button>
+<p class="fine">${L(s, '남겨 주신 정보는 답변 용도로만 씁니다.', 'We use your details only to reply.')}</p></form></div></div></section>`;
+  },
+  blogList(c, depth) { const { s, posts } = c; return posts.length ? `<section><div class="wrap"><div class="posts">${posts.slice(0, 30).map((p) => `<a class="post rv" href="${rel(depth, 'blog/' + slugify(p.slug) + '/')}">${p.photo ? `<img src="${esc(p.photo)}" alt="" loading="lazy">` : ''}<div><span class="date">${esc(p.date || '')}</span><h3>${t(s, p, 'title')}</h3>${p.excerpt ? `<p>${t(s, p, 'excerpt')}</p>` : ''}</div></a>`).join('')}</div></div></section>` : ''; },
+  blogPost(c, p) { const { s } = c; const body = String(pick(s, p, 'body').main || '').split(/\n{2,}/).map((para) => /^##\s/.test(para) ? `<h2>${esc(para.replace(/^##\s*/, ''))}</h2>` : `<p>${esc(para).replace(/\n/g, '<br>')}</p>`).join(''); return `<section><div class="wrap"><article class="article">${p.photo ? `<img class="cover" src="${esc(p.photo)}" alt="">` : ''}<span class="date">${esc(p.date || '')}</span><h1>${t(s, p, 'title')}</h1>${body}</article></div></section>`; },
+  pageHead(c, ko, en, sub) { return `<section class="phead"><div class="wrap"><span class="eyebrow in" style="--i:0">${esc(c.name)}</span><h1 class="in" style="--i:1">${L(c.s, ko, en)}</h1>${sub ? `<p class="lead in" style="--i:2">${sub}</p>` : ''}</div></section>`; },
+};
+const CONTACT_ENDPOINT = 'https://bizhigher.com/api/site-contact';
+
+const EXTRA_CSS = `
+.phead{padding:56px 0 20px}.phead h1{font-size:clamp(32px,5.5vw,52px)}
+.gal-grid{display:grid;gap:10px;grid-template-columns:repeat(2,1fr)}.gal-grid img{aspect-ratio:1;object-fit:cover;width:100%;border-radius:var(--radius)}.gal-grid a:first-child{grid-column:span 2}.gal-grid a:first-child img{aspect-ratio:16/9}
+.contact{display:grid;gap:28px;grid-template-columns:1fr}.cform{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);display:grid;gap:12px}.cform label{display:grid;gap:6px;font-size:14px;font-weight:600;color:var(--ink2)}.cform input,.cform textarea{font:inherit;font-size:16px;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);width:100%}.cform input:focus,.cform textarea:focus{outline:0;border-color:var(--accent)}.cform .two{display:grid;gap:12px;grid-template-columns:1fr}.cform .fine{font-size:12.5px;color:var(--ink3);margin:0}.cform .hp{position:absolute;left:-9999px;top:-9999px}.cform .ok{background:var(--soft);border-radius:12px;padding:14px;font-weight:600}
+.posts{display:grid;gap:16px;grid-template-columns:1fr}.post{display:grid;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;text-decoration:none;color:inherit;box-shadow:var(--shadow)}.post img{aspect-ratio:16/9;object-fit:cover;border-radius:12px;width:100%}.post h3{font-size:18px;margin:4px 0 6px}.post p{color:var(--ink2);font-size:15px;margin:0}.date{font-size:12.5px;color:var(--ink3);font-weight:600;letter-spacing:.04em}
+.article{max-width:720px;margin:0 auto}.article .cover{border-radius:var(--radius);margin-bottom:22px;aspect-ratio:16/9;object-fit:cover;width:100%}.article h1{font-size:clamp(30px,5vw,46px);margin:8px 0 22px}.article h2{font-size:24px;margin:30px 0 10px}.article p{font-size:17px;color:var(--ink2)}
+.nav nav a.on{color:var(--accent)}
+@media(min-width:760px){.gal-grid{grid-template-columns:repeat(4,1fr)}.gal-grid a:first-child{grid-column:span 2;grid-row:span 2}.gal-grid a:first-child img{aspect-ratio:auto;height:100%}.contact{grid-template-columns:1fr 1.1fr;align-items:start}.cform .two{grid-template-columns:1fr 1fr}.posts{grid-template-columns:repeat(3,1fr)}.phead{padding:80px 0 10px}}
+`;
+
+/* 공통 셸 — head·나브·푸터·스크립트. depth = 현재 페이지 깊이, active = 활성 메뉴 경로 */
+function shell(c, { title, desc, depth = 0, active = '', content, extraSchema = [], canonicalPage }) {
+  const { s, style, k, name, phone, addr, maps, toggle, year, ht, tz, pages } = c;
+  const canonical = canonicalPage || c.canonical;
   const fonts = (() => { const f = new Set(); const add = (n, w) => f.add(`family=${n.replace(/ /g, '+')}:wght@${w}`); const hw = { Fraunces: '500;600', 'Playfair Display': '500;600', 'Space Grotesk': '500;700', Nunito: '600;800', 'DM Serif Display': '400' }[k.fontHead] || '600;700'; add(k.fontHead, hw); if (k.fontHeadKo) add(k.fontHeadKo, { 'Noto Serif KR': '600', 'Nanum Myeongjo': '700', 'Gowun Batang': '700' }[k.fontHeadKo] || '700'); if (k.fontBody !== k.fontHead) add(k.fontBody, '400;500;600;700'); return [...f].join('&'); })();
-  const wave = k.wave ? `<svg class="wave" viewBox="0 0 1440 46" preserveAspectRatio="none" aria-hidden="true"><path d="M0,20 C240,46 480,0 720,18 C960,36 1200,10 1440,24 L1440,46 L0,46 Z" fill="${k.band}"/></svg>` : '';
   const openChip = ht ? `<span class="open" id="open-chip"><i></i><span class="t"></span></span>` : '';
-  let i = 0; const IN = () => ` in" style="--i:${i++}`; // 히어로 순차 등장 인덱스
+  const navLinks = pages.map(([h, ko, en]) => `<a href="${h.startsWith('#') ? (depth ? rel(depth, '') + h : h) : rel(depth, h)}"${h === active ? ' class="on"' : ''}>${L(s, ko, en)}</a>`).join('');
+  const schemas = [schema(s, c.canonical), ...extraSchema].join('</script>\n<script type="application/ld+json">');
   return `<!doctype html>
 <html lang="${s.lang === 'en' ? 'en' : 'ko'}" data-style="${style}">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
-${noindex ? '<meta name="robots" content="noindex,nofollow">' : ''}
+${c.noindex ? '<meta name="robots" content="noindex,nofollow">' : ''}
 <link rel="canonical" href="${esc(canonical)}">
 <meta property="og:type" content="business.business"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}">${s.hero.photo ? `<meta property="og:image" content="${esc(s.hero.photo)}">` : ''}<meta property="og:url" content="${esc(canonical)}">
 <meta name="theme-color" content="${k.paper.startsWith('#') ? k.paper : '#ffffff'}">
@@ -237,57 +322,22 @@ ${noindex ? '<meta name="robots" content="noindex,nofollow">' : ''}
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?${fonts}&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 ${s.logo ? `<link rel="icon" href="${esc(s.logo)}">` : ''}
-<script type="application/ld+json">${schema(s, canonical)}</script>
-<style>${CSS(k, style, s.lang)}</style>
+<script type="application/ld+json">${schemas}</script>
+<style>${CSS(k, style, s.lang)}${EXTRA_CSS}</style>
 </head>
 <body${ht ? ` data-hours='${esc(JSON.stringify(ht))}' data-tz="${esc(tz)}"` : ''}>
 <div id="prog" aria-hidden="true"></div>
 <header class="nav"><div class="wrap">
-  <a class="brand" href="#top">${s.logo ? `<img src="${esc(s.logo)}" alt="${esc(name)}">` : ''}<span>${esc(name)}</span></a>
-  <nav>${navLinks.map(([h, ko, en]) => `<a href="${h}">${L(s, ko, en)}</a>`).join('')}</nav>
+  <a class="brand" href="${rel(depth, '')}${depth ? '' : '#top'}">${s.logo ? `<img src="${esc(s.logo)}" alt="${esc(name)}">` : ''}<span>${esc(name)}</span></a>
+  <nav>${navLinks}</nav>
   <div class="right">${openChip}${toggle ? '<button class="lang" id="lang" type="button" aria-label="Language">EN</button>' : ''}${phone ? `<a class="btn primary sm" href="${telHref(phone)}">📞 <span class="num">${esc(phone)}</span><span class="lbl">${L(s, '전화', 'Call')}</span></a>` : ''}</div>
 </div></header>
-
-<section class="hero${s.hero.video ? ' has-video' : ''}" id="top">${s.hero.video ? `<div class="hero-video"><video autoplay muted loop playsinline ${s.hero.photo ? `poster="${esc(s.hero.photo)}"` : ''}><source src="${esc(s.hero.video)}" type="video/mp4"></video></div>` : ''}<div class="wrap">
-  <div class="copy">
-    ${s.category ? `<span class="eyebrow${IN()}">${t(s, s, 'category')}${s.address.city ? ' · ' + esc(s.address.city) : ''}${s.since ? ` · ${L(s, '설립 ' + s.since, 'since ' + s.since)}` : ''}</span>` : ''}
-    <h1 class="${IN()}">${s.hero.headline ? emph(s) : esc(name)}</h1>
-    ${s.hero.sub || s.tagline ? `<p class="lead${IN()}">${s.hero.sub ? t(s, s.hero, 'sub') : t(s, s, 'tagline')}</p>` : ''}
-    <div class="cta${IN()}">${btns()}</div>
-    ${stats.length ? `<ul class="stats${IN()}">${stats.slice(0, 4).map((x) => `<li><b data-count="${esc(x.value)}">${esc(x.value)}</b><span>${s.lang === 'en' ? esc(x.label) : toggle ? `<span data-ko="${esc(x.label_ko || x.label)}" data-en="${esc(x.label)}">${esc(x.label_ko || x.label)}</span>` : esc(x.label_ko || x.label)}</span></li>`).join('')}</ul>` : ''}
-  </div>
-  ${s.hero.photo && !s.hero.video ? `<div class="photo${IN()}"><div class="frame"><img class="px" data-px=".12" src="${esc(s.hero.photo)}" alt="${esc(name)}" fetchpriority="high"><div class="glare"></div></div>${s.rating ? `<div class="chip a">${G_LOGO}<span class="st">${stars(s.rating)}</span><span><b>${esc(s.rating)} ${L(s, '구글 평점', 'on Google')}</b>${s.review_count ? `${esc(s.review_count)} ${L(s, '리뷰', 'reviews')}` : ''}</span></div>` : ''}${s.hero.badge ? `<div class="chip b"><span><b>${t(s, s.hero, 'badge')}</b>${s.hero.badge_sub ? t(s, s.hero, 'badge_sub') : ''}</span></div>` : ''}</div>` : ''}
-</div>${s.promo.title ? wave : ''}</section>
-
-${s.promo.title ? `<div class="band"><div class="wrap"><div><span class="eyebrow">${L(s, '지금', 'Our specialty')}</span><h2>${t(s, s.promo, 'title')}</h2>${s.promo.text ? `<p>${t(s, s.promo, 'text')}</p>` : ''}</div>${s.promo.href ? `<a class="btn accent" href="${esc(s.promo.href)}">${s.promo.cta ? t(s, s.promo, 'cta') : L(s, '자세히', 'Learn more')} →</a>` : ''}</div></div>` : ''}
-
-${s.services.length ? `<section id="services"><div class="wrap"><div class="sec-h center rv"><span class="eyebrow">${L(s, '서비스', 'What we do')}</span><h2>${s.services_title ? t(s, s, 'services_title') : L(s, '한 곳에서 해결하는 서비스', 'Everything you need, under one roof')}</h2>${s.services_intro ? `<p>${t(s, s, 'services_intro')}</p>` : ''}</div>
-<div class="grid${s.services.length >= 7 ? ' four' : ''}">${s.services.slice(0, 12).map((x, n) => `<div class="card rv tilt">${x.photo ? `<img src="${esc(x.photo)}" alt="${esc(x.name)}" loading="lazy">` : `<div class="ic">${String(n + 1).padStart(2, '0')}</div>`}<h3>${t(s, x, 'name')}</h3>${x.desc ? `<p>${t(s, x, 'desc')}</p>` : ''}${x.price ? `<span class="price">${esc(x.price)}</span>` : ''}</div>`).join('')}</div></div></section>` : ''}
-
-${s.highlights.length ? `<section class="tint"><div class="wrap"><div class="sec-h center rv"><span class="eyebrow">${L(s, '왜 ' + name, 'Why ' + name)}</span><h2>${s.highlights_title ? t(s, s, 'highlights_title') : L(s, '손님이 다시 찾는 이유', 'Why neighbors keep coming back')}</h2></div>
-<div class="why">${s.highlights.slice(0, 4).map((h) => `<div class="rv"><b>${t(s, h, 'title')}</b><span>${t(s, h, 'text')}</span></div>`).join('')}</div></div></section>` : ''}
-
-${s.brands.length ? `<section><div class="wrap"><div class="sec-h rv"><span class="eyebrow">${L(s, '취급 브랜드', 'Brands we carry')}</span><h2>${s.brands_title ? t(s, s, 'brands_title') : L(s, '믿을 수 있는 브랜드만', 'Trusted names only')}</h2></div><div class="brands rv">${s.brands.slice(0, 24).map((b) => `<span>${esc(b)}</span>`).join('')}</div></div></section>` : ''}
-
-${gallery.length >= 3 ? `<section class="tint"><div class="wrap"><div class="sec-h rv"><span class="eyebrow">${L(s, '매장', 'Gallery')}</span><h2>${L(s, '직접 보시면 압니다', 'Come see for yourself')}</h2></div></div><div class="marq rv"><div class="track">${[...gallery.slice(0, 8), ...gallery.slice(0, 8)].map((u) => `<img src="${esc(u)}" alt="" loading="lazy">`).join('')}</div></div>${s.gallery_generated.length ? `<div class="wrap"><p class="gen-note">${L(s, '일부 이미지는 분위기 연출용 이미지입니다.', 'Some images are illustrative.')}</p></div>` : ''}</section>` : ''}
-
-${s.steps.length ? `<section><div class="wrap"><div class="sec-h center rv"><span class="eyebrow">${L(s, '이용 방법', 'How it works')}</span><h2>${s.steps_title ? t(s, s, 'steps_title') : L(s, '네 단계면 끝납니다', 'Four easy steps')}</h2></div><div class="steps">${s.steps.slice(0, 4).map((x, n) => `<div class="rv"><i>${n + 1}</i><b>${t(s, x, 'title')}</b>${x.text ? `<span>${t(s, x, 'text')}</span>` : ''}</div>`).join('')}</div></div></section>` : ''}
-
-${s.rating ? `<section class="tint"><div class="wrap"><div class="reviews"><div class="score rv"><b data-count="${esc(s.rating)}">${esc(s.rating)}</b><div class="st">${stars(s.rating)}</div><small>${G_LOGO} ${s.review_count ? `${esc(s.review_count)} ${L(s, '구글 리뷰', 'reviews on Google')}` : 'Google'}</small><a class="btn outline sm" href="${esc(s.review_url || maps)}" target="_blank" rel="noopener">${L(s, '구글에서 리뷰 보기', 'Read reviews on Google')}</a></div><div class="rv"><span class="eyebrow">${L(s, '손님 이야기', 'What customers mention most')}</span><h2>${s.reviews_title ? t(s, s, 'reviews_title') : L(s, '한 번 오신 분이 다시 오십니다', 'People come back — and bring friends')}</h2>${s.review_themes.length ? `<ul class="themes">${s.review_themes.slice(0, 5).map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div></div></div></section>` : ''}
-
-${s.about.text ? `<section id="about"><div class="wrap"><div class="about">${s.about.photo ? `<div class="frame rv"><img class="px" data-px=".08" src="${esc(s.about.photo)}" alt="${esc(name)}" loading="lazy"></div>` : ''}<div class="rv"><span class="eyebrow">${L(s, '소개', 'About')}</span><h2>${s.about.title ? t(s, s.about, 'title') : esc(name)}</h2><p>${t(s, s.about, 'text').replace(/\n/g, '<br>')}</p></div></div></div></section>` : ''}
-
-${addr || s.hours.length ? `<section class="tint" id="visit"><div class="wrap"><div class="visit"><div class="rv"><span class="eyebrow">${L(s, '오시는 길', 'Visit us')}</span><h2>${s.visit_title ? t(s, s, 'visit_title') : L(s, (s.address.city || '') + '에서 뵙겠습니다', 'Find us in ' + (s.address.city || 'town'))}</h2>${addr ? `<p class="addr">📍 <a href="${esc(maps)}" target="_blank" rel="noopener">${esc(addr)}</a></p>` : ''}${phone ? `<p class="addr">📞 <a href="${telHref(phone)}">${esc(phone)}</a></p>` : ''}${s.email ? `<p class="addr">✉️ <a href="mailto:${esc(s.email)}">${esc(s.email)}</a></p>` : ''}${s.hours.length ? `<ul class="hours">${s.hours.map((h) => { const tm = h.time || (h.open && h.close ? h.open + ' – ' + h.close : ''); const closed = /휴무|closed/i.test(tm); return `<li data-days="${esc(h.days)}"><b>${esc(h.days)}</b><span class="${closed ? 'closed' : ''}">${esc(tm)}</span></li>`; }).join('')}</ul>` : ''}${s.hours_note ? `<p style="color:var(--ink3);font-size:14px;margin-top:10px">${t(s, s, 'hours_note')}</p>` : ''}<div class="cta" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">${btns()}</div></div><div class="mapcard rv">${s.map_embed ? `<iframe src="${esc(s.map_embed)}" style="width:100%;height:100%;min-height:260px;border:0;border-radius:20px" loading="lazy" title="map"></iframe>` : `<div><p style="font-weight:600">${esc(addr || name)}</p><a class="btn primary" href="${esc(maps)}" target="_blank" rel="noopener">${L(s, '구글 지도에서 열기', 'Open in Google Maps')}</a></div>`}</div></div></div></section>` : ''}
-
-${s.faq.length ? `<section id="faq"><div class="wrap"><div class="sec-h center rv"><span class="eyebrow">FAQ</span><h2>${L(s, '자주 묻는 질문', 'Frequently asked questions')}</h2></div><div class="faq">${s.faq.slice(0, 10).map((f) => `<details class="rv"><summary>${t(s, f, 'q')}</summary><div class="a">${t(s, f, 'a')}</div></details>`).join('')}</div></div></section>` : ''}
-
-${phone || addr ? `<div class="ctab"><div class="wrap"><h2>${s.closing ? t(s, s, 'closing') : L(s, '궁금한 점은 전화 한 통이면 됩니다.', 'Questions? One call and we will take it from there.')}</h2><div class="btns">${btns('outline')}</div></div></div>` : ''}
-
+${content}
 <footer><div class="wrap"><div class="cols">
-  <div><a class="brand" href="#top">${esc(name)}</a><p class="desc">${t(s, s, 'tagline') || ''}</p>${addr ? `<p class="desc">${esc(addr)}</p>` : ''}${phone ? `<p class="desc"><a href="${telHref(phone)}">${esc(phone)}</a></p>` : ''}</div>
+  <div><a class="brand" href="${rel(depth, '')}">${esc(name)}</a><p class="desc">${t(s, s, 'tagline') || ''}</p>${addr ? `<p class="desc">${esc(addr)}</p>` : ''}${phone ? `<p class="desc"><a href="${telHref(phone)}">${esc(phone)}</a></p>` : ''}</div>
   ${s.hours.length ? `<div><h4>${L(s, '영업시간', 'Hours')}</h4><ul>${s.hours.map((h) => `<li>${esc(h.days)} · ${esc(h.time || (h.open && h.close ? h.open + '–' + h.close : ''))}</li>`).join('')}</ul></div>` : ''}
-  ${s.services.length ? `<div><h4>${L(s, '서비스', 'Services')}</h4><ul>${s.services.slice(0, 8).map((x) => `<li><a href="#services">${t(s, x, 'name')}</a></li>`).join('')}</ul></div>` : ''}
-  <div><h4>${L(s, '바로가기', 'Links')}</h4><ul>${navLinks.map(([h, ko, en]) => `<li><a href="${h}">${L(s, ko, en)}</a></li>`).join('')}${Object.entries(s.social).filter(([, v]) => v).map(([kk, v]) => `<li><a href="${esc(v)}" target="_blank" rel="noopener">${esc(kk[0].toUpperCase() + kk.slice(1))}</a></li>`).join('')}</ul></div>
+  ${s.services.length ? `<div><h4>${L(s, '서비스', 'Services')}</h4><ul>${s.services.slice(0, 8).map((x) => `<li><a href="${c.business ? rel(depth, 'services/') : rel(depth, '') + '#services'}">${t(s, x, 'name')}</a></li>`).join('')}</ul></div>` : ''}
+  <div><h4>${L(s, '바로가기', 'Links')}</h4><ul>${pages.map(([h, ko, en]) => `<li><a href="${h.startsWith('#') ? rel(depth, '') + h : rel(depth, h)}">${L(s, ko, en)}</a></li>`).join('')}${Object.entries(s.social).filter(([, v]) => v).map(([kk, v]) => `<li><a href="${esc(v)}" target="_blank" rel="noopener">${esc(kk[0].toUpperCase() + kk.slice(1))}</a></li>`).join('')}</ul></div>
 </div><div class="copy">© ${year} ${esc(name)}. All rights reserved.</div></div></footer>
 ${phone || addr ? `<div class="bottom">${ht ? `<span class="open" id="open-bar"><i></i><span class="t"></span></span>` : ''}<div class="row">${phone ? `<a class="btn primary" href="${telHref(phone)}">📞 ${L(s, '전화', 'Call')}</a>` : ''}${addr ? `<a class="btn outline" href="${esc(maps)}" target="_blank" rel="noopener" style="background:var(--card)">📍 ${L(s, '길찾기', 'Directions')}</a>` : ''}</div></div>` : ''}
 <script>(function(){
@@ -308,7 +358,9 @@ ${phone || addr ? `<div class="bottom">${ht ? `<span class="open" id="open-bar">
   try{var hb=document.body.getAttribute('data-hours');if(hb){var H=JSON.parse(hb),tz=document.body.getAttribute('data-tz')||'America/Los_Angeles';var parts=new Intl.DateTimeFormat('en-US',{timeZone:tz,weekday:'short',hour:'numeric',minute:'numeric',hour12:false}).formatToParts(new Date()),g={};parts.forEach(function(p){g[p.type]=p.value});var wd={Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6}[g.weekday],now=(parseInt(g.hour,10)%24)*60+parseInt(g.minute,10);var fmt=function(m){var h=Math.floor(m/60),mi=m%60,ap=h>=12?'PM':'AM',h12=h%12||12;return LANG==='en'?h12+(mi?':'+String(mi).padStart(2,'0'):'')+' '+ap:(h>=12?'오후 ':'오전 ')+h12+(mi?':'+String(mi).padStart(2,'0'):'')+'시'};var today=H[wd],isOpen=false,txt='';if(today&&now>=today[0]&&now<today[1]){isOpen=true;txt=LANG==='en'?'Open now · closes '+fmt(today[1]):'지금 영업 중 · '+fmt(today[1])+' 마감'}else{var n=null;for(var i=0;i<7&&n==null;i++){var dd=(wd+i)%7,h=H[dd];if(h&&(i>0||now<h[0])){n=[i,h[0]];}}txt=n?(LANG==='en'?'Closed · opens '+(n[0]===0?'today ':n[0]===1?'tomorrow ':'')+fmt(n[1]):'영업 종료 · '+(n[0]===0?'오늘 ':n[0]===1?'내일 ':'')+fmt(n[1])+' 오픈'):(LANG==='en'?'Closed':'영업 종료')}
     ['open-chip','open-bar'].forEach(function(id){var el=document.getElementById(id);if(!el)return;el.querySelector('.t').textContent=txt;el.classList.toggle('closed',!isOpen);el.classList.add('show');});
     var rows=document.querySelectorAll('.hours li');var KO=['일','월','화','수','목','금','토'],EN=['sun','mon','tue','wed','thu','fri','sat'];rows.forEach(function(li){var dsv=(li.getAttribute('data-days')||'').toLowerCase();if(dsv.indexOf(KO[wd])>-1||dsv.indexOf(EN[wd])>-1){li.classList.add('today');return;}var m=/^\\s*(\\S)[^–\\-~]*[–\\-~]\\s*(\\S)/.exec(dsv);if(m){var a=KO.indexOf(m[1])>-1?KO.indexOf(m[1]):EN.indexOf(dsv.slice(0,3)),b=KO.indexOf(m[2]);var bm=/[–\\-~]\\s*([a-z]{3})/.exec(dsv);if(bm)b=EN.indexOf(bm[1]);if(a>-1&&b>-1){for(var x=a,c=0;c<7;c++,x=(x+1)%7){if(x===wd){li.classList.add('today');break;}if(x===b)break;}}}});}}catch(e){}
-  /* 6) 한/영 토글 */
+  /* 6) 문의 폼 — ?sent=1 이면 접수 안내 */
+  try{var cf=document.querySelector('.cform');if(cf&&/[?&]sent=1/.test(location.search)){var ok=document.createElement('div');ok.className='ok';ok.textContent=cf.getAttribute('data-sent');cf.parentNode.insertBefore(ok,cf);cf.style.display='none';ok.scrollIntoView({block:'center'});}}catch(e){}
+  /* 7) 한/영 토글 */
   var b=document.getElementById('lang');if(!b)return;
   function apply(){document.querySelectorAll('[data-en]').forEach(function(el){el.innerHTML=en?el.getAttribute('data-en'):el.getAttribute('data-ko')});b.textContent=en?'한국어':'EN';d.lang=en?'en':'ko'}
   b.addEventListener('click',function(){en=!en;try{localStorage.setItem('lang',en?'en':'ko')}catch(e){}apply()});if(en)apply();
@@ -316,17 +368,43 @@ ${phone || addr ? `<div class="bottom">${ht ? `<span class="open" id="open-bar">
 </body></html>`;
 }
 
+const crumbs = (c, items) => ({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: items.map(([n, u], i) => ({ '@type': 'ListItem', position: i + 1, name: n, item: c.canonical + u })) });
+
+/* 원페이지 */
+function onepage(c) {
+  const { s, name } = c;
+  const title = s.seo.title || `${name} — ${s.tagline || s.category || ''}`.replace(/ — $/, '');
+  const content = [sec.hero(c, 0), sec.promo(c), sec.services(c, 0), sec.highlights(c), sec.brands(c), sec.galleryStrip(c, 0), sec.steps(c), sec.reviews(c), sec.about(c), sec.visit(c, 0), sec.faq(c), sec.contact(c, 0), sec.ctab(c, 0)].join('\n');
+  return shell(c, { title, desc: s.seo.description || s.tagline || '', content });
+}
+
+/* 비즈니스 등급 — 페이지별 파일 */
+function business(c) {
+  const { s, name, posts } = c; const files = {};
+  const base = s.seo.title || `${name} — ${s.tagline || s.category || ''}`.replace(/ — $/, '');
+  const desc = s.seo.description || s.tagline || '';
+  const T = (ko, en) => (s.lang === 'en' ? en : ko) + ' | ' + name;
+  files['index.html'] = shell(c, { title: base, desc, depth: 0, active: '', content: [sec.hero(c, 0), sec.promo(c), sec.services(c, 0, { max: 6, more: true }), sec.highlights(c), sec.reviews(c), sec.galleryStrip(c, 0, true), sec.ctab(c, 0)].join('\n') });
+  if (s.services.length) files['services/index.html'] = shell(c, { title: T('서비스', 'Services'), desc, depth: 1, active: 'services/', canonicalPage: c.canonical + 'services/', extraSchema: [crumbs(c, [[name, ''], [s.lang === 'en' ? 'Services' : '서비스', 'services/']])], content: [sec.pageHead(c, '서비스', 'Services', s.services_intro ? t(s, s, 'services_intro') : ''), sec.services(c, 1, { full: true }), sec.faq(c), sec.ctab(c, 1)].join('\n') });
+  if (s.about.text || s.highlights.length || s.steps.length) files['about/index.html'] = shell(c, { title: T('소개', 'About'), desc, depth: 1, active: 'about/', canonicalPage: c.canonical + 'about/', extraSchema: [crumbs(c, [[name, ''], [s.lang === 'en' ? 'About' : '소개', 'about/']])], content: [sec.pageHead(c, '소개', 'About'), sec.about(c), sec.highlights(c), sec.steps(c), sec.brands(c), sec.reviews(c), sec.ctab(c, 1)].join('\n') });
+  if (c.gallery.length >= 3) files['gallery/index.html'] = shell(c, { title: T('갤러리', 'Gallery'), desc, depth: 1, active: 'gallery/', canonicalPage: c.canonical + 'gallery/', extraSchema: [crumbs(c, [[name, ''], [s.lang === 'en' ? 'Gallery' : '갤러리', 'gallery/']])], content: [sec.pageHead(c, '갤러리', 'Gallery'), sec.galleryGrid(c), sec.ctab(c, 1)].join('\n') });
+  files['contact/index.html'] = shell(c, { title: T('오시는 길·문의', 'Visit & Contact'), desc, depth: 1, active: 'contact/', canonicalPage: c.canonical + 'contact/', extraSchema: [crumbs(c, [[name, ''], [s.lang === 'en' ? 'Contact' : '오시는 길·문의', 'contact/']])], content: [sec.pageHead(c, '오시는 길 · 문의', 'Visit & Contact'), sec.visit(c, 1), sec.contact(c, 1), sec.faq(c)].join('\n') });
+  if (posts.length) {
+    files['blog/index.html'] = shell(c, { title: T('소식', 'Blog'), desc, depth: 1, active: 'blog/', canonicalPage: c.canonical + 'blog/', extraSchema: [crumbs(c, [[name, ''], [s.lang === 'en' ? 'Blog' : '소식', 'blog/']])], content: [sec.pageHead(c, '소식', 'Blog'), sec.blogList(c, 1), sec.ctab(c, 1)].join('\n') });
+    for (const p of posts) { const ps = slugify(p.slug); files[`blog/${ps}/index.html`] = shell(c, { title: `${pick(s, p, 'title').main} | ${name}`, desc: p.excerpt || desc, depth: 2, active: 'blog/', canonicalPage: c.canonical + `blog/${ps}/`, extraSchema: [{ '@context': 'https://schema.org', '@type': 'BlogPosting', headline: p.title, datePublished: p.date || undefined, image: p.photo || undefined, author: { '@type': 'Organization', name }, publisher: { '@type': 'Organization', name } }, crumbs(c, [[name, ''], [s.lang === 'en' ? 'Blog' : '소식', 'blog/'], [p.title, `blog/${ps}/`]])], content: [sec.blogPost(c, p), sec.ctab(c, 2)].join('\n') }); }
+  }
+  return files;
+}
+
 function render(spec, { origin, noindex }) {
   const s = normalize(spec);
   const canonical = (origin || `https://${s.slug}.sites.bizhigher.com`).replace(/\/$/, '') + '/';
-  return {
-    slug: s.slug,
-    files: {
-      'index.html': page(s, { canonical, noindex: !!noindex }),
-      'robots.txt': noindex ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nAllow: /\nSitemap: ${canonical}sitemap.xml\n`,
-      'sitemap.xml': `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${esc(canonical)}</loc></url></urlset>\n`,
-    },
-  };
+  const c = ctx(s, { canonical, noindex: !!noindex });
+  const files = c.business ? business(c) : { 'index.html': onepage(c) };
+  const urls = Object.keys(files).map((f) => canonical + f.replace(/index\.html$/, ''));
+  files['robots.txt'] = noindex ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nAllow: /\nSitemap: ${canonical}sitemap.xml\n`;
+  files['sitemap.xml'] = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map((u) => `<url><loc>${esc(u)}</loc></url>`).join('')}</urlset>\n`;
+  return { slug: s.slug, files, pages: urls };
 }
 
-module.exports = { render, normalize, slugify, styleFor, moodFor, STYLES, hoursTable };
+module.exports = { render, normalize, slugify, styleFor, moodFor, STYLES, hoursTable, CONTACT_ENDPOINT };

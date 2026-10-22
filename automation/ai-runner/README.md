@@ -29,7 +29,10 @@ node automation/ai-runner/runner.js note --job 5 --text "…"
 
 node automation/ai-runner/qa.js --url https://고객사이트 --out qa --name home   # 360/768/1280 스크린샷·속도·링크·폼 → qa/home-report.md + qa/home-montage.jpg (upload 로 올려 submit --kind images)
 node automation/ai-runner/sites.js prep --spec spec.json [--job 28 --task 12]  # 사진 준비(v3): 900px 미만 업스케일 → /a/ 교체, 갤러리 3장 미만이면 분위기 이미지 생성(gallery_generated). FAL_KEY 없으면 크기 보고만. spec 저장 전에
-node automation/ai-runner/sites.js spec --job 28 --file spec.json           # 고객 사이트 스펙 저장 → slug·미리보기 주소 (web-2)
+node automation/ai-runner/sites.js spec --job 28 --file spec.json           # 고객 사이트 스펙 저장 → slug·미리보기 주소 + 바뀐 키 (web-2 첫 생성)
+node automation/ai-runner/sites.js patch --job 28 --file patch.json [--note …]  # 수정 요청 반영: 바뀐 키만 깊은 병합(null 은 삭제) → 새 버전. 전체 재작성 금지
+node automation/ai-runner/sites.js diff --job 28 [--file new.json]           # 마지막 두 버전(또는 파일 vs 저장본)의 바뀐 키 — 결과물 요약에
+node automation/ai-runner/sites.js leads --job 28                            # 사이트 문의 폼 리드 목록
 node automation/ai-runner/sites.js build && node automation/ai-runner/sites.js deploy   # 전 고객 렌더 + 라우터 → Pages 프로젝트 bizhigher-sites (CLOUDFLARE_API_TOKEN·ACCOUNT_ID 필요)
 node automation/ai-runner/sites.js render --spec spec.json --out preview     # 로컬 확인 (관리자 API 없이)
 node automation/ai-runner/sites.js domains                                   # 서브도메인 {slug}.sites.bizhigher.com 등록 상태 확인·보정 (매 실행 1회)
