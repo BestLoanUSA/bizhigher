@@ -86,6 +86,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | 리포트 디자인 | `functions/report/[id].js` |
 | GBP 리뷰 답글·게시물 자동화 실험 | `automation/gbp/` (README 참고. API 승인 전엔 `--dry-run`만) |
 | 고객 결과물 페이지 `/c/{token}` | `functions/c/[token].js` — 묶음 메일·승인 흐름은 §12-3 |
+| 새 리뷰 감시·답글 과제 | `functions/api/_reviews.js` (§12-4) — 위험 단어 목록 `RISK`, 쿨다운 20시간 |
 | 관리자 페이지 `/admin/` | `functions/admin/` (화면 `_ui.js`, API `[[path]].js`, 인증 `_auth.js`). 설정 안내 `docs/admin-setup-ko.md` |
 | Stripe 결제 → 주문·작업 기록 | `functions/api/stripe-webhook.js` + 공용 `functions/api/_orders.js` |
 | 서비스별 작업 단계·자동화 수준(플레이북) | `functions/api/_playbook.js` — 관리자 파이프라인·플레이북 탭·`docs/automation-map-ko.md`의 단일 소스 |
@@ -189,6 +190,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | `stripe_events` | 처리한 Stripe 이벤트 id (중복 방지) | 웹훅 |
 | `deliverables` 추가 열 | `task_id`·`kind`·`summary`·`needs_approval`·`approved_at`·`revise_note`·`packet_id` — 고객 페이지·묶음 발송·승인(§12-3). `jobs.portal_token`도 같이 | `_orders.js EXTRA_COLUMNS` |
 | `tool_usage` | 무료 도구 하루 사용 횟수 (일자·IP 해시·도구) — 자동 생성 | `functions/api/tools/_shared.js` |
+| `review_seen` · `review_sync` | 본 리뷰의 키 해시·별점, 작업별 마지막 Places 확인 시각 — 자동 생성 | `functions/api/_reviews.js` (§12-4) |
 
 `orders` 이하 6개 테이블은 `functions/api/_orders.js`의 `ensureSchema()`가 **없으면 자동 생성**한다(`CREATE TABLE IF NOT EXISTS`). 손으로 SQL을 돌릴 필요 없다. 기존 3개 테이블은 이 코드가 만들지 않았으므로 관리자 API는 `PRAGMA table_info`로 컬럼 유무를 확인하고 쓴다.
 
@@ -311,6 +313,13 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 - 사이트 QA는 `qa.js --url …`(360/768/1280 스크린샷·LCP·전송량·가로 넘침·링크·폼·터치 대상 → 리포트 md + 몽타주 jpg). `web-4`·`llp-4`가 이걸 쓴다. 속도 수치는 세션 프록시 영향이 커 상대 비교용. 광고 셋업 `ads-2`는 Google Ads Editor 가져오기 CSV + Meta 설정표까지 만들어 David 구축 시간을 90분 → 25/40분으로
 - 수동 경로는 그대로 남아 있다: 고객 여정 "AI 실행 지시 복사" → claude.ai fulfillment 스킬. 스킬에는 2026-10-21 기준 연동 섹션이 들어가 있고, 추가분은 `docs/fulfillment-skill-addendum-ko.md` v2
 
+### 12-4. 새 리뷰 감시 — Places 공개 리뷰 (2026-10-22 B-3, GBP API 전 임시)
+
+- `functions/api/_reviews.js syncReviews`: 리뷰 답글 서비스가 들어 있는 진행 중 작업마다 **하루 1회**(20시간 쿨다운) Places Details(`reviews,rating,userRatingCount`, Enterprise+Atmosphere SKU 월 1,000 무료)를 읽는다. place_id 는 질문지 "구글 프로필 공개 정보" 블록 → ob-3 프로필 순. 루틴 큐(`runner/queue`)가 부르고, 검증 큐 탭 "새 리뷰 확인" 버튼(`POST /admin/api/reviews/sync {force}`)으로 즉시도 된다
+- **처음 보는 작업은 기준선만** 기록한다(옛 리뷰에 과제 안 만듦 — 백로그는 rr-1). 이후 새 리뷰마다 `job_tasks`에 `rr-live` 단계(service `review-live`, sort 9000 고정 → 서로·rr-2~6에 막히지 않음, who ai, verify 1)를 만든다. 리뷰 원문은 그 단계의 `note`에. 별 1~3 또는 환불·위생·법적·직원 언급(`RISK`)이면 제목에 "⚠ 사람 승인 필요"
+- 루틴이 답글 초안을 써서 검증 큐로 → **David가 GBP에 붙여넣고 "승인" = 게시했음**(리뷰당 2분). 자동 승인 규칙 대상이 아니다(게시가 사람 손이므로). GBP API 승인 후 별 4~5는 자동 게시로 바꾼다
+- 한계: Places는 "관련도 높은" 리뷰 최대 5개만 준다 — 리뷰가 많은 가게는 놓칠 수 있다. 저장은 `review_seen`(키 해시·별점)·`review_sync`(마지막 확인)뿐, 본문은 고객 자신의 작업 안에만(§14 재게시 아님). 로컬 테스트는 `--binding PLACES_MOCK='{json}'`
+
 ### 12-3. 고객 메일 정책 — 최소·묶음 (2026-10-21 David 결정)
 
 목표는 거의 100% 자동화. 고객에게 가는 메일은 **꼭 필요한 순간에만, 한꺼번에 묶어서**. 결과물마다 메일을 보내지 않는다.
@@ -397,6 +406,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 - **Meta 거절 사유**: 시연 영상과 신청 권한 불일치, 리뷰어가 앱에 접근 불가, 두루뭉술한 사용 설명, 안 쓰는 권한 끼워넣기
 - **Meta Standard Access는 확장 불가** — 클라이언트 페이지 운영에는 Advanced Access 필수
 - **Yelp는 답글 API가 없다** — 알림·초안까지만 자동화, 게시는 수동
+- **GBP API 전 리뷰 감지는 Places 공개 리뷰(최대 5개, 관련도순)로 한다**(§12-4). 리뷰가 많은 가게는 놓칠 수 있으니 David가 구글 알림 메일로 보완
 - **Bing Places는 GBP 가져오기로 거의 원클릭** — 손으로 채우지 말 것
 - **Apple Business Connect는 인증이 까다롭다** — 온보딩 초반에 먼저 시작
 - **의료·치과 고객 리뷰 답글에서 환자 여부를 암시하는 표현 금지**(HIPAA). 보상·할인 약속 금지, 개인정보 언급 금지

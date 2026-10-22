@@ -24,6 +24,7 @@
  */
 import { authenticate, login, logoutCookie } from './_auth.js';
 import { notify, sendEmail, esc as escHtml } from '../api/_notify.js';
+import { syncReviews } from '../api/_reviews.js';
 import { ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady, ensurePortalToken, sweepAutoApprovals } from '../api/_orders.js';
 import { PLAYBOOK, COMMON_ONBOARDING, WHO, PHASES, tasksFor, summarize, DELIVER_KEYS, APPROVAL_KEYS } from '../api/_playbook.js';
 import { appHtml, loginHtml } from './_ui.js';
@@ -261,8 +262,13 @@ async function api(env, method, seg, body, url) {
   }
 
   /* AI 실행 루틴 큐 */
+  if (res === 'reviews' && id === 'sync' && method === 'POST') {
+    // 새 리뷰 확인 (Places, 작업당 하루 1회 · force 면 즉시). 검증 큐 탭 버튼과 루틴 큐가 부른다
+    return await syncReviews(db, env, { force: !!body.force });
+  }
   if (res === 'runner' && id === 'queue' && method === 'GET') {
     await sweepAutoApprovals(db);
+    let reviewSync = null; try { reviewSync = await syncReviews(db, env); } catch (e) { reviewSync = { error: String(e && e.message || e) }; }
     const limit = Math.min(50, Number(url.searchParams.get('limit')) || 20);
     const jobs = (await db.prepare(`SELECT j.*, o.service_name o_service_name, o.customer_name FROM jobs j LEFT JOIN orders o ON o.id = j.order_id WHERE j.status NOT IN ('done','hold') ORDER BY COALESCE(j.due_date,'9999') ASC, j.id ASC LIMIT 200`).all()).results || [];
     const tmap = await tasksByJob(db, jobs.map((j) => j.id));
@@ -281,7 +287,7 @@ async function api(env, method, seg, body, url) {
     }
     // 고객용 요약(summary)이 없는 결과물 — 루틴이 요약만 쓴다. 발송은 David가 관리자 "고객에게 묶음 보내기"로 (고객 페이지 /c/{token})
     const drafts = (await db.prepare(`SELECT d.*, j.business, j.customer_email, j.service_name, t.result_kind, substr(t.result_text, 1, 3000) AS result_text FROM deliverables d JOIN jobs j ON j.id = d.job_id LEFT JOIN job_tasks t ON t.id = d.task_id WHERE d.sent_at IS NULL AND (d.summary IS NULL OR d.summary = '') AND j.status NOT IN ('done','hold') AND (COALESCE(t.result_text,'') != '' OR COALESCE(d.url,'') != '') ORDER BY d.id ASC LIMIT 20`).all()).results || [];
-    return { items, pendingDrafts: drafts, rules: ['고객에게 자동 발송 금지 — Gmail 초안까지', 'verify 단계는 status review, 아니면 done', '경쟁사 갭 분석 선행(노출·SEO)', '리뷰 대가·게이팅·가짜 리뷰 금지', '의료·치과 환자 암시 금지', '실행 플랜은 180일', '웹 산출물 360px 실측'] };
+    return { items, pendingDrafts: drafts, reviewSync, rules: ['고객에게 자동 발송 금지 — Gmail 초안까지', 'verify 단계는 status review, 아니면 done', '경쟁사 갭 분석 선행(노출·SEO)', '리뷰 대가·게이팅·가짜 리뷰 금지', '의료·치과 환자 암시 금지', '실행 플랜은 180일', '웹 산출물 360px 실측'] };
   }
   if (res === 'assets' && method === 'POST') {
     const TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'video/mp4': 'mp4', 'video/webm': 'webm', 'application/pdf': 'pdf' };
@@ -432,7 +438,8 @@ async function api(env, method, seg, body, url) {
     // 레인은 "지금 단계"(가장 앞선 미완료 phase)만 보여준다 — 먼 미래의 단계는 아래 서비스별 진행과 전체 단계에서 본다
     const cur = currentPhaseTasks(tasks);
     const lanes = {
-      ai: tasks.filter((t) => CLOSED.has(t.status) && t.who !== 'david' && t.who !== 'customer' && (t.done_at || '') >= since).slice(-8),
+      // 최근 완료 순 12개 (플레이북 순서가 아니라 시간 순 — 방금 끝난 게 맨 위)
+      ai: tasks.filter((t) => CLOSED.has(t.status) && t.who !== 'david' && t.who !== 'customer').sort((a, b) => String(b.done_at || '').localeCompare(String(a.done_at || ''))),
       mine: tasks.filter((t) => t.status === 'review' || (t.who === 'david' && t.status === 'doing') || (cur.includes(t) && t.who === 'david' && t.status === 'todo')).slice(0, 8),
       customer: cur.filter((t) => t.who === 'customer' && t.status !== 'blocked').slice(0, 8),
       received: tasks.filter((t) => t.who === 'customer' && t.status === 'done').sort((a, b) => String(b.done_at || '').localeCompare(String(a.done_at || ''))).slice(0, 12),

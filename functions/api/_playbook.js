@@ -117,11 +117,11 @@ export const PLAYBOOK = {
   'review-reply': {
     name: '리뷰 답글 관리', steps: [
       S('rr-1', '미답글 백로그 일괄 처리 + 답글 톤 확인', 'setup', 'ai', 15, { verify: true }),
-      S('rr-2', '새 리뷰 감지 — 매일', 'daily', 'blocked', 0, { block: 'GBP API 거절. 대안: 구글이 hello@ 로 보내는 리뷰 알림 메일을 Gmail에서 읽어 감지(반자동)', next: 'Gmail 알림 파싱 루틴 → 큐 자동 생성' }),
-      S('rr-3', '분류 — 별 4~5 일반 = AUTO / 별 1~3 또는 환불·위생·법적·검안·직원 실명 = HUMAN (코드 완성, 드라이런 검증)', 'daily', 'auto', 0),
-      S('rr-4', '답글 초안 (리뷰 언어, 2~4문장, 대가·보상 약속 금지, HIPAA 표현 금지)', 'daily', 'auto', 0),
-      S('rr-5', 'HUMAN 등급 승인 — 24시간 내', 'daily', 'david', 3, { verify: true }),
-      S('rr-6', '게시', 'daily', 'david', 2, { block: 'API 전엔 앱에서 붙여넣기', next: 'GBP API → AUTO 등급은 승인 없이 자동 게시, HUMAN은 승인 후 자동 게시' }),
+      S('rr-2', '새 리뷰 감지 — 코드가 매일 Places 공개 리뷰(최대 5개)를 읽어 새 리뷰마다 "답글 ★n" 단계(rr-live)를 자동 생성. 이 단계는 확인만 하고 완료', 'daily', 'auto', 0, { next: 'GBP API 승인 → 전체 리뷰·자동 게시' }),
+      S('rr-3', '분류 — 별 4~5 일반 = AUTO / 별 1~3 또는 환불·위생·법적·직원 언급 = HUMAN (코드: rr-live 제목에 "⚠ 사람 승인 필요")', 'daily', 'auto', 0),
+      S('rr-4', '답글 초안 — rr-live 단계마다 AI가 리뷰어 언어로 2~4문장 (대가·보상 약속 금지, HIPAA 표현 금지). 이 단계는 확인만 하고 완료', 'daily', 'auto', 0),
+      S('rr-5', 'HUMAN 등급 승인 — rr-live 검증 큐에서 24시간 내', 'daily', 'david', 3, { verify: true }),
+      S('rr-6', '게시 — rr-live 검증 큐에서 답글을 GBP에 붙여넣고 "승인"(= 게시했음). 리뷰당 2분', 'daily', 'david', 2, { next: 'GBP API → AUTO 등급은 승인 없이 자동 게시, HUMAN은 승인 후 자동 게시' }),
       S('rr-7', '월간 리뷰 요약 리포트', 'monthly', 'ai', 5, { verify: true }),
     ],
   },
