@@ -327,7 +327,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 
 - 구조: **Cloudflare Pages 프로젝트 1개 `bizhigher-sites`** 에 고객 사이트가 `{slug}/` 폴더로 들어가고 `_worker.js` 가 Host 로 폴더를 고른다. 대시보드엔 한 줄만. 원본은 **D1 `sites`(스펙 JSON)**, 저장소에 고객 사이트 파일을 두지 않는다. 설계·대안 비교·함정은 `docs/customer-sites-design-ko.md`
 - 흐름: web-2(AI) 질문지·사진·Places 공개 정보 → 스펙 JSON(`sites.js spec --job`) → `sites.js build`(관리자 `GET sites` → 전 고객 렌더 + `_worker.js`) → `sites.js deploy`(wrangler pages deploy) → 임시 주소(`https://bizhigher-sites.pages.dev/{slug}/` 는 즉시, `https://{slug}.sites.bizhigher.com` 은 deploy 가 Pages 도메인+DNS 로 자동 등록, 둘 다 noindex) 를 검증 큐에 → web-3 고객이 CNAME → `bizhigher-sites.pages.dev` → 관리자 고객 여정 "웹사이트 → 연결"(`POST sites/:slug/domain`, `CLOUDFLARE_API_TOKEN` 있으면 Pages 도메인도 추가) → 다음 빌드부터 canonical·색인 허용
-- 템플릿 원칙: 360px 우선 · JS 없이 전부 보임 · 빈 값은 섹션 숨김(지어내지 않음) · 리뷰 본문 없음(별점·수·링크만) · `lang: ko-en` 이면 `_en` 키로 토글. 템플릿을 고치면 다음 빌드에서 **전 고객 사이트가 함께** 바뀐다
+- 템플릿 원칙: 360px 우선 · JS 없이 전부 보임 · 빈 값은 섹션 숨김(지어내지 않음) · 리뷰 본문 없음(별점·수·링크만) · `lang: ko-en` 이면 `_en` 키로 토글. 템플릿을 고치면 다음 빌드에서 **전 고객 사이트가 함께** 바뀐다 — `sites.js deploy` 가 템플릿 git 리비전을 관리자 `settings.sitesDeployedRev` 에 기록하고, 루틴은 매 실행 `sites.js needs-deploy` 가 yes 면(=머지로 리비전이 바뀜) 전 고객 사이트를 재배포한다. 그 밖에 LA 07시대 첫 실행에도 1회
 - 호스팅 준비(David 1회): Pages 프로젝트 `bizhigher-sites`(Direct Upload) + API 토큰(Pages Edit · DNS Edit bizhigher.com · Account Read) → `bizhigher` 환경 `CLOUDFLARE_API_TOKEN`·`CLOUDFLARE_ACCOUNT_ID`. 없으면 루틴은 스펙 저장까지만 하고 "[배포 대기 — Cloudflare 토큰 필요]"
 - 비용: 정적 무료·무제한, 라우터 호출 무료 하루 10만(넘으면 Workers Paid $5/월). 프로젝트당 도메인 100개(고객 40~50곳) → 넘으면 `bizhigher-sites-2`
 - 2단계 예정: 비즈니스 등급(5페이지·문의 폼·블로그), 수정 요청 → 스펙 패치 → 재배포 루프, 고객 페이지 임베드

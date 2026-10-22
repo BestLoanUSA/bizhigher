@@ -7,6 +7,7 @@
  *   node automation/ai-runner/sites.js deploy [--dir sites-build]             # wrangler pages deploy (CLOUDFLARE_API_TOKEN·CLOUDFLARE_ACCOUNT_ID 필요)
  *   node automation/ai-runner/sites.js render --spec spec.json --out preview  # 로컬 확인용 (관리자 API 없이)
  *   node automation/ai-runner/sites.js domains                                # 모든 사이트의 {slug}.sites.bizhigher.com 등록 상태 확인·보정 (배포 없이)
+ *   node automation/ai-runner/sites.js needs-deploy                           # "yes …"/"no …" — 템플릿·라우터·CLI(automation/sites, sites.js)가 마지막 배포 뒤 바뀌었으면 yes (루틴이 매 실행 확인)
  *
  * 환경변수: BIZHIGHER_ADMIN_PASSWORD(spec·build), CLOUDFLARE_API_TOKEN·CLOUDFLARE_ACCOUNT_ID(deploy), SITES_PROJECT(기본 bizhigher-sites)
  */
@@ -18,6 +19,10 @@ const args = process.argv.slice(2); const cmd = args[0];
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 && args[i + 1] && !args[i + 1].startsWith('--') ? args[i + 1] : d; };
 const BASE = (process.env.BIZHIGHER_ADMIN_URL || 'https://bizhigher.com').replace(/\/$/, '');
 const PROJECT = process.env.SITES_PROJECT || 'bizhigher-sites';
+/** 템플릿·라우터·CLI 의 현재 git 리비전 — 바뀌면 전 고객 사이트를 다시 배포해야 한다 */
+function templateRev() {
+  try { return execSync('git log -1 --format=%h -- automation/sites automation/ai-runner/sites.js', { cwd: path.join(__dirname, '../..'), encoding: 'utf8' }).trim() || 'unknown'; } catch { return 'unknown'; }
+}
 
 let cookie = '';
 async function login() {
@@ -107,9 +112,19 @@ function writeSite(outDir, slug, files) {
     const outp = execSync(`npx --yes wrangler@3 pages deploy "${dir}" --project-name "${PROJECT}" --branch main --commit-dirty=true`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
     const m = /https:\/\/[a-z0-9.-]+\.pages\.dev/.exec(outp);
     console.log(`배포 완료: ${PROJECT}${m ? ' · ' + m[0] : ''}`);
+    try { await api('settings', { settings: { sitesDeployedRev: templateRev(), sitesDeployedAt: new Date().toISOString() } }); } catch (e) { console.log('  (배포 리비전 기록 실패: ' + e.message + ')'); }
     // 임시 주소 {slug}.sites.bizhigher.com — Pages 커스텀 도메인 + DNS CNAME (이미 있으면 그대로). 실패해도 pages.dev 경로는 항상 열린다
     const slugs = fs.readdirSync(dir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name);
     for (const slug of slugs) console.log(`  ${slug}: ${await ensurePreviewDomain(slug)} · https://${PROJECT}.pages.dev/${slug}/`);
+    return;
+  }
+  if (cmd === 'needs-deploy') {
+    const { sites } = await api('sites');
+    if (!sites.length) { console.log('no — 등록된 사이트 없음'); return; }
+    const cur = templateRev();
+    const st = await api('settings');
+    const last = (st.settings || {}).sitesDeployedRev || '';
+    console.log(cur !== last ? `yes — 템플릿 리비전 ${cur} (마지막 배포 ${last || '기록 없음'})` : `no — 템플릿 리비전 ${cur} 그대로`);
     return;
   }
   if (cmd === 'domains') {
@@ -119,5 +134,5 @@ function writeSite(outDir, slug, files) {
     if (!sites.length) console.log('등록된 사이트 없음');
     return;
   }
-  console.log('사용법: sites.js spec|build|deploy|render|domains  (파일 머리 주석 참고)'); process.exit(1);
+  console.log('사용법: sites.js spec|build|deploy|render|domains|needs-deploy  (파일 머리 주석 참고)'); process.exit(1);
 })().catch((e) => { console.error('오류:', e.message); process.exit(1); });
