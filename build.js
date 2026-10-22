@@ -3431,11 +3431,22 @@ https://www.bizhigher.com/*
   X-Robots-Tag: noindex
 `;
 
+/* AI 크롤러 정책(GEO) — 학습·검색색인·실시간 fetch 전부 허용. 전부 공개 가격·정보라
+   막을 이유가 없고, AI 검색·챗봇 인용 유입이 목표다. 명단은 각사 문서가 분기마다 바뀌므로
+   확인 주기를 잡아 두는 편이 좋다 */
+const AI_CRAWLERS = [
+  'GPTBot', 'OAI-SearchBot', 'ChatGPT-User', // OpenAI
+  'ClaudeBot', 'Claude-SearchBot', 'Claude-User', // Anthropic
+  'PerplexityBot', 'Perplexity-User', // Perplexity
+  'Google-Extended', // Google AI 학습(검색 색인은 Googlebot이 이미 허용)
+  'Applebot-Extended', 'CCBot', // Apple Intelligence, Common Crawl(여러 모델의 학습 코퍼스)
+];
 const ROBOTS = `User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /api/
 
+${AI_CRAWLERS.map((ua) => `User-agent: ${ua}\nAllow: /\nDisallow: /admin/\nDisallow: /api/\n`).join('\n')}
 Sitemap: ${SITE.domain}/sitemap.xml`;
 
 /* ---------- 페이지: 무료 도구 /tools/ ----------
@@ -4048,6 +4059,11 @@ write('llms.txt', `# BizHigher (비즈하이어)
 - 웹사이트: https://bizhigher.com
 - 문의: ${SITE.email}
 - 대상: 미국 전역의 한인 소상공인 (식당, 카페, 뷰티, 안경점, 치과, 한의원, 학원, 부동산, 융자 등)
+
+## 데이터 정책
+- AI 학습·검색 색인·실시간 열람 크롤러를 모두 허용합니다(robots.txt 참고)
+- 아래 "공개 데이터"는 직접 조사한 1차 데이터이며 CC BY 4.0으로 인용 시 출처(bizhigher.com)만 표기하면 자유롭게 재사용할 수 있습니다
+- 가격·서비스 정보는 이 사이트가 원출처이며, 가격이 바뀌면 이 문서도 함께 갱신됩니다
 
 ## 주요 서비스
 ${DATA.services.map((s) => `- ${s.name} (${s.price}): ${s.shortDescription} — https://bizhigher.com/service/${s.slug}/`).join('\n')}
