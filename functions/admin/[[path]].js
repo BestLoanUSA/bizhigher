@@ -282,11 +282,47 @@ async function api(env, method, seg, body, url) {
     }
     spec.slug = slug;
     const text = JSON.stringify(spec).slice(0, 400000);
+    const changed = existing ? specDiff(parseJson(existing.spec, {}), spec) : [];
+    if (existing && !changed.length) { const row0 = await db.prepare(`SELECT * FROM sites WHERE id = ?`).bind(existing.id).first(); return { slug, version: row0.version, domain: row0.domain || '', live: !!row0.live, changed: [], unchanged: true, preview_url: `https://${env.SITES_PROJECT || 'bizhigher-sites'}.pages.dev/${slug}/`, preview_host: `https://${slug}.sites.bizhigher.com` }; }
     if (existing) await db.prepare(`UPDATE sites SET spec = ?, version = version + 1, updated_at = datetime('now') WHERE id = ?`).bind(text, existing.id).run();
     else await db.prepare(`INSERT INTO sites (job_id, slug, spec) VALUES (?, ?, ?)`).bind(jobId, slug, text).run();
     const row = await db.prepare(`SELECT * FROM sites WHERE slug = ?`).bind(slug).first();
-    await addEvent(db, jobId, 'task', null, null, `🌐 사이트 스펙 ${existing ? '갱신 v' + row.version : '생성'} — https://${env.SITES_PROJECT || 'bizhigher-sites'}.pages.dev/${slug}/`);
-    return { slug, version: row.version, domain: row.domain || '', live: !!row.live, preview_url: `https://${env.SITES_PROJECT || 'bizhigher-sites'}.pages.dev/${slug}/`, preview_host: `https://${slug}.sites.bizhigher.com` };
+    await db.prepare(`INSERT INTO site_versions (site_id, version, spec, note, changed) VALUES (?, ?, ?, ?, ?)`).bind(row.id, row.version, text, String(body.note || (existing ? '갱신' : '생성')).slice(0, 300), JSON.stringify(changed.slice(0, 60))).run();
+    await setSettingsPartial(db, { sitesDirty: true }); // 다음 루틴 실행에서 needs-deploy = yes
+    await addEvent(db, jobId, 'task', null, null, `🌐 사이트 스펙 ${existing ? '갱신 v' + row.version + (changed.length ? ' — ' + changed.slice(0, 6).join(', ') + (changed.length > 6 ? ' 외 ' + (changed.length - 6) : '') : '') : '생성'} — https://${env.SITES_PROJECT || 'bizhigher-sites'}.pages.dev/${slug}/`);
+    return { slug, version: row.version, domain: row.domain || '', live: !!row.live, changed, preview_url: `https://${env.SITES_PROJECT || 'bizhigher-sites'}.pages.dev/${slug}/`, preview_host: `https://${slug}.sites.bizhigher.com` };
+  }
+  if (res === 'sites' && id && sub === 'versions' && method === 'GET') {
+    const s = await db.prepare(`SELECT id FROM sites WHERE slug = ?`).bind(String(id)).first(); if (!s) return undefined;
+    const rows = (await db.prepare(`SELECT id, version, note, changed, created_at, spec FROM site_versions WHERE site_id = ? ORDER BY version DESC LIMIT 30`).bind(s.id).all()).results || [];
+    return { versions: rows.map((v) => ({ ...v, changed: parseJson(v.changed, []), spec: parseJson(v.spec, {}) })) };
+  }
+  if (res === 'sites' && id && sub === 'leads' && method === 'GET') {
+    const s = await db.prepare(`SELECT id FROM sites WHERE slug = ?`).bind(String(id)).first(); if (!s) return undefined;
+    const rows = (await db.prepare(`SELECT id, name, phone, email, message, page, created_at FROM site_leads WHERE site_id = ? ORDER BY id DESC LIMIT 100`).bind(s.id).all()).results || [];
+    return { leads: rows };
+  }
+  if (res === 'sites' && id && sub === 'patch' && method === 'POST') {
+    // 부분 패치(깊은 병합, null 은 삭제) → 새 버전. 관리자 "스타일 바꾸기"·루틴 sites.js patch 가 쓴다
+    const s = await db.prepare(`SELECT * FROM sites WHERE slug = ?`).bind(String(id)).first(); if (!s) return undefined;
+    const patch = body.patch && typeof body.patch === 'object' ? body.patch : null; if (!patch) throw bad('patch(JSON) 이 필요합니다');
+    const next = deepPatch(parseJson(s.spec, {}), patch); next.slug = s.slug;
+    const changed = specDiff(parseJson(s.spec, {}), next); if (!changed.length) return { slug: s.slug, version: s.version, changed: [] };
+    const text = JSON.stringify(next).slice(0, 400000);
+    await db.prepare(`UPDATE sites SET spec = ?, version = version + 1, updated_at = datetime('now') WHERE id = ?`).bind(text, s.id).run();
+    const row = await db.prepare(`SELECT * FROM sites WHERE id = ?`).bind(s.id).first();
+    await db.prepare(`INSERT INTO site_versions (site_id, version, spec, note, changed) VALUES (?, ?, ?, ?, ?)`).bind(s.id, row.version, text, String(body.note || '부분 패치').slice(0, 300), JSON.stringify(changed.slice(0, 60))).run();
+    await setSettingsPartial(db, { sitesDirty: true });
+    await addEvent(db, s.job_id, 'task', null, null, `🌐 사이트 스펙 v${row.version} — ${changed.slice(0, 6).join(', ')}${body.note ? ' (' + String(body.note).slice(0, 80) + ')' : ''} · 다음 루틴 실행에 재배포`);
+    return { slug: s.slug, version: row.version, changed };
+  }
+  if (res === 'sites' && id && sub === 'revise' && method === 'POST') {
+    // 수정 요청 → web-2(사이트 생성) 단계를 다시 열어 루틴이 스펙을 패치·재배포하게 한다 (고객 페이지·관리자 공용)
+    const s = await db.prepare(`SELECT * FROM sites WHERE slug = ?`).bind(String(id)).first(); if (!s) return undefined;
+    const note = String(body.note || '').trim().slice(0, 2000); if (!note) throw bad('수정 내용이 필요합니다');
+    const r = await reopenSiteTask(db, s.job_id, (body.source === 'customer' ? '[고객 수정 요청] ' : '') + note);
+    await addEvent(db, s.job_id, body.source === 'customer' ? 'customer' : 'david', null, null, `✎ 웹사이트 수정 요청${body.source === 'customer' ? ' (고객 페이지)' : ''} — ${note.slice(0, 200)}${r ? '' : ' (web-2 단계 없음 — 수동 처리)'}`);
+    return { ok: true, reopened: !!r };
   }
   if (res === 'sites' && id && method === 'GET') {
     const s = await db.prepare(`SELECT * FROM sites WHERE slug = ? OR job_id = ?`).bind(String(id), Number(id) || 0).first();
@@ -528,7 +564,8 @@ async function api(env, method, seg, body, url) {
       byPhase: PHASES.map(([k, l]) => ({ key: k, label: l, done: tasks.filter((t) => t.phase === k && CLOSED.has(t.status)).length, total: tasks.filter((t) => t.phase === k).length })).filter((p) => p.total),
     };
     const portal = `${url.origin}/c/${await ensurePortalToken(db, job)}`;
-    const siteRow = await db.prepare(`SELECT slug, domain, live, version, updated_at FROM sites WHERE job_id = ?`).bind(job.id).first().catch(() => null);
+    const siteRow = await db.prepare(`SELECT id, slug, domain, live, version, updated_at, spec FROM sites WHERE job_id = ?`).bind(job.id).first().catch(() => null);
+    if (siteRow) { const sp = parseJson(siteRow.spec, {}); siteRow.tier = sp.tier === 'business' ? 'business' : 'onepage'; siteRow.style = (sp.theme && (sp.theme.style || sp.theme.mood)) || ''; siteRow.forward_to = (sp.contact && sp.contact.forward_to) || ''; delete siteRow.spec; siteRow.leads = ((await db.prepare(`SELECT COUNT(*) AS n FROM site_leads WHERE site_id = ?`).bind(siteRow.id).first().catch(() => null)) || {}).n || 0; }
     return { portal, site: siteRow ? { ...siteRow, preview_url: `https://${env.SITES_PROJECT || 'bizhigher-sites'}.pages.dev/${siteRow.slug}/`, preview_host: `https://${siteRow.slug}.sites.bizhigher.com` } : null, job: { ...job, pct, phase: jobPhase(job, tasks), dueInfo: dueLabel(job.due_date), day: job.created_at ? Math.max(1, Math.floor((Date.now() - new Date(job.created_at.replace(' ', 'T') + 'Z').getTime()) / 864e5) + 1) : 1 }, order, payments, intake, events, deliverables, tasks, lanes, services, milestones, next: nextAction(tasks), summary: { ...summary, bottlenecks: undefined }, history, intakeCandidates, aiPending, stuck, stuckDays, lastMove, brief, progressSummary, who: WHO, phases: PHASES, taskStatuses: TASK_STATUSES, statuses: JOB_STATUSES };
   }
 
@@ -675,6 +712,39 @@ function ruleGuardOk(rule, t) {
 async function autoRuleFor(db, t) {
   const s = await getSettings(db);
   return (s.autoRules || []).find((r) => r.on && Array.isArray(r.tasks) && r.tasks.includes(t.key) && ruleGuardOk(r, t)) || null;
+}
+/* 스펙 깊은 병합(null 은 삭제)·바뀐 키 경로 — automation/ai-runner/sites.js 와 같은 규칙 */
+function deepPatch(base, patch) {
+  const out = { ...(base || {}) };
+  for (const [k, v] of Object.entries(patch || {})) {
+    if (v === null) delete out[k];
+    else if (v && typeof v === 'object' && !Array.isArray(v) && out[k] && typeof out[k] === 'object' && !Array.isArray(out[k])) out[k] = deepPatch(out[k], v);
+    else out[k] = v;
+  }
+  return out;
+}
+function specDiff(a, b, prefix = '') {
+  const keys = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]); const out = [];
+  for (const k of keys) {
+    if (k === 'slug') continue;
+    const x = a ? a[k] : undefined, y = b ? b[k] : undefined; const p = prefix ? prefix + '.' + k : k;
+    if (JSON.stringify(x) === JSON.stringify(y)) continue;
+    if (x && y && typeof x === 'object' && typeof y === 'object' && !Array.isArray(x) && !Array.isArray(y)) out.push(...specDiff(x, y, p));
+    else out.push(p + (x === undefined ? ' (추가)' : y === undefined ? ' (삭제)' : Array.isArray(y) ? ` (${(x || []).length}→${y.length}개)` : ''));
+  }
+  return out;
+}
+async function setSettingsPartial(db, patch) {
+  const cur = await getSettings(db); const next = { ...cur, ...patch };
+  await db.prepare(`INSERT INTO settings (key, value, updated_at) VALUES ('admin', ?, datetime('now')) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')`).bind(JSON.stringify(next)).run();
+}
+/** 웹사이트 수정 요청 → web-2 단계를 doing + revise_note 로 되돌린다(완료된 것도). 없으면 null */
+async function reopenSiteTask(db, jobId, note) {
+  const t = await db.prepare(`SELECT id, status, revise_note FROM job_tasks WHERE job_id = ? AND key = 'web-2' ORDER BY id DESC LIMIT 1`).bind(jobId).first();
+  if (!t) return null;
+  const merged = t.status === 'doing' && t.revise_note ? t.revise_note + '\n' + note : note; // 이미 열려 있으면 요청을 이어 붙인다
+  await db.prepare(`UPDATE job_tasks SET status = 'doing', revise_note = ?, done_at = NULL WHERE id = ?`).bind(merged, t.id).run();
+  return t;
 }
 async function getSettings(db) {
   const row = await db.prepare(`SELECT value FROM settings WHERE key = 'admin'`).first();

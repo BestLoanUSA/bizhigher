@@ -8,6 +8,9 @@
  *   node automation/ai-runner/sites.js render --spec spec.json --out preview  # 로컬 확인용 (관리자 API 없이)
  *   node automation/ai-runner/sites.js domains                                # 모든 사이트의 {slug}.sites.bizhigher.com 등록 상태 확인·보정 (배포 없이)
  *   node automation/ai-runner/sites.js needs-deploy                           # "yes …"/"no …" — 템플릿·라우터·CLI(automation/sites, sites.js)가 마지막 배포 뒤 바뀌었으면 yes (루틴이 매 실행 확인)
+ *   node automation/ai-runner/sites.js patch --job 28 --file patch.json [--note "스타일 변경"]   # 저장된 스펙에 부분 패치(깊은 병합, null 은 삭제) → 새 버전. 수정 요청 반영에 쓴다(전체 재작성 금지)
+ *   node automation/ai-runner/sites.js diff --job 28 [--file new.json]             # 저장된 최신 버전과 이전 버전(또는 --file)의 바뀐 키 목록 — 결과물 요약에 붙인다
+ *   node automation/ai-runner/sites.js leads --job 28 [--since 7d]                # 사이트 문의 폼으로 들어온 리드 목록(관리자 API)
  *   node automation/ai-runner/sites.js prep --spec spec.json [--out spec.json] [--job N --task N] [--no-enhance] [--no-gen]
  *                                                                              # 사진 준비(v3): 작은 사진(가로 900px 미만)은 fal.ai 로 업스케일 → /a/ 업로드 → 스펙 URL 교체(photo_meta 기록),
  *                                                                              #   갤러리가 3장 미만이면 업종 분위기 이미지를 생성해 gallery_generated 에 채운다(사람·글자 없음, 화면에 "연출 이미지" 표시). FAL_KEY 없으면 크기 보고만
@@ -100,7 +103,28 @@ const AMBIANCE = (spec) => `interior of a ${spec.category_en || spec.category ||
 
 function writeSite(outDir, slug, files) {
   const dir = path.join(outDir, slug); fs.mkdirSync(dir, { recursive: true });
-  for (const [name, body] of Object.entries(files)) fs.writeFileSync(path.join(dir, name), body);
+  for (const [name, body] of Object.entries(files)) { const p = path.join(dir, name); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, body); }
+}
+/** 스펙 깊은 병합(patch): 객체는 재귀, 배열·원시값은 교체, null 은 삭제 */
+function deepPatch(base, patch) {
+  const out = Array.isArray(base) ? [...base] : { ...(base || {}) };
+  for (const [k, v] of Object.entries(patch || {})) {
+    if (v === null) delete out[k];
+    else if (v && typeof v === 'object' && !Array.isArray(v) && out[k] && typeof out[k] === 'object' && !Array.isArray(out[k])) out[k] = deepPatch(out[k], v);
+    else out[k] = v;
+  }
+  return out;
+}
+/** 두 스펙의 바뀐 키 경로 목록 (요약용) */
+function diffKeys(a, b, prefix = '') {
+  const keys = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]); const out = [];
+  for (const k of keys) {
+    const x = a ? a[k] : undefined, y = b ? b[k] : undefined; const pth = prefix ? prefix + '.' + k : k;
+    if (JSON.stringify(x) === JSON.stringify(y)) continue;
+    if (x && y && typeof x === 'object' && typeof y === 'object' && !Array.isArray(x) && !Array.isArray(y)) out.push(...diffKeys(x, y, pth));
+    else out.push(pth + (x === undefined ? ' (추가)' : y === undefined ? ' (삭제)' : Array.isArray(y) ? ` (${(x || []).length}→${y.length}개)` : ''));
+  }
+  return out;
 }
 
 (async () => {
@@ -109,8 +133,36 @@ function writeSite(outDir, slug, files) {
     if (!job || !file) throw new Error('--job N --file spec.json 이 필요합니다');
     const spec = JSON.parse(fs.readFileSync(file, 'utf8'));
     const r = await api('sites', { job_id: job, spec });
-    console.log(`저장: ${r.slug} (v${r.version}) → 미리보기 ${r.preview_url}${r.domain ? ' · 도메인 ' + r.domain : ''}`);
+    console.log(`저장: ${r.slug} (v${r.version}) → 미리보기 ${r.preview_url}${r.domain ? ' · 도메인 ' + r.domain : ''}${r.changed && r.changed.length ? '\n  바뀐 키: ' + r.changed.join(', ') : ''}`);
     console.log(`  (배포 후 항상 열리는 주소: https://${PROJECT}.pages.dev/${r.slug}/ — 서브도메인은 deploy 가 등록)`);
+    return;
+  }
+  if (cmd === 'patch') {
+    const job = Number(opt('job')); const file = opt('file');
+    if (!job || !file) throw new Error('--job N --file patch.json 이 필요합니다');
+    const patch = JSON.parse(fs.readFileSync(file, 'utf8'));
+    const cur = await api('sites/' + job); if (!cur || !cur.spec) throw new Error('저장된 스펙이 없습니다 — spec 명령으로 먼저 만드세요');
+    const next = deepPatch(cur.spec, patch);
+    const r = await api('sites', { job_id: job, spec: next, note: opt('note', '부분 패치') });
+    console.log(`패치: ${r.slug} v${r.version} — 바뀐 키: ${(r.changed || diffKeys(cur.spec, next)).join(', ') || '없음'}`);
+    return;
+  }
+  if (cmd === 'diff') {
+    const job = Number(opt('job')); if (!job) throw new Error('--job N 필요');
+    const cur = await api('sites/' + job); if (!cur || !cur.spec) throw new Error('저장된 스펙이 없습니다');
+    let other = null, label = '';
+    if (opt('file')) { other = JSON.parse(fs.readFileSync(opt('file'), 'utf8')); label = '파일 vs 저장본 v' + cur.version; }
+    else { const h = await api('sites/' + cur.slug + '/versions'); const prev = (h.versions || []).find((v) => v.version < cur.version); other = prev ? prev.spec : {}; label = `v${prev ? prev.version : 0} → v${cur.version}`; }
+    const keys = opt('file') ? diffKeys(cur.spec, other) : diffKeys(other, cur.spec);
+    console.log(`${label}: ${keys.length ? keys.join(', ') : '차이 없음'}`);
+    return;
+  }
+  if (cmd === 'leads') {
+    const job = Number(opt('job')); if (!job) throw new Error('--job N 필요');
+    const cur = await api('sites/' + job); if (!cur) throw new Error('사이트 없음');
+    const r = await api('sites/' + cur.slug + '/leads');
+    for (const l of r.leads || []) console.log(`${l.created_at} · ${l.name} · ${l.phone || '-'} · ${l.email || '-'} · ${String(l.message || '').replace(/\s+/g, ' ').slice(0, 120)}`);
+    if (!(r.leads || []).length) console.log('문의 없음');
     return;
   }
   if (cmd === 'render') {
@@ -148,7 +200,7 @@ function writeSite(outDir, slug, files) {
     const outp = execSync(`npx --yes wrangler@3 pages deploy "${dir}" --project-name "${PROJECT}" --branch main --commit-dirty=true`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
     const m = /https:\/\/[a-z0-9.-]+\.pages\.dev/.exec(outp);
     console.log(`배포 완료: ${PROJECT}${m ? ' · ' + m[0] : ''}`);
-    try { await api('settings', { settings: { sitesDeployedRev: templateRev(), sitesDeployedAt: new Date().toISOString() } }); } catch (e) { console.log('  (배포 리비전 기록 실패: ' + e.message + ')'); }
+    try { await api('settings', { settings: { sitesDeployedRev: templateRev(), sitesDeployedAt: new Date().toISOString(), sitesDirty: false } }); } catch (e) { console.log('  (배포 리비전 기록 실패: ' + e.message + ')'); }
     // 임시 주소 {slug}.sites.bizhigher.com — Pages 커스텀 도메인 + DNS CNAME (이미 있으면 그대로). 실패해도 pages.dev 경로는 항상 열린다
     const slugs = fs.readdirSync(dir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name);
     for (const slug of slugs) console.log(`  ${slug}: ${await ensurePreviewDomain(slug)} · https://${PROJECT}.pages.dev/${slug}/`);
@@ -205,7 +257,8 @@ function writeSite(outDir, slug, files) {
     const cur = templateRev();
     const st = await api('settings');
     const last = (st.settings || {}).sitesDeployedRev || '';
-    console.log(cur !== last ? `yes — 템플릿 리비전 ${cur} (마지막 배포 ${last || '기록 없음'})` : `no — 템플릿 리비전 ${cur} 그대로`);
+    const dirty = !!(st.settings || {}).sitesDirty;
+    console.log(cur !== last ? `yes — 템플릿 리비전 ${cur} (마지막 배포 ${last || '기록 없음'})` : dirty ? 'yes — 관리자에서 스펙이 바뀜(배포 대기)' : `no — 템플릿 리비전 ${cur} 그대로`);
     return;
   }
   if (cmd === 'domains') {
@@ -215,5 +268,5 @@ function writeSite(outDir, slug, files) {
     if (!sites.length) console.log('등록된 사이트 없음');
     return;
   }
-  console.log('사용법: sites.js spec|build|deploy|render|domains|needs-deploy|prep  (파일 머리 주석 참고)'); process.exit(1);
+  console.log('사용법: sites.js spec|patch|diff|leads|build|deploy|render|domains|needs-deploy|prep  (파일 머리 주석 참고)'); process.exit(1);
 })().catch((e) => { console.error('오류:', e.message); process.exit(1); });

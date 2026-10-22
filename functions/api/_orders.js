@@ -122,6 +122,30 @@ const SCHEMA = [
     published_at TEXT,
     created_at TEXT DEFAULT (datetime('now'))
   )`,
+  `CREATE TABLE IF NOT EXISTS site_versions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    site_id INTEGER,
+    version INTEGER,
+    spec TEXT,
+    note TEXT,
+    changed TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_site_versions ON site_versions(site_id, version)`,
+  `CREATE TABLE IF NOT EXISTS site_leads (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    site_id INTEGER,
+    job_id INTEGER,
+    slug TEXT,
+    name TEXT,
+    phone TEXT,
+    email TEXT,
+    message TEXT,
+    page TEXT,
+    ip_hash TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_site_leads ON site_leads(site_id, created_at)`,
   `CREATE TABLE IF NOT EXISTS assets (
     id TEXT PRIMARY KEY,
     job_id INTEGER,

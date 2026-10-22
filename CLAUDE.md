@@ -193,6 +193,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | `tool_usage` | 무료 도구 하루 사용 횟수 (일자·IP 해시·도구) — 자동 생성 | `functions/api/tools/_shared.js` |
 | `review_seen` · `review_sync` | 본 리뷰의 키 해시·별점, 작업별 마지막 Places 확인 시각 — 자동 생성 | `functions/api/_reviews.js` (§12-4) |
 | `sites` | 고객 웹사이트 스펙 JSON(작업당 1행, slug·domain·live·version) — 자동 생성 | `sites.js` · 관리자 `sites` API (§12-5) |
+| `site_versions` · `site_leads` | 스펙 버전 기록(버전·메모·바뀐 키), 고객 사이트 문의 폼 리드 — 자동 생성 | 관리자 `sites/:slug/versions`·`leads` · `functions/api/site-contact.js` (§12-5 2단계) |
 
 `orders` 이하 6개 테이블은 `functions/api/_orders.js`의 `ensureSchema()`가 **없으면 자동 생성**한다(`CREATE TABLE IF NOT EXISTS`). 손으로 SQL을 돌릴 필요 없다. 기존 3개 테이블은 이 코드가 만들지 않았으므로 관리자 API는 `PRAGMA table_info`로 컬럼 유무를 확인하고 쓴다.
 
@@ -330,7 +331,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 - 템플릿 v3(2026-10-22): **스타일 8종** `theme.style` clean/warm/luxe/editorial/bold/soft/mono/neon — 없으면 업종으로 자동(`styleFor`, `theme.mood` 는 v2 별칭). 강조색 하나에서 보조 팔레트 자동 생성. 모션(히어로 순차 등장·카운트업·패럴랙스·카드 틸트·갤러리 마퀴·진행 바)은 JS 뒤에만, reduced-motion 이면 전부 꺼짐. 실시간 "지금 영업 중" 표시(가게 타임존). `hero.video` 로 히어로 배경 영상(Premium). 사진은 저장 전 `sites.js prep`(900px 미만 업스케일, 갤러리 3장 미만이면 분위기 이미지 생성 → `gallery_generated`, 화면에 연출 표시). 섹션은 히어로(통계 행·`em` 강조)·프로모 밴드·서비스·왜 우리·브랜드·갤러리·이용 단계·리뷰 요약·소개·오시는 길·FAQ·CTA 밴드·푸터, 값이 있는 것만. 스펙 키 전체는 설계 문서 §4. 원칙: 360px 우선 · JS 없이 전부 보임(스크롤 연출은 JS 뒤, 3초 폴백) · 빈 값은 섹션 숨김(지어내지 않음) · 리뷰 본문 없음(별점·수·링크·고객이 준 `review_themes` 만) · `lang: ko-en` 이면 `_en` 키로 토글. 템플릿을 고치면 다음 빌드에서 **전 고객 사이트가 함께** 바뀐다 — `sites.js deploy` 가 템플릿 git 리비전을 관리자 `settings.sitesDeployedRev` 에 기록하고, 루틴은 매 실행 `sites.js needs-deploy` 가 yes 면(=머지로 리비전이 바뀜) 전 고객 사이트를 재배포한다. 그 밖에 LA 07시대 첫 실행에도 1회
 - 호스팅 준비(David 1회): Pages 프로젝트 `bizhigher-sites`(Direct Upload) + API 토큰(Pages Edit · DNS Edit bizhigher.com · Account Read) → `bizhigher` 환경 `CLOUDFLARE_API_TOKEN`·`CLOUDFLARE_ACCOUNT_ID`. 없으면 루틴은 스펙 저장까지만 하고 "[배포 대기 — Cloudflare 토큰 필요]"
 - 비용: 정적 무료·무제한, 라우터 호출 무료 하루 10만(넘으면 Workers Paid $5/월). 프로젝트당 도메인 100개(고객 40~50곳) → 넘으면 `bizhigher-sites-2`
-- 2단계 예정: 비즈니스 등급(5페이지·문의 폼·블로그), 수정 요청 → 스펙 패치 → 재배포 루프, 고객 페이지 임베드
+- **2단계(2026-10-22 완료)**: `tier: business` 면 홈·서비스·소개·갤러리·오시는 길/문의 + 소식(`posts[]`) 다페이지(상대 링크라 두 호스트 모두 동작, 사이트맵·브레드크럼). **문의 폼** → `functions/api/site-contact.js` → D1 `site_leads` + 타임라인 + David 알림, 사업주 전달은 스펙 `contact.forward_to` 가 있을 때만(§12-3 유일 예외). **수정→재배포 루프**: 고객 페이지 "내 웹사이트" 카드·관리자 "AI에게 수정 요청" → web-2 다시 열림(`revise_note`) → 루틴 `sites.js patch`(부분 패치) → 재배포. 스펙 저장·패치마다 `site_versions` 기록 + `settings.sitesDirty` → `needs-deploy` yes. 관리자 작업 페이지에서 스타일·등급 변경(패치)·문의 리드·버전 기록. 3단계 예정: 예약·주문 임베드, 월간 블로그 자동(seo-4→posts), Turnstile
 
 ### 12-3. 고객 메일 정책 — 최소·묶음 (2026-10-21 David 결정)
 

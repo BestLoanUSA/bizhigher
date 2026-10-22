@@ -15,11 +15,13 @@ async function load(env, token) {
   await ensureSchema(env.DB);
   const job = await env.DB.prepare(`SELECT * FROM jobs WHERE portal_token = ?`).bind(t).first();
   if (!job) return null;
+  const site = await env.DB.prepare(`SELECT id, slug, domain, live, version, updated_at FROM sites WHERE job_id = ?`).bind(job.id).first().catch(() => null);
+  const siteTask = site ? await env.DB.prepare(`SELECT id, status, revise_note FROM job_tasks WHERE job_id = ? AND key = 'web-2' ORDER BY id DESC LIMIT 1`).bind(job.id).first().catch(() => null) : null;
   const ds = (await env.DB.prepare(`SELECT * FROM deliverables WHERE job_id = ? ORDER BY id DESC`).bind(job.id).all()).results || [];
   const taskIds = ds.map((d) => d.task_id).filter(Boolean);
   const tasks = taskIds.length ? (await env.DB.prepare(`SELECT id, key, service, sort, result_kind, result_text, result_url FROM job_tasks WHERE id IN (${taskIds.map(() => '?').join(',')})`).bind(...taskIds).all()).results || [] : [];
   const byId = new Map(tasks.map((x) => [x.id, x]));
-  return { job, ds: ds.map((d) => ({ ...d, task: byId.get(d.task_id) || null })) };
+  return { job, site, siteTask, ds: ds.map((d) => ({ ...d, task: byId.get(d.task_id) || null })) };
 }
 
 /* 결과물 본문 — 관리자 공용 미리보기(_ui.js previewHtml)와 같은 규칙: 종류와 상관없이 이미지·영상·PDF·우리 사이트를 그 자리에서 */
@@ -48,7 +50,21 @@ function body(d) {
   return html || '<p class="muted">내용은 담당자 안내 메일을 참고해 주세요.</p>';
 }
 
-function page(job, ds, { preview, msg }) {
+function siteCard(site, siteTask, env) {
+  if (!site) return '';
+  const url = site.domain && site.live ? `https://${site.domain}/` : `https://${site.slug}.sites.bizhigher.com/`;
+  const alt = `https://${(env && env.SITES_PROJECT) || 'bizhigher-sites'}.pages.dev/${site.slug}/`;
+  const pending = siteTask && siteTask.status === 'doing' && siteTask.revise_note;
+  return `<section class="card site"><div class="meta">웹사이트${site.domain && site.live ? '' : ' · 임시 주소(검색 비노출) — 도메인 연결 전'}</div><h2>내 웹사이트</h2>
+    <iframe src="${esc(alt)}" title="웹사이트 미리보기" loading="lazy" style="width:100%;height:520px;border:1px solid #e5e7eb;border-radius:12px;background:#fff;margin:8px 0"></iframe>
+    <p><a class="btn" href="${esc(url)}" target="_blank" rel="noopener">사이트 열기 →</a> <a class="btn ghost" href="${esc(alt)}" target="_blank" rel="noopener">임시 주소</a></p>
+    <div class="appr"><b>고치고 싶은 곳이 있으면 적어 주세요.</b> 영업시간·사진·문구·색감 무엇이든 괜찮습니다. 반영 후 같은 주소에서 바로 보실 수 있습니다(보통 하루 안).
+      ${pending ? `<div class="rev">✎ 접수된 요청: ${esc(siteTask.revise_note.replace(/^\[고객 수정 요청\]\s*/, ''))} — 반영 중입니다</div>` : ''}
+      <form method="post"><input type="hidden" name="action" value="site-revise"><textarea name="note" required placeholder="예: 토요일 영업시간을 17시 마감으로, 첫 화면 사진을 매장 외관으로"></textarea><button class="btn ghost" type="submit">웹사이트 수정 요청</button></form>
+    </div></section>`;
+}
+
+function page(job, ds, { preview, msg, site, siteTask, env }) {
   const biz = esc((job.business || '').replace(/\s*\(데모\)/, ''));
   const items = ds.map((d) => {
     const approval = d.needs_approval && !d.approved_at ? `
@@ -75,7 +91,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:24px 16px}foo
 </style></head><body>
 <header><div class="logo">Biz<span>Higher</span></div><h1>${biz} 사장님 결과물</h1><p>${esc(job.service_name || '')} · 이 페이지는 사장님만 보는 주소입니다. 북마크해 두세요.</p></header>
 <main>${msg ? `<div class="flash">${esc(msg)}</div>` : ''}${preview ? '<div class="pv">미리보기 모드 — 점선 상자는 아직 고객에게 전달되지 않은 결과물입니다.</div>' : ''}
-${items || '<div class="card"><p class="muted">아직 전달된 결과물이 없습니다. 작업이 진행되면 여기에 쌓입니다.</p></div>'}
+${siteCard(site, siteTask, env)}${items || '<div class="card"><p class="muted">아직 전달된 결과물이 없습니다. 작업이 진행되면 여기에 쌓입니다.</p></div>'}
 </main><footer>궁금한 점은 <a href="mailto:hello@bizhigher.com">hello@bizhigher.com</a> · 수정 1회 무료 · <a href="https://bizhigher.com/terms/">이용약관</a></footer></body></html>`;
 }
 
@@ -87,8 +103,8 @@ export async function onRequestGet({ params, env, request }) {
   const u = new URL(request.url);
   const preview = u.searchParams.get('preview') === '1';
   const ds = preview ? data.ds : data.ds.filter((d) => d.sent_at);
-  const msg = u.searchParams.get('ok') === 'approve' ? '승인해 주셔서 감사합니다. 예정대로 진행하겠습니다.' : u.searchParams.get('ok') === 'revise' ? '수정 요청을 받았습니다. 반영해서 다시 올려드리겠습니다.' : '';
-  return html(page(data.job, ds, { preview, msg }));
+  const msg = u.searchParams.get('ok') === 'approve' ? '승인해 주셔서 감사합니다. 예정대로 진행하겠습니다.' : u.searchParams.get('ok') === 'revise' ? '수정 요청을 받았습니다. 반영해서 다시 올려드리겠습니다.' : u.searchParams.get('ok') === 'site' ? '웹사이트 수정 요청을 받았습니다. 반영되면 같은 주소에서 보실 수 있습니다.' : '';
+  return html(page(data.job, ds, { preview, msg, site: data.site, siteTask: data.siteTask, env }));
 }
 
 export async function onRequestPost({ params, env, request }) {
@@ -97,6 +113,15 @@ export async function onRequestPost({ params, env, request }) {
   const form = await request.formData().catch(() => null);
   if (!form) return html('bad request', 400);
   const id = Number(form.get('id')); const action = String(form.get('action') || ''); const note = String(form.get('note') || '').trim().slice(0, 2000);
+  if (action === 'site-revise') {
+    if (!data.site) return html('bad request', 400);
+    if (!note) return html('수정 내용을 적어 주세요', 400);
+    const t = await env.DB.prepare(`SELECT id, status, revise_note FROM job_tasks WHERE job_id = ? AND key = 'web-2' ORDER BY id DESC LIMIT 1`).bind(data.job.id).first().catch(() => null);
+    const tagged = '[고객 수정 요청] ' + note;
+    if (t) await env.DB.prepare(`UPDATE job_tasks SET status = 'doing', revise_note = ?, done_at = NULL WHERE id = ?`).bind(t.status === 'doing' && t.revise_note ? t.revise_note + '\n' + tagged : tagged, t.id).run();
+    await addEvent(env.DB, data.job.id, 'customer', null, null, `✎ 웹사이트 수정 요청 (고객 페이지) — ${note.slice(0, 200)}${t ? '' : ' (web-2 단계 없음 — 수동 처리)'}`);
+    return Response.redirect(new URL(`/c/${params.token}?ok=site`, request.url).toString(), 303);
+  }
   const d = data.ds.find((x) => x.id === id && x.sent_at);
   if (!d || !d.needs_approval) return html('bad request', 400);
   const db = env.DB;

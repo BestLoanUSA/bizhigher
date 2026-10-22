@@ -41,7 +41,7 @@
 
 ```json
 {
-  "slug": "newoptix", "lang": "ko-en", "tier": "onepage",
+  "slug": "newoptix", "lang": "ko-en", "tier": "onepage",            // "business" 면 5페이지(홈·서비스·소개·갤러리·오시는 길·문의) + 소식(블로그)
   "name": "New Optix", "name_ko": "뉴옵틱스 안경", "tagline": "가든그로브 한인 안경점 · 검안 포함", "tagline_en": "…",
   "category": "안경점", "category_en": "Optometry", "since": 2012, "phone": "(714) 555-1234", "email": "", "address": { "line1": "9876 Garden Grove Blvd", "city": "Garden Grove", "state": "CA", "zip": "92844" },
   "maps_url": "https://maps.google.com/?cid=…", "place_id": "ChIJ…", "review_url": "https://search.google.com/local/writereview?placeid=…", "rating": 4.7, "review_count": 128,
@@ -60,6 +60,8 @@
   "visit_title": "…", "map_embed": "",
   "faq": [{ "q": "…", "a": "…", "q_en": "…", "a_en": "…" }],
   "closing": "궁금한 점은 전화 한 통이면 됩니다.", "closing_en": "…",
+  "contact": { "form": true, "title": "…", "text": "…", "forward_to": "" },
+  "posts": [{ "slug": "new-frames-fall", "title": "…", "title_en": "…", "date": "2026-10-15", "excerpt": "…", "body": "문단은 빈 줄로, 소제목은 ## 로", "photo": "" }],
   "social": { "instagram": "", "facebook": "", "yelp": "" },
   "theme": { "color": "#0A4DF5", "style": "clean" },
   "seo": { "title": "…", "description": "…(155자)", "keywords": "…" },
@@ -93,6 +95,12 @@
 
 **사진 준비 `sites.js prep`** — 루틴이 스펙을 저장하기 전에 돌린다. 가로 900px 미만 사진은 fal.ai(`fal-ai/aura-sr`, 4배)로 업스케일해 `/a/` 에 올리고 URL 을 바꾼다(`photo_meta[새URL] = {w,h,from}`). 갤러리가 3장 미만이면 업종 분위기 이미지를 4장이 되게 생성해 `gallery_generated` 에 넣고 화면에 "일부 이미지는 분위기 연출용" 한 줄을 붙인다(사람·글자·로고 없음). FAL_KEY 없으면 크기 보고만. 비용은 장당 약 $0.01~0.03.
 
+**비즈니스 등급 `tier: "business"` (2단계, 2026-10-22)** — 파일이 여러 개가 된다: `/`(히어로·프로모·서비스 6개·왜 우리·리뷰·갤러리 띠) · `/services/`(서비스 전체 + `detail` 문단 + FAQ) · `/about/`(소개·왜 우리·이용 단계·브랜드·리뷰) · `/gallery/`(사진 그리드, 3장 이상일 때) · `/contact/`(오시는 길·영업시간·지도·**문의 폼**·FAQ) · `/blog/` + `/blog/{slug}/`(`posts[]` 있을 때, BlogPosting 스키마). 사이트맵에 전 페이지, 페이지마다 BreadcrumbList. 링크는 상대 경로라 `bizhigher-sites.pages.dev/{slug}/…` 와 서브도메인·고객 도메인 모두에서 동작한다. 원페이지에서도 `contact.form: true` 면 문의 섹션이 붙는다.
+
+**문의 폼** — 정적 사이트에서 `https://bizhigher.com/api/site-contact` 로 일반 POST(JS 없이도 됨, `functions/api/site-contact.js`). 허니팟·2초 미만 거부·IP 하루 20건. 저장은 D1 `site_leads` + 작업 타임라인 "📩 사이트 문의" + David 알림. **사업주에게는 스펙 `contact.forward_to` 에 이메일이 있을 때만** 전달 메일이 간다(§12-3 "고객에게 자동 메일 금지"의 유일한 예외 — 사업주 자신의 사이트로 들어온 손님 문의. 비우면 관리자 "📩 사이트 문의 n건"과 David 알림에만 쌓인다). 보낸 뒤 `?sent=1` 로 돌아와 접수 안내를 보여준다.
+
+**수정 → 재배포 루프** — ① 고객 페이지 `/c/{token}` 맨 위 "내 웹사이트" 카드(iframe + 열기 + **수정 요청 폼**) 또는 관리자 작업 페이지 "AI에게 수정 요청" → `web-2` 단계가 `doing` + `revise_note`(고객이면 "[고객 수정 요청]" 접두)로 다시 열린다(완료된 것도, 이미 열려 있으면 요청을 이어 붙임) ② 다음 루틴이 `sites.js patch --job N --file patch.json`(깊은 병합, null 삭제)으로 바뀐 키만 고쳐 새 버전 저장 → build·deploy → 검증 큐에 "바뀐 키" 와 함께 올림 ③ 스펙 저장·패치는 `site_versions` 에 버전·메모·바뀐 키를 기록하고 관리자 `settings.sitesDirty` 를 켠다 → `sites.js needs-deploy` 가 yes(관리자에서 스타일·등급만 바꿔도 2시간 안에 재배포). 관리자 "버전 기록" 버튼으로 본다. `sites.js diff --job N` 은 마지막 두 버전의 바뀐 키.
+
 규칙: 사진은 질문지 첨부(`/a/…`) 또는 fal 생성본만. 가격·영업시간·수치(`stats`·`since`)는 질문지·Places 공개 정보에서만(없으면 비움, 지어내지 않음). 리뷰 본문은 넣지 않는다(§14) — 별점·리뷰 수와 "리뷰 보기" 링크만. 의료업은 환자 암시 표현 금지. `lang`이 `ko-en`이면 `_en` 키를 채우고 템플릿이 토글을 보여준다. 헤드라인은 기능이 아니라 **손님이 얻는 것**(속도·편안함·결과)으로 8~14자, `em` 은 그 안의 2~4자. `stats`·`since`·`review_themes` 는 질문지·Places 에 있는 것만.
 
 ## 5. 주소·색인
@@ -110,9 +118,12 @@
 
 ## 7. 단계별 범위
 
-- **1단계(이 PR)**: 원페이지 템플릿 · 라우터 · 스펙 저장 API · 루틴 CLI(spec/build/deploy/render) · 플레이북·루틴 프롬프트 · 로컬 렌더 검증(360px)
-- 2단계: 비즈니스 등급(5페이지 + 문의 폼 + 블로그 구조), 도메인 추가 API 자동화(web-3), 고객 페이지에서 사이트 미리보기 임베드, 수정 요청 → 스펙 수정 → 재배포 루프
-- 3단계: 유지관리 구독(cp-*)과 연결 — 월간 수정 요청이 스펙 패치로
+| 단계 | 내용 | 상태 |
+|---|---|---|
+| 1 | 원페이지 템플릿, D1 스펙, 한 프로젝트 호스팅, 서브도메인 자동 등록, 도메인 연결 | 2026-10-22 완료 |
+| v2·v3 | 프리미엄 디자인, 스타일 8종, 모션, 영업 중 표시, 사진 준비(prep), 히어로 영상 | 2026-10-22 완료 |
+| 2 | 비즈니스 등급(5페이지+블로그), 문의 폼(D1 리드·David 알림·선택 전달), 수정→패치→재배포 루프(버전 기록·dirty 플래그), 고객 페이지 임베드+수정 요청, 관리자 스타일·등급 변경 | 2026-10-22 완료 |
+| 3 (예정) | 예약·주문 외부 툴 임베드, 다국어 3개 이상, 월간 블로그 자동 발행(seo-4 → posts), Turnstile, 고객 도메인 자동 DNS | — |
 
 ## 8. 함정
 
