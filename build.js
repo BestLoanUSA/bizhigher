@@ -148,6 +148,29 @@ const MEGA_CTA = `
   </div>
 </section>`;
 const AUDIT_PLACEHOLDER_LOCATION = '도시 (예: Los Angeles CA) 또는 구글 프로필 링크';
+/* 무료 진단 대기 중 BizHigher 로고가 차오르는 로더(.bh-loader, 질문지 제출 로더와 같은 모양).
+   진단에는 진행률 신호가 없으므로 20~40초 동안 점점 느려지는 곡선으로 92%까지 채우고, 리포트가 나오면 100% */
+const AUDIT_LOADER_HTML = `<div class="bh-loader audit-loader" aria-live="polite"><div class="bh-word" data-text="BizHigher"><span class="bh-fill">BizHigher</span></div><div class="bh-step"></div></div>`;
+const AUDIT_LOADER_JS = `function mkAuditLoader(form) {
+  var box = form.querySelector('.bh-loader');
+  if (!box) return { start: function () {}, done: function () {}, stop: function () {} };
+  var fill = box.querySelector('.bh-fill'), step = box.querySelector('.bh-step'), iv = null, t0 = 0;
+  var STEPS = [[0, '구글에서 우리 가게 찾는 중…'], [18, '주변 경쟁 가게 3곳 찾는 중…'], [40, '웹사이트·리뷰 점검 중…'], [62, '100점 만점으로 채점 중…'], [78, 'AI가 리포트를 쓰는 중…']];
+  function set(p, txt) { fill.style.width = p + '%'; if (txt !== undefined) step.textContent = txt; }
+  return {
+    start: function () {
+      clearInterval(iv); box.classList.add('on', 'busy'); t0 = Date.now(); set(3, STEPS[0][1]);
+      iv = setInterval(function () {
+        var sec = (Date.now() - t0) / 1000, p = 92 * (1 - Math.exp(-sec / 14)), txt = STEPS[0][1];
+        STEPS.forEach(function (x) { if (p >= x[0]) txt = x[1]; });
+        set(Math.max(3, p), txt);
+      }, 400);
+    },
+    done: function (txt) { clearInterval(iv); box.classList.remove('busy'); set(100, txt || '리포트 여는 중…'); },
+    stop: function () { clearInterval(iv); box.classList.remove('on', 'busy'); set(0, ''); }
+  };
+}`;
+
 const FOOTER_AUDIT = `
 <section class="mega-cta mega-cta-form" id="footer-audit">
   <div class="container">
@@ -163,6 +186,7 @@ const FOOTER_AUDIT = `
         <input type="text" name="location" placeholder="${AUDIT_PLACEHOLDER_LOCATION}" class="input" required>
         <input type="email" name="email" placeholder="이메일" class="input" required>
         <button type="submit" class="btn btn-primary btn-block">무료 진단 시작 →</button>
+        ${AUDIT_LOADER_HTML}
         <div class="form-msg" id="fa-msg"></div>
         <p class="fa-form-note">분석에 20~40초 정도 걸립니다 · 완료되면 리포트 화면으로 자동 이동합니다</p>
       </form>
@@ -172,21 +196,26 @@ const FOOTER_AUDIT = `
 <script>
 (function () {
   var form = document.getElementById('fa-form'); if (!form) return;
+  ${AUDIT_LOADER_JS}
+  var ld = mkAuditLoader(form);
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
     var msg = document.getElementById('fa-msg');
     var btn = form.querySelector('button');
-    btn.disabled = true; btn.textContent = 'AI가 분석 중입니다... (최대 40초)';
+    btn.disabled = true; btn.textContent = 'AI가 분석 중입니다…';
+    ld.start();
     try {
       var body = Object.fromEntries(new FormData(form).entries());
       var res = await fetch('/api/audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       if (!res.ok) throw new Error('server');
       var result = await res.json();
-      if (result.reportUrl) { btn.textContent = '리포트 여는 중...'; window.location.href = result.reportUrl; return; }
+      if (result.reportUrl) { btn.textContent = '리포트 여는 중...'; ld.done(); window.location.href = result.reportUrl; return; }
+      ld.stop();
       msg.className = 'form-msg success';
       msg.textContent = '접수되었습니다! 영업일 1일 안에 진단 리포트를 이메일로 보내드릴게요.';
       form.reset(); btn.textContent = '접수 완료 ✓';
     } catch (err) {
+      ld.stop();
       msg.className = 'form-msg error';
       msg.textContent = '일시적인 오류가 발생했습니다. 잠시 후 다시 시도하시거나 ${SITE.email} 로 보내주세요.';
       btn.disabled = false; btn.textContent = '무료 진단 시작 →';
@@ -2035,6 +2064,7 @@ function auditPage() {
       <input type="text" name="location" placeholder="${AUDIT_PLACEHOLDER_LOCATION}" class="input" required>
       <input type="email" name="email" placeholder="이메일" class="input" required>
       <button type="submit" class="btn btn-primary btn-block">무료 진단 시작 →</button>
+      ${AUDIT_LOADER_HTML}
       <div class="form-msg" id="form-msg"></div>
     </form>
     <p class="note-text">분석에 20~40초 정도 걸립니다. 완료되면 리포트 화면으로 자동 이동합니다. 스팸은 보내지 않습니다.</p>
@@ -2067,11 +2097,14 @@ ${guide && guide.faqs.length ? `
   </div>
 </section>` : ''}
 <script>
+${AUDIT_LOADER_JS}
+var auditLd = mkAuditLoader(document.getElementById('audit-form'));
 document.getElementById('audit-form').addEventListener('submit', async function (e) {
   e.preventDefault();
   const msg = document.getElementById('form-msg');
   const btn = this.querySelector('button');
-  btn.disabled = true; btn.textContent = 'AI가 분석 중입니다... (최대 40초)';
+  btn.disabled = true; btn.textContent = 'AI가 분석 중입니다…';
+  auditLd.start();
   try {
     const body = Object.fromEntries(new FormData(this).entries());
     const res = await fetch('/api/audit', {
@@ -2083,14 +2116,17 @@ document.getElementById('audit-form').addEventListener('submit', async function 
     const result = await res.json();
     if (result.reportUrl) {
       btn.textContent = '리포트 여는 중...';
+      auditLd.done();
       window.location.href = result.reportUrl;
       return;
     }
+    auditLd.stop();
     msg.className = 'form-msg success';
     msg.textContent = '접수되었습니다! 영업일 1일 안에 진단 리포트를 이메일로 보내드릴게요.';
     this.reset();
     btn.textContent = '접수 완료 ✓';
   } catch (err) {
+    auditLd.stop();
     msg.className = 'form-msg error';
     msg.textContent = '일시적인 오류가 발생했습니다. 잠시 후 다시 시도하시거나 ${SITE.email} 로 보내주세요.';
     btn.disabled = false; btn.textContent = '무료 진단 시작 →';
