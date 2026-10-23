@@ -154,6 +154,26 @@ document.getElementById('audit-form').addEventListener('submit', async function 
   }
 });
 </script>
+<script>
+/* 마케팅코리안 등에서 #business=&location=&email=&auto=1 로 넘어오면 폼을 채우고(auto=1이면) 바로 진단을 시작한다. */
+(function () {
+  var form = document.getElementById('audit-form');
+  if (!form || !location.hash || location.hash.length < 2) return;
+  var p = new URLSearchParams(location.hash.slice(1));
+  var filled = 0;
+  ['business', 'location', 'email'].forEach(function (k) {
+    var v = (p.get(k) || '').trim().slice(0, 200);
+    var el = form.querySelector('[name="' + k + '"]');
+    if (el && v) { el.value = v; filled++; }
+  });
+  if (!filled) return;
+  history.replaceState(null, '', location.pathname + location.search);
+  form.scrollIntoView({ block: 'center' });
+  if (p.get('auto') === '1' && filled === 3 && form.checkValidity()) {
+    if (form.requestSubmit) form.requestSubmit(); else form.querySelector('button').click();
+  }
+})();
+</script>
 
 <section class="mega-cta">
   <div class="container center">
