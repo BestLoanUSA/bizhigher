@@ -83,7 +83,9 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | 질문지 제출 완료 페이지 `/thanks/done/` | `build.js`의 `thanksDonePage()` — 제출 후 리다이렉트(`?service=&files=&b=`). 진행 순서 4단계(패키지가 아니면 4단계 숨김)·미리 준비할 것(GBP 관리자 초대 hello@)·무료 진단 CTA 없음(`FOOTER_BASE`). 첨부는 최대 30개 |
 | 결제 후 질문지 "구글에서 내 가게 찾기" | `functions/api/place-lookup.js`(Places Text Search, IP·이메일 하루 10회 `intake-place`) · 화면은 `build.js` `/thanks/` 폼 상단 `place-box`. 고객이 고르면 상호·전화·링크가 채워지고 주소·카테고리·영업시간·평점·place_id·지도 링크가 `notes` 맨 앞 "── 구글 프로필 공개 정보 ──" 블록으로 들어간다(고객 본인 가게 정보라 저장 OK). `?email=&business=&contact=&phone=`로 미리 채우기 가능(데모가 쓴다) |
 | 진단 채점 로직 | `functions/api/_engine.js` |
-| 리포트 디자인 | `functions/report/[id].js` |
+| 리포트 디자인 | `functions/report/[id].js` — 만료 화면 `renderExpiredHtml` 포함 |
+| 리포트 주소·30일 만료 | `functions/api/_reports.js` — 주소 `/report/{업체명 슬러그}-{4자}`(사용자 입력 업체명을 로마자로, 구글 상호 아님). 옛 16진 12자 주소도 그대로 열린다. 발급 30일 뒤 구글에서 온 값을 지우고 place_id·점수·입력 업체명/지역만 남긴다(열람 시 + 새 진단마다 `purgeExpiredReports`). 만료 화면은 "같은 가게 다시 진단하기" |
+| 구글 지도 출처 표시 | 로고 `src/google-maps-logo.svg`(공식 회색, 높이 18px, `alt="Google Maps" translate="no"`). 리포트 상단·경쟁 업체 카드, Places를 쓰는 도구 4개(`build.js` `PLACES_TOOLS`). Places 데이터를 화면에 보여주는 새 화면에는 반드시 붙인다 |
 | GBP 리뷰 답글·게시물 자동화 실험 | `automation/gbp/` (README 참고. API 승인 전엔 `--dry-run`만) |
 | 고객 결과물 페이지 `/c/{token}` | `functions/c/[token].js` — 묶음 메일·승인 흐름은 §12-3 |
 | 새 리뷰 감시·답글 과제 | `functions/api/_reviews.js` (§12-4) — 위험 단어 목록 `RISK`, 쿨다운 20시간 |
@@ -390,7 +392,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 - **스킬(fulfillment 등) 수정은 파일을 고쳐도 무효**다. `propose_skills` 제안 카드를 David가 저장해야 반영된다
 - 클라우드 세션의 egress: **bizhigher.com·api.cloudflare.com 모두 열려 있다**(2026-10-21 확인, 이전 "curl 차단" 메모는 낡았다). 관리자 API를 `BIZHIGHER_ADMIN_PASSWORD`로 직접 호출할 수 있다 — AI 실행 루틴이 이 경로를 쓴다
 - **Functions 로컬 테스트**는 `npx wrangler pages dev dist --d1 DB=<id> --binding ADMIN_PASSWORD=x --binding STRIPE_WEBHOOK_SECRET=x --persist-to <스크래치 경로>`(루트 `wrangler.toml`은 Worker용이라 `--config`로 못 넘긴다). 로컬 에뮬레이터는 브라우저 navigate 요청에 Functions 대신 404.html을 주는 버그가 있다 — 프로덕션은 Functions 우선이므로 curl이나 Playwright `route.fetch`로 `sec-fetch-mode`를 바꿔 확인한다. 생성되는 `.wrangler/`는 커밋하지 말 것
-- **Google Places는 진단용 실시간 조회에만 쓴다.** 조회 결과를 저장해 재게시하지 않는다 — [[marketingkorean]]과의 경계에서 특히 중요(§16)
+- **Google Places는 진단용 실시간 조회에만 쓴다.** 조회 결과를 저장해 재게시하지 않는다. 약관(ToS §3.2.3, Places 약관 §14.3): 저장은 place_id만 무기한, 좌표는 30일까지. 그래서 리포트는 30일 뒤 정리되고 noindex를 유지한다(2026-10-23). 리포트 열람은 D1만 읽어 Places·Claude 비용이 들지 않는다 — [[marketingkorean]]과의 경계에서 특히 중요(§16)
 
 ---
 
