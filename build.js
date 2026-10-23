@@ -3878,6 +3878,8 @@ ${intro && intro.faqs.length ? `
 ` + FOOTER;
 }
 
+/* 구글 Places 데이터를 화면에 보여주는 도구 — 구글 지도 표기(로고) 의무(Places 정책) */
+const PLACES_TOOLS = new Set(['local-rank', 'review-link', 'nap-check', 'competitor-reviews']);
 function toolPage(t) {
   const url = `${SITE.domain}/tools/${t.slug}/`;
   const guide = loadServiceGuide(t.slug, 'tools');
@@ -3938,6 +3940,7 @@ function toolPage(t) {
 <section class="section tool-section">
   <div class="container-narrow">
     ${frag}
+    ${PLACES_TOOLS.has(t.slug) ? `<p class="gm-attr">지도·가게 정보 출처 <img src="/google-maps-logo.svg" alt="Google Maps" translate="no" height="18"></p>` : ''}
     ${toolPreview(t)}
   </div>
 </section>
@@ -4080,7 +4083,7 @@ if (SURVEYS.length || REPORTS.length) {
 write('terms/index.html', legalPage('이용약관', '/terms/', TERMS_HTML));
 fs.copyFileSync(path.join(__dirname, 'src', 'og-image.png'), path.join(DIST, 'og-image.png'));
 console.log('  \u2713 og-image.png');
-['favicon.ico', 'favicon.svg', 'favicon-48x48.png', 'apple-touch-icon.png'].forEach((f) => {
+['favicon.ico', 'favicon.svg', 'favicon-48x48.png', 'apple-touch-icon.png', 'google-maps-logo.svg'].forEach((f) => {
   fs.copyFileSync(path.join(__dirname, 'src', f), path.join(DIST, f));
 });
 console.log('  \u2713 favicon.ico, favicon.svg, favicon-48x48.png, apple-touch-icon.png');

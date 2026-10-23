@@ -5,10 +5,11 @@
  * /report/sample 은 가상의 예시 업체로 만든 공개 샘플이다 (_sample.js).
  */
 import { buildSampleReport } from './_sample.js';
+import { cleanReportId, isExpired, scrubReport, REPORT_TTL_DAYS } from '../api/_reports.js';
 
 export async function onRequestGet(context) {
   const { params, env } = context;
-  const id = String(params.id || '').replace(/[^a-z0-9]/gi, '').slice(0, 20);
+  const id = cleanReportId(params.id);
   if (!id) return Response.redirect(new URL('/free-audit/', context.request.url).toString(), 302);
 
   // 공개 샘플 — 가상의 예시 업체를 같은 엔진으로 채점해 보여준다 (D1 조회 없음)
@@ -18,7 +19,7 @@ export async function onRequestGet(context) {
     });
   }
 
-  const row = await env.DB.prepare('SELECT report_json FROM reports WHERE id = ?').bind(id).first();
+  const row = await env.DB.prepare('SELECT business, location, report_json FROM reports WHERE id = ?').bind(id).first();
   if (!row) return Response.redirect(new URL('/free-audit/', context.request.url).toString(), 302);
 
   let report;
@@ -28,8 +29,19 @@ export async function onRequestGet(context) {
     return Response.redirect(new URL('/free-audit/', context.request.url).toString(), 302);
   }
 
+  // 발급 30일이 지났으면 구글에서 온 값을 지우고(아직 안 지웠다면 지금 DB에도 반영) 만료 화면을 보여준다
+  if (isExpired(report)) {
+    if (!report.expired) {
+      report = scrubReport(report, row);
+      context.waitUntil(env.DB.prepare('UPDATE reports SET report_json = ? WHERE id = ?').bind(JSON.stringify(report), id).run().catch(() => null));
+    }
+    return new Response(renderExpiredHtml(report), {
+      headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' },
+    });
+  }
+
   return new Response(renderReportHtml(report, id), {
-    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=3600' },
+    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'private, max-age=600' },
   });
 }
 
@@ -72,7 +84,8 @@ export function renderReportHtml(report, id) {
   const compSection = compRows
     ? `<div class="card"><h2 class="sec-title">같은 지역 경쟁 업체</h2>
        <div class="comp-row comp-me"><span>${esc(b.name)} (내 가게)</span><span>⭐ ${b.rating ?? '-'} · 리뷰 ${b.reviewCount ?? 0}개</span></div>
-       ${compRows}</div>`
+       ${compRows}
+       ${report.sample ? '' : `<p class="gm-attr gm-attr-left">${GM_LOGO}</p>`}</div>`
     : '';
 
   const isSample = !!report.sample;
@@ -138,6 +151,9 @@ ${isSample ? '<link rel="canonical" href="https://bizhigher.com/report/sample">'
   .sample-banner{background:#FFF4D6;border:1px solid #F3D48A;color:#5C3D00;border-radius:14px;padding:14px 18px;font-size:14px;line-height:1.6;margin-bottom:24px;}
   .sample-banner b{display:inline-block;font-size:11px;letter-spacing:.08em;background:#5C3D00;color:#fff;border-radius:999px;padding:2px 9px;margin-right:8px;vertical-align:1px;}
   .sample-banner a{color:#0A4DF5;font-weight:700;white-space:nowrap;}
+  .gm-attr{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;padding:5px 10px 0;font-size:12px;color:#5E5E5E;}
+  .gm-attr-left{justify-content:flex-end;margin-top:14px;}
+  .gm-attr img{height:18px;width:auto;display:block;}
   @media(max-width:600px){.score-flex{flex-direction:column;gap:20px;}.report-title{font-size:24px;}}
 </style>
 <script type="text/javascript">
@@ -162,6 +178,7 @@ ${isSample ? '<link rel="canonical" href="https://bizhigher.com/report/sample">'
     <div class="report-kicker">BIZHIGHER 무료 AI 마케팅 진단</div>
     <h1 class="report-title">${esc(b.name)}</h1>
     <p class="report-date">${(report.business.inferredIndustry || report.business.category) ? esc(report.business.inferredIndustry || report.business.category) + ' · ' : ''}${esc(report.location)} · ${new Date(report.generatedAt).toLocaleDateString('ko-KR')}</p>
+    ${isSample ? '' : `<p class="gm-attr">가게 정보·별점·리뷰 수 출처 ${GM_LOGO}</p>`}
   </div>
 
   <div class="card">
@@ -187,7 +204,7 @@ ${isSample ? '<link rel="canonical" href="https://bizhigher.com/report/sample">'
   </div>
 
   ${isSample ? '' : `<div class="share-band">
-    <p>이 리포트는 고유 링크로 저장됩니다. 동업자나 가족에게 공유해보세요.</p>
+    <p>이 리포트는 고유 링크로 ${REPORT_TTL_DAYS}일 동안 열 수 있습니다. 동업자나 가족에게 공유해보세요.</p>
     <button class="btn btn-ghost btn-small" onclick="navigator.clipboard.writeText(location.href).then(()=>{this.textContent='링크 복사됨 ✓'})">📤 리포트 링크 복사</button>
   </div>`}
 
@@ -254,4 +271,60 @@ function renderWebcheckSection(wc) {
   const bonus = wc.hasLlmsTxt ? `<div class="wc-note" style="margin-top:10px;">✨ llms.txt까지 갖추고 있어 AI 검색엔진 대응이 앞서 있습니다.</div>` : '';
 
   return `<div class="card"><h2 class="sec-title">웹사이트 진단 <span class="wc-badge">${okCount}/${items.length}</span></h2>${rows}${bonus}</div>`;
+}
+
+/* 구글 지도 표기 — 공식 로고 파일(Google Maps Attribution Assets, 회색·외곽선 없음), 높이 16~19px 규정 */
+const GM_LOGO = '<img src="/google-maps-logo.svg" alt="Google Maps" translate="no" height="18">';
+
+/* 만료된 리포트 — 구글 데이터는 지웠고 우리 점수와 사용자가 입력한 업체명·지역만 남아 있다 */
+export function renderExpiredHtml(report) {
+  const s = report.scores || { total: 0, areas: [] };
+  const name = report.business && report.business.name ? report.business.name : '';
+  const bars = (s.areas || [])
+    .map((a) => {
+      const p = a.max ? Math.round((a.score / a.max) * 100) : 0;
+      return `<div class="bar-row"><span class="bar-label">${esc(a.label)}</span><div class="bar"><i style="width:${p}%;background:#9CA3AF"></i></div><span class="bar-val">${a.score}/${a.max}</span></div>`;
+    })
+    .join('');
+  const again = '/free-audit/#' + new URLSearchParams({ business: name, location: report.location || '' }).toString();
+  const when = report.generatedAt ? new Date(report.generatedAt).toLocaleDateString('ko-KR') : '';
+  return `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${esc(name || '진단')} 리포트 — 기간 만료 | BizHigher</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="/style.css">
+<style>
+  .report-wrap{max-width:640px;margin:0 auto;padding:48px 20px 80px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:28px;margin-bottom:18px;}
+  .kicker{font-size:13px;font-weight:800;color:var(--blue-600);letter-spacing:.08em;margin-bottom:10px;text-align:center;}
+  h1{font-size:26px;font-weight:800;letter-spacing:-.02em;text-align:center;margin-bottom:6px;}
+  .sub{text-align:center;font-size:13px;color:var(--ink-400);margin-bottom:24px;}
+  .note{font-size:15px;line-height:1.7;color:var(--ink-600);margin-bottom:18px;}
+  .old-score{font-size:14px;color:var(--ink-600);margin-bottom:12px;}
+  .old-score b{font-size:22px;color:var(--ink-900);}
+  .bar-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;font-size:14px;}
+  .bar-label{width:88px;flex-shrink:0;font-weight:600;}
+  .bar{flex:1;height:8px;background:#E9ECF2;border-radius:99px;overflow:hidden;}
+  .bar i{display:block;height:100%;border-radius:99px;}
+  .bar-val{width:44px;text-align:right;font-weight:700;font-size:12.5px;color:var(--ink-600);}
+</style>
+</head>
+<body>
+<div class="report-wrap">
+  <div class="kicker">BIZHIGHER 무료 AI 마케팅 진단</div>
+  <h1>${esc(name || '진단 리포트')}</h1>
+  <p class="sub">${esc(report.location || '')}${when ? ' · ' + when + ' 진단' : ''}</p>
+  <div class="card">
+    <p class="note">이 리포트는 발급 후 ${REPORT_TTL_DAYS}일이 지나 구글에서 가져온 가게 정보(별점·리뷰 수·주소·경쟁 가게 등)를 지웠습니다. 지금 상태가 궁금하시면 다시 진단해 보세요. 60초면 최신 정보로 새 리포트가 나옵니다.</p>
+    <p class="old-score">당시 점수 <b>${s.total}</b> / 100점</p>
+    ${bars}
+    <div style="margin-top:20px;"><a href="${esc(again)}" class="btn btn-primary btn-block">같은 가게 다시 진단하기 →</a></div>
+  </div>
+</div>
+</body>
+</html>`;
 }

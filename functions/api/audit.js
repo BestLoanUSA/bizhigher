@@ -11,6 +11,7 @@
 import { computeScores, templateAnalysis, buildClaudePrompt } from './_engine.js';
 import { notify, esc } from './_notify.js';
 import { webcheckSite } from './_webcheck.js';
+import { newReportId, purgeExpiredReports } from './_reports.js';
 
 /* 브라우저·크롤러가 주소를 직접 열면(GET) 진단 폼으로 보낸다 — 예전엔 404였다(GSC 404 보고) */
 export function onRequestGet(context) {
@@ -48,7 +49,13 @@ export async function onRequestPost(context) {
   try {
     if (env.GOOGLE_PLACES_API_KEY) {
       const report = await generateReport(business, location, env);
-      const id = crypto.randomUUID().replace(/-/g, '').slice(0, 12);
+      // 주소: /report/{입력한 업체명 슬러그}-{무작위 4자} — 읽기 쉽지만 남이 추측해 열 수는 없다
+      let id = newReportId(business, location);
+      for (let i = 0; i < 4; i++) {
+        const dup = await env.DB.prepare('SELECT 1 FROM reports WHERE id = ?').bind(id).first();
+        if (!dup) break;
+        id = newReportId(business, location);
+      }
       await env.DB.prepare(
         'INSERT INTO reports (id, lead_id, business, location, report_json) VALUES (?, ?, ?, ?, ?)'
       ).bind(id, leadId, business, location, JSON.stringify(report)).run();
@@ -57,6 +64,8 @@ export async function onRequestPost(context) {
   } catch (err) {
     // 조용히 폴백 — 폼은 성공 처리, 리드로 후속
   }
+  // 30일 지난 리포트의 구글 데이터 정리(구글 약관 — place_id 외 저장 금지). 응답을 늦추지 않게 뒤에서
+  context.waitUntil(purgeExpiredReports(env).catch(() => 0));
   // 3) David에게 알림 (비동기 — 응답을 지연시키지 않음)
   const reportLink = reportUrl
     ? `<a href="https://bizhigher.com${reportUrl}">리포트 보기</a>`
@@ -115,6 +124,7 @@ async function generateReport(business, location, env) {
   return {
     v: 1,
     business: {
+      placeId: biz.id || null, // 구글 약관상 기한 없이 보관 가능한 유일한 값
       name: biz.name,
       rating: biz.rating || null,
       reviewCount: biz.reviewCount || 0,
