@@ -4083,7 +4083,7 @@ if (SURVEYS.length || REPORTS.length) {
 write('terms/index.html', legalPage('이용약관', '/terms/', TERMS_HTML));
 fs.copyFileSync(path.join(__dirname, 'src', 'og-image.png'), path.join(DIST, 'og-image.png'));
 console.log('  \u2713 og-image.png');
-['favicon.ico', 'favicon.svg', 'favicon-48x48.png', 'apple-touch-icon.png', 'google-maps-logo.svg'].forEach((f) => {
+['favicon.ico', 'favicon.svg', 'favicon-48x48.png', 'apple-touch-icon.png', 'google-maps-logo.svg', 'naver674026f804446e12149fb51dfe5e000e.html'].forEach((f) => {
   fs.copyFileSync(path.join(__dirname, 'src', f), path.join(DIST, f));
 });
 console.log('  \u2713 favicon.ico, favicon.svg, favicon-48x48.png, apple-touch-icon.png');
@@ -4109,7 +4109,8 @@ fs.readdirSync(TOOLS_SRC).filter((f) => f.endsWith('.js')).forEach((f) => fs.cop
 console.log('  \u2713 assets/tools/');
 write('sitemap.xml', sitemap());
 write('robots.txt', ROBOTS);
-write('_redirects', REDIRECTS);
+// 네이버 서치어드바이저 소유 확인 파일 — Pages가 .html 주소를 확장자 없는 주소로 308 보내지 않게 그대로 서빙
+write('_redirects', '/naver674026f804446e12149fb51dfe5e000e.html /naver674026f804446e12149fb51dfe5e000e 200\n' + REDIRECTS);
 write('_headers', HEADERS);
 write('llms.txt', `# BizHigher (비즈하이어)
 
