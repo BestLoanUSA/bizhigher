@@ -362,15 +362,48 @@ function svcIcon(slug) {
   const d = SVC_ICON[slug] || '<circle cx="12" cy="12" r="8"/>';
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 }
+/* ---------- 홈 서비스 카드: 결과물 미리보기 그림 + 납품 기간 막대 ----------
+   그림은 기본으로 완성된 상태로 보이고, 카드가 화면 아래에 있을 때만 숨겼다가(.pv-arm) 들어오면 순서대로 나타난다(.pv-go).
+   .pa = 튀어나오며 등장, .pb = 아래에서 자라남, .pl = 왼쪽에서 그어짐. --d = 지연 */
+const PV_SVG = {
+  'ai-marketing-report': `<path class="pv-bg" d="M24 56a26 26 0 0 1 52 0" /><path class="pv-arc pl" style="--d:.1s" pathLength="100" d="M24 56a26 26 0 0 1 52 0" /><text class="pv-num pa" style="--d:.5s" x="50" y="55" text-anchor="middle">72</text><g class="pa" style="--d:.7s"><rect class="pv-c" x="96" y="12" width="100" height="44" rx="8"/><rect class="pv-s pl" style="--d:.9s" x="106" y="22" width="62" height="6" rx="3"/><rect class="pv-m pl" style="--d:1s" x="106" y="33" width="80" height="5" rx="2.5"/><rect class="pv-m pl" style="--d:1.1s" x="106" y="43" width="50" height="5" rx="2.5"/></g><g class="pa" style="--d:1.2s"><rect class="pv-c" x="206" y="12" width="56" height="44" rx="8"/><text class="pv-t" x="234" y="32" text-anchor="middle">180일</text><text class="pv-t2" x="234" y="46" text-anchor="middle">실행 플랜</text></g>`,
+  'review-qr-kit': `<path class="pv-c pa" style="--d:.05s" d="M18 58 L44 10 L70 58 Z"/><g class="pa" style="--d:.3s"><rect class="pv-s" x="36" y="30" width="7" height="7" rx="1"/><rect class="pv-s" x="46" y="30" width="7" height="7" rx="1"/><rect class="pv-s" x="36" y="40" width="7" height="7" rx="1"/><rect class="pv-a" x="46" y="40" width="7" height="7" rx="1"/></g><path class="pv-ln pl" style="--d:.5s" pathLength="100" d="M80 34 L120 34"/>${[0,1,2,3,4].map((i)=>`<g transform="translate(${132+i*26} 22)"><path class="pv-star pa" style="--d:${(0.7+i*0.12).toFixed(2)}s" d="M10 0l3 6.5 7 .8-5.2 4.7 1.5 7-6.3-3.6L3.7 19l1.5-7L0 7.3l7-.8z"/></g>`).join('')}<text class="pv-t2 pa" style="--d:1.4s" x="196" y="60" text-anchor="middle">스캔 → 리뷰 작성</text>`,
+  'google-profile-optimization': `<path class="pv-pin pa" style="--d:.05s" d="M40 60s-18-17-18-30a18 18 0 0 1 36 0c0 13-18 30-18 30z"/><circle class="pv-dot" cx="40" cy="30" r="6"/><g class="pa" style="--d:.3s"><rect class="pv-c" x="78" y="6" width="190" height="56" rx="9"/></g>${['카테고리','영업시간','사진·소개'].map((t,i)=>`<g class="pa" style="--d:${(0.5+i*0.25).toFixed(2)}s"><circle class="pv-ok" cx="94" cy="${20+i*16}" r="5"/><path class="pv-ck" d="M91.5 ${20+i*16}l2 2 3.5-4"/><text class="pv-t3" x="106" y="${24+i*16}">${t}</text><rect class="pv-s pl" style="--d:${(0.6+i*0.25).toFixed(2)}s" x="170" y="${17+i*16}" width="${80-i*14}" height="6" rx="3"/></g>`).join('')}`,
+  'local-listing-setup': ['Apple','Bing','Yelp','Nextdoor','Facebook','Yellow','한인록','+23'].map((t,i)=>`<g class="pa" style="--d:${(0.08*i).toFixed(2)}s"><rect class="pv-chip${i>5?' pv-chip-a':''}" x="${8+(i%4)*68}" y="${i<4?8:38}" width="62" height="24" rx="12"/><text class="pv-t3" x="${39+(i%4)*68}" y="${i<4?24:54}" text-anchor="middle">${t}</text></g>`).join(''),
+  'local-listing-care': `${[0,1,2,3,4,5].map((i)=>`<rect class="pv-b${i===5?' pv-b-a':''} pb" style="--d:${(0.1*i).toFixed(2)}s" x="${14+i*30}" y="${52-(10+i*7)}" width="20" height="${10+i*7}" rx="4"/>`).join('')}<path class="pv-ax" d="M8 56 L196 56"/><g class="pa" style="--d:.8s"><rect class="pv-c" x="206" y="14" width="64" height="40" rx="9"/><text class="pv-num2" x="238" y="38" text-anchor="middle">+5곳</text><text class="pv-t2" x="238" y="50" text-anchor="middle">매달</text></g>`,
+  'website': `<g class="pa" style="--d:.05s"><rect class="pv-c" x="8" y="6" width="170" height="56" rx="8"/><rect class="pv-bar" x="8" y="6" width="170" height="11" rx="8"/><circle class="pv-dot2" cx="17" cy="11.5" r="2"/><circle class="pv-dot2" cx="24" cy="11.5" r="2"/></g><rect class="pv-s pl" style="--d:.3s" x="18" y="24" width="90" height="8" rx="3"/><rect class="pv-m pl" style="--d:.45s" x="18" y="37" width="120" height="5" rx="2.5"/><rect class="pv-a2 pa" style="--d:.6s" x="18" y="48" width="44" height="9" rx="4.5"/><rect class="pv-m2 pa" style="--d:.7s" x="118" y="24" width="50" height="33" rx="5"/><g class="pa" style="--d:.9s"><rect class="pv-c" x="196" y="6" width="34" height="56" rx="7"/><rect class="pv-s" x="202" y="16" width="22" height="5" rx="2.5"/><rect class="pv-m2" x="202" y="26" width="22" height="16" rx="3"/><rect class="pv-a2" x="202" y="48" width="22" height="6" rx="3"/></g><text class="pv-t2 pa" style="--d:1.1s" x="254" y="38" text-anchor="middle">PC·폰</text>`,
+  'local-landing-pack': [0,1,2].map((i)=>`<g class="pa" style="--d:${(0.15*i).toFixed(2)}s"><rect class="pv-c" x="${14+i*86}" y="8" width="74" height="52" rx="8"/><rect class="pv-pin2" x="${22+i*86}" y="16" width="20" height="6" rx="3"/><rect class="pv-s pl" style="--d:${(0.3+0.15*i).toFixed(2)}s" x="${22+i*86}" y="28" width="56" height="6" rx="3"/><rect class="pv-m pl" style="--d:${(0.4+0.15*i).toFixed(2)}s" x="${22+i*86}" y="40" width="44" height="5" rx="2.5"/><text class="pv-t2" x="${51+i*86}" y="56" text-anchor="middle">${['한인타운','풀러튼','어바인'][i]}</text></g>`).join(''),
+  'seo-blog-pack': `<g class="pa" style="--d:.05s"><rect class="pv-c" x="10" y="6" width="150" height="56" rx="8"/></g><rect class="pv-s pl" style="--d:.25s" x="20" y="15" width="100" height="7" rx="3"/>${[0,1,2,3].map((i)=>`<rect class="pv-m pl" style="--d:${(0.4+i*0.15).toFixed(2)}s" x="20" y="${28+i*8}" width="${130-(i%2)*30}" height="4" rx="2"/>`).join('')}<path class="pv-ln pl" style="--d:1s" pathLength="100" d="M172 52 L196 40 L218 44 L262 14"/><circle class="pv-dot pa" style="--d:1.4s" cx="262" cy="14" r="4"/><text class="pv-t2 pa" style="--d:1.4s" x="214" y="62" text-anchor="middle">검색 유입</text>`,
+  'seo-aio': `<g class="pa" style="--d:.05s"><rect class="pv-c" x="10" y="8" width="120" height="26" rx="13"/><text class="pv-t3" x="70" y="25" text-anchor="middle">한인 치과 추천?</text></g><g class="pa" style="--d:.5s"><rect class="pv-ai" x="80" y="38" width="188" height="24" rx="12"/><text class="pv-t4" x="94" y="54">AI: "○○치과가 가깝고…"</text></g><circle class="pv-dot pa" style="--d:.9s" cx="256" cy="50" r="5"/>`,
+  'ad-creative-pack': `<g class="pa" style="--d:.05s"><rect class="pv-m2" x="14" y="10" width="48" height="48" rx="7"/><text class="pv-t2" x="38" y="38" text-anchor="middle">1:1</text></g><g class="pa" style="--d:.2s"><rect class="pv-m2" x="74" y="4" width="34" height="60" rx="7"/><text class="pv-t2" x="91" y="38" text-anchor="middle">9:16</text></g><g class="pa" style="--d:.35s"><rect class="pv-m2" x="120" y="16" width="84" height="44" rx="7"/><text class="pv-t2" x="162" y="42" text-anchor="middle">1.91:1</text></g><g class="pa" style="--d:.6s"><rect class="pv-c" x="216" y="16" width="54" height="36" rx="9"/><text class="pv-num2" x="243" y="38" text-anchor="middle">×10</text><text class="pv-t2" x="243" y="49" text-anchor="middle">매달</text></g>`,
+  'shortform-video': `<g class="pa" style="--d:.05s"><rect class="pv-c" x="20" y="2" width="38" height="64" rx="8"/><rect class="pv-m2" x="25" y="8" width="28" height="44" rx="4"/><path class="pv-play" d="M35 23l10 7-10 7z"/></g><rect class="pv-m" x="25" y="57" width="28" height="3" rx="1.5"/><rect class="pv-s pl" style="--d:.4s" x="25" y="57" width="18" height="3" rx="1.5"/>${[0,1,2].map((i)=>`<g class="pa" style="--d:${(0.4+i*0.18).toFixed(2)}s"><rect class="pv-c" x="${76+i*64}" y="14" width="56" height="40" rx="8"/><text class="pv-t3" x="${104+i*64}" y="38" text-anchor="middle">${['릴스','틱톡','쇼츠'][i]}</text></g>`).join('')}`,
+  'ads-setup': `${[24,17,10].map((r,i)=>`<circle class="pv-ring${i===2?' pv-ring-a':''} pa" style="--d:${(0.12*i).toFixed(2)}s" cx="40" cy="34" r="${r}"/>`).join('')}<circle class="pv-dot pa" style="--d:.45s" cx="40" cy="34" r="4"/>${['구글','메타','빙'].map((t,i)=>`<g class="pa" style="--d:${(0.55+i*0.15).toFixed(2)}s"><rect class="pv-chip${i===0?' pv-chip-a':''}" x="${84+i*62}" y="10" width="54" height="22" rx="11"/><text class="pv-t3" x="${111+i*62}" y="25" text-anchor="middle">${t}</text></g>`).join('')}<path class="pv-ln pl" style="--d:1s" pathLength="100" d="M84 48 L262 48"/><text class="pv-t2 pa" style="--d:1.2s" x="173" y="62" text-anchor="middle">전환 추적 연결</text>`,
+  'ads-management': `${[0,1,2,3,4,5].map((i)=>`<rect class="pv-b${i===5?' pv-b-a':''} pb" style="--d:${(0.1*i).toFixed(2)}s" x="${14+i*34}" y="${54-(10+i*7)}" width="22" height="${10+i*7}" rx="4"/>`).join('')}<path class="pv-ax" d="M8 56 L218 56"/><path class="pv-cost pl" style="--d:.7s" pathLength="100" d="M25 10 L59 16 L93 24 L127 32 L161 38 L195 44"/><text class="pv-t2 pa" style="--d:1.2s" x="246" y="30" text-anchor="middle">문의 ↑</text><text class="pv-t2 pa" style="--d:1.3s" x="246" y="46" text-anchor="middle">비용 ↓</text>`,
+  'review-reply': `${[0,1,2,3,4].map((i)=>`<g transform="translate(${12+i*20} 6) scale(.8)"><path class="pv-star pa" style="--d:${(0.08*i).toFixed(2)}s" d="M10 0l3 6.5 7 .8-5.2 4.7 1.5 7-6.3-3.6L3.7 19l1.5-7L0 7.3l7-.8z"/></g>`).join('')}<g class="pa" style="--d:.45s"><rect class="pv-c" x="10" y="26" width="120" height="34" rx="9"/><rect class="pv-m" x="20" y="36" width="96" height="5" rx="2.5"/><rect class="pv-m" x="20" y="46" width="70" height="5" rx="2.5"/></g><g class="pa" style="--d:.9s"><rect class="pv-ai" x="144" y="18" width="126" height="34" rx="9"/><text class="pv-t4" x="156" y="39">사장님 답글 ✓</text></g><text class="pv-t2 pa" style="--d:1.2s" x="207" y="64" text-anchor="middle">24시간 안에</text>`,
+  'gbp-posting': `${[0,1,2,3,4,5,6].map((i)=>`<text class="pv-t2" x="${22+i*36}" y="14" text-anchor="middle">${'일월화수목금토'[i]}</text>`).join('')}${[0,1].map((r)=>[0,1,2,3,4,5,6].map((i)=>`<rect class="pv-cell" x="${8+i*36}" y="${20+r*24}" width="28" height="18" rx="5"/>`).join('')).join('')}${[[1,0],[4,0],[2,1],[5,1]].map(([i,r],k)=>`<rect class="pv-post pa" style="--d:${(0.2+k*0.18).toFixed(2)}s" x="${8+i*36}" y="${20+r*24}" width="28" height="18" rx="5"/>`).join('')}`,
+  'care-plan': `<path class="pv-sh pa" style="--d:.05s" d="M40 6 L64 14 V34 C64 48 52 58 40 62 C28 58 16 48 16 34 V14 Z"/><path class="pv-ck2 pl" style="--d:.4s" pathLength="100" d="M29 34 L37 42 L52 26"/><path class="pv-pulse pl" style="--d:.6s" pathLength="100" d="M80 36 L118 36 L128 18 L140 52 L150 36 L262 36"/><text class="pv-t2 pa" style="--d:1.1s" x="200" y="60" text-anchor="middle">보안·백업·수정</text>`,
+};
+
+/* 납품 기간 막대 — 2주(영업일 10일)를 10칸으로. 반복 서비스는 점이 차례로 켜진다 */
+function deliveryBar(d) {
+  const seg = (n, half = 0) => Array.from({ length: 10 }, (_, i) => `<i class="${i < n ? 'f' : i < n + half ? 'h' : ''}" style="--d:${(0.06 * i).toFixed(2)}s"></i>`).join('');
+  let m;
+  if (d === '즉시') return `<span class="pd pd-now"><span class="pd-seg">${seg(10)}</span><b>결제 즉시 받음</b></span>`;
+  if ((m = d.match(/(\d+)~(\d+)영업일/))) return `<span class="pd"><span class="pd-seg">${seg(+m[1], +m[2] - +m[1])}</span><b>영업일 ${m[1]}~${m[2]}일 뒤 받음</b></span>`;
+  if ((m = d.match(/영업일 (\d+)일/))) return `<span class="pd"><span class="pd-seg">${seg(+m[1])}</span><b>영업일 ${m[1]}일 뒤 받음</b></span>`;
+  return `<span class="pd pd-rep"><span class="pd-dots">${[0, 1, 2, 3].map((i) => `<i style="--d:${(0.3 * i).toFixed(1)}s"></i>`).join('')}</span><b>${d}</b></span>`;
+}
+
 function productCard(s, opts = {}) {
   const pick = opts.pick ? ' data-pick="1"' : '';
   return `
 <a href="/service/${s.slug}/" class="prod-card prod-cat-${s.cat}" data-cat="${s.cat}"${pick}>
-  <div class="prod-top"><span class="prod-ico">${svcIcon(s.slug)}</span>${badgeHtml(s)}</div>
+  <div class="prod-top"><span class="prod-ico">${svcIcon(s.slug)}</span>${badgeHtml(s)}</div>${opts.viz && PV_SVG[s.slug] ? `
+  <div class="pv" aria-hidden="true"><svg viewBox="0 0 280 68" preserveAspectRatio="xMidYMid meet">${PV_SVG[s.slug]}</svg></div>` : ''}
   <h3 class="h3">${s.name}</h3>
   <p class="body-sm">${s.shortDescription}</p>
   <div class="price-row"><span class="price">${s.price}</span><span class="price-sub">${s.priceSub}</span></div>
-  <div class="prod-foot"><span class="prod-chip">${s.delivery}</span><span class="card-cta">자세히 보기 <i>→</i></span></div>
+  <div class="prod-foot">${opts.viz ? deliveryBar(s.delivery) : `<span class="prod-chip">${s.delivery}</span>`}<span class="card-cta">자세히 보기 <i>→</i></span></div>
 </a>`;
 }
 
@@ -1858,7 +1891,7 @@ ${showcaseSection()}
       ${Object.entries(SVC_CAT_LABEL).map(([k, v]) => `<button type="button" data-cat="${k}">${v}</button>`).join('')}
     </div>
     <div class="grid3 svc-grid" id="svc-grid" data-cat="pick">
-      ${DATA.services.map((s, i) => productCard(s, { pick: i < 8 })).join('')}
+      ${DATA.services.map((s, i) => productCard(s, { pick: i < 8, viz: true })).join('')}
       <a href="/services/" class="prod-card prod-card-more" data-pick="1" data-cat="all">
         <h3 class="h3">전체 ${DATA.services.length}개 서비스 보기 →</h3>
         <p class="body-sm">원타임부터 월 구독까지 — 필요한 것만 골라 담으세요.</p>
@@ -1878,10 +1911,22 @@ ${showcaseSection()}
     cards.forEach(function (c) {
       var show = cat === 'pick' ? c.getAttribute('data-pick') === '1' : (c.getAttribute('data-cat') === cat || c.getAttribute('data-cat') === 'all');
       c.classList.toggle('svc-hide', !show);
-      if (show) { c.classList.remove('svc-pop'); void c.offsetWidth; c.classList.add('svc-pop'); }
+      if (show) { c.classList.remove('svc-pop', 'pv-re'); void c.offsetWidth; c.classList.add('svc-pop', 'pv-re'); }
     });
   }
   apply('pick');
+  /* 결과물 그림·납품 막대: 화면 아래에 있을 때만 숨겼다가 들어오면 그린다. 마우스를 올리면 다시 그린다 */
+  if (!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+    var go = function () { grid.classList.add('pv-go'); };
+    if (grid.getBoundingClientRect().top > innerHeight * 0.85 && 'IntersectionObserver' in window) {
+      grid.classList.add('pv-arm');
+      var io = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { go(); io.disconnect(); } }, { threshold: 0.15 });
+      io.observe(grid); setTimeout(go, 3000);
+      window.addEventListener('scroll', function f() { if (grid.getBoundingClientRect().top < innerHeight * 0.85) { go(); window.removeEventListener('scroll', f); } }, { passive: true });
+    } else go();
+    var replay = function (c) { c.classList.remove('pv-re'); void c.offsetWidth; c.classList.add('pv-re'); };
+    cards.forEach(function (c) { c.addEventListener('mouseenter', function () { if (grid.classList.contains('pv-go')) replay(c); }); });
+  }
   tabs.addEventListener('click', function (e) {
     var b = e.target.closest('button[data-cat]'); if (!b) return;
     tabs.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
