@@ -1688,8 +1688,9 @@ ${showcaseSection()}
     <p class="vs-sub">사람이 손으로 하던 일을 AI가 먼저 끝내고, 20년 경력 마케터가 마지막을 확인합니다. 그래서 더 싸고, 더 빠르고, 꾸준합니다.</p>
     <div class="vs-race" id="vs-race" aria-hidden="true">
       <div class="vr-row vr-old"><span class="vr-name">일반 대행사</span><div class="vr-track"><span class="vr-fill"></span><span class="vr-step" style="--x:22%">미팅</span><span class="vr-step" style="--x:48%">견적</span><span class="vr-step" style="--x:74%">계약</span><span class="vr-end">시작 2주+</span></div></div>
-      <div class="vr-row vr-bh"><span class="vr-name">BizHigher</span><div class="vr-track"><span class="vr-fill"></span><span class="vr-goal"><b>✓</b>첫 결과물 영업일 3일</span></div></div>
+      <div class="vr-row vr-bh"><span class="vr-name">BizHigher</span><div class="vr-track"><span class="vr-fill"></span><span class="vr-ms vr-t" style="--x:20%;--t:0.87s"><b></b><em><i class="vr-lg">리뷰 </i>QR 완성</em></span><span class="vr-ms vr-b" style="--x:30%;--t:1.23s"><b></b><em>프로필 최적화</em></span><span class="vr-ms vr-t" style="--x:50%;--t:1.95s"><b></b><em><i class="vr-lg">로컬 </i>등록 · 광고<i class="vr-lg"> 셋업</i></em></span><span class="vr-ms vr-b" style="--x:70%;--t:2.67s"><b></b><em>웹사이트 완성</em></span><span class="vr-end vr-end-bh">게시물 매주 · 최적화 계속</span></div></div>
       <div class="vr-axis"><span>주문한 날</span><span>1주</span><span>2주</span></div>
+      <p class="vr-foot">같은 2주 동안 · BizHigher 서비스별 납품 기준(영업일), 주문한 상품에 따라 다릅니다</p>
     </div>
     <div class="vs-table" id="vs-table" role="table" aria-label="일반 대행사와 BizHigher 비교">
       <div class="vs-c vs-lab vs-head-lab"></div>
@@ -1739,6 +1740,24 @@ ${showcaseSection()}
       io.observe(el);
       setTimeout(function () { if (!el.classList.contains('vs-go') && el.getBoundingClientRect().top < window.innerHeight) el.classList.add('vs-go'); }, 3000);
     });
+    /* BizHigher 칸 글자 타이핑 — 텍스트는 HTML에 그대로 있고, 재생할 때만 비웠다가 다시 쓴다 */
+    var tb = document.getElementById('vs-table');
+    if (tb && tb.classList.contains('vs-arm')) {
+      var cells = Array.prototype.slice.call(tb.querySelectorAll('.vs-bh.vs-row'));
+      var texts = cells.map(function (c) { var n = c.lastChild; var t = n && n.nodeType === 3 ? n.nodeValue : ''; if (t) n.nodeValue = ''; return { n: n, t: t }; });
+      var mo = new MutationObserver(function () {
+        if (!tb.classList.contains('vs-go')) return;
+        mo.disconnect();
+        cells.forEach(function (c, i) {
+          var o = texts[i]; if (!o.t) return;
+          setTimeout(function () {
+            c.classList.add('vs-typing'); var k = 0;
+            var iv = setInterval(function () { k++; o.n.nodeValue = o.t.slice(0, k); if (k >= o.t.length) { clearInterval(iv); c.classList.remove('vs-typing'); c.classList.add('vs-typed'); } }, 32);
+          }, 350 + i * 260);
+        });
+      });
+      mo.observe(tb, { attributes: true, attributeFilter: ['class'] });
+    }
   } catch (e) {}
 })();
 </script>
