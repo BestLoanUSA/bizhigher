@@ -1683,32 +1683,65 @@ ${showcaseSection()}
 
 <section class="section vs-section">
   <div class="container">
-    <p class="eyebrow">WHY AI AGENCY</p>
-    <h2 class="h2">대행사와 비교하지 마세요</h2>
-    <p class="vs-sub">사람만 쓰는 대행사와 AI 광고회사는 구조가 다릅니다. 구조가 다르면, 가격과 속도가 다릅니다.</p>
-    <div class="vs-table" role="table" aria-label="일반 대행사와 BizHigher 비교">
+    <p class="eyebrow">BIZHIGHER vs 대행사</p>
+    <h2 class="h2">같은 일을 절반 이하의 가격으로, 몇 배 빠르게</h2>
+    <p class="vs-sub">사람이 손으로 하던 일을 AI가 먼저 끝내고, 20년 경력 마케터가 마지막을 확인합니다. 그래서 더 싸고, 더 빠르고, 꾸준합니다.</p>
+    <div class="vs-race" id="vs-race" aria-hidden="true">
+      <div class="vr-row vr-old"><span class="vr-name">일반 대행사</span><div class="vr-track"><span class="vr-fill"></span><span class="vr-step" style="--x:22%">미팅</span><span class="vr-step" style="--x:48%">견적</span><span class="vr-step" style="--x:74%">계약</span><span class="vr-end">시작 2주+</span></div></div>
+      <div class="vr-row vr-bh"><span class="vr-name">BizHigher</span><div class="vr-track"><span class="vr-fill"></span><span class="vr-goal"><b>✓</b>첫 결과물 영업일 3일</span></div></div>
+      <div class="vr-axis"><span>주문한 날</span><span>1주</span><span>2주</span></div>
+    </div>
+    <div class="vs-table" id="vs-table" role="table" aria-label="일반 대행사와 BizHigher 비교">
       <div class="vs-c vs-lab vs-head-lab"></div>
       <div class="vs-c vs-old vs-head">일반 대행사</div>
       <div class="vs-c vs-bh vs-head vs-bh-head"><span class="vs-logo">Biz<b>Higher</b></span><span class="vs-badge">AI 광고회사</span></div>
-      <div class="vs-c vs-lab">시작까지</div>
-      <div class="vs-c vs-old"><i>—</i>미팅 · 견적 · 계약, 보통 2주+</div>
-      <div class="vs-c vs-bh"><i>✓</i>온라인 주문 — 오늘 바로 시작</div>
-      <div class="vs-c vs-lab">첫 결과물</div>
-      <div class="vs-c vs-old"><i>—</i>2~4주</div>
-      <div class="vs-c vs-bh"><i>✓</i>영업일 3일</div>
-      <div class="vs-c vs-lab">비용</div>
-      <div class="vs-c vs-old"><i>—</i>월 리테이너 $1,500~</div>
-      <div class="vs-c vs-bh"><i>✓</i>월 $219부터 · 정찰제</div>
-      <div class="vs-c vs-lab">모니터링</div>
-      <div class="vs-c vs-old"><i>—</i>담당자 근무시간에만</div>
-      <div class="vs-c vs-bh"><i>✓</i>AI 24시간 + 전문가 검수</div>
-      <div class="vs-c vs-lab">해지</div>
-      <div class="vs-c vs-old"><i>—</i>전화 · 위약금</div>
-      <div class="vs-c vs-bh vs-bh-last"><i>✓</i>클릭 2번, 언제든</div>
+      <div class="vs-c vs-lab vs-row" style="--i:0">시작까지</div>
+      <div class="vs-c vs-old vs-row" style="--i:0"><i>—</i>미팅 · 견적 · 계약, 보통 2주+</div>
+      <div class="vs-c vs-bh vs-row" style="--i:0"><i>✓</i>온라인 주문 — 오늘 바로 시작</div>
+      <div class="vs-c vs-lab vs-row" style="--i:1">첫 결과물</div>
+      <div class="vs-c vs-old vs-row" style="--i:1"><i>—</i>2~4주</div>
+      <div class="vs-c vs-bh vs-row" style="--i:1"><i>✓</i>영업일 3일</div>
+      <div class="vs-c vs-lab vs-row" style="--i:2">비용</div>
+      <div class="vs-c vs-old vs-row" style="--i:2"><i>—</i>월 리테이너 $1,500~</div>
+      <div class="vs-c vs-bh vs-row vs-hl" style="--i:2"><i>✓</i>월 $219부터 · 정찰제</div>
+      <div class="vs-c vs-lab vs-row" style="--i:3">가격 확인</div>
+      <div class="vs-c vs-old vs-row" style="--i:3"><i>—</i>견적을 받아야 알 수 있음</div>
+      <div class="vs-c vs-bh vs-row" style="--i:3"><i>✓</i>사이트에 전부 공개</div>
+      <div class="vs-c vs-lab vs-row" style="--i:4">모니터링</div>
+      <div class="vs-c vs-old vs-row" style="--i:4"><i>—</i>담당자 근무시간에만</div>
+      <div class="vs-c vs-bh vs-row" style="--i:4"><i>✓</i>AI 24시간 + 전문가 검수</div>
+      <div class="vs-c vs-lab vs-row" style="--i:5">쌓이는 것</div>
+      <div class="vs-c vs-old vs-row" style="--i:5"><i>—</i>광고비를 끄면 효과도 끝</div>
+      <div class="vs-c vs-bh vs-row" style="--i:5"><i>✓</i>프로필·등록·리뷰가 남아 손님이 꾸준히</div>
+      <div class="vs-c vs-lab vs-row" style="--i:6">해지</div>
+      <div class="vs-c vs-old vs-row" style="--i:6"><i>—</i>전화 · 위약금</div>
+      <div class="vs-c vs-bh vs-row vs-bh-last" style="--i:6"><i>✓</i>클릭 2번, 언제든</div>
     </div>
     <p class="vs-note">* 일반 대행사 항목은 미국 로컬 마케팅 대행사의 일반적인 계약 조건 기준입니다. <a href="/pricing/">BizHigher 정찰제 가격표 보기 →</a></p>
   </div>
 </section>
+<script>
+/* 비교 섹션 — 화면에 들어오면 시간 경주 막대가 출발하고 표 줄이 차례로 나타난다.
+   JS가 없거나 움직임 줄이기면 완성된 상태 그대로 보인다(.vs-arm은 관찰을 시작할 때만 붙는다) */
+(function () {
+  try {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return;
+    ['vs-race', 'vs-table'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      var r = el.getBoundingClientRect();
+      if (r.top < window.innerHeight * 0.85) return; /* 이미 보이는 위치면 연출 없이 그대로 */
+      el.classList.add('vs-arm');
+      var io = new IntersectionObserver(function (es) {
+        if (!es[0].isIntersecting) return;
+        el.classList.add('vs-go'); io.disconnect();
+      }, { threshold: 0.35 });
+      io.observe(el);
+      setTimeout(function () { if (!el.classList.contains('vs-go') && el.getBoundingClientRect().top < window.innerHeight) el.classList.add('vs-go'); }, 3000);
+    });
+  } catch (e) {}
+})();
+</script>
 
 <section class="section acc-section">
   <div class="container">
