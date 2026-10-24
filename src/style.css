@@ -1982,6 +1982,7 @@ img { max-width: 100%; display: block; }
 .blog-strip { display: flex; gap: 18px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding: 8px max(24px, calc((100vw - 1120px) / 2 + 24px)) 22px; scroll-padding-left: max(24px, calc((100vw - 1120px) / 2 + 24px)); scrollbar-width: thin; scrollbar-color: var(--blue-300) transparent; }
 .blog-strip .prod-card { flex: 0 0 320px; scroll-snap-align: start; }
 .blog-strip .blog-more { flex-basis: 240px; }
+.blog-strip.bs-auto { scroll-snap-type: none; }
 @media (max-width: 767px) {
   .blog-strip-sec { padding-bottom: 48px; }
   .blog-strip-head { flex-direction: column; align-items: flex-start; gap: 14px; margin-bottom: 16px; }

@@ -1935,7 +1935,7 @@ function blogStripSection(posts) {
     <div>
       <p class="eyebrow" style="text-align:left;">BLOG</p>
       <h2 class="h2" style="text-align:left;margin-bottom:8px;">사장님을 위한 실전 가이드</h2>
-      <p class="blog-strip-sub">구글 노출·리뷰·광고·AI 검색 — 주 3편, 미국 한인 사장님 눈높이로 씁니다. 옆으로 넘겨 보세요.</p>
+      <p class="blog-strip-sub">구글 노출·리뷰·광고·AI 검색 — 주 3편, 미국 한인 사장님 눈높이로 씁니다. 마우스를 올리면 멈춥니다.</p>
     </div>
     <div class="blog-strip-ctl">
       <button type="button" class="bs-btn" data-dir="-1" aria-label="이전">←</button>
@@ -1958,9 +1958,40 @@ function blogStripSection(posts) {
     b.addEventListener('click', function () {
       var card = strip.querySelector('.prod-card');
       var step = card ? card.getBoundingClientRect().width + 18 : 320;
+      pause(3500);
       strip.scrollBy({ left: step * parseInt(b.getAttribute('data-dir'), 10), behavior: 'smooth' });
     });
   });
+  /* 왼쪽으로 천천히 흐르기 — 마우스·손가락·키보드가 닿으면 멈춤 */
+  var held = false, until = 0, half = 0, pos = 0, last = 0;
+  function pause(ms) { until = Math.max(until, performance.now() + ms); }
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var orig = Array.prototype.slice.call(strip.children);
+  orig.forEach(function (n) {
+    var c = n.cloneNode(true); c.setAttribute('aria-hidden', 'true');
+    c.querySelectorAll('a,button').forEach(function (a) { a.setAttribute('tabindex', '-1'); });
+    if (c.tagName === 'A') c.setAttribute('tabindex', '-1');
+    strip.appendChild(c);
+  });
+  strip.classList.add('bs-auto');
+  function measure() { half = strip.children[orig.length].offsetLeft - orig[0].offsetLeft; }
+  measure(); window.addEventListener('resize', measure);
+  ['mouseenter', 'focusin', 'touchstart', 'pointerdown'].forEach(function (e) { strip.addEventListener(e, function () { held = true; }, { passive: true }); });
+  ['mouseleave', 'focusout', 'touchend', 'pointerup', 'touchcancel'].forEach(function (e) { strip.addEventListener(e, function () { held = false; pause(2500); }, { passive: true }); });
+  strip.addEventListener('wheel', function () { pause(2500); }, { passive: true });
+  var vis = true;
+  if ('IntersectionObserver' in window) new IntersectionObserver(function (es) { vis = es[0].isIntersecting; }).observe(strip);
+  function tick(t) {
+    var dt = last ? Math.min(t - last, 50) : 0; last = t;
+    if (!held && vis && t > until && !document.hidden && half > 0) {
+      if (Math.abs(strip.scrollLeft - pos) > 2) pos = strip.scrollLeft;
+      pos += dt * 0.035;
+      if (pos >= half) pos -= half;
+      strip.scrollLeft = pos;
+    } else { pos = strip.scrollLeft; if (half > 0 && pos >= half) { pos -= half; strip.scrollLeft = pos; } }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
 })();
 </script>`;
 }
