@@ -1641,7 +1641,7 @@ function homePage(posts) {
     <p class="eyebrow">HOW IT WORKS</p>
     <h2 class="h2">차원이 다른 광고를 경험하세요</h2>
     <div class="stack-zone">
-      <div class="stack-card"><span class="stack-num">01</span><h3 class="stack-title">쇼핑하듯 클릭 몇 번으로 광고 시작.</h3><p class="stack-desc">모든 가격을 100% 공개합니다. 지루한 견적 미팅은 없고 귀찮은 영업 전화도 없습니다. 기존 대행사가 미팅하고 미루며 버리던 시간을 단 몇분으로 완전히 단축합니다.</p></div>
+      <div class="stack-card"><span class="stack-num">01</span><h3 class="stack-title">반짝 줄 세우는 광고보다, 매달 손님이 쌓이는 광고.</h3><p class="stack-desc">인플루언서 한 번이면 줄은 생깁니다. 하지만 광고가 끝나면 손님도 같이 빠집니다. 저희는 시간이 걸려도 가게에 남는 일을 합니다. 구글 프로필을 다듬고, 로컬 디렉토리에 가게를 등록하고, 웹사이트와 꾸준한 게시물로 '지금 영업 중'이라는 신호를 보내고, 계산대 QR로 리뷰를 모읍니다. 한 번 해 둔 작업은 사라지지 않고 검색 순위를 조금씩 끌어올립니다. 손님이 가게를 찾는 순간마다 우리 가게가 보이게 만드는 것, 가게를 오래 버티게 하는 광고입니다.</p></div>
       <div class="stack-card stack-c2"><span class="stack-num">02</span><h3 class="stack-title">가격은 기존 대행사의 반값 이하, 일처리는 수배 이상.</h3><p class="stack-desc">독자적인 광고 전문 '병렬 AI 에이전트'들이 기획·카피·디자인을 동시다발적으로 자동화하고, 베테랑 한인 광고 전문가가 최종 전략을 검수합니다. 불필요한 인건비 거품을 완전히 제거함으로, 기존 대행사에서는 불가능한 압도적 가격과 퀄리티를 제공합니다.</p></div>
       <div class="stack-card stack-c3"><span class="stack-num">03</span><h3 class="stack-title">AI는 쉬지 않습니다. 365일 실시간 반응 및 초고속 최적화.</h3><p class="stack-desc">인간 에이전시가 퇴근하고 쉬는 순간에도 AI는 멈추지 않습니다. 24시간 실시간으로 데이터를 감시하고 반응하여, 매 순간 최상의 광고 효율을 내도록 최적화 사이클을 자동으로 돌립니다. 차원이 다른 속도와 성과를 경험하세요.</p></div>
     </div>
