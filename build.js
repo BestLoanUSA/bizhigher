@@ -394,11 +394,30 @@ function deliveryBar(d) {
   return `<span class="pd pd-rep"><span class="pd-dots">${[0, 1, 2, 3].map((i) => `<i style="--d:${(0.3 * i).toFixed(1)}s"></i>`).join('')}</span><b>${d}</b></span>`;
 }
 
+
+/* 결과물 그림·납품 막대(.pv-grid): 화면 아래에 있을 때만 숨겼다가 들어오면 그린다. 3초 뒤엔 무조건 보인다. 마우스를 올리면 다시 그린다 */
+const PV_JS = `<script>
+(function () {
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.querySelectorAll('.pv-grid').forEach(function (grid) {
+    var go = function () { grid.classList.add('pv-go'); };
+    if (grid.getBoundingClientRect().top > innerHeight * 0.85 && 'IntersectionObserver' in window) {
+      grid.classList.add('pv-arm');
+      var io = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { go(); io.disconnect(); } }, { threshold: 0.15 });
+      io.observe(grid); setTimeout(go, 3000);
+    } else go();
+    grid.querySelectorAll('.prod-card').forEach(function (c) {
+      c.addEventListener('mouseenter', function () { if (!grid.classList.contains('pv-go')) return; c.classList.remove('pv-re'); void c.offsetWidth; c.classList.add('pv-re'); });
+    });
+  });
+})();
+</script>`;
+
 function productCard(s, opts = {}) {
   const pick = opts.pick ? ' data-pick="1"' : '';
   return `
 <a href="/service/${s.slug}/" class="prod-card prod-cat-${s.cat}" data-cat="${s.cat}"${pick}>
-  <div class="prod-top"><span class="prod-ico">${svcIcon(s.slug)}</span>${badgeHtml(s)}</div>${opts.viz && PV_SVG[s.slug] ? `
+  ${opts.viz && PV_SVG[s.slug] ? '' : `<div class="prod-top"><span class="prod-ico">${svcIcon(s.slug)}</span>${badgeHtml(s)}</div>`}${opts.viz && PV_SVG[s.slug] ? `
   <div class="pv" aria-hidden="true"><svg viewBox="0 0 280 68" preserveAspectRatio="xMidYMid meet">${PV_SVG[s.slug]}</svg></div>` : ''}
   <h3 class="h3">${s.name}</h3>
   <p class="body-sm">${s.shortDescription}</p>
@@ -1890,7 +1909,7 @@ ${showcaseSection()}
       <button type="button" class="on" data-cat="pick">추천</button>
       ${Object.entries(SVC_CAT_LABEL).map(([k, v]) => `<button type="button" data-cat="${k}">${v}</button>`).join('')}
     </div>
-    <div class="grid3 svc-grid" id="svc-grid" data-cat="pick">
+    <div class="grid3 svc-grid pv-grid" id="svc-grid" data-cat="pick">
       ${DATA.services.map((s, i) => productCard(s, { pick: i < 8, viz: true })).join('')}
       <a href="/services/" class="prod-card prod-card-more" data-pick="1" data-cat="all">
         <h3 class="h3">전체 ${DATA.services.length}개 서비스 보기 →</h3>
@@ -1915,18 +1934,6 @@ ${showcaseSection()}
     });
   }
   apply('pick');
-  /* 결과물 그림·납품 막대: 화면 아래에 있을 때만 숨겼다가 들어오면 그린다. 마우스를 올리면 다시 그린다 */
-  if (!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) {
-    var go = function () { grid.classList.add('pv-go'); };
-    if (grid.getBoundingClientRect().top > innerHeight * 0.85 && 'IntersectionObserver' in window) {
-      grid.classList.add('pv-arm');
-      var io = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { go(); io.disconnect(); } }, { threshold: 0.15 });
-      io.observe(grid); setTimeout(go, 3000);
-      window.addEventListener('scroll', function f() { if (grid.getBoundingClientRect().top < innerHeight * 0.85) { go(); window.removeEventListener('scroll', f); } }, { passive: true });
-    } else go();
-    var replay = function (c) { c.classList.remove('pv-re'); void c.offsetWidth; c.classList.add('pv-re'); };
-    cards.forEach(function (c) { c.addEventListener('mouseenter', function () { if (grid.classList.contains('pv-go')) replay(c); }); });
-  }
   tabs.addEventListener('click', function (e) {
     var b = e.target.closest('button[data-cat]'); if (!b) return;
     tabs.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
@@ -1934,6 +1941,7 @@ ${showcaseSection()}
   });
 })();
 </script>
+${PV_JS}
 
 ${packageMatrixSection({ home: true })}
 
@@ -2097,11 +2105,12 @@ ${[
   <div class="container">
     <h2 class="h2-left">${title}</h2>
     <p class="svc-cat-sub">${sub}</p>
-    <div class="grid3">
-      ${DATA.services.filter((s) => s.cat === cat).map(productCard).join('')}
+    <div class="grid3 pv-grid">
+      ${DATA.services.filter((s) => s.cat === cat).map((s) => productCard(s, { viz: true })).join('')}
     </div>
   </div>
 </section>`).join('')}
+${PV_JS}
 
 <section class="pkg-band">
   <div class="container center">
