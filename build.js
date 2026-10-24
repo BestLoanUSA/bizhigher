@@ -278,7 +278,7 @@ const FOOTER_BASE = `
           function step(ts) {
             if (!start) start = ts;
             var p = Math.min((ts - start) / 1200, 1);
-            el.textContent = pre + Math.round(target * (1 - Math.pow(1 - p, 3))) + suf;
+            el.textContent = pre + Math.round(target * (1 - Math.pow(1 - p, 3))).toLocaleString('en-US') + suf;
             if (p < 1) requestAnimationFrame(step);
           }
           requestAnimationFrame(step);
@@ -486,7 +486,7 @@ function dataBandSection() {
   <div class="container">
     <p class="eyebrow">OUR OWN DATA</p>
     <h2 class="h2">${headline}</h2>
-    <p class="data-band-sub">${sub}</p>
+    ${sub.split('\n\n').map((t) => `<p class="data-band-sub">${t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')}</p>`).join('')}
     <div class="grid3">
       ${stats.map((x) => `<div class="stat-box"><div class="stat" data-count="${x.n}" data-suffix="곳">${x.n.toLocaleString('en-US')}곳</div><p class="stat-label">${x.label}</p></div>`).join('')}
     </div>
@@ -2003,12 +2003,13 @@ function blogStripSection(posts) {
     b.addEventListener('click', function () {
       var card = strip.querySelector('.prod-card');
       var step = card ? card.getBoundingClientRect().width + 18 : 320;
-      pause(3500);
+      pause(2500);
       strip.scrollBy({ left: step * parseInt(b.getAttribute('data-dir'), 10), behavior: 'smooth' });
     });
   });
   /* 왼쪽으로 천천히 흐르기 — 마우스·손가락·키보드가 닿으면 멈춤 */
-  var held = false, until = 0, half = 0, pos = 0, last = 0;
+  var until = 0, half = 0, pos = 0, last = 0;
+  var canHover = window.matchMedia && matchMedia('(hover: hover)').matches;
   function pause(ms) { until = Math.max(until, performance.now() + ms); }
   if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   var orig = Array.prototype.slice.call(strip.children);
@@ -2021,14 +2022,21 @@ function blogStripSection(posts) {
   strip.classList.add('bs-auto');
   function measure() { half = strip.children[orig.length].offsetLeft - orig[0].offsetLeft; }
   measure(); window.addEventListener('resize', measure);
-  ['mouseenter', 'focusin', 'touchstart', 'pointerdown'].forEach(function (e) { strip.addEventListener(e, function () { held = true; }, { passive: true }); });
-  ['mouseleave', 'focusout', 'touchend', 'pointerup', 'touchcancel'].forEach(function (e) { strip.addEventListener(e, function () { held = false; pause(2500); }, { passive: true }); });
-  strip.addEventListener('wheel', function () { pause(2500); }, { passive: true });
+  /* 멈춤 조건은 매 프레임 다시 본다: 마우스가 지금 위에 있을 때(:hover), 키보드로 카드에 포커스했을 때.
+     손가락은 만진 뒤 2초만 멈춘다(터치 :hover는 남아 있을 수 있어 쓰지 않는다) */
+  strip.addEventListener('touchstart', function () { pause(2000); }, { passive: true });
+  strip.addEventListener('touchmove', function () { pause(2000); }, { passive: true });
+  strip.addEventListener('wheel', function () { pause(1500); }, { passive: true });
   var vis = true;
   if ('IntersectionObserver' in window) new IntersectionObserver(function (es) { vis = es[0].isIntersecting; }).observe(strip);
+  function held() {
+    if (canHover && strip.matches(':hover')) return true;
+    var f = document.activeElement;
+    return !!(f && strip.contains(f) && f.matches(':focus-visible'));
+  }
   function tick(t) {
     var dt = last ? Math.min(t - last, 50) : 0; last = t;
-    if (!held && vis && t > until && !document.hidden && half > 0) {
+    if (vis && !document.hidden && half > 0 && !held() && t > until) {
       if (Math.abs(strip.scrollLeft - pos) > 2) pos = strip.scrollLeft;
       pos += dt * 0.035;
       if (pos >= half) pos -= half;

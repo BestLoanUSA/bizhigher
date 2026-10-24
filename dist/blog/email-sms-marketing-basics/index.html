@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="/style.css?v=0bebe18f">
+<link rel="stylesheet" href="/style.css?v=f7cb8f22">
 <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"가게 이메일·문자 마케팅 입문 — 단골에게 다시 오게 하는 법","description":"새 손님만 찾다 보면 놓치는 것이 단골입니다. 동의받은 연락처 모으기, 월 1~2회 보내는 내용, 수신 거부와 문자 동의 같은 법적 기본까지 사장님 눈높이로 정리했습니다.","image":"https://bizhigher.com/og/email-sms-marketing-basics.png","datePublished":"2026-10-20","dateModified":"2026-10-20","inLanguage":"ko","author":{"@type":"Organization","@id":"https://bizhigher.com/#organization","name":"BizHigher","url":"https://bizhigher.com/","logo":{"@type":"ImageObject","url":"https://bizhigher.com/apple-touch-icon.png","width":180,"height":180}},"publisher":{"@type":"Organization","@id":"https://bizhigher.com/#organization","name":"BizHigher","url":"https://bizhigher.com/","logo":{"@type":"ImageObject","url":"https://bizhigher.com/apple-touch-icon.png","width":180,"height":180}},"articleSection":"콘텐츠·SNS","abstract":"가게 이메일·문자 마케팅은 동의받은 단골 목록 하나로 시작하면 됩니다. 마케팅 문자는 사전 서면 동의가 필요하고 수신 거부 방법을 반드시 넣어야 합니다. 처음에는 월 1~2회, 한 번에 제안 하나만 보내고 반응을 확인하세요.","isPartOf":{"@type":"Blog","@id":"https://bizhigher.com/blog/#blog"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://bizhigher.com/blog/email-sms-marketing-basics/"},"keywords":"가게 이메일 마케팅, 문자 마케팅, 단골 관리, 소상공인 재방문, CAN-SPAM, 한인 가게 문자 발송"},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"홈","item":"https://bizhigher.com/"},{"@type":"ListItem","position":2,"name":"블로그","item":"https://bizhigher.com/blog/"},{"@type":"ListItem","position":3,"name":"콘텐츠·SNS","item":"https://bizhigher.com/blog/content-sns-hub/"},{"@type":"ListItem","position":4,"name":"가게 이메일·문자 마케팅 입문 — 단골에게 다시 오게 하는 법","item":"https://bizhigher.com/blog/email-sms-marketing-basics/"}]},{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"손님 연락처가 많지 않은데 시작해도 되나요?","acceptedAnswer":{"@type":"Answer","text":"네, 괜찮습니다. 50명 목록으로도 신메뉴나 휴무 안내처럼 실제로 필요한 소식은 충분히 전달됩니다. 규모보다 동의받은 목록이라는 점이 더 중요합니다."}},{"@type":"Question","name":"손님이 직접 알려준 번호로 홍보 문자를 보내도 되나요?","acceptedAnswer":{"@type":"Answer","text":"예약 때 받은 번호는 예약 안내용으로 쓰는 것이 원칙입니다. 홍보 문자는 별도의 동의를 받아야 하므로, 가입 문구에 홍보 문자 수신 동의를 분명히 넣으세요."}},{"@type":"Question","name":"이메일이 스팸함으로 가면 어떡하나요?","acceptedAnswer":{"@type":"Answer","text":"구입한 목록을 쓰지 않고, 제목을 과장하지 않으며, 수신 거부를 쉽게 해두면 도움이 됩니다. 첫 가입 시 \"발신 주소를 연락처에 추가해 주세요\"라고 안내하는 방법도 있습니다."}},{"@type":"Question","name":"직접 못 쓰겠는데 어떻게 하나요?","acceptedAnswer":{"@type":"Answer","text":"사진과 핵심 정보만 정리해 두고 문구 작성이나 번역만 도움을 받는 방식도 가능합니다. 어느 쪽이든 발송 전 최종 확인은 사장님이 하셔야 가게 이야기가 정확하게 전달됩니다."}}]}]</script>
 
 <script type="text/javascript">
@@ -326,7 +326,7 @@
           function step(ts) {
             if (!start) start = ts;
             var p = Math.min((ts - start) / 1200, 1);
-            el.textContent = pre + Math.round(target * (1 - Math.pow(1 - p, 3))) + suf;
+            el.textContent = pre + Math.round(target * (1 - Math.pow(1 - p, 3))).toLocaleString('en-US') + suf;
             if (p < 1) requestAnimationFrame(step);
           }
           requestAnimationFrame(step);

@@ -1654,7 +1654,11 @@ img { max-width: 100%; display: block; }
 .data-band-quiet .stat-box { background: #fff; border: 1px solid var(--line); padding: 20px 14px; }
 .data-band-quiet .stat-box::before { opacity: 0.5; }
 .data-band-quiet .stat-box:hover { background: #fff; border-color: var(--blue-300); }
-.data-band-quiet .stat { font-size: 36px; color: var(--ink-900); }
+.data-band-quiet .stat { font-size: 40px; color: var(--blue-600); background: linear-gradient(120deg, var(--blue-700) 10%, var(--blue-500) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.data-band-quiet .stat-box:last-child .stat { background: linear-gradient(120deg, #C2261D 10%, #F0533F 100%); -webkit-background-clip: text; background-clip: text; }
+.data-band-quiet .data-band-sub { max-width: 760px; margin-bottom: 14px; }
+.data-band-quiet .data-band-sub + .grid3 { margin-top: 30px; }
+.data-band-quiet .data-band-sub strong { color: var(--ink-900); font-weight: 800; }
 .data-band-quiet .stat-label { color: var(--ink-600); font-size: 13.5px; }
 .data-band-quiet .data-band-links { margin-top: 28px; }
 .data-band-quiet .data-band-more { color: var(--blue-600); }
