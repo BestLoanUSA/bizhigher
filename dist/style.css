@@ -744,6 +744,69 @@ img { max-width: 100%; display: block; }
 .stack-desc { font-size: 17px; line-height: 1.7; color: var(--ink-600); max-width: 560px; }
 .stack-c3 .stack-desc { color: #DCE7FF; }
 
+/* HOW IT WORKS 카드 모션 그래픽 — 기본은 완성된 정지 화면, 카드가 화면에 보일 때만(.viz-on) 움직인다.
+   JS가 없거나 움직임 줄이기 설정이면 정지 화면 그대로 */
+.stack-card.has-viz { display: grid; grid-template-columns: 1.15fr 0.85fr; align-items: center; gap: 36px; }
+.stack-viz svg { width: 100%; height: auto; max-height: 240px; display: block; overflow: visible; font-family: inherit; }
+.stack-viz text { font-size: 13px; font-weight: 700; text-anchor: middle; fill: var(--ink-600); }
+.v-lanes rect { fill: #fff; stroke: rgba(10, 77, 245, .28); stroke-width: 1.5; }
+.v-lbl text { fill: var(--blue-600); }
+.v-base path { fill: none; stroke: rgba(10, 77, 245, .14); stroke-width: 3; }
+.v-flow path { fill: none; stroke: var(--blue-600); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 2 12; }
+.v-node { fill: var(--blue-600); }
+.v-ring { fill: none; stroke: var(--cyan-400); stroke-width: 2; opacity: 0; transform-box: fill-box; transform-origin: center; }
+.v-chk { fill: none; stroke: #fff; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 100; }
+.v-cap { fill: var(--ink-900, #0A1B4D) !important; }
+.v-clock circle { fill: none; stroke: rgba(10, 77, 245, .45); stroke-width: 2; }
+.v-hand { stroke: var(--blue-600); stroke-width: 2.4; stroke-linecap: round; transform-box: view-box; transform-origin: 292px 26px; }
+.v-24 { font-size: 11px !important; fill: var(--blue-600) !important; }
+.v-chip rect { fill: #fff; stroke: rgba(15, 23, 42, .14); }
+.v-chip text { fill: var(--ink-400, #8A94A6); }
+.v-strike { fill: none; stroke: #EF4444; stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 100; }
+.stack-viz .v-bl { text-anchor: start; }
+.stack-viz .v-bl.b { fill: var(--blue-600); }
+.v-bar0 { fill: rgba(15, 23, 42, .14); }
+.v-bar1 { fill: var(--blue-600); transform-box: fill-box; transform-origin: left center; }
+.stack-viz .v-half { text-anchor: start; font-size: 15px; font-weight: 800; fill: var(--blue-600); }
+.v-axis { stroke: rgba(255, 255, 255, .3); stroke-width: 1.5; }
+.v-spike { fill: none; stroke: rgba(255, 255, 255, .45); stroke-width: 2; stroke-dasharray: 3 5; }
+.stack-viz .v-sl { fill: rgba(255, 255, 255, .6); font-size: 12px; }
+.v-grow { fill: none; stroke: #fff; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 100; }
+.v-dots circle { fill: #fff; transform-box: fill-box; transform-origin: center; }
+.v-pin { fill: #22D3EE; stroke: #fff; stroke-width: 2.5; }
+.v-pin-ring { fill: none; stroke: #fff; stroke-width: 2; opacity: 0; transform-box: fill-box; transform-origin: center; }
+.stack-viz .v-gl { text-anchor: end; fill: #fff; }
+
+.viz-on .v-flow .f1 { animation: vFlow 1.1s linear infinite; }
+.viz-on .v-flow .f2 { animation: vFlow .9s linear infinite; }
+.viz-on .v-flow .f3 { animation: vFlow 1.3s linear infinite; }
+.viz-on .v-ring { animation: vRing 2.2s ease-out infinite; }
+.viz-on .v-chk { animation: vDraw 2.2s ease-in-out infinite; }
+.viz-on .v-hand { animation: vSpin 3s linear infinite; }
+.viz-on .v-strike { animation: vStrike 4s ease-in-out infinite; }
+.viz-on .v-strike.s2 { animation-delay: .35s; }
+.viz-on .v-bar1 { animation: vShrink 4s cubic-bezier(.6,0,.2,1) infinite; }
+.viz-on .v-half { animation: vFade 4s ease infinite; }
+.viz-on .v-spike { animation: vDrawDash 6s ease-in-out infinite; }
+.viz-on .v-grow { animation: vDrawLong 6s ease-in-out infinite; }
+.viz-on .v-dots circle { animation: vPop 6s ease infinite; }
+.viz-on .v-dots circle:nth-child(2) { animation-delay: .25s; }
+.viz-on .v-dots circle:nth-child(3) { animation-delay: .5s; }
+.viz-on .v-dots circle:nth-child(4) { animation-delay: .75s; }
+.viz-on .v-dots circle:nth-child(5) { animation-delay: 1s; }
+.viz-on .v-pin-ring { animation: vRing 2s ease-out 2s infinite; }
+@keyframes vFlow { to { stroke-dashoffset: -28; } }
+@keyframes vRing { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(1.7); } }
+@keyframes vDraw { 0%, 20% { stroke-dashoffset: 100; } 55%, 100% { stroke-dashoffset: 0; } }
+@keyframes vSpin { to { transform: rotate(360deg); } }
+@keyframes vStrike { 0%, 15% { stroke-dashoffset: 100; } 40%, 85% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes vShrink { 0%, 10% { transform: scaleX(2.2); } 45%, 100% { transform: scaleX(1); } }
+@keyframes vFade { 0%, 35% { opacity: 0; } 55%, 100% { opacity: 1; } }
+@keyframes vDrawDash { 0% { opacity: 0; } 8% { opacity: 1; } 40%, 70% { opacity: 1; } 85%, 100% { opacity: .25; } }
+@keyframes vDrawLong { 0%, 25% { stroke-dashoffset: 100; } 75%, 100% { stroke-dashoffset: 0; } }
+@keyframes vPop { 0%, 30% { opacity: 0; transform: scale(0); } 45%, 100% { opacity: 1; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .stack-viz * { animation: none !important; } }
+
 /* ---------- 확장 아코디언 (EXPERTISE) ---------- */
 .acc { display: flex; gap: 12px; height: 440px; }
 .acc-item {
@@ -890,6 +953,9 @@ img { max-width: 100%; display: block; }
   .stack-c2 { top: 98px; }
   .stack-c3 { top: 110px; }
   .stack-num { font-size: 52px; }
+  .stack-card.has-viz { grid-template-columns: 1fr; gap: 14px; }
+  .stack-viz svg { max-height: 132px; }
+  .stack-card.has-viz .stack-num { margin-bottom: 4px; }
   .stack-title { font-size: 23px; }
   .stack-desc { font-size: 15.5px; }
   .mega-cta { padding: 72px 20px 20px; }
