@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="/style.css?v=0bebe18f">
+<link rel="stylesheet" href="/style.css?v=f7cb8f22">
 
 
 <script type="text/javascript">
@@ -256,7 +256,7 @@
           function step(ts) {
             if (!start) start = ts;
             var p = Math.min((ts - start) / 1200, 1);
-            el.textContent = pre + Math.round(target * (1 - Math.pow(1 - p, 3))) + suf;
+            el.textContent = pre + Math.round(target * (1 - Math.pow(1 - p, 3))).toLocaleString('en-US') + suf;
             if (p < 1) requestAnimationFrame(step);
           }
           requestAnimationFrame(step);
