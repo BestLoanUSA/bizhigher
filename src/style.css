@@ -835,6 +835,77 @@ img { max-width: 100%; display: block; }
 .acc-item.on .acc-body { opacity: 1; max-height: 200px; }
 .acc-body b { display: block; margin-top: 12px; color: #fff; }
 
+/* EXPERTISE 카드 — 펼친 카드 위쪽에 결과물 미니 화면(.acc-viz), 접힌 카드에는 선 아이콘(.acc-ic).
+   그림은 기본 정지 화면(완성 상태)이고, 섹션이 보일 때(.acc.viz-on) 펼친 카드만 움직인다 */
+.acc-viz { position: absolute; left: 26px; right: 26px; top: 54px; height: 170px; opacity: 0; transform: translateY(10px); transition: opacity .45s ease .2s, transform .45s ease .2s; pointer-events: none; }
+.acc-item.on .acc-viz { opacity: 1; transform: none; }
+.acc-viz svg { height: 100%; width: auto; max-width: 100%; display: block; overflow: visible; }
+.acc-viz text { font-family: inherit; font-size: 12.5px; font-weight: 700; fill: rgba(255,255,255,.85); }
+.acc-ic { position: absolute; top: 54px; left: 24px; width: 26px; height: 26px; opacity: .85; transition: opacity .3s; }
+.acc-ic svg { width: 100%; height: 100%; fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.acc-item.on .acc-ic { opacity: 0; }
+.acc-prog { position: absolute; left: 0; right: 0; top: 0; height: 3px; background: rgba(255,255,255,.15); opacity: 0; }
+.acc-prog i { display: block; height: 100%; width: 0; background: #fff; }
+.av-cap { fill: rgba(255,255,255,.7) !important; font-size: 11.5px !important; }
+/* 01 SEO */
+.av-rows rect { fill: rgba(255,255,255,.12); }
+.av-me rect { fill: #fff; } .av-me circle { fill: var(--blue-600); }
+.acc-viz .av-rk { fill: #fff; text-anchor: middle; font-size: 12px; } .acc-viz .av-mt { fill: var(--blue-600); font-size: 13px; }
+.av-bub rect { fill: rgba(255,255,255,.16); stroke: rgba(255,255,255,.4); }
+.acc-viz .av-bt { fill: rgba(255,255,255,.7); font-size: 11px; } .acc-viz .av-ty { fill: #fff; font-size: 14px; }
+.av-pin path { fill: #22D3EE; } .av-pin circle { fill: #fff; } .av-pin { transform-box: fill-box; transform-origin: bottom center; }
+/* 02 웹사이트 */
+.av-trk { fill: rgba(255,255,255,.18); } .av-fill { fill: #fff; transform-box: fill-box; transform-origin: left center; }
+.acc-viz .av-big { font-size: 30px; font-weight: 900; fill: #fff; }
+.av-chip rect { fill: rgba(255,255,255,.16); } .acc-viz .av-chip text { text-anchor: middle; font-size: 12px; fill: #fff; }
+.av-phone { fill: rgba(255,255,255,.1); stroke: #fff; stroke-width: 2; }
+.av-bl rect { fill: rgba(255,255,255,.55); } .av-bl .w2 { fill: rgba(255,255,255,.3); } .av-bl .av-btn { fill: #fff; }
+.acc-viz .av-btt { text-anchor: middle; font-size: 11.5px; fill: var(--blue-600); }
+/* 03 콘텐츠 */
+.acc-viz .av-wk { text-anchor: middle; font-size: 11px; fill: rgba(255,255,255,.7); }
+.acc-viz .av-ch text { font-size: 11.5px; }
+.av-t { fill: rgba(255,255,255,.85); transform-box: fill-box; transform-origin: center; }
+/* 04 숏폼 */
+.av-scr { fill: rgba(255,255,255,.14); } .av-play { fill: #fff; transform-box: fill-box; transform-origin: center; }
+.av-sub rect { fill: #fff; }
+.av-ads rect { fill: rgba(255,255,255,.22); stroke: rgba(255,255,255,.7); stroke-width: 1.5; }
+.acc-viz .av-al text { text-anchor: middle; font-size: 12px; fill: #fff; }
+/* 05 광고 운영 */
+.av-ax { stroke: rgba(255,255,255,.4); stroke-width: 1.5; }
+.av-b { fill: rgba(255,255,255,.35); transform-box: fill-box; transform-origin: bottom center; }
+.av-cost { fill: none; stroke: #22D3EE; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 100; }
+.av-cd { fill: #22D3EE; stroke: #fff; stroke-width: 2; }
+.av-lg rect { fill: rgba(255,255,255,.35); } .av-lg path { stroke: #22D3EE; stroke-width: 3; } .acc-viz .av-lg text { font-size: 11px; }
+
+.viz-on .on .av-me { animation: avClimb 5s cubic-bezier(.6,0,.2,1) infinite; }
+.viz-on .on .av-ty { animation: avType 5s steps(9) infinite; }
+.viz-on .on .av-pin { animation: avBounce 1.6s ease-in-out infinite; }
+.viz-on .on .av-fill { animation: avGrow 5s ease-in-out infinite; }
+.viz-on .on .av-bl rect { animation: avIn 5s ease infinite; }
+.viz-on .on .av-bl .w2 { animation-delay: .35s; } .viz-on .on .av-bl .w3 { animation-delay: .7s; } .viz-on .on .av-bl .w4 { animation-delay: .9s; } .viz-on .on .av-bl .w5 { animation-delay: 1.2s; }
+.viz-on .on .av-t { animation: avPop 5s ease infinite; animation-delay: var(--d); }
+.viz-on .on .av-play { animation: avPulse 1.4s ease-in-out infinite; }
+.viz-on .on .av-sub rect { animation: avIn 2.5s ease infinite; } .viz-on .on .av-sub .c2 { animation-delay: .4s; }
+.viz-on .on .av-ads rect { animation: avPop 4.5s ease infinite; } .viz-on .on .av-ads .a2 { animation-delay: .5s; } .viz-on .on .av-ads .a3 { animation-delay: 1s; }
+.viz-on .on .av-b { animation: avBar 5s ease-out infinite; animation-delay: var(--d); }
+.viz-on .on .av-cost { animation: avDraw 5s ease-in-out infinite; }
+@keyframes avClimb { 0%, 12% { transform: translateY(92px); } 40% { transform: translateY(46px); } 62%, 100% { transform: translateY(0); } }
+@keyframes avType { 0%, 50% { clip-path: inset(0 100% 0 0); } 85%, 100% { clip-path: inset(0 0 0 0); } }
+@keyframes avBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes avGrow { 0% { transform: scaleX(0); } 70%, 100% { transform: scaleX(1); } }
+@keyframes avIn { 0% { opacity: 0; transform: translateY(8px); } 18%, 100% { opacity: 1; transform: none; } }
+@keyframes avPop { 0%, 8% { opacity: 0; transform: scale(.4); } 22%, 100% { opacity: 1; transform: scale(1); } }
+@keyframes avPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); } }
+@keyframes avBar { 0% { transform: scaleY(0); } 35%, 100% { transform: scaleY(1); } }
+@keyframes avDraw { 0%, 20% { stroke-dashoffset: 100; } 70%, 100% { stroke-dashoffset: 0; } }
+@media (min-width: 992px) {
+  .acc-run.viz-on .acc-item.on .acc-prog { opacity: 1; }
+  .acc-run.viz-on .acc-item.on .acc-prog i { animation: accProg 5.5s linear forwards; }
+  .acc-run.acc-hold .acc-item.on .acc-prog i { animation-play-state: paused; }
+}
+@keyframes accProg { to { width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .acc-viz *, .acc-prog i { animation: none !important; } }
+
 /* ---------- 메가 CTA (푸터 상단 대형 타이포) ---------- */
 .mega-cta { background: var(--space-950); padding: 120px 24px 30px; text-align: center; }
 .mega-link { display: inline-block; }
@@ -939,7 +1010,9 @@ img { max-width: 100%; display: block; }
 @media (max-width: 991px) {
   .acc { flex-direction: column; height: auto; }
   .acc-item { min-height: 84px; padding: 20px 22px; justify-content: center; }
-  .acc-item.on { min-height: 250px; justify-content: flex-end; }
+  .acc-item.on { min-height: 380px; justify-content: flex-end; }
+  .acc-viz { left: 22px; right: 22px; top: 50px; height: 132px; }
+  .acc-ic { top: 50%; left: auto; right: 22px; margin-top: -13px; }
   .acc-title { writing-mode: horizontal-tb; transform: none; }
   .acc-num { position: static; margin-bottom: 6px; }
 }
