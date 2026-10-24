@@ -3015,7 +3015,6 @@ function dataReportPage(s) {
         <li><b>확인 방법</b> — ${s.method.verification}</li>
         <li><b>“자체 사이트”의 정의</b> — ${s.method.websiteDefinition}</li>
         <li><b>수집하지 않은 것</b> — ${s.method.noGooglePlaces}</li>
-        <li><b>확인 시점</b> — ${s.freshness.oldestVerifiedAt} ~ ${s.freshness.newestVerifiedAt}</li>
       </ul>
       <div class="callout"><b>표본이 아니라 전수입니다.</b> ${s.method.caveat}</div>
 
