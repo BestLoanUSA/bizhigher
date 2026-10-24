@@ -1716,24 +1716,24 @@ ${showcaseSection()}
     <h2 class="h2">BizHigher가 잘하는 것</h2>
     <div class="acc" id="acc">
       <a class="acc-item" href="/service/seo-aio/" style="--ga:#0A4DF5;--gb:#062B8F;">
-        <span class="acc-num">01</span><span class="acc-title">로컬 SEO · AIO</span>
+        <span class="acc-prog"><i></i></span><span class="acc-num">01</span><span class="acc-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span><span class="acc-viz av-seo" aria-hidden="true"><svg viewBox="0 0 360 200"><g class="av-rows"><rect x="0" y="34" width="170" height="34" rx="10"/><rect x="0" y="80" width="170" height="34" rx="10"/><rect x="0" y="126" width="170" height="34" rx="10"/></g><g class="av-me"><rect x="0" y="34" width="170" height="34" rx="10"/><circle cx="20" cy="51" r="11"/><text class="av-rk" x="20" y="55">1</text><text class="av-mt" x="40" y="56">우리 가게</text></g><text class="av-cap" x="0" y="22">구글 지도 검색 순위</text><g class="av-bub"><rect x="196" y="34" width="164" height="70" rx="14"/><text class="av-bt" x="210" y="58">AI 검색 답변</text><text class="av-ty" x="210" y="84">추천: 우리 가게</text></g><g class="av-pin"><path d="M278 128c-13 0-22 9-22 21 0 15 22 35 22 35s22-20 22-35c0-12-9-21-22-21z"/><circle cx="278" cy="149" r="7"/></g></svg></span><span class="acc-title">로컬 SEO · AIO</span>
         <span class="acc-body">구글 지도와 AI 검색(ChatGPT) 모두에서 발견되게 만듭니다. 경쟁사 갭 분석으로 시작하는 데이터 기반 최적화.<b>자세히 보기 →</b></span>
       </a>
       <a class="acc-item" href="/service/website/" style="--ga:#22D3EE;--gb:#0A4DF5;">
-        <span class="acc-num">02</span><span class="acc-title">웹사이트 제작</span>
+        <span class="acc-prog"><i></i></span><span class="acc-num">02</span><span class="acc-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 18h4"/></svg></span><span class="acc-viz av-web" aria-hidden="true"><svg viewBox="0 0 360 200"><text class="av-cap" x="0" y="22">제작 진행</text><rect class="av-trk" x="0" y="34" width="120" height="10" rx="5"/><rect class="av-fill" x="0" y="34" width="120" height="10" rx="5"/><text class="av-big" x="0" y="80">3~7일</text><g class="av-chip"><rect x="0" y="100" width="104" height="28" rx="14"/><text x="52" y="119">호스팅비 $0</text></g><rect class="av-phone" x="196" y="2" width="118" height="196" rx="20"/><g class="av-bl"><rect class="w1" x="208" y="20" width="94" height="12" rx="4"/><rect class="w2" x="208" y="42" width="94" height="58" rx="8"/><rect class="w3" x="208" y="110" width="80" height="8" rx="4"/><rect class="w4" x="208" y="124" width="62" height="8" rx="4"/><rect class="w5 av-btn" x="208" y="146" width="94" height="26" rx="13"/></g><text class="av-btt" x="255" y="164">예약하기</text></svg></span><span class="acc-title">웹사이트 제작</span>
         <span class="acc-body">호스팅비 $0, 영업일 3~7일. 예약·주문까지 되는 사이트를 정찰제로. 유지관리 구독으로 계속 관리됩니다.<b>자세히 보기 →</b></span>
       </a>
       <a class="acc-item" href="/service/gbp-posting/" style="--ga:#7C5CFF;--gb:#3B1FA8;">
-        <span class="acc-num">03</span><span class="acc-title">콘텐츠 · 포스팅</span>
+        <span class="acc-prog"><i></i></span><span class="acc-num">03</span><span class="acc-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span><span class="acc-viz av-post" aria-hidden="true"><svg viewBox="0 0 360 200"><text class="av-wk" x="110" y="18">1주</text><text class="av-wk" x="172" y="18">2주</text><text class="av-wk" x="234" y="18">3주</text><text class="av-wk" x="296" y="18">4주</text><g class="av-ch"><text x="0" y="57">구글 프로필</text><text x="0" y="113">인스타그램</text><text x="0" y="169">페이스북</text></g><rect class="av-t t0" style="--d:0.00s" x="86" y="30" width="48" height="44" rx="9"/><rect class="av-t t0" style="--d:0.10s" x="86" y="86" width="48" height="44" rx="9"/><rect class="av-t t0" style="--d:0.20s" x="86" y="142" width="48" height="44" rx="9"/><rect class="av-t t1" style="--d:0.35s" x="148" y="30" width="48" height="44" rx="9"/><rect class="av-t t1" style="--d:0.45s" x="148" y="86" width="48" height="44" rx="9"/><rect class="av-t t1" style="--d:0.55s" x="148" y="142" width="48" height="44" rx="9"/><rect class="av-t t2" style="--d:0.70s" x="210" y="30" width="48" height="44" rx="9"/><rect class="av-t t2" style="--d:0.80s" x="210" y="86" width="48" height="44" rx="9"/><rect class="av-t t2" style="--d:0.90s" x="210" y="142" width="48" height="44" rx="9"/><rect class="av-t t3" style="--d:1.05s" x="272" y="30" width="48" height="44" rx="9"/><rect class="av-t t3" style="--d:1.15s" x="272" y="86" width="48" height="44" rx="9"/><rect class="av-t t3" style="--d:1.25s" x="272" y="142" width="48" height="44" rx="9"/></svg></span><span class="acc-title">콘텐츠 · 포스팅</span>
         <span class="acc-body">구글 프로필 + 인스타 + 페이스북에 매주 콘텐츠가 올라갑니다. 블로그까지 더하면 검색 유입이 복리로 쌓입니다.<b>자세히 보기 →</b></span>
       </a>
       <a class="acc-item" href="/service/shortform-video/" style="--ga:#2F6BFF;--gb:#0B1B66;">
-        <span class="acc-num">04</span><span class="acc-title">숏폼 · 광고 소재</span>
+        <span class="acc-prog"><i></i></span><span class="acc-num">04</span><span class="acc-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9l5 3-5 3z"/></svg></span><span class="acc-viz av-video" aria-hidden="true"><svg viewBox="0 0 360 200"><rect class="av-phone" x="10" y="2" width="108" height="196" rx="18"/><rect class="av-scr" x="20" y="14" width="88" height="150" rx="10"/><path class="av-play" d="M56 74 L78 89 L56 104 Z"/><g class="av-sub"><rect class="c1" x="28" y="132" width="72" height="9" rx="4"/><rect class="c2" x="36" y="146" width="56" height="9" rx="4"/></g><text class="av-cap" x="164" y="22">광고 이미지 · 매달 새로</text><g class="av-ads"><rect class="a1" x="164" y="44" width="70" height="70" rx="10"/><rect class="a2" x="246" y="34" width="50" height="90" rx="10"/><rect class="a3" x="164" y="134" width="132" height="58" rx="10"/></g><g class="av-al"><text x="199" y="84">1:1</text><text x="271" y="84">9:16</text><text x="230" y="168">1.91:1</text></g></svg></span><span class="acc-title">숏폼 · 광고 소재</span>
         <span class="acc-body">릴스·틱톡용 AI 영상과 매달 새 광고 이미지. 촬영팀 없이 광고급 크리에이티브를 구독으로.<b>자세히 보기 →</b></span>
       </a>
       <a class="acc-item" href="/service/ads-management/" style="--ga:#0839C4;--gb:#050A3F;">
-        <span class="acc-num">05</span><span class="acc-title">광고 운영</span>
-        <span class="acc-body">구글·메타·빙 광고를 전환 데이터 기반으로 매주 최적화. 동시 5곳 한정으로 품질을 지킵니다.<b>자세히 보기 →</b></span>
+        <span class="acc-prog"><i></i></span><span class="acc-num">05</span><span class="acc-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V6M16 20v-8M21 4l-5 5"/></svg></span><span class="acc-viz av-ads" aria-hidden="true"><svg viewBox="0 0 360 200"><path class="av-ax" d="M10 172 L330 172"/><rect class="av-b" style="--d:0.00s" x="22" y="130" width="30" height="40" rx="6"/><rect class="av-b" style="--d:0.18s" x="74" y="114" width="30" height="56" rx="6"/><rect class="av-b" style="--d:0.36s" x="126" y="100" width="30" height="70" rx="6"/><rect class="av-b" style="--d:0.54s" x="178" y="78" width="30" height="92" rx="6"/><rect class="av-b" style="--d:0.72s" x="230" y="58" width="30" height="112" rx="6"/><rect class="av-b" style="--d:0.90s" x="282" y="38" width="30" height="132" rx="6"/><path class="av-cost" pathLength="100" d="M37 40 L89 58 L141 74 L193 96 L245 112 L297 128"/><circle class="av-cd" cx="297" cy="128" r="6"/><g class="av-lg"><rect x="10" y="4" width="12" height="12" rx="3"/><text x="28" y="15">문의·예약 수</text><path d="M140 10 L158 10"/><text x="164" y="15">고객 1명당 비용</text></g></svg></span><span class="acc-title">광고 운영</span>
+        <span class="acc-body">구글·메타·빙 광고를 문의·예약 데이터로 매주 점검하고, 효과 없는 곳의 예산은 바로 줄입니다.<b>자세히 보기 →</b></span>
       </a>
     </div>
   </div>
@@ -1759,6 +1759,26 @@ ${showcaseSection()}
       it.classList.add('on');
     });
   });
+  /* 화면에 보일 때만 그림이 움직이고(.viz-on), 넓은 화면에서는 5초마다 다음 카드로 넘어간다(.acc-run).
+     진행 막대 애니메이션이 끝나면 다음 카드. 마우스를 올리거나 포커스가 있으면 멈춘다 */
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduce && 'IntersectionObserver' in window) {
+    new IntersectionObserver(function (es) { acc.classList.toggle('viz-on', es[0].isIntersecting); }, { threshold: 0.35 }).observe(acc);
+    acc.classList.add('acc-run');
+    acc.addEventListener('mouseenter', function () { acc.classList.add('acc-hold'); });
+    acc.addEventListener('mouseleave', function () { acc.classList.remove('acc-hold'); });
+    acc.addEventListener('focusin', function () { acc.classList.add('acc-hold'); });
+    acc.addEventListener('focusout', function () { acc.classList.remove('acc-hold'); });
+    items.forEach(function (it, i) {
+      var bar = it.querySelector('.acc-prog i');
+      if (!bar) return;
+      bar.addEventListener('animationend', function () {
+        if (window.matchMedia('(max-width: 991px)').matches) return;
+        items.forEach(function (o) { o.classList.remove('on'); });
+        items[(i + 1) % items.length].classList.add('on');
+      });
+    });
+  }
   /* 좁은 화면: 스크롤 위치에 따라 카드가 순서대로 하나씩 확장 */
   var accTick = false;
   function accScroll() {
