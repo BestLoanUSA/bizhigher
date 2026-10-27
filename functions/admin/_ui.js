@@ -124,6 +124,7 @@ const initial = (name) => { const s = String(name || '?').replace(/\s*\(데모\)
 const dueHtml = (di) => di && di.label ? '<span class="due ' + esc(di.tone) + '">' + esc(di.label) + '</span>' : '';
 const kindTag = (k) => '<span class="tag ' + (k === '검증' ? 'verify' : k === '승인' ? 'approve' : 'manual') + '">' + esc(k) + '</span>';
 let WHO = {}, STATUSES = [], TASK_STATUSES = [];
+let OUT_LABEL = { media: '이미지·영상', text: '글·본문', site: '사이트·링크', report: '리포트·전달', internal: '내부 작업' };
 const stLabel = (k) => (STATUSES.find((s) => s[0] === k) || [k, k])[1];
 const stPill = (k) => '<span class="pill ' + esc(k) + '">' + esc(stLabel(k)) + '</span>';
 const oPill = (k) => k ? '<span class="pill ' + esc(k) + '">' + esc({ paid: '결제됨', active: '구독 중', past_due: '미납', canceled: '해지', refunded: '환불', incomplete: '미완료' }[k] || k) + '</span>' : '';
@@ -134,7 +135,7 @@ async function api(path, body) {
   if (r.status === 401) { location.href = '/admin/'; return null; }
   const j = await r.json().catch(() => ({ ok: false, error: 'bad json' }));
   if (!j.ok) throw new Error(j.error || '오류');
-  if (j.who) WHO = j.who; if (j.statuses) STATUSES = j.statuses; if (j.taskStatuses) TASK_STATUSES = j.taskStatuses;
+  if (j.who) WHO = j.who; if (j.statuses) STATUSES = j.statuses; if (j.taskStatuses) TASK_STATUSES = j.taskStatuses; if (j.outputLabels) OUT_LABEL = j.outputLabels;
   return j;
 }
 const app = $('#app');
@@ -163,6 +164,7 @@ async function route() {
 let towerSort = (() => { try { return localStorage.getItem('bh.sort') || 'due'; } catch { return 'due'; } })();
 let towerFilter = 'all';
 let rvTab = 0;
+let aiOut = 'all'; // 고객 여정 "AI가 했음" 완성물 필터 (all | media | text | site | report)
 window.addEventListener('hashchange', route);
 route(); updateReviewCount();
 
@@ -257,7 +259,17 @@ async function journey(id) {
     '</section>' +
     (aiPending.length ? '<div class="aibox' + (stuck ? ' stuck' : '') + '"><div class="h">AI가 할 차례 ' + aiPending.length + '단계' + (stuck ? '<span class="badge-stuck">' + stuckDays + '일째 멈춤</span>' : '') + '<small>저절로 돌지 않음 — 지시서를 복사해 claude.ai에 붙여넣거나 루틴이 실행</small><span style="flex:1"></span><button class="btn sm" id="copy-brief-2">지시서 복사</button></div>' + aiPending.map((t) => '<div class="li"><span class="ic">' + ((WHO[t.who] || {}).icon || '') + '</span><span class="m">' + esc(t.title) + '<small>' + esc(t.service_name) + (t.revise_note ? ' · 수정 요청: ' + esc(t.revise_note) : '') + (t.status === 'doing' ? ' · 진행 중' : '') + '</small></span></div>').join('') + '</div>' : '') +
     '<section class="lanes">' +
-      '<div class="lane" style="border-color:#0B9E58"><div class="h">AI가 했음 <small>전체 ' + lanes.ai.length + '개 · 최근 완료 순 · 눌러서 내용 확인·수정</small></div>' + (lanes.ai.length ? lanes.ai.slice(0, 8).map((t) => aiItem(t, false)).join('') + (lanes.ai.length > 8 ? '<details style="margin-top:6px"><summary class="ph" style="border-top:0;padding-top:4px;color:var(--blue)">더 보기 ' + (lanes.ai.length - 8) + '개</summary>' + lanes.ai.slice(8).map((t) => aiItem(t, false)).join('') + '</details>' : '') : '<div class="muted" style="padding:8px 0">아직 없음</div>') + '</div>' +
+      (() => {
+        // 완성물(고객 전달·업로드용)과 내부 작업·계획을 나눈다 — David가 전달할 것·올릴 것을 한곳에서 찾게
+        const fin = lanes.ai.filter((t) => t.out && t.out !== 'internal'); const inner = lanes.ai.filter((t) => !t.out || t.out === 'internal');
+        const cnt = (k) => fin.filter((t) => t.out === k).length;
+        const shown = aiOut === 'all' ? fin : fin.filter((t) => t.out === aiOut);
+        const chips = '<div class="chips" style="margin:6px 0 4px">' + [['all', '전체 ' + fin.length], ['media', OUT_LABEL.media + ' ' + cnt('media')], ['text', OUT_LABEL.text + ' ' + cnt('text')], ['site', OUT_LABEL.site + ' ' + cnt('site')], ['report', OUT_LABEL.report + ' ' + cnt('report')]].filter(([k]) => k === 'all' || cnt(k)).map(([k, l]) => '<button type="button" data-aiout="' + k + '" class="' + (aiOut === k ? 'on' : '') + '">' + l + '</button>').join('') + '</div>';
+        return '<div class="lane" style="border-color:#0B9E58"><div class="h" style="flex-wrap:wrap"><span style="white-space:nowrap">AI가 했음</span><small>완성 결과물 ' + fin.length + ' · 내부 작업 ' + inner.length + ' · 최근 완료 순</small></div>' +
+          (fin.length ? chips + (shown.length ? shown.slice(0, 8).map((t) => aiItem(t, false)).join('') + (shown.length > 8 ? '<details style="margin-top:6px"><summary class="ph" style="border-top:0;padding-top:4px;color:var(--blue)">더 보기 ' + (shown.length - 8) + '개</summary>' + shown.slice(8).map((t) => aiItem(t, false)).join('') + '</details>' : '') : '<div class="muted" style="padding:8px 0">이 종류는 아직 없음</div>') : '<div class="muted" style="padding:8px 0">고객에게 전달하거나 올릴 완성물은 아직 없음</div>') +
+          (inner.length ? '<details style="margin-top:10px"><summary class="ph" style="padding-top:8px;color:var(--ink-600)">내부 작업·계획 ' + inner.length + '개 — 프로필·분석·설계·설정</summary>' + inner.map((t) => aiItem(t, false)).join('') + '</details>' : '') +
+          '</div>';
+      })() +
       '<div class="lane mine"><div class="h" style="color:#0A4DF5">내 차례 <small>' + lanes.mine.length + '단계 · ' + lanes.mine.reduce((a, t) => a + (t.david_min || 0), 0) + '분</small></div>' + (lanes.mine.length ? lanes.mine.map((t) => '<div class="li">' + kindTag(t.status === 'review' ? (t.verify ? '검증' : '승인') : '직접') + '<span class="m">' + esc(t.title) + '<small>' + esc(t.service_name) + (t.david_min ? ' · ' + t.david_min + '분' : '') + '</small></span>' + (t.status === 'review' ? '<a class="btn sm" href="#/review?task=' + t.id + '">' + (t.verify ? '검증' : '승인') + '</a>' : '<button class="btn sm ghost" data-done="' + t.id + '">완료</button>') + '</div>').join('') : '<div class="muted" style="padding:8px 0">지금은 없음</div>') + '</div>' +
       '<div class="lane" style="border-color:#F59E0B"><div class="h" style="color:#B45309">고객 차례 <small>' + lanes.customer.length + '건 · 리마인더 자동</small></div>' + (lanes.customer.length ? lanes.customer.map((t) => '<div class="li"><span class="m">' + esc(t.title) + '<small>' + esc(t.service_name) + (t.block ? ' · ' + esc(t.block) : '') + '</small></span><button class="btn sm ghost" data-received="' + t.id + '">받았음</button></div>').join('') : '<div class="muted" style="padding:8px 0">기다리는 것 없음</div>') +
         (lanes.received && lanes.received.length ? '<details style="margin-top:10px"><summary class="ph" style="border-top:0;padding-top:4px;color:#B45309">받은 것 ' + lanes.received.length + '개 — 메모·되돌리기</summary>' + lanes.received.map((t) => '<div class="li" style="align-items:flex-start"><span class="m">' + esc(t.title) + '<small>' + esc(t.service_name) + ' · ' + when(t.done_at) + (t.note ? '</small><small style="display:block;color:var(--ink-900);white-space:pre-wrap">📝 ' + esc(t.note) : '') + '</small></span><span style="display:flex;gap:4px;flex-direction:column"><button class="btn sm ghost" data-recv-note="' + t.id + '">메모</button><button class="btn sm ghost" data-undo="' + t.id + '">되돌리기</button></span></div>').join('') + '</details>' : '') +
@@ -289,6 +301,7 @@ async function journey(id) {
   const reload = () => journey(id);
   const act = async (fn, msg) => { try { await fn(); toast(msg); reload(); } catch (e) { toast('오류: ' + e.message); } };
   for (const bid of ['copy-brief', 'copy-brief-2']) { const b = $('#' + bid); if (b) b.onclick = async () => toast((await copyText(brief)) ? '지시서 복사됨 — claude.ai에 붙여넣으세요' : '복사 실패 — 아래 지시서를 직접 선택하세요'); }
+  app.querySelectorAll('[data-aiout]').forEach((b) => b.onclick = () => { aiOut = b.dataset.aiout; journey(id); });
   app.querySelectorAll('[data-reopen]').forEach((b) => b.onclick = () => { const note = prompt('무엇을 고칠까요? (AI가 다시 합니다)'); if (!note) return; act(() => api('tasks/' + b.dataset.reopen + '/reopen', { note }), '다시 열림 — AI 차례로'); });
   app.querySelectorAll('[data-edit]').forEach((b) => b.onclick = () => { const box = app.querySelector('[data-editbox="' + b.dataset.edit + '"]'); box.style.display = box.style.display === 'none' ? '' : 'none'; });
   app.querySelectorAll('[data-editsave]').forEach((b) => b.onclick = () => { const box = app.querySelector('[data-editbox="' + b.dataset.editsave + '"]'); act(() => api('tasks/' + b.dataset.editsave + '/edit', { text: box.querySelector('textarea').value, url: box.querySelector('input').value }), '결과물 저장'); });
@@ -318,7 +331,8 @@ function kv(k, v) { return '<dt>' + k + '</dt><dd>' + (v || '<span class="muted"
 function aiItem(t, showWho) {
   const has = !!(t.result_text || t.result_url);
   const w = WHO[t.who] || { icon: '', label: t.who };
-  const head = '<span style="color:#0B9E58;font-weight:800">✓</span><span class="m">' + esc(t.title) + (has ? '<span class="more">내용 보기 ▾</span>' : '') + '<small>' + esc(t.service_name) + (showWho ? ' · ' + esc(w.label) : '') + ' · ' + day(t.done_at) + (t.note ? ' · ' + esc(t.note) : '') + '</small></span>';
+  const outTag = t.out && t.out !== 'internal' ? '<span class="tag ' + ({ media: 'approve', site: 'verify', text: 'manual', report: 'manual' }[t.out] || 'manual') + '" style="margin-right:6px">' + esc((OUT_LABEL[t.out] || t.out)) + '</span>' : '';
+  const head = '<span style="color:#0B9E58;font-weight:800">✓</span><span class="m">' + outTag + esc(t.title) + (has ? '<span class="more">내용 보기 ▾</span>' : '') + '<small>' + esc(t.service_name) + (showWho ? ' · ' + esc(w.label) : '') + ' · ' + day(t.done_at) + (t.note ? ' · ' + esc(t.note) : '') + '</small></span>';
   if (!has) return '<div class="li">' + head + '</div>';
   const body = '<div style="margin-top:6px">' + previewHtml(t, { radius: 8, cell: 120, siteH: 420 }) + '</div>' +
     (t.self_check ? '<div class="muted" style="font-size:12px;margin-top:4px">AI 자기 점검: ' + esc(t.self_check) + '</div>' : '') +
