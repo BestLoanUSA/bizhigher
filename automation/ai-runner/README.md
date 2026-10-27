@@ -29,6 +29,7 @@ node automation/ai-runner/runner.js note --job 5 --text "…"
 
 node automation/ai-runner/creative.js caption --video clip.mp4 --text "훅|자막2|자막3" --brand "New Optix" [--logo URL] [--cta "지금 예약 (714) …"] [--music bgm.mp3] --out final.mp4   # 자막·로고·CTA 합성(Playwright PNG + /usr/bin/ffmpeg overlay). *단어* 는 브랜드 색 강조. sv-2 완성본
 node automation/ai-runner/creative.js promo --job 28 [--clip clip.mp4] [--props over.json] [--hook "리드|문장|강조어"] --out promo.mp4 [--upload --task 12]   # 사이트 스펙 → Remotion 프로모 20초(훅·서비스 ≤3·왜 우리·엔드카드, automation/video). --clip 은 훅 배경(Kling), 없으면 사진 켄번스. 렌더 약 1.5분·비용 0. sv-2 스토리 완성본
+node automation/ai-runner/creative.js print --job 28 --out kit [--upload --task 12]   # 리뷰 QR 인쇄물 키트(qr-2+qr-3): 테이블텐트·포스터·카운터 카드·스티커·모바일 PNG 300dpi + 인쇄용 PDF(재단선) + 가이드. 질문지 place_id 필수. 약 15초·비용 0. --name/--place-id/--color 로 직접도 됨
 node automation/ai-runner/qa.js --url https://고객사이트 --out qa --name home   # 360/768/1280 스크린샷·속도·링크·폼 + Unlighthouse(사이트 전체 Lighthouse 점수·지적 항목, https 만, --no-lighthouse 로 끔) → qa/home-report.md + qa/home-montage.jpg (upload 로 올려 submit --kind images)
 node automation/ai-runner/sites.js prep --spec spec.json [--job 28 --task 12]  # 사진 준비(v3): 900px 미만 업스케일 → /a/ 교체, 갤러리 3장 미만이면 분위기 이미지 생성(gallery_generated). FAL_KEY 없으면 크기 보고만. spec 저장 전에
 node automation/ai-runner/sites.js spec --job 28 --file spec.json           # 고객 사이트 스펙 저장 → slug·미리보기 주소 + 바뀐 키 (web-2 첫 생성)

@@ -55,8 +55,8 @@ export const PLAYBOOK = {
   'review-qr-kit': {
     name: '리뷰 QR 키트', steps: [
       S('qr-1', 'place_id 확인 → 리뷰 링크 생성 → QR 생성·스캔 테스트', 'setup', 'auto', 0),
-      S('qr-2', '테이블텐트·포스터·카운터 카드·스티커 시트 디자인 (한/영)', 'setup', 'ai', 5, { verify: true, block: '리뷰 대가 문구 금지 검수' }),
-      S('qr-3', '인쇄용 PDF(재단선)·모바일 PNG·인쇄 가이드 → Drive → Gmail 초안', 'setup', 'auto', 2, { verify: true }),
+      S('qr-2', '리뷰 QR 키트 생성 — 테이블텐트·포스터·카운터 카드·스티커 시트·모바일 공유 이미지 (한/영, creative.js print)', 'setup', 'auto', 3, { verify: true, block: '루틴이 질문지 place_id·상호·브랜드 색으로 PNG 300dpi + 인쇄용 PDF(재단선·접는 선) + 인쇄 가이드를 만든다(비용 0). David 는 QR 스캔 1회·문구 확인(리뷰 대가 문구 없음)' }),
+      S('qr-3', '인쇄 파일 전달 — qr-2 의 PDF·PNG 링크 + 인쇄 가이드를 고객 전달 결과물로', 'setup', 'auto', 1, { verify: true }),
     ],
   },
   'local-listing-setup': {
