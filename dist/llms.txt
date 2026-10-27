@@ -58,6 +58,7 @@
 - 한/영 가게 소개문 생성기 (무료, 이메일만 입력): https://bizhigher.com/tools/bilingual-intro/ — 한국어로 쓴 가게 소개를 구글 프로필 규격(750자)에 맞는 자연스러운 영어·한국어 소개로 다듬습니다.
 
 ## 블로그 (한인 비즈니스 마케팅 가이드)
+- 구글 프로필 서비스·상품 항목 채우는 법 — 손님이 검색하는 말로 적으세요: https://bizhigher.com/blog/google-business-profile-services-guide/
 - 구글 프로필 카테고리 고르는 법 — 주 카테고리 하나가 노출을 좌우합니다: https://bizhigher.com/blog/google-business-profile-category-guide/
 - 가게 광고 완전 가이드 — 시작 예산부터 성과 읽기, 시즌 운영까지: https://bizhigher.com/blog/ads-hub/
 - 광고 성과 읽는 법 — 클릭수 말고 봐야 할 숫자 3가지: https://bizhigher.com/blog/ad-performance-metrics-guide/
