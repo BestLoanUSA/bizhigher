@@ -172,7 +172,7 @@ import { tasksFor } from './_playbook.js';
 // 기존 테이블에 나중에 추가된 컬럼 — CREATE TABLE IF NOT EXISTS 는 컬럼을 못 더하므로 PRAGMA 로 확인 후 ALTER
 const EXTRA_COLUMNS = {
   jobs: [['portal_token', 'TEXT']],        // 고객 결과물 페이지 /c/{token} (없으면 처음 열 때 생성)
-  deliverables: [['drafted_at', 'TEXT'], ['task_id', 'INTEGER'], ['kind', 'TEXT'], ['summary', 'TEXT'], ['needs_approval', 'INTEGER'], ['approved_at', 'TEXT'], ['revise_note', 'TEXT'], ['packet_id', 'TEXT']], // 고객 페이지·묶음 발송·승인
+  deliverables: [['drafted_at', 'TEXT'], ['task_id', 'INTEGER'], ['kind', 'TEXT'], ['summary', 'TEXT'], ['needs_approval', 'INTEGER'], ['approved_at', 'TEXT'], ['revise_note', 'TEXT'], ['packet_id', 'TEXT'], ['options', 'TEXT'], ['choice', 'TEXT'], ['choice_at', 'TEXT']], // 고객 페이지·묶음 발송·승인 · options/choice = 고객이 고르는 승인(2026-10-27)
   assets: [['r2_key', 'TEXT']],           // R2 에 넣었으면 객체 키(a/{id}.jpg). 없으면 data(BLOB) 가 D1 에 있다
   job_tasks: [
     ['result_kind', 'TEXT'],      // text | html | link
@@ -183,6 +183,7 @@ const EXTRA_COLUMNS = {
     ['requested_at', 'TEXT'],     // 검증 요청 시각
     ['revise_note', 'TEXT'],      // 수정 요청 내용
     ['decided_at', 'TEXT'],
+    ['options', 'TEXT'],         // JSON [{key,label,image,note,styles[],default}] — 고객이 고르는 선택지(시안·세트). 승인 시 deliverables.options 로 복사
   ],
 };
 
@@ -207,18 +208,50 @@ export async function ensurePortalToken(db, job) {
   return (row && row.portal_token) || t;
 }
 
-/* 결과물 승인 — 고객 페이지 클릭·7일 무응답 간주 둘 다 이 함수. 같은 서비스의 다음 "고객 차례" 단계를 완료로 */
-export async function approveDeliverable(db, d, { source, note }) {
-  await db.prepare(`UPDATE deliverables SET approved_at = datetime('now'), revise_note = NULL WHERE id = ?`).bind(d.id).run();
+/* ---------- 고객이 고르는 승인 (2026-10-27) — 시안·세트·버전처럼 선택지가 있는 결과물 ----------
+ * options = [{ key:'B', label:'네이비·골드', image:'https://…/a/….jpg', note:'…', styles:['luxe','mono'], default:true }]
+ * 고객 페이지는 선택지마다 [이 디자인으로 진행] 버튼, 관리자는 David 가 대신 고를 수 있다. 선택값은 deliverables.choice 와
+ * 같은 서비스의 다음 AI 단계 note "[고객 선택] key — label" 로 전달된다(루틴이 읽는다). 인쇄물·광고 소재·영상·사이트 공통 */
+export function parseOptions(s) {
+  try { const a = typeof s === 'string' ? JSON.parse(s) : s; return Array.isArray(a) ? a.filter((o) => o && o.key).map((o) => ({ key: String(o.key).slice(0, 20), label: String(o.label || o.key).slice(0, 120), image: o.image ? String(o.image).slice(0, 1000) : '', note: o.note ? String(o.note).slice(0, 400) : '', styles: Array.isArray(o.styles) ? o.styles.map(String) : [], default: !!o.default })).slice(0, 8) : []; } catch { return []; }
+}
+/** 무응답(7일) 기본값: 사이트 스타일과 맞는 선택지 → default 표시 → 첫 항목 (David 결정 2026-10-27: 사이트 스타일로 자동) */
+export function pickDefaultOption(options, siteStyle) {
+  if (!options || !options.length) return null;
+  const st = String(siteStyle || '').toLowerCase();
+  return (st && options.find((o) => (o.styles || []).map((x) => String(x).toLowerCase()).includes(st))) || options.find((o) => o.default) || options[0];
+}
+async function siteStyleOf(db, jobId) {
+  try { const r = await db.prepare(`SELECT spec FROM sites WHERE job_id = ?`).bind(jobId).first(); const sp = r && r.spec ? JSON.parse(r.spec) : null; return (sp && sp.theme && (sp.theme.style || sp.theme.mood)) || ''; } catch { return ''; }
+}
+
+/* 결과물 승인 — 고객 페이지 클릭·David 대신 선택·7일 무응답 간주 셋 다 이 함수. 같은 서비스의 다음 "고객 차례" 단계를 완료로.
+ * 선택지가 있으면 choice(키)를 기록하고 다음 AI 단계 note 에 "[고객 선택]"을 남긴다. choice 가 없으면 기본값(pickDefaultOption) */
+export async function approveDeliverable(db, d, { source, note, choice }) {
+  const options = parseOptions(d.options);
+  let picked = null;
+  if (options.length) {
+    picked = options.find((o) => o.key === String(choice || '')) || pickDefaultOption(options, await siteStyleOf(db, d.job_id));
+    await db.prepare(`UPDATE deliverables SET approved_at = datetime('now'), revise_note = NULL, choice = ?, choice_at = datetime('now') WHERE id = ?`).bind(picked.key, d.id).run();
+  } else {
+    await db.prepare(`UPDATE deliverables SET approved_at = datetime('now'), revise_note = NULL WHERE id = ?`).bind(d.id).run();
+  }
   const task = d.task_id ? await db.prepare(`SELECT id, service, sort FROM job_tasks WHERE id = ?`).bind(d.task_id).first() : null;
   if (task) {
     const nxt = await db.prepare(`SELECT id FROM job_tasks WHERE job_id = ? AND service = ? AND sort > ? AND who = 'customer' AND status = 'todo' ORDER BY sort ASC LIMIT 1`).bind(d.job_id, task.service, task.sort).first();
     if (nxt) await db.prepare(`UPDATE job_tasks SET status = 'done', done_at = datetime('now'), note = ? WHERE id = ?`).bind(note, nxt.id).run();
+    if (picked) { // 선택값을 다음 AI 단계(같은 서비스, 아직 안 끝난 것)에 넘긴다 — 루틴은 task.note 의 "[고객 선택]"을 읽는다
+      const ai = await db.prepare(`SELECT id, note FROM job_tasks WHERE job_id = ? AND service = ? AND sort > ? AND who IN ('auto','ai') AND status IN ('todo','doing') ORDER BY sort ASC LIMIT 1`).bind(d.job_id, task.service, task.sort).first();
+      const tag = `[고객 선택] ${picked.key} — ${picked.label}${source === 'auto' ? ' (무응답 기본값)' : source === 'david' ? ' (David 대신 선택)' : ''}`;
+      if (ai) await db.prepare(`UPDATE job_tasks SET note = ? WHERE id = ?`).bind((ai.note && !/\[고객 선택\]/.test(ai.note) ? ai.note + '\n' : '') + tag, ai.id).run();
+    }
   }
-  await addEvent(db, d.job_id, 'customer', null, null, `${source === 'auto' ? '⏱ 7일 무응답 → 승인 간주(약관 §2)' : '👍 고객 승인 (고객 페이지)'} — ${d.title}`);
+  const who = source === 'auto' ? '⏱ 7일 무응답 → 승인 간주(약관 §2)' : source === 'david' ? '👍 David 가 고객 대신 승인' : '👍 고객 승인 (고객 페이지)';
+  await addEvent(db, d.job_id, 'customer', null, null, `${who} — ${d.title}${picked ? ` · 선택: ${picked.key} ${picked.label}` : ''}`);
+  return picked;
 }
 
-/* 7일 무응답 승인 간주 (약관 §2) — 보낸 지 7일 지난 승인 대기 결과물. 루틴 큐·관제탑을 열 때 돈다. 수정 요청이 걸린 건 건드리지 않는다 */
+/* 7일 무응답 승인 간주 (약관 §2) — 보낸 지 7일 지난 승인 대기 결과물. 루틴 큐·관제탑을 열 때 돈다. 수정 요청이 걸린 건 건드리지 않는다. 선택지가 있으면 사이트 스타일 기본값으로 */
 export async function sweepAutoApprovals(db) {
   const rows = (await db.prepare(`SELECT d.* FROM deliverables d JOIN jobs j ON j.id = d.job_id WHERE d.needs_approval = 1 AND d.approved_at IS NULL AND (d.revise_note IS NULL OR d.revise_note = '') AND d.sent_at IS NOT NULL AND d.sent_at <= datetime('now', '-7 days') AND j.status NOT IN ('done','hold') LIMIT 50`).all()).results || [];
   for (const d of rows) await approveDeliverable(db, d, { source: 'auto', note: '7일 무응답 — 승인 간주(약관)' });

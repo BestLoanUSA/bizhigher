@@ -25,7 +25,7 @@
 import { authenticate, login, logoutCookie } from './_auth.js';
 import { notify, sendEmail, esc as escHtml } from '../api/_notify.js';
 import { syncReviews } from '../api/_reviews.js';
-import { ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady, ensurePortalToken, sweepAutoApprovals } from '../api/_orders.js';
+import { ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady, ensurePortalToken, sweepAutoApprovals, parseOptions, approveDeliverable } from '../api/_orders.js';
 import { PLAYBOOK, COMMON_ONBOARDING, WHO, PHASES, tasksFor, summarize, DELIVER_KEYS, APPROVAL_KEYS, outputKind, OUTPUT_LABEL } from '../api/_playbook.js';
 import { appHtml, loginHtml } from './_ui.js';
 
@@ -187,7 +187,7 @@ async function api(env, method, seg, body, url) {
       await db.prepare(`UPDATE job_tasks SET status = 'done', done_at = datetime('now'), decided_at = datetime('now'), note = CASE WHEN ? != '' THEN ? ELSE note END,
         result_text = CASE WHEN ? != '' THEN COALESCE(result_text, '') || char(10) || char(10) || '[David 승인 메모] ' || ? ELSE result_text END WHERE id = ?`).bind(note, note, note, note, t.id).run();
       // 결과물 링크가 있으면 결과물 목록에 올리고 "발송 대기"로. Gmail 초안은 fulfillment 루틴이 이 행을 보고 만든다(고객 자동 발송 금지 §12)
-      if (DELIVER_KEYS.has(t.key)) await ensureDeliverable(db, t); // 고객에게 가는 결과물인 단계만 — 내부 작업물은 올리지 않는다
+      if (DELIVER_KEYS.has(t.key) || t.options) await ensureDeliverable(db, t); // 고객에게 가는 결과물인 단계만 — 내부 작업물은 올리지 않는다. 단 선택지(options)가 붙은 결과물은 고객이 골라야 하므로 어느 단계든 올린다
       await addEvent(db, t.job_id, 'task', null, null, `✔ 승인 — ${t.title}${note ? ' · ' + note : ''}`);
       await autoAdvance(db, t.job_id);
       return { next: await nextReview(db, t.id) };
@@ -232,9 +232,10 @@ async function api(env, method, seg, body, url) {
       const kind = ['text', 'html', 'link', 'images', 'video'].includes(body.kind) ? body.kind : (body.url && !body.text ? 'link' : 'text');
       const checks = Array.isArray(body.checks) ? body.checks.slice(0, 6).map((c) => String(c).slice(0, 200)) : [];
       const text = String(body.text || '').slice(0, 200000); const selfCheck = String(body.self_check || '').slice(0, 500);
+      const options = parseOptions(body.options); // 고객이 고르는 선택지(시안·세트). 승인되면 결과물로 복사된다
       await db
-        .prepare(`UPDATE job_tasks SET result_kind = ?, result_text = ?, result_url = ?, checks = ?, self_check = ?, status = 'review', requested_at = datetime('now') WHERE id = ?`)
-        .bind(kind, text, String(body.url || '').slice(0, 1000), JSON.stringify(checks), selfCheck, t.id)
+        .prepare(`UPDATE job_tasks SET result_kind = ?, result_text = ?, result_url = ?, checks = ?, self_check = ?, options = ?, status = 'review', requested_at = datetime('now') WHERE id = ?`)
+        .bind(kind, text, String(body.url || '').slice(0, 1000), JSON.stringify(checks), selfCheck, options.length ? JSON.stringify(options) : null, t.id)
         .run();
       // 자동 승인 규칙(검증 큐 탭에서 켜고 끔) — 켜진 규칙의 단계는 큐를 건너뛴다
       const rule = await autoRuleFor(db, { ...t, result_text: text, self_check: selfCheck });
@@ -405,6 +406,15 @@ async function api(env, method, seg, body, url) {
     await db.prepare(`UPDATE deliverables SET summary = ? WHERE id = ?`).bind(String(body.text || '').trim().slice(0, 2000), d.id).run();
     return {};
   }
+  if (res === 'deliverables' && id && sub === 'choose' && method === 'POST') {
+    // David 가 고객 대신 선택·승인 (전화로 확인했을 때 등). 선택지가 없는 결과물도 승인된다
+    const d = await db.prepare(`SELECT * FROM deliverables WHERE id = ?`).bind(Number(id)).first();
+    if (!d) return undefined;
+    const opts = parseOptions(d.options);
+    if (opts.length && body.choice != null && !opts.some((o) => o.key === String(body.choice))) throw bad('없는 선택지입니다: ' + String(body.choice).slice(0, 20) + ' (가능: ' + opts.map((o) => o.key).join(', ') + ')');
+    const picked = await approveDeliverable(db, d, { source: 'david', note: 'David 가 고객 대신 승인' + (body.choice ? ' — 선택 ' + String(body.choice).slice(0, 20) : ''), choice: body.choice });
+    return { ok: true, choice: picked ? picked.key : null };
+  }
   if (res === 'jobs' && id && sub === 'send-packet' && method === 'POST') {
     // David 가 누른다: 전달 안 된 결과물 전부를 한 통으로 고객에게 (고객 페이지 링크 + 요약). 루틴은 호출하지 않는다 (§12 자동 발송 금지)
     const j = await db.prepare(`SELECT * FROM jobs WHERE id = ?`).bind(Number(id)).first();
@@ -418,7 +428,7 @@ async function api(env, method, seg, body, url) {
     const biz = (j.business || '').replace(/\s*\(데모\)/, '');
     const needs = ds.filter((d) => d.needs_approval && !d.approved_at);
     const subject = `[BizHigher] ${biz} — 결과물 ${ds.length}건${needs.length ? ' · 확인 부탁드립니다' : ''}`;
-    const list = ds.map((d) => `<li style="margin:0 0 10px"><b>${escHtml(d.title)}</b>${d.needs_approval && !d.approved_at ? ' <span style="color:#B45309">(확인 필요)</span>' : ''}${d.summary ? `<br><span style="color:#374151">${escHtml(d.summary)}</span>` : ''}</li>`).join('');
+    const list = ds.map((d) => `<li style="margin:0 0 10px"><b>${escHtml(d.title)}</b>${d.needs_approval && !d.approved_at ? (d.options ? ' <span style="color:#B45309">(시안 중 하나를 골라 주세요)</span>' : ' <span style="color:#B45309">(확인 필요)</span>') : ''}${d.summary ? `<br><span style="color:#374151">${escHtml(d.summary)}</span>` : ''}</li>`).join('');
     const htmlBody = `<div style="font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#111318;line-height:1.6">
       <div style="font-size:18px;font-weight:800;margin-bottom:14px">Biz<span style="color:#0A4DF5">Higher</span></div>
       <p>${escHtml(biz)} 사장님, 안녕하세요.</p>
@@ -842,10 +852,11 @@ async function ensureDeliverable(db, t) {
   const dup = await db.prepare(`SELECT id, revise_note FROM deliverables WHERE job_id = ? AND title = ? LIMIT 1`).bind(t.job_id, t.title.slice(0, 200)).first();
   if (dup) {
     // 같은 단계를 다시 승인(고객 수정 요청 반영 등) → 새 결과물로 취급: 전달 전·요약 없음·승인 전으로 되돌려 다음 묶음에 다시 들어가게
-    await db.prepare(`UPDATE deliverables SET task_id = ?, kind = ?, url = CASE WHEN ? != '' THEN ? ELSE url END, sent_at = NULL, packet_id = NULL, summary = NULL, approved_at = NULL, revise_note = NULL WHERE id = ?`).bind(t.id, t.result_kind || null, t.result_url || '', t.result_url || '', dup.id).run();
+    await db.prepare(`UPDATE deliverables SET task_id = ?, kind = ?, url = CASE WHEN ? != '' THEN ? ELSE url END, sent_at = NULL, packet_id = NULL, summary = NULL, approved_at = NULL, revise_note = NULL, options = ?, choice = NULL, choice_at = NULL WHERE id = ?`).bind(t.id, t.result_kind || null, t.result_url || '', t.result_url || '', t.options || null, dup.id).run();
     return dup.id;
   }
-  const r = await db.prepare(`INSERT INTO deliverables (job_id, title, url, task_id, kind, needs_approval) VALUES (?, ?, ?, ?, ?, ?)`).bind(t.job_id, t.title.slice(0, 200), t.result_url || '', t.id, t.result_kind || null, APPROVAL_KEYS.has(t.key) ? 1 : 0).run();
+  // 선택지(options)가 있는 결과물은 단계 키와 무관하게 고객 승인(선택)이 필요하다
+  const r = await db.prepare(`INSERT INTO deliverables (job_id, title, url, task_id, kind, needs_approval, options) VALUES (?, ?, ?, ?, ?, ?, ?)`).bind(t.job_id, t.title.slice(0, 200), t.result_url || '', t.id, t.result_kind || null, APPROVAL_KEYS.has(t.key) || t.options ? 1 : 0, t.options || null).run();
   return r.meta && r.meta.last_row_id;
 }
 

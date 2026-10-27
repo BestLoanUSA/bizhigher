@@ -4,7 +4,7 @@
  * 보여 주는 것: 고객에게 전달된(sent_at) 결과물만. ?preview=1 은 David 미리보기(전달 전 것도 표시).
  * 승인이 필요한 결과물(needs_approval)은 [승인] / [수정 요청] 버튼 → job_tasks 에 반영돼 루틴이 다음 단계를 돈다.
  */
-import { ensureSchema, addEvent, approveDeliverable } from '../api/_orders.js';
+import { ensureSchema, addEvent, approveDeliverable, parseOptions } from '../api/_orders.js';
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const EMBED_RE = /^https:\/\/([a-z0-9-]+\.)*(bizhigher-sites\.pages\.dev|sites\.bizhigher\.com|bizhigher\.com)(\/|$)/i;
@@ -67,11 +67,15 @@ function siteCard(site, siteTask, env) {
 function page(job, ds, { preview, msg, site, siteTask, env }) {
   const biz = esc((job.business || '').replace(/\s*\(데모\)/, ''));
   const items = ds.map((d) => {
+    const options = parseOptions(d.options);
+    const chosen = options.find((o) => o.key === d.choice);
+    // 선택지가 있는 결과물(시안·세트·버전): 카드마다 "이 디자인으로 진행" — 고객이 고르는 승인 (2026-10-27)
+    const choiceCards = options.length ? `<div class="opts">${options.map((o) => `<form method="post" class="opt"><input type="hidden" name="id" value="${d.id}"><input type="hidden" name="action" value="approve"><input type="hidden" name="choice" value="${esc(o.key)}">${o.image ? `<a href="${esc(o.image)}" target="_blank" rel="noopener"><img src="${esc(o.image)}" alt="${esc(o.label)}" loading="lazy"></a>` : ''}<div class="ol"><b>${esc(o.key)}.</b> ${esc(o.label)}</div>${o.note ? `<div class="on">${esc(o.note)}</div>` : ''}<button class="btn" type="submit">이 디자인으로 진행</button></form>`).join('')}</div>` : '';
     const approval = d.needs_approval && !d.approved_at ? `
-      <div class="appr"><b>확인 부탁드립니다.</b> 내용이 괜찮으면 승인을 눌러 주세요. 7일 안에 회신이 없으면 승인된 것으로 보고 예정대로 진행합니다(게시 후에도 수정 1회 무료).
-        <form method="post" class="row"><input type="hidden" name="id" value="${d.id}"><input type="hidden" name="action" value="approve"><button class="btn" type="submit">✓ 이대로 진행해 주세요</button></form>
+      <div class="appr"><b>${options.length ? '마음에 드는 디자인을 골라 주세요.' : '확인 부탁드립니다.'}</b> ${options.length ? '이미지를 누르면 크게 보입니다. 고르시면 그 디자인으로 나머지를 만듭니다. 7일 안에 회신이 없으면 가게 분위기에 맞는 것으로 진행합니다.' : '내용이 괜찮으면 승인을 눌러 주세요. 7일 안에 회신이 없으면 승인된 것으로 보고 예정대로 진행합니다(게시 후에도 수정 1회 무료).'}
+        ${options.length ? choiceCards : `<form method="post" class="row"><input type="hidden" name="id" value="${d.id}"><input type="hidden" name="action" value="approve"><button class="btn" type="submit">✓ 이대로 진행해 주세요</button></form>`}
         <details${d.revise_note ? ' open' : ''}><summary>수정 요청하기</summary>${d.revise_note ? `<div class="rev">✎ 접수된 요청: ${esc(d.revise_note)} — 반영 후 다시 올려드립니다</div>` : ''}<form method="post"><input type="hidden" name="id" value="${d.id}"><input type="hidden" name="action" value="revise"><textarea name="note" required placeholder="무엇을 어떻게 고칠지 적어 주세요 (예: 2주차 게시물 가격 문구 삭제)"></textarea><button class="btn ghost" type="submit">수정 요청 보내기</button></form></details>
-      </div>` : d.approved_at ? `<div class="ok">✓ ${esc(d.approved_at.slice(0, 10))} 승인됨</div>` : '';
+      </div>` : d.approved_at ? `<div class="ok">✓ ${esc(d.approved_at.slice(0, 10))} 승인됨${chosen ? ` · 선택: ${esc(chosen.key)}. ${esc(chosen.label)}` : ''}</div>${chosen && chosen.image ? `<div class="grid"><a href="${esc(chosen.image)}" target="_blank" rel="noopener"><img src="${esc(chosen.image)}" alt="" loading="lazy"></a></div>` : ''}` : '';
     return `<section class="card${d.sent_at ? '' : ' draft'}"><div class="meta">${d.sent_at ? esc(d.sent_at.slice(0, 10)) : '전달 전 (미리보기)'}</div><h2>${esc(d.title)}</h2>${d.summary ? `<p class="sum">${esc(d.summary)}</p>` : ''}${body(d)}${approval}</section>`;
   }).join('');
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>${biz} — BizHigher 결과물</title>
@@ -85,6 +89,7 @@ pre{white-space:pre-wrap;word-break:break-word;font:14px/1.6 inherit;background:
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:8px 0}.grid img,.grid video{width:100%;border-radius:10px;border:1px solid var(--line);display:block;background:#000}
 .btn{display:inline-block;background:var(--blue);color:#fff;border:0;border-radius:999px;padding:12px 18px;font-weight:700;font-size:15px;cursor:pointer;text-decoration:none;font-family:inherit}.btn.ghost{background:#fff;color:var(--blue);border:1.5px solid var(--blue)}
 .appr{margin-top:12px;background:#EEF2FF;border-radius:12px;padding:12px;font-size:14px;line-height:1.6}.appr .row{margin:10px 0}.appr details{margin-top:6px}.appr summary{cursor:pointer;color:var(--blue);font-weight:700}.appr textarea{width:100%;min-height:90px;border:1.5px solid var(--line);border-radius:10px;padding:10px;font:inherit;margin:8px 0}
+.opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:12px 0 4px}.opt{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}.opt img{width:100%;border-radius:8px;border:1px solid var(--line);display:block;background:#fff}.opt .ol{font-size:14px}.opt .on{font-size:12.5px;color:var(--muted);line-height:1.45}.opt .btn{margin-top:auto;padding:10px 12px;font-size:14px;text-align:center}
 .ok{margin-top:10px;color:#0B7A3E;font-weight:700}.rev{margin-top:10px;color:#B45309;font-size:14px}.muted{color:var(--muted);font-size:14px}
 .flash{background:#E7F7EE;color:#0B7A3E;border-radius:12px;padding:12px 14px;font-weight:700;margin-bottom:14px}.pv{background:#FEF3C7;color:#92400E;border-radius:12px;padding:10px 14px;font-size:13px;margin-bottom:14px}
 footer{text-align:center;color:var(--muted);font-size:13px;padding:24px 16px}footer a{color:var(--blue)}
@@ -103,7 +108,7 @@ export async function onRequestGet({ params, env, request }) {
   const u = new URL(request.url);
   const preview = u.searchParams.get('preview') === '1';
   const ds = preview ? data.ds : data.ds.filter((d) => d.sent_at);
-  const msg = u.searchParams.get('ok') === 'approve' ? '승인해 주셔서 감사합니다. 예정대로 진행하겠습니다.' : u.searchParams.get('ok') === 'revise' ? '수정 요청을 받았습니다. 반영해서 다시 올려드리겠습니다.' : u.searchParams.get('ok') === 'site' ? '웹사이트 수정 요청을 받았습니다. 반영되면 같은 주소에서 보실 수 있습니다.' : '';
+  const msg = u.searchParams.get('ok') === 'approve' ? '승인해 주셔서 감사합니다. 예정대로 진행하겠습니다.' : u.searchParams.get('ok') === 'choice' ? '골라 주셔서 감사합니다. 그 디자인으로 나머지를 만들어 올려드리겠습니다.' : u.searchParams.get('ok') === 'revise' ? '수정 요청을 받았습니다. 반영해서 다시 올려드리겠습니다.' : u.searchParams.get('ok') === 'site' ? '웹사이트 수정 요청을 받았습니다. 반영되면 같은 주소에서 보실 수 있습니다.' : '';
   return html(page(data.job, ds, { preview, msg, site: data.site, siteTask: data.siteTask, env }));
 }
 
@@ -126,8 +131,10 @@ export async function onRequestPost({ params, env, request }) {
   if (!d || !d.needs_approval) return html('bad request', 400);
   const db = env.DB;
   if (action === 'approve') {
-    await approveDeliverable(db, d, { source: 'customer', note: '고객 페이지에서 승인' });
-    return Response.redirect(new URL(`/c/${params.token}?ok=approve`, request.url).toString(), 303);
+    const options = parseOptions(d.options); const choice = String(form.get('choice') || '').slice(0, 20);
+    if (options.length && !options.some((o) => o.key === choice)) return html('디자인을 하나 골라 주세요', 400);
+    await approveDeliverable(db, d, { source: 'customer', note: '고객 페이지에서 승인' + (choice ? ' — 선택 ' + choice : ''), choice });
+    return Response.redirect(new URL(`/c/${params.token}?ok=${choice ? 'choice' : 'approve'}`, request.url).toString(), 303);
   }
   if (action === 'revise') {
     if (!note) return html('수정 내용을 적어 주세요', 400);

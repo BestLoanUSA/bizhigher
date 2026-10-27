@@ -18,6 +18,10 @@
  *       사이트 스펙(D1 sites.spec)에서 props 를 만들어 Remotion 템플릿(automation/video, 9:16 약 20초: 훅 → 서비스 ≤3 → 왜 우리 → 엔드카드)을 렌더한다.
  *       --clip 은 훅 장면 배경(Kling 클립), 없으면 히어로 사진 켄번스. --props 는 props 부분 덮어쓰기(JSON: hook·services[].sub·highlights·cta·hours 등 — sv-1 기획안 문구를 여기로).
  *       스펙에 없는 값은 비워 두면 그 장면·요소가 빠진다(지어내지 않는다). 첫 실행은 automation/video 에 npm ci(1~2분), 렌더는 20초 영상 기준 약 1.5분, 비용 0.
+ *   node automation/ai-runner/creative.js print (--job 28 | --place-id … --name "…" [--name-ko …] [--phone …] [--photo a.jpg,b.jpg]) [--look A|B|C|auto] [--preview] [--color "#0A4DF5"] --out dir [--upload --task 12]
+ *       리뷰 QR 인쇄물 키트. 룩 3종(A 사진 콜라주 · B 네이비·골드 세리프 · C 미니멀+도형). --preview = 룩별 시안(텐트+포스터) + 보드 + options.json(runner submit --options 로 고객이 고른다, qr-2).
+ *       --look 으로 전체 키트(qr-3): 테이블텐트·포스터·카운터 카드·스티커·모바일 PNG 300dpi + 인쇄용 PDF(재단선·접는 선) + 가이드. auto = 사이트 스타일로(없으면 B). 비용 0, 시안 약 40초·키트 약 30초.
+ *       --job 이면 질문지(place_id·상호·전화·첨부 사진)와 사이트 스펙(한글 상호·색·스타일·사진)에서 채운다. 사진이 없고 FAL_KEY 가 있으면 A 룩용 분위기 이미지 2장 생성(--no-gen 으로 끔). 글꼴은 _fonts.js 자체 서빙
  */
 const fs = require('fs');
 const path = require('path');
@@ -353,6 +357,73 @@ async function promo() {
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 }
 
+/* ───────── print: 리뷰 QR 인쇄물 키트 (룩 3종, 시안 → 고객 선택 → 전체 키트) ───────── */
+/** 사진 1장을 data URL 로 (1600px 축소). 실패하면 '' */
+async function photoData(src, dir, i) {
+  try {
+    let buf; if (/^https?:\/\//.test(src)) { const r = await fetch(src); if (!r.ok) return ''; buf = Buffer.from(await r.arrayBuffer()); } else { if (!fs.existsSync(src)) return ''; buf = fs.readFileSync(src); }
+    const raw = path.join(dir, `_p${i}.src`); fs.writeFileSync(raw, buf); const out = path.join(dir, `_p${i}.jpg`);
+    try { require('child_process').execFileSync(ffmpegBin(), ['-v', 'error', '-y', '-i', raw, '-vf', "scale='min(1600,iw)':-2", '-q:v', '4', out], { stdio: 'ignore' }); buf = fs.readFileSync(out); } catch {}
+    try { fs.unlinkSync(raw); fs.unlinkSync(out); } catch {}
+    return 'data:image/jpeg;base64,' + buf.toString('base64');
+  } catch { return ''; }
+}
+async function printKit() {
+  const { makeKit, makePreview, LOOKS, lookForStyle } = require('./_print.js');
+  const out = path.resolve(opt('out', 'print-kit')); fs.mkdirSync(out, { recursive: true });
+  const job = opt('job'); const preview = args.includes('--preview');
+  let d = { name: opt('name', ''), name_ko: opt('name-ko', ''), city: opt('city', ''), phone: opt('phone', ''), review_url: opt('review-url', ''), color: opt('color', ''), logo: opt('logo', '') };
+  let photoSrcs = (opt('photo', '') || '').split(',').map((x) => x.trim()).filter(Boolean); let style = opt('style', '');
+  if (!d.review_url && opt('place-id')) d.review_url = 'https://search.google.com/local/writereview?placeid=' + opt('place-id');
+  if (job) {
+    const j = await adminGet('jobs/' + job); const notes = String((j.intake && j.intake.notes) || ''); const biz = (j.job && j.job.business) || '';
+    const pid = /place_id:\s*([A-Za-z0-9_-]{10,})/.exec(notes); const nm = /^상호:\s*(.+)$/m.exec(notes); const ph = /^전화:\s*(.+)$/m.exec(notes); const ad = /^주소:\s*(.+)$/m.exec(notes);
+    let spec = null; try { const r = await adminGet('sites/' + job); spec = r && r.spec ? (typeof r.spec === 'string' ? JSON.parse(r.spec) : r.spec) : null; } catch {}
+    d.name = d.name || (spec && spec.name) || (nm && nm[1].trim()) || biz.replace(/\s*\(데모\)\s*$/, '');
+    d.name_ko = d.name_ko || (spec && spec.name_ko) || '';
+    d.city = d.city || (spec && spec.address && spec.address.city) || (ad ? (ad[1].split(',')[1] || '').trim() : '');
+    d.phone = d.phone || (spec && spec.phone) || (ph && ph[1].trim() !== '-' ? ph[1].trim() : '');
+    d.review_url = d.review_url || (spec && spec.review_url) || (spec && spec.place_id ? 'https://search.google.com/local/writereview?placeid=' + spec.place_id : '') || (pid ? 'https://search.google.com/local/writereview?placeid=' + pid[1] : '');
+    d.color = d.color || (spec && spec.theme && spec.theme.color) || '';
+    style = style || (spec && spec.theme && (spec.theme.style || spec.theme.mood)) || '';
+    if (!photoSrcs.length) { // 사진: 스펙(히어로·갤러리·소개) → 질문지 첨부(jpg/png, 로고 제외)
+      const fromSpec = spec ? [spec.hero && spec.hero.photo, ...(spec.gallery || []), spec.about && spec.about.photo].filter(Boolean) : [];
+      const fromNotes = (notes.match(/https?:\/\/\S+\.(?:jpe?g|png|webp)/gi) || []).filter((u) => !/logo/i.test(u));
+      photoSrcs = [...new Set([...fromSpec, ...fromNotes])].slice(0, 6);
+    }
+  }
+  if (!d.name) throw new Error('상호가 없습니다 (--name 또는 --job)');
+  if (!d.review_url) throw new Error('리뷰 링크가 없습니다 — --place-id 또는 질문지의 구글 프로필 place_id 가 필요 (고객에게 "구글에서 내 가게 찾기"로 질문지 재제출 요청)');
+  if (!/^#?[0-9a-f]{6}$/i.test(d.color)) d.color = '#0A4DF5'; if (!d.color.startsWith('#')) d.color = '#' + d.color;
+  // 사진 → data URL. 없고 FAL_KEY 가 있으면 업종 분위기 배경 2장 생성(A 룩용, 장당 약 $0.003) — 선택지 설명에 "생성 이미지" 표시
+  const photos = []; for (let i = 0; i < photoSrcs.length; i++) { const u = await photoData(photoSrcs[i], out, i); if (u) photos.push(u); }
+  let generated = 0;
+  if (!photos.length && process.env.FAL_KEY && !args.includes('--no-gen')) {
+    for (let i = 0; i < 2; i++) { try { const f = path.join(out, `_gen${i}.jpg`); require('child_process').execFileSync(process.execPath, [__filename, 'gen', '--prompt', `${d.city ? d.city + ' ' : ''}${opt('category', 'local shop')} interior, warm natural light, clean, no people, no text, no logo, editorial photo`, '--out', f, '--size', 'landscape_16_9'], { stdio: 'ignore' }); const u = await photoData(f, out, 90 + i); if (u) { photos.push(u); generated++; } fs.unlinkSync(f); } catch {} }
+  }
+  const base = { ...d, photos, out, generated };
+  const chosenLook = opt('look', 'auto');
+  if (preview) {
+    const r = await makePreview(base);
+    const files = [{ kind: 'board', file: r.board }, ...r.looks.map((o) => ({ kind: 'look-' + o.key, file: o.card }))];
+    if (args.includes('--upload')) { for (const f of files) f.url = await uploadFile(f.file, { job: opt('job'), task: opt('task'), label: f.kind === 'board' ? '시안 보드 (룩 3종)' : `시안 ${f.kind.slice(5)} — ${LOOKS[f.kind.slice(5)].label}` }); }
+    const auto = lookForStyle(style);
+    const options = r.looks.map((o) => { const f = files.find((x) => x.kind === 'look-' + o.key); return { key: o.key, label: o.label, note: o.note + (generated && o.key === 'A' ? ' (사진이 없어 분위기 이미지를 생성해 넣었습니다)' : ''), image: (f && f.url) || '', styles: o.styles, default: o.key === auto }; });
+    const optFile = path.join(out, 'options.json'); fs.writeFileSync(optFile, JSON.stringify(options, null, 1));
+    console.log(JSON.stringify({ out, preview: true, review_url: d.review_url, site_style: style || null, default_look: auto, generated, files: files.map((f) => ({ kind: f.kind, file: f.file, url: f.url })), options: optFile }));
+    return;
+  }
+  const look = chosenLook === 'auto' ? lookForStyle(style) : String(chosenLook).toUpperCase();
+  if (!LOOKS[look]) throw new Error('--look 은 A | B | C | auto');
+  const r = await makeKit({ ...base, look });
+  const files = [...r.files, ...(r.pdf ? [{ kind: 'pdf', file: r.pdf }] : [])];
+  if (args.includes('--upload')) {
+    const labels = { tent: '테이블텐트 4×5" PNG', card: '카운터 카드 4×6" PNG', poster: '포스터 8.5×11" PNG', sticker: '스티커 2" PNG', mobile: '모바일 공유 1080×1920', pdf: '인쇄용 PDF (재단선)' };
+    for (const f of files) f.url = await uploadFile(f.file, { job: opt('job'), task: opt('task'), label: labels[f.kind] || f.kind });
+  }
+  console.log(JSON.stringify({ out, look, look_label: LOOKS[look].label, review_url: d.review_url, color: d.color, photos: photos.length, generated, files: files.map((f) => ({ kind: f.kind, file: f.file, url: f.url })), guide: r.guide }));
+}
+
 async function upload() {
   const file = opt('file'); if (!file || !fs.existsSync(file)) throw new Error('--file 없음');
   console.log(await uploadFile(file, { job: opt('job'), task: opt('task'), label: opt('label') }));
@@ -365,6 +436,7 @@ async function upload() {
   if (cmd === 'video') return video();
   if (cmd === 'caption') return caption();
   if (cmd === 'promo') return promo();
+  if (cmd === 'print') return printKit();
   if (cmd === 'crop') return cropImage(opt('image'), opt('ratio', '9:16'), opt('out', 'cropped.jpg')).then((o) => console.log(o));
-  console.log('사용법: gen --prompt … --out bg.jpg | compose --bg bg.jpg --headline … --out dir | upload --file a.jpg [--job N --task N] | video --image 사진URL또는파일 [--crop 9:16] [--prompt …] [--duration 5] --out clip.mp4 [--job N --task N] | caption --video clip.mp4 --text "자막1|자막2" [--brand …] [--logo …] [--cta …] [--music bgm.mp3] --out final.mp4 | promo (--job N | --spec spec.json) [--clip clip.mp4] [--props over.json] [--hook "리드|문장|강조어"] [--cta …] [--upload --task N] --out promo.mp4 | crop --image a.jpg --ratio 9:16 --out b.jpg');
+  console.log('사용법: gen --prompt … --out bg.jpg | compose --bg bg.jpg --headline … --out dir | upload --file a.jpg [--job N --task N] | video --image 사진URL또는파일 [--crop 9:16] [--prompt …] [--duration 5] --out clip.mp4 [--job N --task N] | caption --video clip.mp4 --text "자막1|자막2" [--brand …] [--logo …] [--cta …] [--music bgm.mp3] --out final.mp4 | promo (--job N | --spec spec.json) [--clip clip.mp4] [--props over.json] [--hook "리드|문장|강조어"] [--cta …] [--upload --task N] --out promo.mp4 | print (--job N | --place-id … --name …) [--look A|B|C|auto] [--preview] --out dir [--upload --task N] | crop --image a.jpg --ratio 9:16 --out b.jpg');
 })().catch((e) => { console.error('오류:', e.message); process.exit(1); });
