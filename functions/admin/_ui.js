@@ -124,7 +124,7 @@ const initial = (name) => { const s = String(name || '?').replace(/\s*\(데모\)
 const dueHtml = (di) => di && di.label ? '<span class="due ' + esc(di.tone) + '">' + esc(di.label) + '</span>' : '';
 const kindTag = (k) => '<span class="tag ' + (k === '검증' ? 'verify' : k === '승인' ? 'approve' : 'manual') + '">' + esc(k) + '</span>';
 let WHO = {}, STATUSES = [], TASK_STATUSES = [];
-let OUT_LABEL = { media: '이미지·영상', text: '글·본문', site: '사이트·링크', report: '리포트·전달', internal: '내부 작업' };
+let OUT_LABEL = { media: '이미지·영상', text: '글·본문', site: '사이트·링크', report: '리포트·전달', plan: '파일 대기(기획안)', internal: '내부 작업' };
 const stLabel = (k) => (STATUSES.find((s) => s[0] === k) || [k, k])[1];
 const stPill = (k) => '<span class="pill ' + esc(k) + '">' + esc(stLabel(k)) + '</span>';
 const oPill = (k) => k ? '<span class="pill ' + esc(k) + '">' + esc({ paid: '결제됨', active: '구독 중', past_due: '미납', canceled: '해지', refunded: '환불', incomplete: '미완료' }[k] || k) + '</span>' : '';
@@ -264,7 +264,7 @@ async function journey(id) {
         const fin = lanes.ai.filter((t) => t.out && t.out !== 'internal'); const inner = lanes.ai.filter((t) => !t.out || t.out === 'internal');
         const cnt = (k) => fin.filter((t) => t.out === k).length;
         const shown = aiOut === 'all' ? fin : fin.filter((t) => t.out === aiOut);
-        const chips = '<div class="chips" style="margin:6px 0 4px">' + [['all', '전체 ' + fin.length], ['media', OUT_LABEL.media + ' ' + cnt('media')], ['text', OUT_LABEL.text + ' ' + cnt('text')], ['site', OUT_LABEL.site + ' ' + cnt('site')], ['report', OUT_LABEL.report + ' ' + cnt('report')]].filter(([k]) => k === 'all' || cnt(k)).map(([k, l]) => '<button type="button" data-aiout="' + k + '" class="' + (aiOut === k ? 'on' : '') + '">' + l + '</button>').join('') + '</div>';
+        const chips = '<div class="chips" style="margin:6px 0 4px">' + [['all', '전체 ' + fin.length], ['media', OUT_LABEL.media + ' ' + cnt('media')], ['text', OUT_LABEL.text + ' ' + cnt('text')], ['site', OUT_LABEL.site + ' ' + cnt('site')], ['report', OUT_LABEL.report + ' ' + cnt('report')], ['plan', OUT_LABEL.plan + ' ' + cnt('plan')]].filter(([k]) => k === 'all' || cnt(k)).map(([k, l]) => '<button type="button" data-aiout="' + k + '" class="' + (aiOut === k ? 'on' : '') + '">' + l + '</button>').join('') + '</div>';
         return '<div class="lane" style="border-color:#0B9E58"><div class="h" style="flex-wrap:wrap"><span style="white-space:nowrap">AI가 했음</span><small>완성 결과물 ' + fin.length + ' · 내부 작업 ' + inner.length + ' · 최근 완료 순</small></div>' +
           (fin.length ? chips + (shown.length ? shown.slice(0, 8).map((t) => aiItem(t, false)).join('') + (shown.length > 8 ? '<details style="margin-top:6px"><summary class="ph" style="border-top:0;padding-top:4px;color:var(--blue)">더 보기 ' + (shown.length - 8) + '개</summary>' + shown.slice(8).map((t) => aiItem(t, false)).join('') + '</details>' : '') : '<div class="muted" style="padding:8px 0">이 종류는 아직 없음</div>') : '<div class="muted" style="padding:8px 0">고객에게 전달하거나 올릴 완성물은 아직 없음</div>') +
           (inner.length ? '<details style="margin-top:10px"><summary class="ph" style="padding-top:8px;color:var(--ink-600)">내부 작업·계획 ' + inner.length + '개 — 프로필·분석·설계·설정</summary>' + inner.map((t) => aiItem(t, false)).join('') + '</details>' : '') +
@@ -331,7 +331,7 @@ function kv(k, v) { return '<dt>' + k + '</dt><dd>' + (v || '<span class="muted"
 function aiItem(t, showWho) {
   const has = !!(t.result_text || t.result_url);
   const w = WHO[t.who] || { icon: '', label: t.who };
-  const outTag = t.out && t.out !== 'internal' ? '<span class="tag ' + ({ media: 'approve', site: 'verify', text: 'manual', report: 'manual' }[t.out] || 'manual') + '" style="margin-right:6px">' + esc((OUT_LABEL[t.out] || t.out)) + '</span>' : '';
+  const outTag = t.out && t.out !== 'internal' ? '<span class="tag ' + ({ media: 'approve', site: 'verify', text: 'manual', report: 'manual', plan: 'manual' }[t.out] || 'manual') + '" style="margin-right:6px' + (t.out === 'plan' ? ';background:#FEF3C7;color:#92400E;border-color:#FDE68A' : '') + '">' + esc((OUT_LABEL[t.out] || t.out)) + '</span>' : '';
   const head = '<span style="color:#0B9E58;font-weight:800">✓</span><span class="m">' + outTag + esc(t.title) + (has ? '<span class="more">내용 보기 ▾</span>' : '') + '<small>' + esc(t.service_name) + (showWho ? ' · ' + esc(w.label) : '') + ' · ' + day(t.done_at) + (t.note ? ' · ' + esc(t.note) : '') + '</small></span>';
   if (!has) return '<div class="li">' + head + '</div>';
   const body = '<div style="margin-top:6px">' + previewHtml(t, { radius: 8, cell: 120, siteH: 420 }) + '</div>' +
