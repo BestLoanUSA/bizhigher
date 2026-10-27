@@ -26,7 +26,7 @@ import { authenticate, login, logoutCookie } from './_auth.js';
 import { notify, sendEmail, esc as escHtml } from '../api/_notify.js';
 import { syncReviews } from '../api/_reviews.js';
 import { ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady, ensurePortalToken, sweepAutoApprovals } from '../api/_orders.js';
-import { PLAYBOOK, COMMON_ONBOARDING, WHO, PHASES, tasksFor, summarize, DELIVER_KEYS, APPROVAL_KEYS } from '../api/_playbook.js';
+import { PLAYBOOK, COMMON_ONBOARDING, WHO, PHASES, tasksFor, summarize, DELIVER_KEYS, APPROVAL_KEYS, outputKind, OUTPUT_LABEL } from '../api/_playbook.js';
 import { appHtml, loginHtml } from './_ui.js';
 
 export const TASK_STATUSES = [['todo', '대기'], ['doing', '진행'], ['review', '검증 대기'], ['done', '완료'], ['blocked', '막힘'], ['skipped', '해당 없음']];
@@ -523,6 +523,7 @@ async function api(env, method, seg, body, url) {
     const since = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 19).replace('T', ' ');
     // 레인은 "지금 단계"(가장 앞선 미완료 phase)만 보여준다 — 먼 미래의 단계는 아래 서비스별 진행과 전체 단계에서 본다
     const cur = currentPhaseTasks(tasks);
+    for (const t of tasks) t.out = outputKind(t); // 완성물/내부 구분 (AI가 했음 레인)
     const lanes = {
       // 최근 완료 순 12개 (플레이북 순서가 아니라 시간 순 — 방금 끝난 게 맨 위)
       ai: tasks.filter((t) => CLOSED.has(t.status) && t.who !== 'david' && t.who !== 'customer').sort((a, b) => String(b.done_at || '').localeCompare(String(a.done_at || ''))),
@@ -566,7 +567,7 @@ async function api(env, method, seg, body, url) {
     const portal = `${url.origin}/c/${await ensurePortalToken(db, job)}`;
     const siteRow = await db.prepare(`SELECT id, slug, domain, live, version, updated_at, spec FROM sites WHERE job_id = ?`).bind(job.id).first().catch(() => null);
     if (siteRow) { const sp = parseJson(siteRow.spec, {}); siteRow.tier = sp.tier === 'business' ? 'business' : 'onepage'; siteRow.style = (sp.theme && (sp.theme.style || sp.theme.mood)) || ''; siteRow.forward_to = (sp.contact && sp.contact.forward_to) || ''; delete siteRow.spec; siteRow.leads = ((await db.prepare(`SELECT COUNT(*) AS n FROM site_leads WHERE site_id = ?`).bind(siteRow.id).first().catch(() => null)) || {}).n || 0; }
-    return { portal, site: siteRow ? { ...siteRow, preview_url: `https://${env.SITES_PROJECT || 'bizhigher-sites'}.pages.dev/${siteRow.slug}/`, preview_host: `https://${siteRow.slug}.sites.bizhigher.com` } : null, job: { ...job, pct, phase: jobPhase(job, tasks), dueInfo: dueLabel(job.due_date), day: job.created_at ? Math.max(1, Math.floor((Date.now() - new Date(job.created_at.replace(' ', 'T') + 'Z').getTime()) / 864e5) + 1) : 1 }, order, payments, intake, events, deliverables, tasks, lanes, services, milestones, next: nextAction(tasks), summary: { ...summary, bottlenecks: undefined }, history, intakeCandidates, aiPending, stuck, stuckDays, lastMove, brief, progressSummary, who: WHO, phases: PHASES, taskStatuses: TASK_STATUSES, statuses: JOB_STATUSES };
+    return { portal, site: siteRow ? { ...siteRow, preview_url: `https://${env.SITES_PROJECT || 'bizhigher-sites'}.pages.dev/${siteRow.slug}/`, preview_host: `https://${siteRow.slug}.sites.bizhigher.com` } : null, job: { ...job, pct, phase: jobPhase(job, tasks), dueInfo: dueLabel(job.due_date), day: job.created_at ? Math.max(1, Math.floor((Date.now() - new Date(job.created_at.replace(' ', 'T') + 'Z').getTime()) / 864e5) + 1) : 1 }, order, payments, intake, events, deliverables, tasks, lanes, services, milestones, next: nextAction(tasks), summary: { ...summary, bottlenecks: undefined }, history, intakeCandidates, aiPending, stuck, stuckDays, lastMove, brief, progressSummary, who: WHO, phases: PHASES, taskStatuses: TASK_STATUSES, statuses: JOB_STATUSES, outputLabels: OUTPUT_LABEL };
   }
 
   if (res === 'jobs' && id && method === 'POST') {
