@@ -55,8 +55,9 @@ export const PLAYBOOK = {
   'review-qr-kit': {
     name: '리뷰 QR 키트', steps: [
       S('qr-1', 'place_id 확인 → 리뷰 링크 생성 → QR 생성·스캔 테스트', 'setup', 'auto', 0),
-      S('qr-2', '리뷰 QR 키트 생성 — 테이블텐트·포스터·카운터 카드·스티커 시트·모바일 공유 이미지 (한/영, creative.js print)', 'setup', 'auto', 3, { verify: true, block: '루틴이 질문지 place_id·상호·브랜드 색으로 PNG 300dpi + 인쇄용 PDF(재단선·접는 선) + 인쇄 가이드를 만든다(비용 0). David 는 QR 스캔 1회·문구 확인(리뷰 대가 문구 없음)' }),
-      S('qr-3', '인쇄 파일 전달 — qr-2 의 PDF·PNG 링크 + 인쇄 가이드를 고객 전달 결과물로', 'setup', 'auto', 1, { verify: true }),
+      S('qr-2', '리뷰 QR 시안 3종 — A 사진 콜라주 · B 네이비·골드 세리프 · C 미니멀+도형 (creative.js print --preview) → 고객이 하나 고른다', 'setup', 'auto', 2, { verify: true, block: '루틴이 질문지 place_id·상호·사진·브랜드 색으로 룩 3종 시안(텐트+포스터)을 만들어 선택지(options)와 함께 올린다. David 는 문구·QR 확인 후 승인 → "고객에게 묶음 보내기" → 고객이 고객 페이지에서 선택(7일 무응답이면 사이트 스타일로 자동)' }),
+      S('qr-2b', '고객이 시안을 고른다 — 고객 페이지 [이 디자인으로 진행] (무응답 7일 → 사이트 스타일로 자동 선택)', 'setup', 'customer', 0),
+      S('qr-3', '선택한 룩으로 전체 키트 제작 — 테이블텐트·포스터·카운터 카드·스티커·모바일 PNG 300dpi + 인쇄용 PDF(재단선·접는 선) + 인쇄 가이드 → 고객 전달', 'setup', 'auto', 2, { verify: true, block: '루틴이 qr-2b 의 "[고객 선택]"을 읽어 creative.js print --look 으로 만든다(비용 0). David 는 QR 스캔 1회·오탈자 확인' }),
     ],
   },
   'local-listing-setup': {
@@ -131,7 +132,7 @@ export const PLAYBOOK = {
       S('ac-2', '카피 — 헤드라인 5·본문 2·CTA 한/영, 광고 정책 검사', 'monthly', 'auto', 0),
       S('ac-3', '이미지 — 매장 실사진 합성(배경 제거) 또는 생성, 1:1·9:16·1.91:1 규격, 수량 30~50% 여유', 'monthly', 'auto', 0, { block: '루틴이 fal.ai(FAL_KEY) 배경 생성 + 한글 조판으로 3규격 제작, 검증 큐에서 확인. 매장 실사진 합성은 David 세션' }),
       S('ac-4', 'David 큐레이션 — 20장 선별 (검수가 아니라 선별)', 'monthly', 'david', 15, { verify: true }),
-      S('ac-5', '규격별 폴더 + 카피 문서 + 업로드 가이드 → Drive → Gmail 초안', 'monthly', 'auto', 2),
+      S('ac-5', '세트별 소재 묶음 + 카피 문서 + 업로드 가이드 → 고객이 세트를 고른다(선택지 = ac-3 세트 3개, 고객 페이지)', 'monthly', 'auto', 2, { block: '루틴이 ac-3 세트(헤드라인·피드 이미지)를 options 로 붙여 올린다. 고객이 고르면 deliverables.choice 에 기록 — David 가 ads-3 구축 때 그 세트를 쓴다' }),
     ],
   },
   'local-listing-care': {
@@ -202,7 +203,7 @@ const GIFTS = {
 
 /** slug(서비스 또는 패키지-기간) → 적용할 서비스 slug 목록 */
 /* 승인·완료 시 "결과물 · 발송" 목록(고객 전달)에 올라가는 단계 — 나머지는 내부 작업물이라 올리지 않는다 (2026-10-21: 매 단계마다 초안 메일이 가던 문제) */
-export const DELIVER_KEYS = new Set(['ob-5', 'gpo-5', 'qr-3', 'lls-7', 'ads-5', 'llp-4', 'web-4', 'post-2', 'post-7', 'rr-7', 'ac-5', 'cp-2', 'mr-4', 'seo-3', 'seo-4', 'seo-8', 'sv-2', 'am-5', 'llc-2']);
+export const DELIVER_KEYS = new Set(['ob-5', 'gpo-5', 'qr-2', 'qr-3', 'lls-7', 'ads-5', 'llp-4', 'web-4', 'post-2', 'post-7', 'rr-7', 'ac-5', 'cp-2', 'mr-4', 'seo-3', 'seo-4', 'seo-8', 'sv-2', 'am-5', 'llc-2']);
 
 /* 고객 승인이 필요한 결과물 — 고객 페이지에 [승인]/[수정 요청] 버튼이 붙고, 승인하면 같은 서비스의 다음 고객 차례 단계가 완료된다 */
 /** 결과물 종류 — 관리자 "AI가 했음"에서 완성물(고객 전달·업로드용)과 내부 작업·계획을 나눈다 (2026-10-27 David 요청)
@@ -228,7 +229,7 @@ export function outputKind(t) {
   return DELIVER_KEYS.has(t.key) ? 'report' : 'internal';
 }
 
-export const APPROVAL_KEYS = new Set(['post-2', 'seo-3', 'ac-5', 'sv-2']);
+export const APPROVAL_KEYS = new Set(['post-2', 'seo-3', 'ac-5', 'sv-2', 'qr-2']); // qr-2 = 시안 선택(고객이 고르는 승인)
 
 export function servicesFor(slug) {
   if (!slug) return [];

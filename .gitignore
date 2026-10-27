@@ -12,3 +12,6 @@ automation/video/out/
 automation/video/public/_run-*/
 automation/video/public/*.ttf
 automation/video/.remotion*
+
+# 인쇄물·소재 글꼴 캐시 (_fonts.js 가 첫 실행에 내려받는다)
+automation/fonts/

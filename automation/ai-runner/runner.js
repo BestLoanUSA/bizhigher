@@ -4,7 +4,8 @@
  * 콘텐츠 생성은 루틴 세션의 Claude가 하고, 이 스크립트는 읽기/쓰기만 한다 (Node 18+, 의존성 없음).
  *
  *   node automation/ai-runner/runner.js queue [--limit 20]                 # 할 단계 + 고객 컨텍스트 + Gmail 초안 대기 (JSON)
- *   node automation/ai-runner/runner.js submit --task 123 --file out.md [--url https://…] [--kind text|html|link]
+ *   node automation/ai-runner/runner.js submit --task 123 --file out.md [--url https://…] [--kind text|html|link|images|video] [--options options.json]
+ *       --options = 고객이 고르는 선택지 [{key:'B',label:'네이비·골드',image:'https://…/a/….jpg',note:'…',styles:['luxe','mono'],default:true}] — 승인되면 고객 페이지에 카드로 뜨고 고객이 하나를 고른다. 선택값은 다음 AI 단계 note "[고객 선택] B — …"
  *                                              [--checks "포인트1|포인트2|포인트3"] [--self-check "…"] [--done]   # 기본 검증 큐(review), --done 이면 바로 완료(verify=0 단계)
  *   node automation/ai-runner/runner.js summary --deliverable 7 --file s.txt      # 결과물의 고객용 요약 저장 (고객 페이지·묶음 메일에 쓰임). 메일은 보내지 않는다
  *   node automation/ai-runner/runner.js draft --job 5 --file body.txt            # (구) 작업 단위 초안을 David 메일에 — 이제 summary 를 쓴다
@@ -54,7 +55,8 @@ async function api(path, body) {
     if (!id || !file) throw new Error('--task ID --file path 가 필요합니다');
     const text = fs.readFileSync(file, 'utf8');
     const checks = (opt('checks', '') || '').split('|').map((s) => s.trim()).filter(Boolean);
-    const r = await api(`tasks/${id}/result`, { kind: opt('kind', opt('url') && text.trim().length < 400 ? 'link' : 'text'), text, url: opt('url', ''), checks, self_check: opt('self-check', '') });
+    let options; if (opt('options')) { options = JSON.parse(fs.readFileSync(opt('options'), 'utf8')); if (!Array.isArray(options) || !options.length) throw new Error('--options 는 [{key,label,image,note,styles,default}] 배열이어야 합니다'); }
+    const r = await api(`tasks/${id}/result`, { kind: opt('kind', opt('url') && text.trim().length < 400 ? 'link' : 'text'), text, url: opt('url', ''), checks, self_check: opt('self-check', ''), options });
     if (args.includes('--done') && !(r && r.autoApproved)) await api(`tasks/${id}/status`, { status: 'done' }); // verify=0 단계: 검증 없이 완료
     console.log(`올림: task ${id} (${text.length}자)${r && r.autoApproved ? ' → 자동 승인(' + r.rule + ')' : args.includes('--done') ? ' → 완료' : ' → 검증 큐'}`);
     return;
@@ -97,5 +99,5 @@ async function api(path, body) {
     console.log('메모 저장');
     return;
   }
-  console.log('사용법: queue | submit --task ID --file F [--url U] [--kind text|html|link|images] [--checks "a|b"] [--self-check S] [--done] | done --task ID | draft --deliverable ID --file F | drafted --deliverable ID | note --job ID --text T');
+  console.log('사용법: queue | submit --task ID --file F [--url U] [--kind text|html|link|images|video] [--checks "a|b"] [--self-check S] [--options o.json] [--done] | done --task ID | draft --deliverable ID --file F | drafted --deliverable ID | note --job ID --text T');
 })().catch((e) => { console.error('오류:', e.message); process.exit(1); });
