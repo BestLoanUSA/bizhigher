@@ -206,19 +206,22 @@ export const DELIVER_KEYS = new Set(['ob-5', 'gpo-5', 'qr-3', 'lls-7', 'ads-5', 
 
 /* 고객 승인이 필요한 결과물 — 고객 페이지에 [승인]/[수정 요청] 버튼이 붙고, 승인하면 같은 서비스의 다음 고객 차례 단계가 완료된다 */
 /** 결과물 종류 — 관리자 "AI가 했음"에서 완성물(고객 전달·업로드용)과 내부 작업·계획을 나눈다 (2026-10-27 David 요청)
- *  media 이미지·영상·인쇄물 · text 글·본문·답글 · site 사이트·페이지·링크 · report 리포트·전달 묶음 · internal 프로필·분석·설계·설정 */
+ *  media 이미지·영상·인쇄물 · text 글·본문·답글 · site 사이트·페이지·링크 · report 리포트·전달 묶음 · plan 파일 대신 기획안만 올라온 것(David 가 파일을 만들어야 함) · internal 프로필·분석·설계·설정 */
 export const OUTPUT_KIND = {
   'ac-3': 'media', 'post-4': 'media', 'sv-2': 'media', 'qr-2': 'media', 'qr-3': 'media',
   'gpo-3': 'text', 'llp-2': 'text', 'seo-4': 'text', 'post-2': 'text', 'rr-1': 'text', 'rr-live': 'text', 'ac-2': 'text', 'lls-3': 'text', 'ob-5': 'text', 'seo-3': 'text',
   'web-2': 'site', 'web-4': 'site', 'llp-3': 'site', 'llp-4': 'site', 'cp-2': 'site', 'seo-5': 'site', 'seo-8': 'site',
   'gpo-5': 'report', 'lls-7': 'report', 'ads-5': 'report', 'post-7': 'report', 'rr-7': 'report', 'ac-5': 'report', 'mr-4': 'report', 'am-5': 'report', 'llc-2': 'report',
 };
-export const OUTPUT_LABEL = { media: '이미지·영상', text: '글·본문', site: '사이트·링크', report: '리포트·전달', internal: '내부 작업' };
+export const OUTPUT_LABEL = { media: '이미지·영상', text: '글·본문', site: '사이트·링크', report: '리포트·전달', plan: '파일 대기(기획안)', internal: '내부 작업' };
+const PLAN_RE = /\[David 세션에서|파일 미제작|기획안만|파일\/데이터 작업 필요|이미지 작업 필요|영상 작업 필요/;
 const MEDIA_RE = /https?:\/\/\S+\.(?:jpe?g|png|webp|gif|mp4|webm|pdf)(?:[?#]\S*)?/i;
 const SITE_RE = /https?:\/\/(?:[a-z0-9-]+\.)*(?:sites\.bizhigher\.com|bizhigher-sites\.pages\.dev|bizhigher\.com\/c\/)/i;
 /** 단계 1개의 결과물 종류. 실제 결과물(이미지·영상·사이트 주소)이 있으면 키 매핑보다 그것을 우선 */
 export function outputKind(t) {
   const text = String(t.result_text || ''); const url = String(t.result_url || '');
+  // 루틴이 파일 대신 기획안만 올린 단계(규칙 d) — 파일이 있는 것처럼 보이면 안 된다. David 가 만들 것 목록
+  if (!MEDIA_RE.test(url) && !MEDIA_RE.test(text) && (PLAN_RE.test(text.slice(0, 300)) || PLAN_RE.test(String(t.self_check || '')))) return 'plan';
   if (t.result_kind === 'images' || t.result_kind === 'video' || MEDIA_RE.test(url) || MEDIA_RE.test(text)) return 'media';
   if (t.result_kind === 'link' || t.result_kind === 'html' || SITE_RE.test(url) || SITE_RE.test(text)) return 'site';
   if (OUTPUT_KIND[t.key]) return OUTPUT_KIND[t.key];
