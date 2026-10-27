@@ -395,21 +395,55 @@ function deliveryBar(d) {
 }
 
 
-/* 결과물 그림·납품 막대(.pv-grid): 화면 아래에 있을 때만 숨겼다가 들어오면 그린다. 3초 뒤엔 무조건 보인다. 마우스를 올리면 다시 그린다 */
+/* 결과물 그림·납품 막대(.pv-grid 안의 카드): 카드마다 화면에 들어올 때 그린다.
+   - 화면 아래에 있는 카드만 숨겼다가(.pv-arm) 들어오면 그린다(.pv-go). 3초 뒤 화면 안에 있는 카드는 무조건 보인다
+   - 한꺼번에 들어온 카드는 줄 순서대로, 같은 줄은 왼쪽부터 조금씩 늦게(--o)
+   - 마우스가 있으면 올릴 때, 터치 화면이면 카드가 화면 한가운데를 지날 때 한 번 더 그린다 */
 const PV_JS = `<script>
 (function () {
   if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  document.querySelectorAll('.pv-grid').forEach(function (grid) {
-    var go = function () { grid.classList.add('pv-go'); };
-    if (grid.getBoundingClientRect().top > innerHeight * 0.85 && 'IntersectionObserver' in window) {
-      grid.classList.add('pv-arm');
-      var io = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { go(); io.disconnect(); } }, { threshold: 0.15 });
-      io.observe(grid); setTimeout(go, 3000);
-    } else go();
-    grid.querySelectorAll('.prod-card').forEach(function (c) {
-      c.addEventListener('mouseenter', function () { if (!grid.classList.contains('pv-go')) return; c.classList.remove('pv-re'); void c.offsetWidth; c.classList.add('pv-re'); });
+  var cards = [];
+  document.querySelectorAll('.pv-grid .prod-card').forEach(function (c) { if (c.querySelector('.pv, .pd')) cards.push(c); });
+  if (!cards.length) return;
+  var canHover = window.matchMedia && matchMedia('(hover: hover)').matches;
+  function replay(c) { c.style.setProperty('--o', '0s'); c.classList.remove('pv-re'); void c.offsetWidth; c.classList.add('pv-re'); }
+  function play(list) {
+    list = list.filter(function (c) { return !c.classList.contains('pv-go'); });
+    if (!list.length) return;
+    list.sort(function (x, y) { var a = x.getBoundingClientRect(), b = y.getBoundingClientRect(); return (a.top - b.top) || (a.left - b.left); });
+    var row = -1, col = 0, lastTop = null;
+    list.forEach(function (c) {
+      var t = Math.round(c.getBoundingClientRect().top);
+      if (lastTop === null || Math.abs(t - lastTop) > 20) { row++; col = 0; lastTop = t; } else col++;
+      c.style.setProperty('--o', (row * 0.35 + col * 0.15).toFixed(2) + 's');
+      c.classList.add('pv-go'); c._pvAt = performance.now();
     });
-  });
+  }
+  if (!('IntersectionObserver' in window)) { play(cards); return; }
+  cards.forEach(function (c) { if (c.getBoundingClientRect().top > innerHeight * 0.9) c.classList.add('pv-arm'); });
+  play(cards.filter(function (c) { var r = c.getBoundingClientRect(); return !c.classList.contains('pv-arm') && r.bottom > 0 && r.height > 0; }));
+  var io = new IntersectionObserver(function (es) {
+    play(es.filter(function (e) { return e.isIntersecting; }).map(function (e) { return e.target; }));
+  }, { threshold: 0.25 });
+  cards.forEach(function (c) { io.observe(c); });
+  setTimeout(function () {
+    play(cards.filter(function (c) { var r = c.getBoundingClientRect(); return r.height > 0 && r.top < innerHeight && r.bottom > 0; }));
+  }, 3000);
+  if (canHover) {
+    cards.forEach(function (c) { c.addEventListener('mouseenter', function () { if (c.classList.contains('pv-go')) replay(c); }); });
+  } else {
+    var mid = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        var c = e.target;
+        c._pvIn = e.isIntersecting;
+        if (!e.isIntersecting || c._pvMid) return;
+        var wait = c.classList.contains('pv-go') ? 900 - (performance.now() - (c._pvAt || 0)) : 900;
+        if (wait > 0) { setTimeout(function () { if (c._pvIn && !c._pvMid && c.classList.contains('pv-go')) { c._pvMid = true; replay(c); } }, wait); return; }
+        c._pvMid = true; replay(c);
+      });
+    }, { rootMargin: '-45% 0px -45% 0px' });
+    cards.forEach(function (c) { mid.observe(c); });
+  }
 })();
 </script>`;
 
