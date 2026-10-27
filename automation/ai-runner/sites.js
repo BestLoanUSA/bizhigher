@@ -11,6 +11,9 @@
  *   node automation/ai-runner/sites.js patch --job 28 --file patch.json [--note "스타일 변경"]   # 저장된 스펙에 부분 패치(깊은 병합, null 은 삭제) → 새 버전. 수정 요청 반영에 쓴다(전체 재작성 금지)
  *   node automation/ai-runner/sites.js diff --job 28 [--file new.json]             # 저장된 최신 버전과 이전 버전(또는 --file)의 바뀐 키 목록 — 결과물 요약에 붙인다
  *   node automation/ai-runner/sites.js leads --job 28 [--since 7d]                # 사이트 문의 폼으로 들어온 리드 목록(관리자 API)
+ *   node automation/ai-runner/sites.js styles (--job 28 | --spec spec.json) --out dir [--styles luxe,warm,clean] [--upload --task N]
+ *                                                                              # 스타일 시안 3종(지금 스타일 + 어울리는 2종) — 같은 스펙을 스타일만 바꿔 렌더·데스크탑+모바일 스크린샷 → style-{key}.jpg + styles-board.jpg
+ *                                                                              #   + options.json(고객이 고르는 승인용, patch={"theme":{"style":key}} — 고르면 스펙이 바로 바뀐다). --upload 면 /a/ 에 올려 URL 로 채운다. 비용 0, 약 30초
  *   node automation/ai-runner/sites.js prep --spec spec.json [--out spec.json] [--job N --task N] [--no-enhance] [--no-gen]
  *                                                                              # 사진 준비(v3): 작은 사진(가로 900px 미만)은 fal.ai 로 업스케일 → /a/ 업로드 → 스펙 URL 교체(photo_meta 기록),
  *                                                                              #   갤러리가 3장 미만이면 업종 분위기 이미지를 생성해 gallery_generated 에 채운다(사람·글자 없음, 화면에 "연출 이미지" 표시). FAL_KEY 없으면 크기 보고만
@@ -163,6 +166,59 @@ function diffKeys(a, b, prefix = '') {
     const r = await api('sites/' + cur.slug + '/leads');
     for (const l of r.leads || []) console.log(`${l.created_at} · ${l.name} · ${l.phone || '-'} · ${l.email || '-'} · ${String(l.message || '').replace(/\s+/g, ' ').slice(0, 120)}`);
     if (!(r.leads || []).length) console.log('문의 없음');
+    return;
+  }
+  if (cmd === 'styles') {
+    const { STYLES, styleFor } = require('../sites/render.js');
+    const job = Number(opt('job')); const out = opt('out', 'styles'); const upload = args.includes('--upload'); const task = opt('task');
+    let spec = null;
+    if (opt('spec')) spec = JSON.parse(fs.readFileSync(opt('spec'), 'utf8'));
+    else if (job) { const cur = await api('sites/' + job); if (!cur || !cur.spec) throw new Error('저장된 스펙이 없습니다 — spec 명령으로 먼저 만드세요'); spec = cur.spec; }
+    else throw new Error('--job N 또는 --spec spec.json 이 필요합니다');
+    const current = styleFor(spec);
+    // 지금 스타일 + 어울리는 대안 2종 (업종 기본값을 1순위로, 질문지로 바꾼 경우에도 흔히 고르는 짝)
+    const ALT = { clean: ['warm', 'luxe'], warm: ['clean', 'editorial'], luxe: ['clean', 'mono'], editorial: ['warm', 'soft'], bold: ['clean', 'neon'], soft: ['clean', 'warm'], mono: ['luxe', 'clean'], neon: ['bold', 'luxe'] };
+    let keys = opt('styles') ? opt('styles').split(',').map((x) => x.trim()).filter((x) => STYLES.includes(x)) : [current, ...(ALT[current] || ['clean', 'warm'])];
+    keys = [...new Set(keys)].slice(0, 4); if (!keys.includes(current)) keys.unshift(current);
+    const NAME = { clean: '깔끔·전문', warm: '따뜻한 종이결', luxe: '다크·골드', editorial: '잡지 감성', bold: '강렬·큰 글씨', soft: '파스텔·부드러움', mono: '흑백 미니멀', neon: '네온·밤' };
+    const DESC = { clean: '흰 바탕에 브랜드 색 강조 — 병원·전문직·안경·학원에 무난', warm: '종이색 바탕과 세리프 제목 — 식당·미용실처럼 편안한 느낌', luxe: '어두운 배경에 골드 포인트 — 부동산·법률·주얼리의 고급감', editorial: '큰 사진 위에 세리프 제목 — 카페·베이커리·꽃집의 감성', bold: '원색 하나와 아주 큰 글씨 — 치킨·분식·세차처럼 눈에 띄게', soft: '파스텔 그라데이션과 유리 카드 — 네일·스파·요가의 부드러움', mono: '흑백 사진에 포인트 색 하나 — 변호사·회계의 절제', neon: '어두운 배경에 네온 테두리 — 바·노래방·헬스장의 밤 분위기' };
+    fs.mkdirSync(out, { recursive: true });
+    const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+    const exe = process.env.PLAYWRIGHT_CHROMIUM || (fs.existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined);
+    const browser = await chromium.launch(exe ? { executablePath: exe } : {});
+    const ctx = await browser.newContext({ ignoreHTTPSErrors: true }); // 세션 프록시 인증서 때문에 구글 폰트·사진이 조용히 실패하는 것을 막는다
+    const shots = [];
+    try {
+      for (const key of keys) {
+        const sp = JSON.parse(JSON.stringify(spec)); sp.theme = { ...(sp.theme || {}), style: key }; delete sp.theme.mood;
+        const { slug, files } = render(sp, { noindex: true });
+        const dir = path.join(out, key); writeSite(dir, slug, files);
+        const url = 'file://' + path.resolve(dir, slug, 'index.html');
+        const grab = async (w, h) => { const page = await ctx.newPage(); await page.setViewportSize({ width: w, height: h }); await page.goto(url, { waitUntil: 'load' }); try { await page.waitForLoadState('networkidle', { timeout: 8000 }); } catch {} try { await Promise.race([page.evaluate(() => Promise.all([...document.images].filter((i) => !i.complete).map((i) => new Promise((r) => { i.onload = i.onerror = r; })))), new Promise((r) => setTimeout(r, 6000))]); } catch {} await page.evaluate(() => document.fonts && document.fonts.ready); await page.waitForTimeout(600); const buf = await page.screenshot({ type: 'jpeg', quality: 82 }); await page.close(); return buf; };
+        const desk = await grab(1280, 820), mob = await grab(360, 820);
+        // 카드 1장: 데스크탑 + 모바일을 나란히 (1600×1000), 아래 스타일 이름
+        const page = await ctx.newPage(); await page.setViewportSize({ width: 1600, height: 1000 });
+        await page.setContent(`<html><body style="margin:0;background:#EEF0F4;font-family:system-ui,'Apple SD Gothic Neo','Malgun Gothic',sans-serif"><div style="display:flex;gap:24px;align-items:flex-start;padding:28px 28px 0"><img src="data:image/jpeg;base64,${desk.toString('base64')}" style="width:1170px;height:750px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.14);display:block"><img src="data:image/jpeg;base64,${mob.toString('base64')}" style="width:330px;height:750px;border-radius:22px;border:8px solid #111;box-shadow:0 10px 30px rgba(0,0,0,.18);display:block"></div><div style="padding:22px 32px;font-size:34px;font-weight:800;color:#111">${key.toUpperCase()} · ${NAME[key] || key}<span style="font-size:20px;font-weight:500;color:#555;margin-left:16px">${DESC[key] || ''}</span></div></body></html>`);
+        await page.waitForTimeout(200);
+        const file = path.join(out, `style-${key}.jpg`); await page.screenshot({ path: file, type: 'jpeg', quality: 86 }); await page.close();
+        shots.push({ key, file }); console.error(`시안 ${key}: ${file}`);
+      }
+      // 보드: 세로로 나열
+      const bp = await ctx.newPage(); await bp.setViewportSize({ width: 1600, height: 1000 * shots.length + 40 });
+      await bp.setContent(`<html><body style="margin:0;background:#DDE1E8">${shots.map((x) => `<img src="data:image/jpeg;base64,${fs.readFileSync(x.file).toString('base64')}" style="display:block;width:1600px;margin:0 0 20px">`).join('')}</body></html>`);
+      await bp.waitForTimeout(200); const board = path.join(out, 'styles-board.jpg'); await bp.screenshot({ path: board, type: 'jpeg', quality: 80, fullPage: true }); await bp.close();
+      shots.board = board;
+    } finally { await browser.close(); }
+    const files = [];
+    const options = [];
+    for (const x of shots) {
+      let url = x.file;
+      if (upload) { url = await uploadFile(x.file, { job, task, label: `사이트 스타일 시안 ${x.key}` }); files.push({ name: `style-${x.key}`, url }); }
+      options.push({ key: x.key, label: NAME[x.key] || x.key, image: url, note: (DESC[x.key] || '') + (x.key === current ? ' (지금 적용된 스타일)' : ''), styles: [x.key], default: x.key === current, patch: { theme: { style: x.key } } });
+    }
+    let boardUrl = shots.board; if (upload) { boardUrl = await uploadFile(shots.board, { job, task, label: '사이트 스타일 시안 보드' }); files.push({ name: 'board', url: boardUrl }); }
+    fs.writeFileSync(path.join(out, 'options.json'), JSON.stringify(options, null, 2));
+    console.log(JSON.stringify({ current, keys, board: boardUrl, options: path.join(out, 'options.json'), files: upload ? files : shots.map((x) => ({ name: `style-${x.key}`, url: x.file })) }, null, 2));
     return;
   }
   if (cmd === 'render') {

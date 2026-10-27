@@ -213,8 +213,54 @@ export async function ensurePortalToken(db, job) {
  * 고객 페이지는 선택지마다 [이 디자인으로 진행] 버튼, 관리자는 David 가 대신 고를 수 있다. 선택값은 deliverables.choice 와
  * 같은 서비스의 다음 AI 단계 note "[고객 선택] key — label" 로 전달된다(루틴이 읽는다). 인쇄물·광고 소재·영상·사이트 공통 */
 export function parseOptions(s) {
-  try { const a = typeof s === 'string' ? JSON.parse(s) : s; return Array.isArray(a) ? a.filter((o) => o && o.key).map((o) => ({ key: String(o.key).slice(0, 20), label: String(o.label || o.key).slice(0, 120), image: o.image ? String(o.image).slice(0, 1000) : '', note: o.note ? String(o.note).slice(0, 400) : '', styles: Array.isArray(o.styles) ? o.styles.map(String) : [], default: !!o.default })).slice(0, 8) : []; } catch { return []; }
+  try { const a = typeof s === 'string' ? JSON.parse(s) : s; return Array.isArray(a) ? a.filter((o) => o && o.key).map((o) => ({ key: String(o.key).slice(0, 20), label: String(o.label || o.key).slice(0, 120), image: o.image ? String(o.image).slice(0, 1000) : '', video: o.video ? String(o.video).slice(0, 1000) : '', note: o.note ? String(o.note).slice(0, 400) : '', styles: Array.isArray(o.styles) ? o.styles.map(String) : [], default: !!o.default, patch: o.patch && typeof o.patch === 'object' && !Array.isArray(o.patch) ? o.patch : null })).slice(0, 8) : []; } catch { return []; }
 }
+/* 선택지 필드: key·label·image(썸네일, 필수에 가깝다)·video(mp4 — 고객 페이지에서 재생)·note·styles[](사이트 스타일과 맞추는 무응답 기본값)·default·
+ * patch(사이트 스펙 부분 패치 — 고르는 순간 patchSiteSpec 으로 적용, 예 {"theme":{"style":"luxe"}}. 웹사이트 스타일 선택이 쓴다) */
+
+/* ---------- 사이트 스펙 부분 패치 (관리자 sites/:slug/patch · 선택지 patch 공용) ---------- */
+export function deepPatch(base, patch) {
+  const out = { ...(base || {}) };
+  for (const [k, v] of Object.entries(patch || {})) {
+    if (v === null) delete out[k];
+    else if (v && typeof v === 'object' && !Array.isArray(v) && out[k] && typeof out[k] === 'object' && !Array.isArray(out[k])) out[k] = deepPatch(out[k], v);
+    else out[k] = v;
+  }
+  return out;
+}
+export function specDiff(a, b, prefix = '') {
+  const keys = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]); const out = [];
+  for (const k of keys) {
+    if (k === 'slug') continue;
+    const x = a ? a[k] : undefined, y = b ? b[k] : undefined; const p = prefix ? prefix + '.' + k : k;
+    if (JSON.stringify(x) === JSON.stringify(y)) continue;
+    if (x && y && typeof x === 'object' && typeof y === 'object' && !Array.isArray(x) && !Array.isArray(y)) out.push(...specDiff(x, y, p));
+    else out.push(p + (x === undefined ? ' (추가)' : y === undefined ? ' (삭제)' : Array.isArray(y) ? ` (${(x || []).length}→${y.length}개)` : ''));
+  }
+  return out;
+}
+/** 저장된 사이트 스펙에 부분 패치 → 새 버전 + site_versions + settings.sitesDirty(다음 루틴 실행에 재배포) + 타임라인. 사이트가 없으면 null */
+export async function patchSiteSpec(db, { jobId, slug, patch, note }) {
+  const s = slug ? await db.prepare(`SELECT * FROM sites WHERE slug = ?`).bind(String(slug)).first() : await db.prepare(`SELECT * FROM sites WHERE job_id = ? ORDER BY id DESC LIMIT 1`).bind(Number(jobId)).first();
+  if (!s) return null;
+  const cur = parseJsonSafe(s.spec, {});
+  const next = deepPatch(cur, patch || {}); next.slug = s.slug;
+  const changed = specDiff(cur, next);
+  if (!changed.length) return { slug: s.slug, version: s.version, changed: [] };
+  const text = JSON.stringify(next).slice(0, 400000);
+  await db.prepare(`UPDATE sites SET spec = ?, version = version + 1, updated_at = datetime('now') WHERE id = ?`).bind(text, s.id).run();
+  const row = await db.prepare(`SELECT * FROM sites WHERE id = ?`).bind(s.id).first();
+  await db.prepare(`INSERT INTO site_versions (site_id, version, spec, note, changed) VALUES (?, ?, ?, ?, ?)`).bind(s.id, row.version, text, String(note || '부분 패치').slice(0, 300), JSON.stringify(changed.slice(0, 60))).run();
+  await markSitesDirty(db);
+  await addEvent(db, s.job_id, 'task', null, null, `🌐 사이트 스펙 v${row.version} — ${changed.slice(0, 6).join(', ')}${note ? ' (' + String(note).slice(0, 80) + ')' : ''} · 다음 루틴 실행에 재배포`);
+  return { slug: s.slug, version: row.version, changed };
+}
+async function markSitesDirty(db) {
+  const row = await db.prepare(`SELECT value FROM settings WHERE key = 'admin'`).first();
+  const cur = row ? parseJsonSafe(row.value, {}) : {};
+  await db.prepare(`INSERT INTO settings (key, value, updated_at) VALUES ('admin', ?, datetime('now')) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')`).bind(JSON.stringify({ ...cur, sitesDirty: true })).run();
+}
+function parseJsonSafe(s, d) { try { return s ? JSON.parse(s) : d; } catch { return d; } }
 /** 무응답(7일) 기본값: 사이트 스타일과 맞는 선택지 → default 표시 → 첫 항목 (David 결정 2026-10-27: 사이트 스타일로 자동) */
 export function pickDefaultOption(options, siteStyle) {
   if (!options || !options.length) return null;
@@ -238,13 +284,17 @@ export async function approveDeliverable(db, d, { source, note, choice }) {
   }
   const task = d.task_id ? await db.prepare(`SELECT id, service, sort FROM job_tasks WHERE id = ?`).bind(d.task_id).first() : null;
   if (task) {
-    const nxt = await db.prepare(`SELECT id FROM job_tasks WHERE job_id = ? AND service = ? AND sort > ? AND who = 'customer' AND status = 'todo' ORDER BY sort ASC LIMIT 1`).bind(d.job_id, task.service, task.sort).first();
-    if (nxt) await db.prepare(`UPDATE job_tasks SET status = 'done', done_at = datetime('now'), note = ? WHERE id = ?`).bind(note, nxt.id).run();
-    if (picked) { // 선택값을 다음 AI 단계(같은 서비스, 아직 안 끝난 것)에 넘긴다 — 루틴은 task.note 의 "[고객 선택]"을 읽는다
-      const ai = await db.prepare(`SELECT id, note FROM job_tasks WHERE job_id = ? AND service = ? AND sort > ? AND who IN ('auto','ai') AND status IN ('todo','doing') ORDER BY sort ASC LIMIT 1`).bind(d.job_id, task.service, task.sort).first();
+    // 바로 다음 단계가 "고객 차례"(승인·선택 대기 단계, 예 qr-2b·web-2b·sv-2b·post-3)일 때만 완료로. 더 뒤의 고객 단계(예 web-3 도메인 연결)는 건드리지 않는다
+    const nxt = await db.prepare(`SELECT id, who, status FROM job_tasks WHERE job_id = ? AND service = ? AND sort > ? ORDER BY sort ASC LIMIT 1`).bind(d.job_id, task.service, task.sort).first();
+    if (nxt && nxt.who === 'customer' && nxt.status === 'todo') await db.prepare(`UPDATE job_tasks SET status = 'done', done_at = datetime('now'), note = ? WHERE id = ?`).bind(note, nxt.id).run();
+    if (picked) { // 선택값을 같은 서비스의 다음 단계(고객 차례가 아닌 것 — AI 면 루틴이, David 면 관리자에서 읽는다)에 넘긴다: task.note 의 "[고객 선택]"
+      const ai = await db.prepare(`SELECT id, note FROM job_tasks WHERE job_id = ? AND service = ? AND sort > ? AND who != 'customer' AND status IN ('todo','doing') ORDER BY sort ASC LIMIT 1`).bind(d.job_id, task.service, task.sort).first();
       const tag = `[고객 선택] ${picked.key} — ${picked.label}${source === 'auto' ? ' (무응답 기본값)' : source === 'david' ? ' (David 대신 선택)' : ''}`;
       if (ai) await db.prepare(`UPDATE job_tasks SET note = ? WHERE id = ?`).bind((ai.note && !/\[고객 선택\]/.test(ai.note) ? ai.note + '\n' : '') + tag, ai.id).run();
     }
+  }
+  if (picked && picked.patch) { // 선택지에 사이트 스펙 패치가 붙어 있으면(웹사이트 스타일 선택) 그 자리에서 적용 — 다음 루틴 실행이 재배포한다
+    try { await patchSiteSpec(db, { jobId: d.job_id, patch: picked.patch, note: `고객 선택 ${picked.key} — ${picked.label}` }); } catch (e) { await addEvent(db, d.job_id, 'system', null, null, `⚠ 선택지 패치 실패 — ${String(e.message || e).slice(0, 160)}`); }
   }
   const who = source === 'auto' ? '⏱ 7일 무응답 → 승인 간주(약관 §2)' : source === 'david' ? '👍 David 가 고객 대신 승인' : '👍 고객 승인 (고객 페이지)';
   await addEvent(db, d.job_id, 'customer', null, null, `${who} — ${d.title}${picked ? ` · 선택: ${picked.key} ${picked.label}` : ''}`);

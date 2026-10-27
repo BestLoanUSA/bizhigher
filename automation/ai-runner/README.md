@@ -29,11 +29,13 @@ node automation/ai-runner/runner.js note --job 5 --text "…"
 
 node automation/ai-runner/creative.js caption --video clip.mp4 --text "훅|자막2|자막3" --brand "New Optix" [--logo URL] [--cta "지금 예약 (714) …"] [--music bgm.mp3] --out final.mp4   # 자막·로고·CTA 합성(Playwright PNG + /usr/bin/ffmpeg overlay). *단어* 는 브랜드 색 강조. sv-2 완성본
 node automation/ai-runner/creative.js promo --job 28 [--clip clip.mp4] [--props over.json] [--hook "리드|문장|강조어"] --out promo.mp4 [--upload --task 12]   # 사이트 스펙 → Remotion 프로모 20초(훅·서비스 ≤3·왜 우리·엔드카드, automation/video). --clip 은 훅 배경(Kling), 없으면 사진 켄번스. 렌더 약 1.5분·비용 0. sv-2 스토리 완성본
+node automation/ai-runner/creative.js pick --videos final1.mp4,final2.mp4,promo.mp4 --labels "훅 1|훅 2|프로모 20초" --default 3 --job 28 --task 12 --out pick   # 영상 선택지: 포스터 추출 + mp4·포스터 업로드 + pick/options.json → runner submit --kind video --options (sv-2, 고객이 재생해 보고 고른다)
 node automation/ai-runner/creative.js print --job 28 --preview --upload --task 12 --out kit   # 리뷰 QR 시안 3종(A 사진 콜라주·B 네이비 골드·C 미니멀) + 보드 + kit/options.json → runner submit --options 로 고객이 고른다 (qr-2)
 node automation/ai-runner/creative.js print --job 28 --look B --upload --task 13 --out kit   # 고른 룩으로 전체 키트: 텐트·포스터·카드·스티커·모바일 PNG 300dpi + 인쇄용 PDF(재단선) + 가이드 (qr-3). --look auto = 사이트 스타일. 사진 없으면 FAL 로 분위기 이미지 2장
 node automation/ai-runner/qa.js --url https://고객사이트 --out qa --name home   # 360/768/1280 스크린샷·속도·링크·폼 + Unlighthouse(사이트 전체 Lighthouse 점수·지적 항목, https 만, --no-lighthouse 로 끔) → qa/home-report.md + qa/home-montage.jpg (upload 로 올려 submit --kind images)
 node automation/ai-runner/sites.js prep --spec spec.json [--job 28 --task 12]  # 사진 준비(v3): 900px 미만 업스케일 → /a/ 교체, 갤러리 3장 미만이면 분위기 이미지 생성(gallery_generated). FAL_KEY 없으면 크기 보고만. spec 저장 전에
 node automation/ai-runner/sites.js spec --job 28 --file spec.json           # 고객 사이트 스펙 저장 → slug·미리보기 주소 + 바뀐 키 (web-2 첫 생성)
+node automation/ai-runner/sites.js styles --job 28 --upload --task 12 --out styles     # 사이트 스타일 시안 3종(지금 스타일 + 어울리는 2종, 데스크탑+모바일 스크린샷 카드 + 보드) + styles/options.json(선택지마다 patch={theme.style}) → runner submit --options. 고르면 스펙이 바로 바뀌고 needs-deploy = yes (web-2)
 node automation/ai-runner/sites.js patch --job 28 --file patch.json [--note …]  # 수정 요청 반영: 바뀐 키만 깊은 병합(null 은 삭제) → 새 버전. 전체 재작성 금지
 node automation/ai-runner/sites.js diff --job 28 [--file new.json]           # 마지막 두 버전(또는 파일 vs 저장본)의 바뀐 키 — 결과물 요약에
 node automation/ai-runner/sites.js leads --job 28                            # 사이트 문의 폼 리드 목록

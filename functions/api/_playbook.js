@@ -99,7 +99,8 @@ export const PLAYBOOK = {
   'website': {
     name: '웹사이트 제작', steps: [
       S('web-1', '웹사이트 질문지(도메인·참고 사이트·페이지·기능) + 사진·로고', 'onboarding', 'customer', 0, { block: '월 분납 플랜은 2회차 납부 후 착수(§4)' }),
-      S('web-2', '사이트 생성 — 질문지·사진·Places 공개 정보로 스펙 JSON 작성(sites.js spec) → 빌드·배포(sites.js build/deploy) → 임시 주소 {slug}.sites.bizhigher.com 검증', 'setup', 'ai', 15, { verify: true, block: '맞춤형(예약·주문)은 외부 툴 연동이 수동' }),
+      S('web-2', '사이트 생성 — 질문지·사진·Places 공개 정보로 스펙 JSON 작성(sites.js spec) → 빌드·배포(sites.js build/deploy) → 임시 주소 {slug}.sites.bizhigher.com 검증 + 스타일 시안 3종(sites.js styles → 고객이 고른다)', 'setup', 'ai', 15, { verify: true, block: '맞춤형(예약·주문)은 외부 툴 연동이 수동' }),
+      S('web-2b', '고객이 사이트 스타일을 고른다 — 고객 페이지에서 시안 3종(지금 스타일 + 어울리는 2종, sites.js styles) 중 [이 디자인으로 진행]. 고르면 스펙 theme.style 이 바로 바뀌고 다음 루틴 실행에 재배포 (무응답 7일 → 지금 스타일)', 'setup', 'customer', 0),
       S('web-3', '도메인 연결 — 고객이 CNAME → bizhigher-sites.pages.dev 로 바꾸면 관리자 "웹사이트 → 연결"(색인 허용). 안내문은 web-2 결과물에', 'setup', 'customer', 15, { block: '고객이 DNS를 못 만지면 David가 원격 안내 30분' }),
       S('web-4', '자동 QA 리포트(qa.js: 360/768/1280 스크린샷·속도·링크·폼) → David 검토 → 수정 1회 반영 → 인도', 'setup', 'ai', 10, { verify: true, block: '리포트의 "수정할 것"이 비면 인도. 수정은 cp-2 경로' }),
     ],
@@ -173,6 +174,7 @@ export const PLAYBOOK = {
     name: '숏폼 영상 (Premium 4편/월)', steps: [
       S('sv-1', '월초 기획안 4편 — 훅·장면·자막·음악 → 고객 승인', 'monthly', 'customer', 10, { verify: true }),
       S('sv-2', '영상 생성 — 고객 매장 사진으로 5초 클립(릴스·틱톡·쇼츠 9:16) + 자막·로고·CTA 자동 합성, 사이트 스펙이 있으면 20초 스토리 완성본(Remotion)까지', 'monthly', 'auto', 0, { block: '루틴이 fal.ai 이미지→영상(Kling 2.1, 편당 약 $0.25~0.5)으로 클립을 만들고(creative.js video) 기획안 자막·로고·CTA 를 Playwright+ffmpeg 로 얹는다(creative.js caption). 사이트 스펙이 있는 고객은 creative.js promo 로 훅→서비스→왜 우리→엔드카드 20초 완성본도 렌더(비용 0). 음악은 고객이 준 mp3 가 있을 때만', next: '메뉴 리빌·비포/애프터 템플릿, 배경음악 라이브러리(저작권 프리) 자동 선택' }),
+      S('sv-2b', '고객이 먼저 올릴 영상을 고른다 — 고객 페이지에서 완성본을 재생해 보고 [이 영상으로 진행] (무응답 7일 → 추천 표시된 것). 선택은 sv-3·sv-4 메모에 "[고객 선택]"으로', 'monthly', 'customer', 0),
       S('sv-3', 'David 확인 (자막 타이밍·오탈자·톤) — 재편집은 수정 요청으로', 'monthly', 'david', 5, { verify: true }),
       S('sv-4', '게시 — 릴스·틱톡·쇼츠', 'monthly', 'david', 20, { block: '세 플랫폼 모두 앱 심사 없이는 API 게시 불가', next: '예약 툴(Publer·Later류)로 한 번에 예약' }),
     ],
@@ -229,7 +231,7 @@ export function outputKind(t) {
   return DELIVER_KEYS.has(t.key) ? 'report' : 'internal';
 }
 
-export const APPROVAL_KEYS = new Set(['post-2', 'seo-3', 'ac-5', 'sv-2', 'qr-2']); // qr-2 = 시안 선택(고객이 고르는 승인)
+export const APPROVAL_KEYS = new Set(['post-2', 'seo-3', 'ac-5', 'sv-2', 'qr-2', 'web-2']); // qr-2·web-2·sv-2·ac-5 = 고객이 고르는 승인(선택지 카드). 선택지가 붙은 결과물은 이 목록과 무관하게 승인(선택)이 필요하다
 
 export function servicesFor(slug) {
   if (!slug) return [];
