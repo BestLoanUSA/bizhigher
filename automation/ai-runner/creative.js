@@ -18,6 +18,9 @@
  *       사이트 스펙(D1 sites.spec)에서 props 를 만들어 Remotion 템플릿(automation/video, 9:16 약 20초: 훅 → 서비스 ≤3 → 왜 우리 → 엔드카드)을 렌더한다.
  *       --clip 은 훅 장면 배경(Kling 클립), 없으면 히어로 사진 켄번스. --props 는 props 부분 덮어쓰기(JSON: hook·services[].sub·highlights·cta·hours 등 — sv-1 기획안 문구를 여기로).
  *       스펙에 없는 값은 비워 두면 그 장면·요소가 빠진다(지어내지 않는다). 첫 실행은 automation/video 에 npm ci(1~2분), 렌더는 20초 영상 기준 약 1.5분, 비용 0.
+ *   node automation/ai-runner/creative.js pick --videos final1.mp4,final2.mp4,promo.mp4 [--labels "훅 1|훅 2|프로모 20초"] [--notes "…|…|…"] [--default 1] --job 28 --task 12 --out dir
+ *       고객이 고르는 승인(영상): 편마다 1초 지점 포스터(jpg)를 뽑아 mp4·포스터를 올리고 {out}/options.json([{key,label,image,video,note,default}]) 을 쓴다 → runner.js submit --options.
+ *       고객 페이지에서 재생해 보고 [이 영상으로 진행]. 비용 0, 편당 몇 초
  *   node automation/ai-runner/creative.js print (--job 28 | --place-id … --name "…" [--name-ko …] [--phone …] [--photo a.jpg,b.jpg]) [--look A|B|C|auto] [--preview] [--color "#0A4DF5"] --out dir [--upload --task 12]
  *       리뷰 QR 인쇄물 키트. 룩 3종(A 사진 콜라주 · B 네이비·골드 세리프 · C 미니멀+도형). --preview = 룩별 시안(텐트+포스터) + 보드 + options.json(runner submit --options 로 고객이 고른다, qr-2).
  *       --look 으로 전체 키트(qr-3): 테이블텐트·포스터·카운터 카드·스티커·모바일 PNG 300dpi + 인쇄용 PDF(재단선·접는 선) + 가이드. auto = 사이트 스타일로(없으면 B). 비용 0, 시안 약 40초·키트 약 30초.
@@ -429,8 +432,33 @@ async function upload() {
   console.log(await uploadFile(file, { job: opt('job'), task: opt('task'), label: opt('label') }));
 }
 
+/* 영상 선택지 — 포스터 추출 + 업로드 + options.json */
+async function pick() {
+  const files = (opt('videos') || '').split(',').map((x) => x.trim()).filter(Boolean);
+  if (!files.length) throw new Error('--videos a.mp4,b.mp4 가 필요합니다');
+  for (const f of files) if (!fs.existsSync(f)) throw new Error('없는 파일: ' + f);
+  const labels = (opt('labels') || '').split('|').map((x) => x.trim()); const notes = (opt('notes') || '').split('|').map((x) => x.trim());
+  const def = String(opt('default', '1')); const out = opt('out', 'pick'); const job = opt('job'), task = opt('task');
+  fs.mkdirSync(out, { recursive: true });
+  const { execFileSync } = require('child_process'); const ff = ffmpegBin();
+  const options = [];
+  for (let i = 0; i < files.length; i++) {
+    const key = String(i + 1); const poster = path.join(out, `poster-${key}.jpg`);
+    const info = probeInfo(files[i]);
+    execFileSync(ff, ['-v', 'error', '-y', '-ss', String(Math.min(1, Math.max(0, info.duration - 0.2))), '-i', files[i], '-frames:v', '1', '-vf', "scale='min(720,iw)':-2", '-q:v', '3', poster], { stdio: 'ignore' });
+    const label = labels[i] || path.basename(files[i], path.extname(files[i]));
+    const video = job ? await uploadFile(files[i], { job, task, label: `영상 선택지 ${key} — ${label}` }) : files[i];
+    const image = job ? await uploadFile(poster, { job, task, label: `영상 선택지 ${key} 포스터` }) : poster;
+    options.push({ key, label: label.slice(0, 120), image, video, note: (notes[i] || `${Math.round(info.duration)}초 · ${info.w}×${info.h}`).slice(0, 400), default: key === def });
+    console.error(`선택지 ${key}: ${label} → ${video}`);
+  }
+  fs.writeFileSync(path.join(out, 'options.json'), JSON.stringify(options, null, 2));
+  console.log(JSON.stringify({ options: path.join(out, 'options.json'), items: options }, null, 2));
+}
+
 (async () => {
   if (cmd === 'gen') return gen();
+  if (cmd === 'pick') return pick();
   if (cmd === 'compose') return compose();
   if (cmd === 'upload') return upload();
   if (cmd === 'video') return video();
@@ -438,5 +466,5 @@ async function upload() {
   if (cmd === 'promo') return promo();
   if (cmd === 'print') return printKit();
   if (cmd === 'crop') return cropImage(opt('image'), opt('ratio', '9:16'), opt('out', 'cropped.jpg')).then((o) => console.log(o));
-  console.log('사용법: gen --prompt … --out bg.jpg | compose --bg bg.jpg --headline … --out dir | upload --file a.jpg [--job N --task N] | video --image 사진URL또는파일 [--crop 9:16] [--prompt …] [--duration 5] --out clip.mp4 [--job N --task N] | caption --video clip.mp4 --text "자막1|자막2" [--brand …] [--logo …] [--cta …] [--music bgm.mp3] --out final.mp4 | promo (--job N | --spec spec.json) [--clip clip.mp4] [--props over.json] [--hook "리드|문장|강조어"] [--cta …] [--upload --task N] --out promo.mp4 | print (--job N | --place-id … --name …) [--look A|B|C|auto] [--preview] --out dir [--upload --task N] | crop --image a.jpg --ratio 9:16 --out b.jpg');
+  console.log('사용법: gen --prompt … --out bg.jpg | compose --bg bg.jpg --headline … --out dir | upload --file a.jpg [--job N --task N] | video --image 사진URL또는파일 [--crop 9:16] [--prompt …] [--duration 5] --out clip.mp4 [--job N --task N] | caption --video clip.mp4 --text "자막1|자막2" [--brand …] [--logo …] [--cta …] [--music bgm.mp3] --out final.mp4 | promo (--job N | --spec spec.json) [--clip clip.mp4] [--props over.json] [--hook "리드|문장|강조어"] [--cta …] [--upload --task N] --out promo.mp4 | pick --videos a.mp4,b.mp4 [--labels "…|…"] [--default 1] --job N --task N --out dir | print (--job N | --place-id … --name …) [--look A|B|C|auto] [--preview] --out dir [--upload --task N] | crop --image a.jpg --ratio 9:16 --out b.jpg');
 })().catch((e) => { console.error('오류:', e.message); process.exit(1); });
