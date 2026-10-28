@@ -25,7 +25,7 @@
 import { authenticate, login, logoutCookie } from './_auth.js';
 import { notify, sendEmail, esc as escHtml } from '../api/_notify.js';
 import { syncReviews } from '../api/_reviews.js';
-import { ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady, ensurePortalToken, sweepAutoApprovals, parseOptions, approveDeliverable } from '../api/_orders.js';
+import { ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady, ensurePortalToken, sweepAutoApprovals, parseOptions, approveDeliverable, deepPatch, specDiff, patchSiteSpec } from '../api/_orders.js';
 import { PLAYBOOK, COMMON_ONBOARDING, WHO, PHASES, tasksFor, summarize, DELIVER_KEYS, APPROVAL_KEYS, outputKind, OUTPUT_LABEL } from '../api/_playbook.js';
 import { appHtml, loginHtml } from './_ui.js';
 
@@ -304,18 +304,11 @@ async function api(env, method, seg, body, url) {
     return { leads: rows };
   }
   if (res === 'sites' && id && sub === 'patch' && method === 'POST') {
-    // 부분 패치(깊은 병합, null 은 삭제) → 새 버전. 관리자 "스타일 바꾸기"·루틴 sites.js patch 가 쓴다
-    const s = await db.prepare(`SELECT * FROM sites WHERE slug = ?`).bind(String(id)).first(); if (!s) return undefined;
+    // 부분 패치(깊은 병합, null 은 삭제) → 새 버전. 관리자 "스타일 바꾸기"·루틴 sites.js patch 가 쓴다. 고객 페이지 스타일 선택은 approveDeliverable 이 같은 patchSiteSpec 을 부른다
     const patch = body.patch && typeof body.patch === 'object' ? body.patch : null; if (!patch) throw bad('patch(JSON) 이 필요합니다');
-    const next = deepPatch(parseJson(s.spec, {}), patch); next.slug = s.slug;
-    const changed = specDiff(parseJson(s.spec, {}), next); if (!changed.length) return { slug: s.slug, version: s.version, changed: [] };
-    const text = JSON.stringify(next).slice(0, 400000);
-    await db.prepare(`UPDATE sites SET spec = ?, version = version + 1, updated_at = datetime('now') WHERE id = ?`).bind(text, s.id).run();
-    const row = await db.prepare(`SELECT * FROM sites WHERE id = ?`).bind(s.id).first();
-    await db.prepare(`INSERT INTO site_versions (site_id, version, spec, note, changed) VALUES (?, ?, ?, ?, ?)`).bind(s.id, row.version, text, String(body.note || '부분 패치').slice(0, 300), JSON.stringify(changed.slice(0, 60))).run();
-    await setSettingsPartial(db, { sitesDirty: true });
-    await addEvent(db, s.job_id, 'task', null, null, `🌐 사이트 스펙 v${row.version} — ${changed.slice(0, 6).join(', ')}${body.note ? ' (' + String(body.note).slice(0, 80) + ')' : ''} · 다음 루틴 실행에 재배포`);
-    return { slug: s.slug, version: row.version, changed };
+    const r = await patchSiteSpec(db, { slug: String(id), patch, note: body.note || '부분 패치' });
+    if (!r) return undefined;
+    return r;
   }
   if (res === 'sites' && id && sub === 'revise' && method === 'POST') {
     // 수정 요청 → web-2(사이트 생성) 단계를 다시 열어 루틴이 스펙을 패치·재배포하게 한다 (고객 페이지·관리자 공용)
@@ -725,26 +718,7 @@ async function autoRuleFor(db, t) {
   return (s.autoRules || []).find((r) => r.on && Array.isArray(r.tasks) && r.tasks.includes(t.key) && ruleGuardOk(r, t)) || null;
 }
 /* 스펙 깊은 병합(null 은 삭제)·바뀐 키 경로 — automation/ai-runner/sites.js 와 같은 규칙 */
-function deepPatch(base, patch) {
-  const out = { ...(base || {}) };
-  for (const [k, v] of Object.entries(patch || {})) {
-    if (v === null) delete out[k];
-    else if (v && typeof v === 'object' && !Array.isArray(v) && out[k] && typeof out[k] === 'object' && !Array.isArray(out[k])) out[k] = deepPatch(out[k], v);
-    else out[k] = v;
-  }
-  return out;
-}
-function specDiff(a, b, prefix = '') {
-  const keys = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]); const out = [];
-  for (const k of keys) {
-    if (k === 'slug') continue;
-    const x = a ? a[k] : undefined, y = b ? b[k] : undefined; const p = prefix ? prefix + '.' + k : k;
-    if (JSON.stringify(x) === JSON.stringify(y)) continue;
-    if (x && y && typeof x === 'object' && typeof y === 'object' && !Array.isArray(x) && !Array.isArray(y)) out.push(...specDiff(x, y, p));
-    else out.push(p + (x === undefined ? ' (추가)' : y === undefined ? ' (삭제)' : Array.isArray(y) ? ` (${(x || []).length}→${y.length}개)` : ''));
-  }
-  return out;
-}
+/* deepPatch·specDiff 는 _orders.js 공용 (선택지 patch 가 같은 함수를 쓴다) */
 async function setSettingsPartial(db, patch) {
   const cur = await getSettings(db); const next = { ...cur, ...patch };
   await db.prepare(`INSERT INTO settings (key, value, updated_at) VALUES ('admin', ?, datetime('now')) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')`).bind(JSON.stringify(next)).run();
