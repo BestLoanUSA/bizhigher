@@ -55,6 +55,13 @@ function escAttr(str) {
 function plainText(str) {
   return String(str == null ? '' : str).replace(/<[^>]*>/g, '');
 }
+/* 목록 카드용 요약 — 태그를 걷어내고(카드 자체가 <a> 라 안쪽 링크가 들어오면 카드가 쪼개진다) 문장 단위로 짧게 자른다 */
+function cardSummary(str, max = 230) {
+  const t = plainText(str).replace(/\s+/g, ' ').trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max); const end = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('다. '), cut.lastIndexOf('다.'));
+  return end > 60 ? cut.slice(0, end + 1).trim() : cut.trim() + '…';
+}
 
 /* ---------- 구조화 데이터: 회사 엔티티 ----------
    모든 페이지의 provider·author·publisher가 같은 @id를 가리키게 해서 구글이 "한 회사"로 묶도록 한다.
@@ -3308,7 +3315,7 @@ function dataIndexPage(surveys) {
               (s) => `<a class="prod-card" href="/data/${s.slug}/" style="display:block;margin-bottom:16px;">
   <span class="badge">${s.quarter}</span>
   <h2 class="h2-left" style="margin:0 0 8px;">${(s.editorial && s.editorial.headline) || s.title}</h2>
-  <p style="color:var(--ink-600);margin:0 0 10px;">${(s.editorial && s.editorial.dek) || ''}</p>
+  <p style="color:var(--ink-600);margin:0 0 10px;">${cardSummary(s.editorial && s.editorial.dek)}</p>
   <p style="font-size:14px;color:var(--ink-400);margin:0;">${s.asOf} 기준 · ${s.totals ? `확인한 업소 ${s.totals.businesses}곳` : s.cardNote || '전수 점검'} · CSV 제공</p>
 </a>`
             )
