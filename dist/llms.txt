@@ -94,7 +94,7 @@
 - 가게 웹사이트, 꼭 만들어야 하나요? — 구글 프로필만으로 부족해지는 순간들: https://bizhigher.com/blog/do-you-need-a-website/
 - 구글 리뷰 늘리는 법 — 정지 안 당하고 안전하게 (실전 가이드): https://bizhigher.com/blog/google-review-guide/
 - 내 가게가 구글 검색에 안 나오는 7가지 이유 (그리고 각각의 해결법): https://bizhigher.com/blog/not-showing-on-google/
-- 손님이 ChatGPT에게 맛집을 물어보는 시대 — 내 가게가 AI의 추천을 받는 법 (AIO 입문): https://bizhigher.com/blog/ai-search-optimization-aio/
+- 손님이 ChatGPT에게 맛집을 물어보는 시대 — 내 가게가 AI 답변에 나오게 하는 법 (AIO 입문): https://bizhigher.com/blog/ai-search-optimization-aio/
 
 ## 특징
 - 모든 가격 공개 (정찰제), 월간 구독은 언제든 해지 가능

@@ -5,6 +5,7 @@ date: 2026-10-12
 description: ChatGPT와 구글 AI 요약이 가게를 소개하는 방식, 준비해야 할 기본기, 연말 점검 순서를 AI 검색 관련 글들과 함께 단계별로 정리한 가이드입니다.
 summary: AI 검색 대비의 핵심은 구글 프로필과 웹사이트의 정보를 정확하고 일관되게 두는 것입니다. | AI 노출을 신청하거나 보장받는 방법은 없고 기본 검색 노출이 출발점입니다. | 먼저 손님이 칠 법한 질문 5개를 AI와 구글에 직접 입력해 결과를 기록하세요.
 keywords: AI 검색 최적화, ChatGPT 가게 추천, 구글 AI 요약, AIO, 로컬 비즈니스 AI 노출
+updated: 2026-10-29
 category: AI 검색
 related: seo-aio
 hub: true
@@ -20,7 +21,7 @@ AI 도구는 새로운 정보를 마법처럼 만들어내지 않고, 이미 공
 
 ChatGPT 같은 AI 도구에 손님이 가게를 묻는 시대의 기본 개념, AI에게 읽히기 위한 최소 준비를 다룹니다. 처음 접하는 사장님은 이 글부터 읽으세요.
 
-- [손님이 ChatGPT에게 맛집을 물어보는 시대 — AIO 입문](/blog/ai-search-optimization-aio/): AI 검색 최적화(AIO)의 기본 개념과 시작점을 설명합니다.
+- [손님이 ChatGPT에게 맛집을 물어보는 시대 — AIO 입문](/blog/ai-search-optimization-aio/): AI 검색 최적화(AIO)의 기본 개념과 오늘 시작할 7가지, ChatGPT 검색 크롤러(OAI-SearchBot) 허용 확인법을 설명합니다.
 
 ## 2단계: 구글 AI 요약에 대비하기
 
