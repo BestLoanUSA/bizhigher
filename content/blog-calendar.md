@@ -40,6 +40,7 @@
 
 | 상태 | 제목 | slug |
 |---|---|---|
+| ✅ 2026-10-30 | 구글 광고 vs 메타 광고 — 한인 가게는 어디에 먼저 쓸까 | google-ads-vs-meta-ads-for-local-business |
 | ✅ 2026-10-28 | 가게 블로그, 무엇을 써야 검색에 걸릴까 — 사장님용 주제 찾기 | small-business-blog-topic-ideas |
 | ✅ 2026-10-26 | 구글 프로필 서비스·상품 항목 채우는 법 — 손님이 검색하는 말로 적으세요 | google-business-profile-services-guide |
 | ✅ 2026-10-23 | 구글 프로필 카테고리 고르는 법 — 주 카테고리 하나가 노출을 좌우합니다 | google-business-profile-category-guide |
@@ -76,7 +77,6 @@
 
 | 상태 | 제목 | 카테고리 | related |
 |---|---|---|---|
-| ⬜ | 구글 광고 vs 메타 광고 — 한인 가게는 어디에 먼저 쓸까 | 광고 | ad-creative-pack |
 | ⬜ | 모바일에서 느린 가게 사이트, 고객이 떠나기 전에 고치는 법 | 웹사이트 | website |
 | ⬜ | 챗GPT·제미나이가 우리 가게를 추천하게 하는 정보 정리법 | AI 검색 | seo-aio |
 | ⬜ | 챗GPT에 우리 가게가 나오는지 직접 확인하는 법 — 질문 10개 테스트 | AI 검색 | seo-aio |
