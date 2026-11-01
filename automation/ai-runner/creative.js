@@ -14,7 +14,9 @@
  *       자막·로고·CTA 를 Playwright 로 투명 PNG 에 그려 시스템 ffmpeg(overlay·libx264)로 클립에 얹는다 — sv-3 의 David 편집을 "확인"으로 줄이는 명령.
  *       --text 는 | 로 나눈 자막을 길이에 비례해 자동 배분(사이 0.1초), --captions 는 [{start,end,text}] 로 직접 지정. *단어* 는 브랜드 색 강조. 음악은 --music(mp3) 이 있을 때만, 끝 1초 페이드.
  *       Playwright 번들 ffmpeg 에는 overlay 가 없으므로 /usr/bin/ffmpeg(또는 FFMPEG 환경변수)를 쓴다 — 없으면 오류로 멈춘다
- *   node automation/ai-runner/creative.js promo (--job 28 | --spec spec.json) [--clip clip.mp4] [--props over.json] [--hook "리드|문장|강조어"] [--cta "…"] --out promo.mp4
+ *   node automation/ai-runner/creative.js promo (--job 28 | --spec spec.json) [--template promo|list|tour|ba|menu] [--photos a.jpg,b.jpg] [--captions "한 단어|…"] [--caption-pos top|mid|bottom] [--clip clip.mp4] [--props over.json] [--hook "리드|문장|강조어"] [--cta "…"] --out promo.mp4
+ *       --template(2026-11-01, docs/shortform-playbook-ko.md): list=3가지 이유(reasons[]·highlights) · tour=POV 매장 투어(photos 순서대로, captions) · ba=시작 전과 지금(--props pairs 필수) · menu=메뉴·서비스 리빌(items·services) · promo=기존 스토리.
+ *       훅 문장에 *별표* 로 핵심어를 감싸면 브랜드 색 단어 팝. 사진은 creative.js photos 로 보정한 9:16 크롭을 --photos 로 주는 것이 가장 좋다
  *       사이트 스펙(D1 sites.spec)에서 props 를 만들어 Remotion 템플릿(automation/video, 9:16 약 20초: 훅 → 서비스 ≤3 → 왜 우리 → 엔드카드)을 렌더한다.
  *       --clip 은 훅 장면 배경(Kling 클립), 없으면 히어로 사진 켄번스. --props 는 props 부분 덮어쓰기(JSON: hook·services[].sub·highlights·cta·hours 등 — sv-1 기획안 문구를 여기로).
  *       스펙에 없는 값은 비워 두면 그 장면·요소가 빠진다(지어내지 않는다). 첫 실행은 automation/video 에 npm ci(1~2분), 렌더는 20초 영상 기준 약 1.5분, 비용 0.
@@ -340,16 +342,43 @@ async function ensureFont() {
   try { const r = await fetch('https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/Variable/TTF/Subset/NotoSansKR-VF.ttf'); if (r.ok) { const b = Buffer.from(await r.arrayBuffer()); if (b.length > 1e6) { fs.writeFileSync(f, b); return 'NotoSansKR.ttf'; } } } catch {}
   return ''; // 템플릿이 구글 폰트 링크로 대체
 }
+/** 템플릿별 props — 스펙에서 만들고 --props 로 덮어쓴다. 값이 없으면 지어내지 않고 비운다(그 요소가 빠진다) */
+const TEMPLATES = { promo: 'Promo', list: 'List', tour: 'Tour', ba: 'BeforeAfter', menu: 'Menu' };
+function templateProps(tpl, spec, photosArg) {
+  const base = spec ? specToProps(spec) : { name: '', name_ko: '', accent: '#0A4DF5', hook: { line: '' }, services: [], highlights: [], photo: '' };
+  const gallery = spec ? [...new Set([spec.hero && spec.hero.photo, ...(spec.gallery || []), spec.about && spec.about.photo, ...(spec.services || []).map((x) => x && x.photo)].filter(Boolean))] : [];
+  const photos = photosArg && photosArg.length ? photosArg : gallery;
+  if (tpl === 'promo') return base;
+  if (tpl === 'list') { // 이유 = highlights(title·text) → 없으면 서비스 이름. 사진은 순서대로
+    const hs = spec ? (spec.highlights || []).filter((h) => h && h.title).map((h) => ({ title: h.title, sub: shorten(h.text, 22) })) : [];
+    const reasons = (hs.length ? hs : base.services.map((x) => ({ title: x.name, sub: x.sub }))).slice(0, 4).map((r, i) => ({ ...r, photo: photos[i % Math.max(1, photos.length)] || '' }));
+    return { ...base, reasons, hook: { ...base.hook, line: base.hook.line }, photo: photos[0] || base.photo };
+  }
+  if (tpl === 'tour') { // 사진 순서대로, 자막은 highlights 제목 → 서비스 이름(모자라면 빈칸)
+    const caps = spec ? [...(spec.highlights || []).map((h) => h && h.title), ...(spec.services || []).map((x) => x && x.name)].filter(Boolean) : [];
+    return { ...base, photos: photos.slice(0, 10), captions: photos.slice(0, 10).map((_, i) => caps[i] || ''), photo: photos[0] || base.photo };
+  }
+  if (tpl === 'ba') return { ...base, pairs: [], photo: photos[0] || base.photo }; // pairs 는 --props 로만 (숫자를 지어내지 않는다)
+  if (tpl === 'menu') { const items = spec ? (spec.services || []).filter((x) => x && x.name).slice(0, 6).map((x) => ({ name: x.name, price: x.price || '', sub: shorten(x.desc, 20), photo: x.photo || '' })) : []; return { ...base, items, photo: photos[0] || base.photo }; }
+  throw new Error('모르는 템플릿: ' + tpl + ' (promo|list|tour|ba|menu)');
+}
 async function promo() {
   const out = path.resolve(opt('out', 'promo.mp4')); const job = opt('job'); const specFile = opt('spec'); const over = opt('props');
+  const tpl = String(opt('template', 'promo')).toLowerCase(); if (!TEMPLATES[tpl]) throw new Error('--template 은 promo|list|tour|ba|menu');
   let spec = null;
   if (specFile) spec = JSON.parse(fs.readFileSync(specFile, 'utf8'));
   else if (job) { const r = await adminGet('sites/' + job); spec = r && r.spec; if (!spec) throw new Error('작업 ' + job + ' 에 저장된 사이트 스펙이 없습니다 — --spec 또는 --props 로 직접 주세요'); if (typeof spec === 'string') spec = JSON.parse(spec); }
-  const props = spec ? specToProps(spec) : { name: '', hook: { line: '' }, services: [], highlights: [] };
+  const photosArg = (opt('photos', '') || '').split(',').map((x) => x.trim()).filter(Boolean);
+  const props = templateProps(tpl, spec, photosArg);
   if (over) deepMerge(props, JSON.parse(fs.readFileSync(over, 'utf8')));
   if (opt('hook')) { const [lead, line, em] = opt('hook').split('|'); props.hook = { lead: (lead || '').trim(), line: (line || props.hook.line || '').trim(), em: (em || '').trim() }; }
   if (opt('cta')) props.cta = opt('cta');
+  if (opt('captions')) props.captions = opt('captions').split('|').map((x) => x.trim());
+  if (opt('caption-pos')) props.captionPos = opt('caption-pos');
+  if (opt('bpm')) props.bpm = Number(opt('bpm'));
   if (!props.hook || !props.hook.line) throw new Error('훅 문장이 없습니다 (스펙 hero.headline 또는 --hook)');
+  if (tpl === 'ba' && !(props.pairs || []).length) throw new Error('ba 템플릿은 --props 로 pairs:[{label,before,after}] 가 필요합니다 (숫자는 리포트·Places 값만)');
+  if (tpl === 'tour' && !(props.photos || []).length) throw new Error('tour 템플릿은 사진이 필요합니다 (--photos 또는 스펙 사진)');
   await ensureVideoDeps();
   const run = '_run-' + Date.now().toString(36); const dir = path.join(VIDEO_DIR, 'public', run); fs.mkdirSync(dir, { recursive: true });
   try {
@@ -358,18 +387,22 @@ async function promo() {
     if (props.photo) props.photo = rel(await fetchAsset(props.photo, dir, 'hero'));
     if (props.logo) props.logo = rel(await fetchAsset(props.logo, dir, 'logo'));
     const seen = {};
-    for (let i = 0; i < props.services.length; i++) { const src = props.services[i].photo; if (!src) continue; if (seen[src]) { props.services[i].photo = seen[src]; continue; } seen[src] = props.services[i].photo = rel(await fetchAsset(src, dir, 'svc' + i)); }
+    const grab = async (src, name) => { if (!src) return ''; if (seen[src]) return seen[src]; const f = await fetchAsset(src, dir, name); seen[src] = f ? rel(f) : ''; return seen[src]; };
+    for (let i = 0; i < (props.services || []).length; i++) props.services[i].photo = await grab(props.services[i].photo, 'svc' + i);
+    for (let i = 0; i < (props.reasons || []).length; i++) props.reasons[i].photo = await grab(props.reasons[i].photo, 'rsn' + i);
+    for (let i = 0; i < (props.items || []).length; i++) props.items[i].photo = await grab(props.items[i].photo, 'item' + i);
+    if (props.photos) { const ph = []; for (let i = 0; i < props.photos.length; i++) { const f = await grab(props.photos[i], 'ph' + i); if (f) ph.push(f); } props.photos = ph; }
     props.font = await ensureFont();
     const propsFile = path.join(dir, 'props.json'); fs.writeFileSync(propsFile, JSON.stringify(props));
-    const scenes = 1 + props.services.filter((x) => x && x.name).length + (props.highlights.length ? 1 : 0) + 1;
+    const scenes = tpl === 'promo' ? 1 + props.services.filter((x) => x && x.name).length + (props.highlights.length ? 1 : 0) + 1 : tpl === 'list' ? 2 + (props.reasons || []).length : tpl === 'tour' ? 2 + (props.photos || []).length : 3;
     const chrome = chromeBin();
-    const argv = ['render', 'src/index.ts', 'Promo', out, '--props=' + propsFile, '--codec=h264', '--concurrency=' + (opt('concurrency', '2')), '--log=error'];
+    const argv = ['render', 'src/index.ts', TEMPLATES[tpl], out, '--props=' + propsFile, '--codec=h264', '--concurrency=' + (opt('concurrency', '2')), '--log=error'];
     if (chrome) argv.push('--browser-executable=' + chrome, '--chrome-mode=chrome-for-testing');
-    console.error(`렌더 중 (${scenes}장면, Remotion)…`);
+    console.error(`렌더 중 (${TEMPLATES[tpl]} · ${scenes}장면, Remotion)…`);
     require('child_process').execFileSync(path.join(VIDEO_DIR, 'node_modules/.bin/remotion'), argv, { cwd: VIDEO_DIR, stdio: ['ignore', 'ignore', 'inherit'], timeout: 15 * 60 * 1000 });
     const info = probeInfo(out);
     const url = opt('job') && args.includes('--upload') ? await uploadFile(out, { job: opt('job'), task: opt('task'), label: opt('label', '프로모 영상 9:16') }) : undefined;
-    console.log(JSON.stringify({ out, seconds: info.duration, scenes, services: props.services.map((x) => x.name), highlights: props.highlights.length, clip: !!props.clip, font: props.font ? 'local' : 'google', url }));
+    console.log(JSON.stringify({ out, template: TEMPLATES[tpl], seconds: info.duration, scenes, services: (props.services || []).map((x) => x.name), reasons: (props.reasons || []).map((x) => x.title), photos: (props.photos || []).length, items: (props.items || []).length, pairs: (props.pairs || []).length, clip: !!props.clip, font: props.font ? 'local' : 'google', url }));
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 }
 

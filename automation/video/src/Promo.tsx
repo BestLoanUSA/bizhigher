@@ -38,7 +38,7 @@ const FONT = "'NotoKR', 'Noto Sans KR', sans-serif";
 const INK = '#0B1220';
 const PAPER = '#F5F7FB';
 
-function useFont(font?: string) {
+export function useFont(font?: string) {
   const [handle] = useState(() => delayRender('font'));
   useEffect(() => {
     const done = () => continueRender(handle);
@@ -54,7 +54,7 @@ function useFont(font?: string) {
   }, [handle, font]);
 }
 
-const Brand: React.FC<{ logo?: string; name: string; dark?: boolean }> = ({ logo, name, dark }) => (
+export const Brand: React.FC<{ logo?: string; name: string; dark?: boolean }> = ({ logo, name, dark }) => (
   <div style={{ position: 'absolute', top: 64, left: 64, display: 'flex', alignItems: 'center', gap: 18, color: dark ? INK : '#fff', fontWeight: 700, fontSize: 34, letterSpacing: '-0.01em', textShadow: dark ? 'none' : '0 1px 10px rgba(0,0,0,.45)' }}>
     {logo ? <Img src={staticFile(logo)} style={{ height: 56, width: 'auto', borderRadius: 12, background: '#fff', padding: 6 }} /> : null}
     <span>{name}</span>
@@ -151,7 +151,7 @@ const Why: React.FC<PromoProps> = ({ highlights, rating, review_count, accent, l
 };
 
 /** 4. 엔드카드 — 브랜드 색, 전화번호가 가장 크다 */
-const End: React.FC<PromoProps> = ({ accent, logo, name, name_ko, phone, address, hours, cta }) => {
+export const End: React.FC<PromoProps> = ({ accent, logo, name, name_ko, phone, address, hours, cta }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const a = (d: number) => spring({ frame: frame - d, fps, config: { damping: 18, stiffness: 110 } });
