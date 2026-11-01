@@ -5,6 +5,7 @@
  * 승인이 필요한 결과물(needs_approval)은 [승인] / [수정 요청] 버튼 → job_tasks 에 반영돼 루틴이 다음 단계를 돈다.
  */
 import { ensureSchema, addEvent, approveDeliverable, parseOptions } from '../api/_orders.js';
+import { wakeRoutine } from '../api/_runner.js';
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const EMBED_RE = /^https:\/\/([a-z0-9-]+\.)*(bizhigher-sites\.pages\.dev|sites\.bizhigher\.com|bizhigher\.com)(\/|$)/i;
@@ -37,7 +38,7 @@ function body(d) {
   const pdfs = uniq.filter((u) => /\.pdf(\?|$)/i.test(u));
   const sites = uniq.filter((u) => EMBED_RE.test(u) && !isMedia(u) && !/\/a\//.test(u));
   let html = '';
-  if (k === 'html' && text) html += `<iframe sandbox="" srcdoc="${esc(text.slice(0, 200000))}" style="width:100%;height:520px;border:1px solid #e5e7eb;border-radius:12px;background:#fff"></iframe>`;
+  if (k === 'html' && text) html += `<iframe sandbox="" srcdoc="${esc(text.slice(0, 200000))}" style="width:100%;height:${/class="cover"/.test(text) ? 900 : 520}px;border:1px solid #e5e7eb;border-radius:12px;background:#fff"></iframe>`; // 리포트(creative.js report)는 길어서 더 높게
   if (imgs.length) html += '<div class="grid">' + imgs.slice(0, 24).map((u) => `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="" loading="lazy"></a>`).join('') + '</div>';
   if (vids.length) html += '<div class="grid">' + vids.slice(0, 6).map((u) => `<video src="${esc(u)}" controls playsinline preload="metadata"></video>`).join('') + '</div>';
   for (const u of pdfs.slice(0, 3)) html += `<object data="${esc(u)}" type="application/pdf" style="width:100%;height:480px;border:1px solid #e5e7eb;border-radius:12px;margin:8px 0"><a class="btn ghost" href="${esc(u)}" target="_blank" rel="noopener">PDF 열기 →</a></object>`;
@@ -112,7 +113,8 @@ export async function onRequestGet({ params, env, request }) {
   return html(page(data.job, ds, { preview, msg, site: data.site, siteTask: data.siteTask, env }));
 }
 
-export async function onRequestPost({ params, env, request }) {
+export async function onRequestPost({ params, env, request, waitUntil }) {
+  const wake = (why) => { try { const p = wakeRoutine(env.DB, env, why); if (waitUntil) waitUntil(p); } catch {} }; // 고객 행동으로 AI 차례가 열리면 루틴을 깨운다
   const data = await load(env, params.token);
   if (!data) return html('not found', 404);
   const form = await request.formData().catch(() => null);
@@ -125,6 +127,7 @@ export async function onRequestPost({ params, env, request }) {
     const tagged = '[고객 수정 요청] ' + note;
     if (t) await env.DB.prepare(`UPDATE job_tasks SET status = 'doing', revise_note = ?, done_at = NULL WHERE id = ?`).bind(t.status === 'doing' && t.revise_note ? t.revise_note + '\n' + tagged : tagged, t.id).run();
     await addEvent(env.DB, data.job.id, 'customer', null, null, `✎ 웹사이트 수정 요청 (고객 페이지) — ${note.slice(0, 200)}${t ? '' : ' (web-2 단계 없음 — 수동 처리)'}`);
+    wake('고객 웹사이트 수정 요청');
     return Response.redirect(new URL(`/c/${params.token}?ok=site`, request.url).toString(), 303);
   }
   const d = data.ds.find((x) => x.id === id && x.sent_at);
@@ -134,6 +137,7 @@ export async function onRequestPost({ params, env, request }) {
     const options = parseOptions(d.options); const choice = String(form.get('choice') || '').slice(0, 20);
     if (options.length && !options.some((o) => o.key === choice)) return html('디자인을 하나 골라 주세요', 400);
     await approveDeliverable(db, d, { source: 'customer', note: '고객 페이지에서 승인' + (choice ? ' — 선택 ' + choice : ''), choice });
+    wake(choice ? `고객 선택 ${choice} — ${d.title.slice(0, 50)}` : `고객 승인 — ${d.title.slice(0, 50)}`);
     return Response.redirect(new URL(`/c/${params.token}?ok=${choice ? 'choice' : 'approve'}`, request.url).toString(), 303);
   }
   if (action === 'revise') {
@@ -141,6 +145,7 @@ export async function onRequestPost({ params, env, request }) {
     await db.prepare(`UPDATE deliverables SET revise_note = ?, approved_at = NULL WHERE id = ?`).bind(note, d.id).run();
     if (d.task) await db.prepare(`UPDATE job_tasks SET status = 'doing', revise_note = ?, done_at = NULL WHERE id = ?`).bind('[고객 수정 요청] ' + note, d.task.id).run();
     await addEvent(db, data.job.id, 'customer', null, null, `✎ 고객 수정 요청 (고객 페이지) — ${d.title}: ${note}`);
+    wake(`고객 수정 요청 — ${d.title.slice(0, 50)}`);
     return Response.redirect(new URL(`/c/${params.token}?ok=revise`, request.url).toString(), 303);
   }
   return html('bad request', 400);

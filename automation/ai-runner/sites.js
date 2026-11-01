@@ -14,9 +14,13 @@
  *   node automation/ai-runner/sites.js styles (--job 28 | --spec spec.json) --out dir [--styles luxe,warm,clean] [--upload --task N]
  *                                                                              # 스타일 시안 3종(지금 스타일 + 어울리는 2종) — 같은 스펙을 스타일만 바꿔 렌더·데스크탑+모바일 스크린샷 → style-{key}.jpg + styles-board.jpg
  *                                                                              #   + options.json(고객이 고르는 승인용, patch={"theme":{"style":key}} — 고르면 스펙이 바로 바뀐다). --upload 면 /a/ 에 올려 URL 로 채운다. 비용 0, 약 30초
- *   node automation/ai-runner/sites.js prep --spec spec.json [--out spec.json] [--job N --task N] [--no-enhance] [--no-gen]
+ *   node automation/ai-runner/sites.js frames (--job 28 | --spec spec.json --out spec.json) [--video clip.mp4|URL] [--n 36] [--width 960] [--task 12] [--dir frames]
+ *                                                                              # 히어로 "스크롤 재생" 프레임: 클립(또는 spec.hero.video)에서 n장(webp)을 뽑아 /a/ 에 올리고 hero.frames 에 넣는다 → 템플릿 scrub 효과(스크롤에 따라 사진이 영상처럼 재생).
+ *                                                                              #   36장×960px ≈ 1.5MB. --job 이면 저장된 스펙에 바로 패치, --spec 이면 파일에만 쓴다(--no-upload 면 로컬 경로)
+ *   node automation/ai-runner/sites.js prep --spec spec.json [--out spec.json] [--job N --task N] [--no-enhance] [--no-gen] [--grade [--look warm]]
  *                                                                              # 사진 준비(v3): 작은 사진(가로 900px 미만)은 fal.ai 로 업스케일 → /a/ 업로드 → 스펙 URL 교체(photo_meta 기록),
  *                                                                              #   갤러리가 3장 미만이면 업종 분위기 이미지를 생성해 gallery_generated 에 채운다(사람·글자 없음, 화면에 "연출 이미지" 표시). FAL_KEY 없으면 크기 보고만
+ *                                                                              #   --grade: 모든 사진 칸을 _photos.js 로 보정(자동 레벨·화이트밸런스·사이트 스타일 룩·비네트)해 다시 올린다(크롭 없음, 비용 0). 한 번 보정한 칸은 건너뜀
  *
  * 환경변수: BIZHIGHER_ADMIN_PASSWORD(spec·build), CLOUDFLARE_API_TOKEN·CLOUDFLARE_ACCOUNT_ID(deploy), SITES_PROJECT(기본 bizhigher-sites)
  */
@@ -168,6 +172,30 @@ function diffKeys(a, b, prefix = '') {
     if (!(r.leads || []).length) console.log('문의 없음');
     return;
   }
+  if (cmd === 'frames') {
+    const job = Number(opt('job')); const specFile = opt('spec'); const n = Math.max(8, Math.min(96, Number(opt('n', '36')))); const width = Number(opt('width', '960')); const dir = path.resolve(opt('dir', 'frames')); fs.mkdirSync(dir, { recursive: true });
+    let spec = null;
+    if (specFile) spec = JSON.parse(fs.readFileSync(specFile, 'utf8'));
+    else if (job) { const cur = await api('sites/' + job); if (!cur || !cur.spec) throw new Error('저장된 스펙이 없습니다'); spec = cur.spec; }
+    else throw new Error('--job N 또는 --spec spec.json 이 필요합니다');
+    let video = opt('video') || (spec.hero && spec.hero.video) || ''; if (!video) throw new Error('--video 또는 spec.hero.video 가 필요합니다');
+    if (/^https?:\/\//.test(video)) { const local = path.join(dir, '_src.mp4'); fs.writeFileSync(local, await fetchBuf(video)); video = local; }
+    const ff = [process.env.FFMPEG, '/usr/bin/ffmpeg', '/usr/local/bin/ffmpeg'].filter(Boolean).find((b) => fs.existsSync(b)); if (!ff) throw new Error('ffmpeg 없음');
+    const { execFileSync } = require('child_process');
+    const probe = (() => { try { return execFileSync(ff, ['-hide_banner', '-i', video], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }); } catch (e) { return String(e.stderr || ''); } })();
+    const dm = /Duration:\s*(\d+):(\d+):(\d+\.?\d*)/.exec(probe); const dur = dm ? Number(dm[1]) * 3600 + Number(dm[2]) * 60 + Number(dm[3]) : 5;
+    for (const f of fs.readdirSync(dir)) if (/^f\d+\.webp$/.test(f)) fs.unlinkSync(path.join(dir, f));
+    execFileSync(ff, ['-v', 'error', '-y', '-i', video, '-vf', `fps=${(n / dur).toFixed(4)},scale=${width}:-2`, '-frames:v', String(n), '-c:v', 'libwebp', '-quality', '72', path.join(dir, 'f%03d.webp')], { stdio: 'ignore' });
+    const files = fs.readdirSync(dir).filter((f) => /^f\d+\.webp$/.test(f)).sort().map((f) => path.join(dir, f));
+    if (files.length < 8) throw new Error('프레임이 ' + files.length + '장뿐입니다 (8장 이상 필요)');
+    const total = files.reduce((a, f) => a + fs.statSync(f).size, 0);
+    let urls = files;
+    if (!args.includes('--no-upload')) { urls = []; for (const [i, f] of files.entries()) urls.push(await uploadFile(f, { job: job || undefined, task: opt('task'), label: `히어로 프레임 ${i + 1}/${files.length}` })); }
+    spec.hero = spec.hero || {}; spec.hero.frames = urls;
+    if (job && !args.includes('--no-upload')) { const r = await api('sites', { job_id: job, spec, note: `히어로 프레임 ${urls.length}장(스크롤 재생)` }); console.log(JSON.stringify({ job, frames: urls.length, bytes: total, version: r.version, changed: r.changed })); }
+    else { const out = opt('out', specFile || path.join(dir, 'spec.json')); fs.writeFileSync(out, JSON.stringify(spec, null, 2)); console.log(JSON.stringify({ out, frames: urls.length, bytes: total })); }
+    return;
+  }
   if (cmd === 'styles') {
     const { STYLES, styleFor } = require('../sites/render.js');
     const job = Number(opt('job')); const out = opt('out', 'styles'); const upload = args.includes('--upload'); const task = opt('task');
@@ -289,6 +317,23 @@ function diffKeys(a, b, prefix = '') {
           obj[key] = nu; report.enhanced++;
         } catch (e) { report.errors.push(`${label}: ${e.message}`); }
       }
+    }
+    // 보정(--grade): 모든 사진 칸을 자동 레벨·화이트밸런스·룩(사이트 스타일) 필터로 다시 저장해 올린다 — 크롭 없음(템플릿이 cover 로 맞춘다). 한 번 보정한 것은 photo_meta.graded 로 건너뜀
+    if (args.includes('--grade')) {
+      const P = require('./_photos.js'); const { styleFor } = require('../sites/render.js'); const look = opt('look', 'auto') === 'auto' ? styleFor(spec) : opt('look');
+      const browser = await P.launch(); report.graded = 0; report.look = look;
+      try {
+        for (const [obj, key, label] of photoSlots(spec)) {
+          const url = obj[key]; if (!/^https?:\/\//.test(url)) continue;
+          if (spec.photo_meta[url] && spec.photo_meta[url].graded) { continue; }
+          try {
+            const local = path.join(tmp, label + '-src.jpg'); fs.writeFileSync(local, await fetchBuf(url));
+            const outF = path.join(tmp, label + '-graded.jpg'); const r = await P.enhance(browser, local, { ratio: 'orig', look, out: outF, max: 2000 });
+            const nu = await uploadFile(outF, { job, task, label: `보정 ${label} (${look})` });
+            spec.photo_meta[nu] = { ...(spec.photo_meta[url] || {}), from: url, graded: look }; obj[key] = nu; report.graded++;
+          } catch (e) { report.errors.push(`${label} 보정: ${e.message}`); }
+        }
+      } finally { await browser.close(); }
     }
     const gal = (spec.gallery || []).filter(Boolean); const gen = spec.gallery_generated || [];
     if (!args.includes('--no-gen') && gal.length + gen.length < 3) {
