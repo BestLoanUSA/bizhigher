@@ -17,7 +17,7 @@ export type TourProps = Base & { photos: string[]; captions?: string[] };
 export type BAProps = Base & { pairs: { label: string; before: string | number; after: string | number }[] };
 export type MenuProps = Base & { items: { name: string; price?: string; sub?: string; photo?: string }[] };
 
-const HOOK = 66, ENDF = 96, OV = 10;
+const HOOK = 84, ENDF = 96, OV = 10;
 const P = (p: Base) => ({ ...p, accent: p.accent || '#0A4DF5' });
 const hookText = (h: Base['hook']) => { if (!h) return ''; const line = h.line || ''; return h.em && line.includes(h.em) ? line.replace(h.em, `*${h.em.replace(/\s+/g, ' ')}*`) : line; };
 
@@ -33,7 +33,7 @@ const Hook: React.FC<Base & { bg?: string }> = (p) => {
         : bg ? <Img src={staticFile(bg)} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: `scale(${z})` }} /> : <AbsoluteFill style={{ background: p.accent }} />}
       <AbsoluteFill style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.35) 0%, rgba(0,0,0,.15) 40%, rgba(0,0,0,.6) 100%)' }} />
       {p.hook.lead ? <div style={{ position: 'absolute', left: 56, right: 56, top: '30%', textAlign: 'center', color: '#fff', fontFamily: FONT, fontSize: 44, fontWeight: 600, opacity: interpolate(frame, [4, 16], [0, 1], { extrapolateRight: 'clamp' }), textShadow: '0 2px 12px rgba(0,0,0,.6)' }}>{p.hook.lead}</div> : null}
-      <KineticCaption text={hookText(p.hook)} at={2} accent={p.accent!} pos="mid" size={104} stagger={4} />
+      <KineticCaption text={hookText(p.hook)} at={4} accent={p.accent!} pos="mid" size={104} stagger={8} />
       <div style={{ opacity: brand }}><Brand logo={p.logo} name={p.name} /></div>
     </AbsoluteFill>
   );
@@ -54,7 +54,7 @@ const Reason: React.FC<{ r: ListProps['reasons'][0]; i: number; n: number; accen
         <div style={{ width: 120, height: 120, borderRadius: 32, background: accent, color: '#fff', fontFamily: FONT, fontWeight: 900, fontSize: 68, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 10px 30px rgba(0,0,0,.35)' }}>{i + 1}</div>
         <div style={{ color: '#fff', fontFamily: FONT, fontSize: 36, fontWeight: 600, opacity: .9, textShadow: '0 2px 10px rgba(0,0,0,.6)' }}>{i + 1} / {n}</div>
       </div>
-      <KineticCaption text={r.title} at={6} accent={accent} pos={pos || 'bottom'} size={r.title.length > 10 ? 84 : 100} />
+      <KineticCaption text={r.title} at={6} accent={accent} pos={pos || 'bottom'} size={r.title.length > 10 ? 84 : 100} stagger={7} />
       {r.sub ? <div style={{ position: 'absolute', left: 56, right: 56, bottom: 200, textAlign: 'center', color: '#fff', fontFamily: FONT, fontSize: 42, fontWeight: 500, opacity: interpolate(frame, [24, 36], [0, 1], { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' }), textShadow: '0 2px 12px rgba(0,0,0,.7)', wordBreak: 'keep-all' }}>{r.sub}</div> : null}
     </AbsoluteFill>
   );
@@ -89,7 +89,7 @@ export const Tour: React.FC<TourProps> = (p0) => {
       {photos.map((src, i) => (
         <Sequence key={i} {...seq(SHOT)}>
           <Photo src={staticFile(src)} cuts={[0]} from={i % 2 ? 1.12 : 1.02} to={i % 2 ? 1.02 : 1.12} pan={(i % 3 - 1) * 2} dim={0.2} />
-          {caps[i] ? <KineticCaption text={caps[i]} at={3} accent={p.accent!} pos={p.captionPos || 'bottom'} size={caps[i].length > 8 ? 80 : 110} stagger={3} /> : null}
+          {caps[i] ? <KineticCaption text={caps[i]} at={3} accent={p.accent!} pos={p.captionPos || 'bottom'} size={caps[i].length > 8 ? 80 : 110} stagger={6} marker={false} /> : null}
           <div style={{ position: 'absolute', right: 56, top: 230, color: '#fff', fontFamily: FONT, fontWeight: 800, fontSize: 34, opacity: .85, textShadow: '0 2px 10px rgba(0,0,0,.6)' }}>{i + 1}/{photos.length}</div>
         </Sequence>
       ))}

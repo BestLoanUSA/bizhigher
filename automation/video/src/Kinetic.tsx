@@ -34,9 +34,13 @@ export const Progress: React.FC<{ accent: string }> = ({ accent }) => {
 };
 
 /** 단어 팝 자막. text: "안경 *직접* 써 보고" — *별표* 는 강조색. at: 시작 프레임. pos: top|mid|bottom. size: px */
-export const KineticCaption: React.FC<{ text: string; at?: number; accent: string; pos?: 'top' | 'mid' | 'bottom'; size?: number; stagger?: number; dark?: boolean; outline?: boolean }> = ({ text, at = 0, accent, pos = 'bottom', size = 96, stagger = 5, dark = false, outline = true }) => {
+/* 단어 간격(stagger) 기본 8프레임(0.27초) — 프로모 훅과 같은 "한 단어씩 올라오는" 속도. 4~5프레임이면 한꺼번에 뜨는 것처럼 보인다(2026-11-01 David 지적).
+ * 강조어(*별표*)는 글자가 자리 잡은 뒤 뒤에서 마커가 쓸고 지나간다(프로모 훅과 동일) */
+export const KineticCaption: React.FC<{ text: string; at?: number; accent: string; pos?: 'top' | 'mid' | 'bottom'; size?: number; stagger?: number; dark?: boolean; outline?: boolean; marker?: boolean }> = ({ text, at = 0, accent, pos = 'bottom', size = 96, stagger = 8, dark = false, outline = true, marker = true }) => {
   const frame = useCurrentFrame(); const { fps } = useVideoConfig();
   const tokens = text.split(/\s+/).filter(Boolean);
+  const lastAt = at + (tokens.length - 1) * stagger;
+  const sweep = interpolate(frame, [lastAt + 14, lastAt + 32], [0, 100], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
   const top = pos === 'top' ? 230 : pos === 'mid' ? '38%' : undefined; const bottom = pos === 'bottom' ? 300 : undefined;
   const color = dark ? INK : '#fff';
   const stroke = outline ? (dark ? '0 0 0 #fff' : `-3px -3px 0 ${INK}, 3px -3px 0 ${INK}, -3px 3px 0 ${INK}, 3px 3px 0 ${INK}, 0 6px 22px rgba(0,0,0,.55)`) : 'none';
@@ -44,9 +48,12 @@ export const KineticCaption: React.FC<{ text: string; at?: number; accent: strin
     <div style={{ position: 'absolute', left: 56, right: 56, top, bottom, textAlign: 'center', fontFamily: FONT, color, fontSize: size, fontWeight: 900, lineHeight: 1.12, letterSpacing: '-0.03em', wordBreak: 'keep-all', zIndex: 10 }}>
       {tokens.map((tk, i) => {
         const em = /^\*.+\*$/.test(tk); const w = tk.replace(/^\*|\*$/g, '');
-        const s = spring({ frame: frame - at - i * stagger, fps, config: { damping: 12, stiffness: 160, mass: 0.7 } });
+        const s = spring({ frame: frame - at - i * stagger, fps, config: { damping: 14, stiffness: 120 } });
         return (
-          <span key={i} style={{ display: 'inline-block', marginRight: 20, opacity: s, transform: `translateY(${(1 - s) * 50}px) scale(${0.6 + s * 0.4})`, color: em ? accent : color, textShadow: em && !dark ? `-3px -3px 0 ${INK}, 3px -3px 0 ${INK}, -3px 3px 0 ${INK}, 3px 3px 0 ${INK}, 0 6px 22px rgba(0,0,0,.55)` : stroke }}>{w}</span>
+          <span key={i} style={{ display: 'inline-block', position: 'relative', marginRight: 20, opacity: s, transform: `translateY(${(1 - s) * 64}px)`, color: em ? accent : color, textShadow: em && !dark ? `-3px -3px 0 ${INK}, 3px -3px 0 ${INK}, -3px 3px 0 ${INK}, 3px 3px 0 ${INK}, 0 6px 22px rgba(0,0,0,.55)` : stroke }}>
+            {em && marker ? <span style={{ position: 'absolute', left: -8, right: -8, bottom: 6, height: Math.round(size * 0.3), width: `${sweep}%`, background: dark ? accent : 'rgba(255,255,255,.92)', zIndex: -1, borderRadius: 8 }} /> : null}
+            {w}
+          </span>
         );
       })}
     </div>
