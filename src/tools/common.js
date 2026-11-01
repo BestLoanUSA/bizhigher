@@ -43,6 +43,7 @@
     }).then(function (d) {
       if (!d || !d.ok) throw new Error((d && d.error) || '일시적인 오류가 발생했습니다.');
       if (window.gtag) window.gtag('event', 'tool_use', { tool_name: tool });
+      try { var k = 'mk_lead_' + tool; if (window.mkLead && !sessionStorage.getItem(k)) { sessionStorage.setItem(k, '1'); window.mkLead('free_tool', { tool_name: tool }); } } catch (e) {}
       return d;
     });
   };

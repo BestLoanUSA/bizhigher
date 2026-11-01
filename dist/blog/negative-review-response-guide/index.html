@@ -40,6 +40,21 @@
   gtag('js', new Date());
 
   gtag('config', 'G-6D7XST08PS');
+
+  /* 리드 이벤트(generate_lead) — seo-data가 GA4에서 "어느 페이지가 문의를 만드는지" 센다.
+     lead_source: free_audit(무료 진단 제출) · free_tool(무료 도구 사용, 이메일 입력 — 세션당 도구마다 1번) · email_consult(상담·신청 메일 링크).
+     결제 링크 클릭은 리드가 아니라 begin_checkout. cb가 있으면 전송 뒤(최대 0.8초) 부른다(페이지 이동 전에 보내기 위해) */
+  window.mkLead = function (src, extra, cb) {
+    var done = false, fin = function () { if (!done) { done = true; if (cb) cb(); } };
+    try { gtag('event', 'generate_lead', Object.assign({ lead_source: src, page_path: location.pathname }, extra || {}, cb ? { event_callback: fin } : {})); } catch (e) {}
+    if (cb) setTimeout(fin, 800);
+  };
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[href]'); if (!a) return;
+    var h = a.getAttribute('href') || '';
+    if (h.indexOf('mailto:') === 0) window.mkLead('email_consult', { link_text: (a.textContent || '').trim().slice(0, 60) });
+    else if (h.indexOf('https://buy.stripe.com/') === 0) { try { gtag('event', 'begin_checkout', { link_text: (a.textContent || '').trim().slice(0, 60), page_path: location.pathname }); } catch (e2) {} }
+  }, true);
 </script>
 </head>
 <body>
@@ -225,8 +240,8 @@
       var res = await fetch('/api/audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       if (!res.ok) throw new Error('server');
       var result = await res.json();
-      if (result.reportUrl) { btn.textContent = '리포트 여는 중...'; ld.done(); window.location.href = result.reportUrl; return; }
-      ld.stop();
+      if (result.reportUrl) { btn.textContent = '리포트 여는 중...'; ld.done(); window.mkLead('free_audit', {}, function () { window.location.href = result.reportUrl; }); return; }
+      ld.stop(); window.mkLead('free_audit', { report: 'no' });
       msg.className = 'form-msg success';
       msg.textContent = '접수되었습니다! 영업일 1일 안에 진단 리포트를 이메일로 보내드릴게요.';
       form.reset(); btn.textContent = '접수 완료 ✓';
