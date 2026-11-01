@@ -29,6 +29,7 @@ node automation/ai-runner/runner.js note --job 5 --text "…"
 node automation/ai-runner/runner.js wake [--reason …] [--force]   # 루틴 깨우기(관리자 API → claude.ai 루틴 API 트리거). 루틴은 끝날 때 한 번 호출해 남은 단계가 있으면 다음 실행을 잇는다. AI 차례 없으면 건너뜀, 3분 디바운스
 
 node automation/ai-runner/creative.js caption --video clip.mp4 --text "훅|자막2|자막3" --brand "New Optix" [--logo URL] [--cta "지금 예약 (714) …"] [--music bgm.mp3] --out final.mp4   # 자막·로고·CTA 합성(Playwright PNG + /usr/bin/ffmpeg overlay). *단어* 는 브랜드 색 강조. sv-2 완성본
+node automation/ai-runner/creative.js promo --job 28 --template list|tour|ba|menu --photos a.jpg,b.jpg [--captions "…|…"] --out x.mp4   # 숏폼 템플릿 4종(docs/shortform-playbook-ko.md). 사진은 photos 로 보정한 9:16 크롭
 node automation/ai-runner/creative.js promo --job 28 [--clip clip.mp4] [--props over.json] [--hook "리드|문장|강조어"] --out promo.mp4 [--upload --task 12]   # 사이트 스펙 → Remotion 프로모 20초(훅·서비스 ≤3·왜 우리·엔드카드, automation/video). --clip 은 훅 배경(Kling), 없으면 사진 켄번스. 렌더 약 1.5분·비용 0. sv-2 스토리 완성본
 node automation/ai-runner/creative.js photos --job 28 --out photos [--pick 3,1,7] [--ratios 1:1,9:16,16:9] [--look auto] [--upload --task 12]   # 사진 선별·크롭·보정: 점수·컨택트 시트(sheet.jpg) → 베스트를 규격별 스마트 크롭 + 자동 레벨·WB·룩 필터. 먼저 돌려 시트를 보고 --pick 으로 번호 지정
 node automation/ai-runner/creative.js report --data report.json --out rep [--upload --job 28 --task 12]   # 고객 리포트: 로고·표지·KPI·표·차트·비포/애프터·다음 달 계획 → report.html + PDF + 미리보기 → submit --kind html --file report.html --url {pdf_url}
@@ -39,6 +40,7 @@ node automation/ai-runner/qa.js --url https://고객사이트 --out qa --name ho
 node automation/ai-runner/sites.js prep --spec spec.json [--job 28 --task 12]  # 사진 준비(v3): 900px 미만 업스케일 → /a/ 교체, 갤러리 3장 미만이면 분위기 이미지 생성(gallery_generated). FAL_KEY 없으면 크기 보고만. spec 저장 전에
 node automation/ai-runner/sites.js spec --job 28 --file spec.json           # 고객 사이트 스펙 저장 → slug·미리보기 주소 + 바뀐 키 (web-2 첫 생성)
 node automation/ai-runner/sites.js styles --job 28 --upload --task 12 --out styles     # 사이트 스타일 시안 3종(지금 스타일 + 어울리는 2종, 데스크탑+모바일 스크린샷 카드 + 보드) + styles/options.json(선택지마다 patch={theme.style}) → runner submit --options. 고르면 스펙이 바로 바뀌고 needs-deploy = yes (web-2)
+node automation/ai-runner/sites.js frames --job 28 --video clip.mp4 [--n 36] [--task 12]   # 히어로 스크롤 재생 프레임(webp 36장) → hero.frames 패치 → 템플릿 scrub 효과 (sites.js prep --grade 도 같이 쓴다)
 node automation/ai-runner/sites.js patch --job 28 --file patch.json [--note …]  # 수정 요청 반영: 바뀐 키만 깊은 병합(null 은 삭제) → 새 버전. 전체 재작성 금지
 node automation/ai-runner/sites.js diff --job 28 [--file new.json]           # 마지막 두 버전(또는 파일 vs 저장본)의 바뀐 키 — 결과물 요약에
 node automation/ai-runner/sites.js leads --job 28                            # 사이트 문의 폼 리드 목록
