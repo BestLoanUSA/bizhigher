@@ -190,12 +190,14 @@ async function tower() {
       '<div class="chips">' + [['all', '전체 ' + d.customers.length], ['mine', '내 차례 ' + d.customers.filter((c) => isMine(c)).length], ['customer', '고객 차례 ' + d.customers.filter((c) => c.counts.customer).length], ['blocked', '막힘 ' + d.customers.filter((c) => c.counts.blockedAll).length], ['soon', '마감 임박 ' + d.customers.filter((c) => c.dueInfo.rank <= 1).length]].map(([k, l]) => '<button data-f="' + k + '" class="' + (towerFilter === k ? 'on' : '') + '">' + l + '</button>').join('') + '</div>' +
       '<div class="chips"><button data-s="due" class="' + (towerSort === 'due' ? 'on' : '') + '">마감 순</button><button data-s="progress" class="' + (towerSort === 'progress' ? 'on' : '') + '">진행률 낮은 순</button></div></div>' +
       legendHtml() + (list.length ? list.map(custRow).join('') : '<div class="empty">' + (d.customers.length ? '필터에 해당하는 고객이 없습니다' : '진행 중인 고객이 없습니다') + '</div>') +
+      runnerBox(d.runner) +
       '<div style="margin:12px 0 4px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost sm" id="demo-one">데모: New Optix Premium 새 주문 1곳</button><button class="btn ghost sm" id="demo-add">데모 고객 4곳 (진행 중 상태)</button><button class="btn ghost sm" id="demo-clear">데모 삭제</button></div>' +
     '</section>' +
     (d.lastStripeEvent ? '<p class="muted">마지막 Stripe 이벤트: ' + esc(d.lastStripeEvent.type) + ' · ' + when(d.lastStripeEvent.at) + '</p>' : '');
   app.querySelectorAll('[data-f]').forEach((b) => b.onclick = () => { towerFilter = b.dataset.f; tower(); });
   app.querySelectorAll('[data-s]').forEach((b) => b.onclick = () => { towerSort = b.dataset.s; try { localStorage.setItem('bh.sort', towerSort); } catch {} tower(); });
   $('#demo-one').onclick = async () => { try { const r = await api('demo', { only: 'new optix', fresh: true }); toast('데모 주문 생성 — 이어서 결제 후 질문지를 써 주세요'); if (r.intake_url && confirm('데모 주문이 생겼습니다.\n\n실제 고객처럼 "결제 후 질문지"를 David가 직접 써야 다음 단계가 열립니다. 지금 질문지 페이지를 열까요? (이메일은 데모 주소로 미리 채워집니다)')) { window.open(r.intake_url, '_blank'); } location.hash = '#/jobs/' + r.jobs[0]; } catch (e) { toast('오류: ' + e.message); } };
+  const wb = $('#runner-wake'); if (wb) wb.onclick = async () => { wb.disabled = true; try { const r = await api('runner/wake', { force: true, reason: '관제탑 버튼' }); toast(r.fired ? '루틴을 깨웠습니다 — 1~2분 뒤 결과가 쌓입니다' : '건너뜀: ' + (r.status && r.status.skipped || r.skipped)); } catch (e) { toast('오류: ' + e.message); } wb.disabled = false; tower(); };
   $('#demo-add').onclick = async () => { try { const r = await api('demo', {}); toast('데모 고객 ' + r.jobs.length + '곳 생성'); tower(); } catch (e) { toast('오류: ' + e.message); } };
   $('#demo-clear').onclick = async () => { if (!confirm('데모 고객·주문·질문지를 모두 삭제할까요?')) return; try { const r = await api('demo/clear', {}); toast('삭제 ' + r.removed + '건'); tower(); } catch (e) { toast('오류: ' + e.message); } };
   function applyFilter(cs) { return cs.filter((c) => towerFilter === 'all' || (towerFilter === 'mine' && isMine(c)) || (towerFilter === 'customer' && c.counts.customer) || (towerFilter === 'blocked' && c.counts.blockedAll) || (towerFilter === 'soon' && c.dueInfo.rank <= 1)); }
@@ -330,6 +332,15 @@ async function journey(id) {
 function kv(k, v) { return '<dt>' + k + '</dt><dd>' + (v || '<span class="muted">—</span>') + '</dd>'; }
 /* 완료된 단계 1건 — 결과물 펼쳐 보기 + 수정 요청 + 직접 고치기 */
 /* 결과물 선택지(시안·세트) — 고객이 고르기 전엔 David 가 대신 고를 수 있다(전화 확인 등). 고른 뒤엔 선택값만 표시 */
+/* 루틴 상태 한 줄 — 할 일이 생기면 관리자가 루틴을 깨운다(§12-2). 미설정이면 설정 안내 */
+function runnerBox(r) {
+  if (!r) return '';
+  const when2 = (t) => (t ? when(t) : '없음');
+  const line = !r.configured
+    ? '<b>루틴 자동 깨움 미설정</b> — Cloudflare 환경변수 ROUTINE_FIRE_URL · ROUTINE_FIRE_TOKEN 을 넣으면 승인·질문지·고객 선택 때 루틴이 바로 돕니다 (지금은 하루 1회 정기 실행만)'
+    : '<b>루틴 자동 깨움</b> · 마지막 깨움 ' + when2(r.lastFiredAt) + (r.lastReason ? ' · 마지막 신호: ' + esc(r.lastReason) : '') + (r.skipped ? ' · <span style="color:var(--amber)">' + esc(r.skipped) + '</span>' : '') + (r.pending ? ' · <span style="color:#D3382F">대기 중인 신호 있음</span>' : '') + ' · 누적 ' + (r.fires || 0) + '회';
+  return '<div class="muted" style="margin:10px 0 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="flex:1">' + line + '</span>' + (r.configured ? '<button class="btn ghost sm" id="runner-wake">지금 루틴 돌리기</button>' : '') + (r.lastSession ? '<a class="btn ghost sm" target="_blank" href="' + esc(r.lastSession) + '">마지막 세션</a>' : '') + '</div>';
+}
 function optionsRow(x) {
   let opts = []; try { opts = JSON.parse(x.options || '[]'); } catch {}
   if (!opts.length) return '';

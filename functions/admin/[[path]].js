@@ -25,6 +25,7 @@
 import { authenticate, login, logoutCookie } from './_auth.js';
 import { notify, sendEmail, esc as escHtml } from '../api/_notify.js';
 import { syncReviews } from '../api/_reviews.js';
+import { wakeRoutine, runnerStatus } from '../api/_runner.js';
 import { ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady, ensurePortalToken, sweepAutoApprovals, parseOptions, approveDeliverable, deepPatch, specDiff, patchSiteSpec } from '../api/_orders.js';
 import { PLAYBOOK, COMMON_ONBOARDING, WHO, PHASES, tasksFor, summarize, DELIVER_KEYS, APPROVAL_KEYS, outputKind, OUTPUT_LABEL } from '../api/_playbook.js';
 import { appHtml, loginHtml } from './_ui.js';
@@ -64,6 +65,7 @@ export async function onRequest(context) {
     if (isMultipart) body.__form = await request.formData().catch(() => null); // 자산 업로드(영상·큰 파일)
     const out = await api(env, request.method, seg, body, url);
     if (out === undefined) return json({ ok: false, error: 'not found' }, 404);
+    if (out.__wake) { const reason = out.__wake; delete out.__wake; context.waitUntil(wakeRoutine(env.DB, env, reason)); } // AI 차례가 생겼을 수 있는 변경 → 루틴 깨움 (응답은 기다리지 않는다)
     return json({ ok: true, ...out });
   } catch (e) {
     return json({ ok: false, error: String((e && e.message) || e) }, e && e.status ? e.status : 500);
@@ -164,6 +166,7 @@ async function api(env, method, seg, body, url) {
       aiStuck: rows.filter((r) => r.aiStuck).length, aiPending: rows.reduce((a, r) => a + r.aiPending, 0),
       monthRevenueCents: month.c || 0, monthPayments: month.n || 0, activeSubs: subs.n || 0, mrrCents: subs.c || 0,
       leads7d: (leads && leads.n) || 0, lastStripeEvent: lastEvent.created_at ? { at: lastEvent.created_at, type: lastEvent.type } : null,
+      runner: await runnerStatus(db, env),
       who: WHO, statuses: JOB_STATUSES,
     };
   }
@@ -190,18 +193,18 @@ async function api(env, method, seg, body, url) {
       if (DELIVER_KEYS.has(t.key) || t.options) await ensureDeliverable(db, t); // 고객에게 가는 결과물인 단계만 — 내부 작업물은 올리지 않는다. 단 선택지(options)가 붙은 결과물은 고객이 골라야 하므로 어느 단계든 올린다
       await addEvent(db, t.job_id, 'task', null, null, `✔ 승인 — ${t.title}${note ? ' · ' + note : ''}`);
       await autoAdvance(db, t.job_id);
-      return { next: await nextReview(db, t.id) };
+      return { next: await nextReview(db, t.id), __wake: `승인 — ${t.title.slice(0, 60)}` };
     }
     if (sub === 'revise') {
       if (!note) throw bad('무엇을 고칠지 적어 주세요');
       await db.prepare(`UPDATE job_tasks SET status = 'doing', revise_note = ?, decided_at = datetime('now') WHERE id = ?`).bind(note, t.id).run();
       await addEvent(db, t.job_id, 'task', null, null, `✎ 수정 요청 — ${t.title}: ${note}`);
-      return { next: await nextReview(db, t.id) };
+      return { next: await nextReview(db, t.id), __wake: `수정 요청 — ${t.title.slice(0, 60)}` };
     }
     if (sub === 'reject') {
       await db.prepare(`UPDATE job_tasks SET status = 'todo', note = ?, decided_at = datetime('now') WHERE id = ?`).bind(note ? '반려: ' + note : '반려', t.id).run();
       await addEvent(db, t.job_id, 'task', null, null, `⛔ 반려 — ${t.title}${note ? ': ' + note : ''}`);
-      return { next: await nextReview(db, t.id) };
+      return { next: await nextReview(db, t.id), __wake: `반려 — ${t.title.slice(0, 60)}` };
     }
     if (sub === 'edit') {
       // David가 AI 결과물을 직접 고친다 (상태는 그대로)
@@ -225,7 +228,7 @@ async function api(env, method, seg, body, url) {
       if (!note) throw bad('무엇을 고칠지 적어 주세요');
       await db.prepare(`UPDATE job_tasks SET status = 'doing', revise_note = ?, done_at = NULL, decided_at = datetime('now') WHERE id = ?`).bind(note, t.id).run();
       await addEvent(db, t.job_id, 'task', null, null, `↩ 다시 열어 수정 요청 — ${t.title}: ${note}`);
-      return {};
+      return { __wake: `다시 열기 — ${t.title.slice(0, 60)}` };
     }
     if (sub === 'result') {
       // AI(fulfillment 스킬·루틴)가 결과물을 붙이고 검증을 요청한다
@@ -244,7 +247,7 @@ async function api(env, method, seg, body, url) {
         if (DELIVER_KEYS.has(t.key)) await ensureDeliverable(db, t);
         await addEvent(db, t.job_id, 'task', null, null, `✅ 자동 승인(${rule.label}) — ${t.title}`);
         await autoAdvance(db, t.job_id);
-        return { autoApproved: true, rule: rule.key };
+        return { autoApproved: true, rule: rule.key, __wake: `자동 승인 — ${t.title.slice(0, 60)}` };
       }
       await addEvent(db, t.job_id, 'task', null, null, `👀 검증 요청 — ${t.title}`);
       return {};
@@ -257,7 +260,7 @@ async function api(env, method, seg, body, url) {
       if (to === 'done') { if (DELIVER_KEYS.has(t.key)) await ensureDeliverable(db, t); await addEvent(db, t.job_id, 'task', null, null, `✔ ${t.title}${t.who === 'customer' && note ? ' — 받은 것: ' + note : ''}`); await autoAdvance(db, t.job_id); }
       else if (to === 'review') await addEvent(db, t.job_id, 'task', null, null, `👀 검증 요청 — ${t.title}`);
       else if (to === 'blocked') await addEvent(db, t.job_id, 'task', null, null, `⛔ 막힘 — ${t.title}`);
-      return {};
+      return to === 'done' ? { __wake: `단계 완료 — ${t.title.slice(0, 60)}` } : {};
     }
     return undefined;
   }
@@ -316,7 +319,7 @@ async function api(env, method, seg, body, url) {
     const note = String(body.note || '').trim().slice(0, 2000); if (!note) throw bad('수정 내용이 필요합니다');
     const r = await reopenSiteTask(db, s.job_id, (body.source === 'customer' ? '[고객 수정 요청] ' : '') + note);
     await addEvent(db, s.job_id, body.source === 'customer' ? 'customer' : 'david', null, null, `✎ 웹사이트 수정 요청${body.source === 'customer' ? ' (고객 페이지)' : ''} — ${note.slice(0, 200)}${r ? '' : ' (web-2 단계 없음 — 수동 처리)'}`);
-    return { ok: true, reopened: !!r };
+    return { ok: true, reopened: !!r, __wake: '웹사이트 수정 요청' };
   }
   if (res === 'sites' && id && method === 'GET') {
     const s = await db.prepare(`SELECT * FROM sites WHERE slug = ? OR job_id = ?`).bind(String(id), Number(id) || 0).first();
@@ -345,6 +348,12 @@ async function api(env, method, seg, body, url) {
     // 새 리뷰 확인 (Places, 작업당 하루 1회 · force 면 즉시). 검증 큐 탭 버튼과 루틴 큐가 부른다
     return await syncReviews(db, env, { force: !!body.force });
   }
+  if (res === 'runner' && id === 'wake' && method === 'POST') {
+    // 루틴 깨우기 — 관제탑 "지금 루틴 돌리기"(force) 또는 루틴 자신(runner.js wake: 남은 일이 있을 때)
+    const r = await wakeRoutine(db, env, String(body.reason || '관리자에서 직접'), { force: !!body.force });
+    return { ...r, status: await runnerStatus(db, env) };
+  }
+  if (res === 'runner' && id === 'status' && method === 'GET') return { status: await runnerStatus(db, env) };
   if (res === 'runner' && id === 'queue' && method === 'GET') {
     await sweepAutoApprovals(db);
     let reviewSync = null; try { reviewSync = await syncReviews(db, env); } catch (e) { reviewSync = { error: String(e && e.message || e) }; }
@@ -406,7 +415,7 @@ async function api(env, method, seg, body, url) {
     const opts = parseOptions(d.options);
     if (opts.length && body.choice != null && !opts.some((o) => o.key === String(body.choice))) throw bad('없는 선택지입니다: ' + String(body.choice).slice(0, 20) + ' (가능: ' + opts.map((o) => o.key).join(', ') + ')');
     const picked = await approveDeliverable(db, d, { source: 'david', note: 'David 가 고객 대신 승인' + (body.choice ? ' — 선택 ' + String(body.choice).slice(0, 20) : ''), choice: body.choice });
-    return { ok: true, choice: picked ? picked.key : null };
+    return { ok: true, choice: picked ? picked.key : null, __wake: `David 대신 선택 — ${d.title.slice(0, 60)}` };
   }
   if (res === 'jobs' && id && sub === 'send-packet' && method === 'POST') {
     // David 가 누른다: 전달 안 된 결과물 전부를 한 통으로 고객에게 (고객 페이지 링크 + 요약). 루틴은 호출하지 않는다 (§12 자동 발송 금지)
@@ -631,7 +640,7 @@ async function api(env, method, seg, body, url) {
       made.push(await seedDemo(db, catalog, x));
     }
     const first = list[0];
-    return { jobs: made, intake_url: body.fresh ? `/thanks/?service=${encodeURIComponent(first.slug)}&email=${encodeURIComponent(first.email)}&business=${encodeURIComponent(first.business)}&contact=${encodeURIComponent(first.contact)}&phone=${encodeURIComponent(first.phone)}` : null };
+    return { __wake: '데모 생성', jobs: made, intake_url: body.fresh ? `/thanks/?service=${encodeURIComponent(first.slug)}&email=${encodeURIComponent(first.email)}&business=${encodeURIComponent(first.business)}&contact=${encodeURIComponent(first.contact)}&phone=${encodeURIComponent(first.phone)}` : null };
   }
 
   /* 목록들 */

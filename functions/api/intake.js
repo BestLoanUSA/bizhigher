@@ -3,6 +3,7 @@
  * D1 intakes 테이블에 저장. David가 확인 후 작업 시작.
  */
 import { notify, esc } from './_notify.js';
+import { wakeRoutine } from './_runner.js';
 import { ensureSchema, attachIntake, loadCatalog, catalogLookup } from './_orders.js';
 
 export async function onRequestPost(context) {
@@ -41,6 +42,7 @@ export async function onRequestPost(context) {
     const catalog = await loadCatalog(env, request.url);
     const item = catalogLookup(catalog, { slug: service });
     await attachIntake(env.DB, { id: intakeId, service, service_name: item && item.name, business, email }, { deliveryDays: item && item.deliveryDays });
+    context.waitUntil(wakeRoutine(env.DB, env, `질문지 제출 — ${business || ''}`)); // ob-3(프로필)부터 AI 차례 → 루틴 깨움
   } catch {
     // 관리자 페이지 연결 실패는 조용히 무시
   }

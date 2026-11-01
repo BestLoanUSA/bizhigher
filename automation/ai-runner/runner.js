@@ -94,10 +94,15 @@ async function api(path, body) {
     console.log(`기록: deliverable ${id} Gmail 초안`);
     return;
   }
+  if (cmd === 'wake') { // 루틴이 끝날 때 남은 일이 있으면 자신을 다시 깨운다(관리자가 ROUTINE_FIRE_URL 로 발사). 3분 디바운스·AI 차례 없으면 건너뜀
+    const r = await api('runner/wake', { reason: opt('reason', '루틴 — 남은 단계'), force: args.includes('--force') });
+    console.log(r.fired ? `루틴 깨움: ${r.session || ''}` : `건너뜀: ${r.skipped}${r.status && r.status.skipped ? ' — ' + r.status.skipped : ''}`);
+    return;
+  }
   if (cmd === 'note') {
     await api(`jobs/${Number(opt('job'))}/note`, { note: opt('text', '') });
     console.log('메모 저장');
     return;
   }
-  console.log('사용법: queue | submit --task ID --file F [--url U] [--kind text|html|link|images|video] [--checks "a|b"] [--self-check S] [--options o.json] [--done] | done --task ID | draft --deliverable ID --file F | drafted --deliverable ID | note --job ID --text T');
+  console.log('사용법: queue | submit --task ID --file F [--url U] [--kind text|html|link|images|video] [--checks "a|b"] [--self-check S] [--options o.json] [--done] | done --task ID | draft --deliverable ID --file F | drafted --deliverable ID | note --job ID --text T | wake [--reason R] [--force]');
 })().catch((e) => { console.error('오류:', e.message); process.exit(1); });

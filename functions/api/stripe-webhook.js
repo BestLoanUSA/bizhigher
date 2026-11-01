@@ -12,6 +12,7 @@
  */
 import { notify, esc } from './_notify.js';
 import { ensureSchema, loadCatalog, catalogLookup, createJobForOrder } from './_orders.js';
+import { wakeRoutine } from './_runner.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -131,6 +132,7 @@ async function onCheckout(context, s) {
 
   const hasJob = await db.prepare('SELECT id FROM jobs WHERE order_id = ?').bind(orderId).first();
   if (!hasJob) await createJobForOrder(db, order, { deliveryDays: item && item.deliveryDays });
+  context.waitUntil(wakeRoutine(db, env, `결제 — ${order.customer_email || ''}`)); // 질문지가 먼저 와 있던 작업이면 AI 차례가 바로 열린다
 
   context.waitUntil(
     notify(env, `💰 결제 완료 — ${order.service_name || order.service_slug || '상품 미확인'} · $${(order.amount_cents / 100).toFixed(0)}`, [

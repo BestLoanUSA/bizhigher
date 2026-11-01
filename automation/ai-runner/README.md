@@ -26,6 +26,7 @@ node automation/ai-runner/runner.js summary --deliverable 7 --file s.txt      # 
 # submit 응답에 autoApproved 가 오면 관리자 자동 승인 규칙(검증 큐 탭)에 걸려 바로 완료된 것 — 큐에 올라가지 않는다. 출력: "→ 자동 승인(규칙키)"
 node automation/ai-runner/runner.js draft --job 5 --file body.txt              # (구) 작업 단위 초안을 David 메일에 — 이제는 summary 를 쓴다
 node automation/ai-runner/runner.js note --job 5 --text "…"
+node automation/ai-runner/runner.js wake [--reason …] [--force]   # 루틴 깨우기(관리자 API → claude.ai 루틴 API 트리거). 루틴은 끝날 때 한 번 호출해 남은 단계가 있으면 다음 실행을 잇는다. AI 차례 없으면 건너뜀, 3분 디바운스
 
 node automation/ai-runner/creative.js caption --video clip.mp4 --text "훅|자막2|자막3" --brand "New Optix" [--logo URL] [--cta "지금 예약 (714) …"] [--music bgm.mp3] --out final.mp4   # 자막·로고·CTA 합성(Playwright PNG + /usr/bin/ffmpeg overlay). *단어* 는 브랜드 색 강조. sv-2 완성본
 node automation/ai-runner/creative.js promo --job 28 [--clip clip.mp4] [--props over.json] [--hook "리드|문장|강조어"] --out promo.mp4 [--upload --task 12]   # 사이트 스펙 → Remotion 프로모 20초(훅·서비스 ≤3·왜 우리·엔드카드, automation/video). --clip 은 훅 배경(Kling), 없으면 사진 켄번스. 렌더 약 1.5분·비용 0. sv-2 스토리 완성본
