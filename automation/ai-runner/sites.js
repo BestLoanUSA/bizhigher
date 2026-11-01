@@ -14,9 +14,10 @@
  *   node automation/ai-runner/sites.js styles (--job 28 | --spec spec.json) --out dir [--styles luxe,warm,clean] [--upload --task N]
  *                                                                              # 스타일 시안 3종(지금 스타일 + 어울리는 2종) — 같은 스펙을 스타일만 바꿔 렌더·데스크탑+모바일 스크린샷 → style-{key}.jpg + styles-board.jpg
  *                                                                              #   + options.json(고객이 고르는 승인용, patch={"theme":{"style":key}} — 고르면 스펙이 바로 바뀐다). --upload 면 /a/ 에 올려 URL 로 채운다. 비용 0, 약 30초
- *   node automation/ai-runner/sites.js prep --spec spec.json [--out spec.json] [--job N --task N] [--no-enhance] [--no-gen]
+ *   node automation/ai-runner/sites.js prep --spec spec.json [--out spec.json] [--job N --task N] [--no-enhance] [--no-gen] [--grade [--look warm]]
  *                                                                              # 사진 준비(v3): 작은 사진(가로 900px 미만)은 fal.ai 로 업스케일 → /a/ 업로드 → 스펙 URL 교체(photo_meta 기록),
  *                                                                              #   갤러리가 3장 미만이면 업종 분위기 이미지를 생성해 gallery_generated 에 채운다(사람·글자 없음, 화면에 "연출 이미지" 표시). FAL_KEY 없으면 크기 보고만
+ *                                                                              #   --grade: 모든 사진 칸을 _photos.js 로 보정(자동 레벨·화이트밸런스·사이트 스타일 룩·비네트)해 다시 올린다(크롭 없음, 비용 0). 한 번 보정한 칸은 건너뜀
  *
  * 환경변수: BIZHIGHER_ADMIN_PASSWORD(spec·build), CLOUDFLARE_API_TOKEN·CLOUDFLARE_ACCOUNT_ID(deploy), SITES_PROJECT(기본 bizhigher-sites)
  */
@@ -289,6 +290,23 @@ function diffKeys(a, b, prefix = '') {
           obj[key] = nu; report.enhanced++;
         } catch (e) { report.errors.push(`${label}: ${e.message}`); }
       }
+    }
+    // 보정(--grade): 모든 사진 칸을 자동 레벨·화이트밸런스·룩(사이트 스타일) 필터로 다시 저장해 올린다 — 크롭 없음(템플릿이 cover 로 맞춘다). 한 번 보정한 것은 photo_meta.graded 로 건너뜀
+    if (args.includes('--grade')) {
+      const P = require('./_photos.js'); const { styleFor } = require('../sites/render.js'); const look = opt('look', 'auto') === 'auto' ? styleFor(spec) : opt('look');
+      const browser = await P.launch(); report.graded = 0; report.look = look;
+      try {
+        for (const [obj, key, label] of photoSlots(spec)) {
+          const url = obj[key]; if (!/^https?:\/\//.test(url)) continue;
+          if (spec.photo_meta[url] && spec.photo_meta[url].graded) { continue; }
+          try {
+            const local = path.join(tmp, label + '-src.jpg'); fs.writeFileSync(local, await fetchBuf(url));
+            const outF = path.join(tmp, label + '-graded.jpg'); const r = await P.enhance(browser, local, { ratio: 'orig', look, out: outF, max: 2000 });
+            const nu = await uploadFile(outF, { job, task, label: `보정 ${label} (${look})` });
+            spec.photo_meta[nu] = { ...(spec.photo_meta[url] || {}), from: url, graded: look }; obj[key] = nu; report.graded++;
+          } catch (e) { report.errors.push(`${label} 보정: ${e.message}`); }
+        }
+      } finally { await browser.close(); }
     }
     const gal = (spec.gallery || []).filter(Boolean); const gen = spec.gallery_generated || [];
     if (!args.includes('--no-gen') && gal.length + gen.length < 3) {
