@@ -77,6 +77,13 @@ function normalize(spec) {
   s.hero = s.hero || {}; s.about = s.about || {}; s.social = s.social || {}; s.theme = s.theme || {}; s.seo = s.seo || {}; s.cta = s.cta || {}; s.promo = s.promo || {};
   s.theme.color = /^#[0-9a-f]{6}$/i.test(s.theme.color || '') ? s.theme.color : '#0A4DF5';
   s.theme.scroll = s.theme.scroll && typeof s.theme.scroll === 'object' ? s.theme.scroll : {};
+  // 지역 랜딩 페이지(areas) — 도시마다 입구 페이지 하나. slug 없으면 도시명으로. faq·landmarks 는 배열만
+  arr('areas', (a) => a && a.city && (a.intro || a.headline));
+  s.areas = s.areas.map((a, i) => ({ ...a, slug: (() => { const sl = slugify(a.slug || a.city_en || a.city); return sl && sl !== 'site' ? sl : 'area-' + (i + 1); })(), landmarks: Array.isArray(a.landmarks) ? a.landmarks.filter((x) => typeof x === 'string' && x.trim()) : [], faq: Array.isArray(a.faq) ? a.faq.filter((f) => f && f.q && f.a) : [] })).filter((a, i, all) => all.findIndex((b) => b.slug === a.slug) === i).slice(0, 20);
+  // 측정: ga4(G-…) · gsc_verification(HTML 태그 값) · ga4_property(숫자, 서비스 계정 읽기용) · gsc_site(sc-domain:… 또는 URL)
+  s.analytics = s.analytics && typeof s.analytics === 'object' ? s.analytics : {};
+  if (!/^G-[A-Z0-9]{4,16}$/i.test(s.analytics.ga4 || '')) s.analytics.ga4 = '';
+  s.analytics.gsc_verification = /^[A-Za-z0-9_-]{10,120}$/.test(s.analytics.gsc_verification || '') ? s.analytics.gsc_verification : '';
   s.hero.frames = Array.isArray(s.hero.frames) ? s.hero.frames.filter((u) => /^https?:\/\//.test(u)).slice(0, 96) : [];
   return s;
 }
@@ -238,8 +245,8 @@ function ctx(spec, { canonical, noindex }) {
   const stats = s.stats.length ? s.stats : [s.rating ? { value: `${s.rating}★`, label: 'Google', label_ko: '구글 평점' } : null, s.review_count ? { value: String(s.review_count), label: 'reviews', label_ko: '리뷰' } : null, s.since ? { value: `${Math.max(1, year - Number(s.since))}+`, label: 'years', label_ko: '년 운영' } : null].filter(Boolean);
   // 페이지 목록 (비즈니스 등급) — [경로, ko, en]. 원페이지는 앵커
   const pages = business
-    ? [['', '홈', 'Home'], s.services.length && ['services/', '서비스', 'Services'], (s.about.text || s.highlights.length || s.steps.length) && ['about/', '소개', 'About'], gallery.length >= 3 && ['gallery/', '갤러리', 'Gallery'], posts.length && ['blog/', '소식', 'Blog'], ['contact/', '오시는 길·문의', 'Visit & Contact']].filter(Boolean)
-    : [s.services.length && ['#services', '서비스', 'Services'], s.about.text && ['#about', '소개', 'About'], s.faq.length && ['#faq', '자주 묻는 질문', 'FAQ'], (addr || s.hours.length) && ['#visit', '오시는 길', 'Visit']].filter(Boolean);
+    ? [['', '홈', 'Home'], s.services.length && ['services/', '서비스', 'Services'], (s.about.text || s.highlights.length || s.steps.length) && ['about/', '소개', 'About'], gallery.length >= 3 && ['gallery/', '갤러리', 'Gallery'], s.areas.length && ['areas/', '지역', 'Areas'], posts.length && ['blog/', '소식', 'Blog'], ['contact/', '오시는 길·문의', 'Visit & Contact']].filter(Boolean)
+    : [s.services.length && ['#services', '서비스', 'Services'], s.about.text && ['#about', '소개', 'About'], s.areas.length && ['#areas', '지역', 'Areas'], s.faq.length && ['#faq', '자주 묻는 질문', 'FAQ'], (addr || s.hours.length) && ['#visit', '오시는 길', 'Visit']].filter(Boolean);
   const contactOn = !!(s.contact && s.contact.form) || business;
   const sc = scrollFor(s, style);
   return { s, style, k, name, phone, addr, maps, toggle, year, business, posts, ht, tz, gallery, stats, pages, canonical, noindex, contactOn, sc };
@@ -249,7 +256,7 @@ const rel = (depth, p) => (p.startsWith('#') ? (depth ? '../'.repeat(depth) + p 
 
 function btns(c, cls, depth = 0) {
   const { s, phone, addr, maps } = c;
-  return `${phone ? `<a class="btn primary" href="${telHref(phone)}">📞 ${L(s, '전화하기', 'Call ' + phone)}</a>` : ''}${s.cta.booking_url ? `<a class="btn ${cls || 'outline'}" href="${esc(s.cta.booking_url)}" target="_blank" rel="noopener">${L(s, '온라인 예약', 'Book online')}</a>` : ''}${addr ? `<a class="btn ${cls || 'outline'}" href="${esc(maps)}" target="_blank" rel="noopener">📍 ${L(s, '길찾기', 'Get directions')}</a>` : c.contactOn && c.business ? `<a class="btn ${cls || 'outline'}" href="${rel(depth, 'contact/')}">${L(s, '문의하기', 'Contact us')}</a>` : ''}`;
+  return `${phone ? `<a class="btn primary" href="${telHref(phone)}">📞 ${L(s, '전화하기', 'Call ' + phone)}</a>` : ''}${s.cta.booking_url ? `<a class="btn ${cls || 'outline'}" href="${esc(s.cta.booking_url)}" target="_blank" rel="noopener" data-ev="booking_click">${L(s, '온라인 예약', 'Book online')}</a>` : ''}${addr ? `<a class="btn ${cls || 'outline'}" href="${esc(maps)}" target="_blank" rel="noopener">📍 ${L(s, '길찾기', 'Get directions')}</a>` : c.contactOn && c.business ? `<a class="btn ${cls || 'outline'}" href="${rel(depth, 'contact/')}">${L(s, '문의하기', 'Contact us')}</a>` : ''}`;
 }
 
 /* ---------- 섹션 ---------- */
@@ -305,13 +312,30 @@ const sec = {
   },
   blogList(c, depth) { const { s, posts } = c; return posts.length ? `<section><div class="wrap"><div class="posts">${posts.slice(0, 30).map((p) => `<a class="post rv" href="${rel(depth, 'blog/' + slugify(p.slug) + '/')}">${p.photo ? `<img src="${esc(p.photo)}" alt="" loading="lazy">` : ''}<div><span class="date">${esc(p.date || '')}</span><h3>${t(s, p, 'title')}</h3>${p.excerpt ? `<p>${t(s, p, 'excerpt')}</p>` : ''}</div></a>`).join('')}</div></div></section>` : ''; },
   blogPost(c, p) { const { s } = c; const body = String(pick(s, p, 'body').main || '').split(/\n{2,}/).map((para) => /^##\s/.test(para) ? `<h2>${esc(para.replace(/^##\s*/, ''))}</h2>` : `<p>${esc(para).replace(/\n/g, '<br>')}</p>`).join(''); return `<section><div class="wrap"><article class="article">${p.photo ? `<img class="cover" src="${esc(p.photo)}" alt="">` : ''}<span class="date">${esc(p.date || '')}</span><h1>${t(s, p, 'title')}</h1>${body}</article></div></section>`; },
+  /* 지역 랜딩 — 홈의 "이 지역에서도" 칩(내부 링크 맵), 목록 페이지, 도시별 페이지. 내용은 스펙 areas[] 그대로(도시 간 중복은 sites.js areas 가 검사) */
+  areasHome(c, depth) { const { s, name } = c; return s.areas.length ? `<section id="areas"><div class="wrap"><div class="sec-h rv"><span class="eyebrow">${L(s, '찾아오시는 지역', 'Areas we serve')}</span><h2>${c.sc.reveal ? words(L(s, '이 지역에서도 찾아오십니다', 'Neighbors come from')) : L(s, '이 지역에서도 찾아오십니다', 'Neighbors come from')}</h2></div><div class="areas rv">${s.areas.map((a) => `<a class="chip-a" href="${rel(depth, 'areas/' + a.slug + '/')}">${t(s, a, 'city')}${a.state ? ` <small>${esc(a.state)}</small>` : ''}</a>`).join('')}</div></div></section>` : ''; },
+  areasIndex(c, depth) { const { s } = c; return `<section><div class="wrap"><div class="areas-list">${s.areas.map((a) => `<a class="card rv" href="${rel(depth, 'areas/' + a.slug + '/')}">${a.photo ? `<img src="${esc(a.photo)}" alt="" loading="lazy">` : ''}<h3>${t(s, a, 'city')}${a.state ? ` <small>${esc(a.state)}</small>` : ''}</h3><p>${t(s, a, 'headline') || t(s, a, 'intro').slice(0, 120)}</p></a>`).join('')}</div></div></section>`; },
+  areaPage(c, a, depth) {
+    const { s, name } = c;
+    const head = `<section class="phead"><div class="wrap"><span class="eyebrow in" style="--i:0">${esc(name)} · ${t(s, a, 'city')}${a.state ? ', ' + esc(a.state) : ''}</span><h1 class="in" style="--i:1">${t(s, a, 'headline') || t(s, a, 'title') || `${t(s, a, 'city')} ${t(s, s, 'category')}`}</h1>${a.distance ? `<p class="lead in" style="--i:2">${t(s, a, 'distance')}</p>` : ''}</div></section>`;
+    const intro = `<section class="area-intro"><div class="wrap"><div class="about">${a.photo ? `<div class="frame rv"><img src="${esc(a.photo)}" alt="${esc(a.city)}" loading="lazy"></div>` : ''}<div class="rv">${String(pick(s, a, 'intro').main || '').split(/\n{2,}/).map((p) => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`).join('')}${a.landmarks.length ? `<p class="lm"><b>${L(s, '가까운 곳', 'Near')}</b> ${a.landmarks.map(esc).join(' · ')}</p>` : ''}${a.note ? `<p class="note">${t(s, a, 'note')}</p>` : ''}<div class="cta" style="margin-top:18px">${btns(c, 'outline', depth)}</div></div></div></div></section>`;
+    const faq = a.faq.length ? `<section class="tint" id="faq"><div class="wrap"><div class="sec-h center rv"><span class="eyebrow">FAQ</span><h2>${t(s, a, 'city')} ${L(s, '손님이 자주 묻는 질문', 'questions')}</h2></div><div class="faq">${a.faq.slice(0, 6).map((f) => `<details class="rv"><summary>${t(s, f, 'q')}</summary><div>${t(s, f, 'a')}</div></details>`).join('')}</div></div></section>` : '';
+    const others = s.areas.filter((x) => x.slug !== a.slug);
+    const more = others.length ? `<section><div class="wrap"><p class="muted" style="text-align:center">${L(s, '다른 지역', 'Other areas')}: ${others.map((x) => `<a href="${rel(depth, 'areas/' + x.slug + '/')}">${t(s, x, 'city')}</a>`).join(' · ')} · <a href="${rel(depth, '')}">${L(s, '홈', 'Home')}</a></p></div></section>` : '';
+    return [head, intro, sec.services(c, depth, { max: 6 }), sec.highlights(c), faq, sec.visit(c, depth), more, sec.ctab(c, depth)].join('\n');
+  },
   pageHead(c, ko, en, sub) { return `<section class="phead"><div class="wrap"><span class="eyebrow in" style="--i:0">${esc(c.name)}</span><h1 class="in" style="--i:1">${L(c.s, ko, en)}</h1>${sub ? `<p class="lead in" style="--i:2">${sub}</p>` : ''}</div></section>`; },
 };
 const CONTACT_ENDPOINT = 'https://bizhigher.com/api/site-contact';
+const EVENT_ENDPOINT = 'https://bizhigher.com/api/site-event'; // 전환 이벤트 비콘 — functions/api/site-event.js (D1 site_events 일별 집계)
 /* 스크롤에 맞춰 그려지는 손글씨 밑줄 — .rv.on 이 되면 stroke-dashoffset 애니메이션 */
 const DRAW = `<svg class="draw" viewBox="0 0 320 28" aria-hidden="true" preserveAspectRatio="none"><path pathLength="1" d="M4 18 C 60 6, 120 26, 180 12 S 290 10, 316 16" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round"/></svg>`;
 
 const EXTRA_CSS = `
+.areas{display:flex;flex-wrap:wrap;gap:10px}.chip-a{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border:1px solid var(--line);border-radius:999px;background:var(--card);text-decoration:none;color:inherit;font-weight:600;font-size:15px;box-shadow:var(--shadow)}.chip-a:hover{border-color:var(--accent);color:var(--accent)}.chip-a small{color:var(--ink3);font-weight:500}
+.areas-list{display:grid;gap:16px;grid-template-columns:1fr}.areas-list .card{text-decoration:none;color:inherit}.areas-list h3 small{color:var(--ink3);font-weight:500;font-size:14px}
+.area-intro .lm{font-size:14.5px;color:var(--ink2)}.area-intro .note{font-size:15px;color:var(--ink2);border-left:3px solid var(--accent);padding-left:12px}
+@media(min-width:760px){.areas-list{grid-template-columns:repeat(2,1fr)}}@media(min-width:1024px){.areas-list{grid-template-columns:repeat(3,1fr)}}
 /* 스크롤 효과 v4 — .js 뒤에만, reduced-motion 이면 전부 끔 */
 .js .hero.has-scrub{min-height:200vh;padding-bottom:0;overflow:clip}.js .hero.has-scrub .wrap{position:sticky;top:64px;padding-bottom:48px}.hero .frame img.scrub{transition:none}
 .js .stack{display:block}.js .stack .card{position:sticky;top:calc(84px + var(--n,0) * 14px);margin-bottom:22px;transform-origin:center top;transition:transform .25s ease,box-shadow .25s ease,filter .35s ease}.js .stack .card.under{transform:scale(.96) translateY(-6px);filter:brightness(.92)}.js .stack .card:last-child{margin-bottom:0}
@@ -339,7 +363,9 @@ function shell(c, { title, desc, depth = 0, active = '', content, extraSchema = 
   const fonts = (() => { const f = new Set(); const add = (n, w) => f.add(`family=${n.replace(/ /g, '+')}:wght@${w}`); const hw = { Fraunces: '500;600', 'Playfair Display': '500;600', 'Space Grotesk': '500;700', Nunito: '600;800', 'DM Serif Display': '400' }[k.fontHead] || '600;700'; add(k.fontHead, hw); if (k.fontHeadKo) add(k.fontHeadKo, { 'Noto Serif KR': '600', 'Nanum Myeongjo': '700', 'Gowun Batang': '700' }[k.fontHeadKo] || '700'); if (k.fontBody !== k.fontHead) add(k.fontBody, '400;500;600;700'); return [...f].join('&'); })();
   const openChip = ht ? `<span class="open" id="open-chip"><i></i><span class="t"></span></span>` : '';
   const navLinks = pages.map(([h, ko, en]) => `<a href="${h.startsWith('#') ? (depth ? rel(depth, '') + h : h) : rel(depth, h)}"${h === active ? ' class="on"' : ''}>${L(s, ko, en)}</a>`).join('');
-  const schemas = [schema(s, c.canonical), ...extraSchema].join('</script>\n<script type="application/ld+json">');
+  // extraSchema 는 객체(BreadcrumbList·BlogPosting·지역 LocalBusiness) — 문자열로 직렬화(undefined·빈 배열 제거). 2026-11-01 까지 "[object Object]" 로 나가던 버그 수정
+  const ser = (x) => (typeof x === 'string' ? x : JSON.stringify(x, (k, v) => (v === undefined || (Array.isArray(v) && !v.length) ? undefined : v)));
+  const schemas = [schema(s, c.canonical), ...extraSchema.map(ser)].join('</script>\n<script type="application/ld+json">');
   return `<!doctype html>
 <html lang="${s.lang === 'en' ? 'en' : 'ko'}" data-style="${style}">
 <head>
@@ -354,6 +380,8 @@ ${c.noindex ? '<meta name="robots" content="noindex,nofollow">' : ''}
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?${fonts}&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 ${s.logo ? `<link rel="icon" href="${esc(s.logo)}">` : ''}
+${!c.noindex && s.analytics.gsc_verification ? `<meta name="google-site-verification" content="${esc(s.analytics.gsc_verification)}">` : ''}
+${!c.noindex && s.analytics.ga4 ? `<script async src="https://www.googletagmanager.com/gtag/js?id=${esc(s.analytics.ga4)}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','${esc(s.analytics.ga4)}',{anonymize_ip:true});</script>` : ''}
 <script type="application/ld+json">${schemas}</script>
 <style>${CSS(k, style, s.lang)}${EXTRA_CSS}</style>
 </head>
@@ -371,6 +399,7 @@ ${content}
   <div><a class="brand" href="${rel(depth, '')}">${esc(name)}</a><p class="desc">${t(s, s, 'tagline') || ''}</p>${addr ? `<p class="desc">${esc(addr)}</p>` : ''}${phone ? `<p class="desc"><a href="${telHref(phone)}">${esc(phone)}</a></p>` : ''}</div>
   ${s.hours.length ? `<div><h3>${L(s, '영업시간', 'Hours')}</h3><ul>${s.hours.map((h) => `<li>${esc(h.days)} · ${esc(h.time || (h.open && h.close ? h.open + '–' + h.close : ''))}</li>`).join('')}</ul></div>` : ''}
   ${s.services.length ? `<div><h3>${L(s, '서비스', 'Services')}</h3><ul>${s.services.slice(0, 8).map((x) => `<li><a href="${c.business ? rel(depth, 'services/') : rel(depth, '') + '#services'}">${t(s, x, 'name')}</a></li>`).join('')}</ul></div>` : ''}
+  ${s.areas.length ? `<div><h3>${L(s, '찾아오시는 지역', 'Areas')}</h3><ul>${s.areas.slice(0, 8).map((a) => `<li><a href="${rel(depth, 'areas/' + a.slug + '/')}">${t(s, a, 'city')}</a></li>`).join('')}</ul></div>` : ''}
   <div><h3>${L(s, '바로가기', 'Links')}</h3><ul>${pages.map(([h, ko, en]) => `<li><a href="${h.startsWith('#') ? rel(depth, '') + h : rel(depth, h)}">${L(s, ko, en)}</a></li>`).join('')}${Object.entries(s.social).filter(([, v]) => v).map(([kk, v]) => `<li><a href="${esc(v)}" target="_blank" rel="noopener">${esc(kk[0].toUpperCase() + kk.slice(1))}</a></li>`).join('')}</ul></div>
 </div><div class="copy">© ${year} ${esc(name)}. All rights reserved.</div></div></footer>
 ${phone || addr ? `<div class="bottom">${ht ? `<span class="open" id="open-bar"><i></i><span class="t"></span></span>` : ''}<div class="row">${phone ? `<a class="btn primary" href="${telHref(phone)}">📞 ${L(s, '전화', 'Call')}</a>` : ''}${addr ? `<a class="btn outline" href="${esc(maps)}" target="_blank" rel="noopener" style="background:var(--card)">📍 ${L(s, '길찾기', 'Directions')}</a>` : ''}</div></div>` : ''}
@@ -402,6 +431,10 @@ ${phone || addr ? `<div class="bottom">${ht ? `<span class="open" id="open-bar">
     var rows=document.querySelectorAll('.hours li');var KO=['일','월','화','수','목','금','토'],EN=['sun','mon','tue','wed','thu','fri','sat'];rows.forEach(function(li){var dsv=(li.getAttribute('data-days')||'').toLowerCase();if(dsv.indexOf(KO[wd])>-1||dsv.indexOf(EN[wd])>-1){li.classList.add('today');return;}var m=/^\\s*(\\S)[^–\\-~]*[–\\-~]\\s*(\\S)/.exec(dsv);if(m){var a=KO.indexOf(m[1])>-1?KO.indexOf(m[1]):EN.indexOf(dsv.slice(0,3)),b=KO.indexOf(m[2]);var bm=/[–\\-~]\\s*([a-z]{3})/.exec(dsv);if(bm)b=EN.indexOf(bm[1]);if(a>-1&&b>-1){for(var x=a,c=0;c<7;c++,x=(x+1)%7){if(x===wd){li.classList.add('today');break;}if(x===b)break;}}}});}}catch(e){}
   /* 6) 문의 폼 — ?sent=1 이면 접수 안내 */
   try{var cf=document.querySelector('.cform');if(cf&&/[?&]sent=1/.test(location.search)){var ok=document.createElement('div');ok.className='ok';ok.textContent=cf.getAttribute('data-sent');cf.parentNode.insertBefore(ok,cf);cf.style.display='none';ok.scrollIntoView({block:'center'});}}catch(e){}
+  /* 6-1) 전환 이벤트 — 전화 클릭·길찾기·예약·문의 제출·페이지 보기. gtag 가 있으면 GA4 로, 그리고 bizhigher.com 에 비콘(일별 집계, 개인정보 없음). 미리보기(noindex)에서는 끈다 */
+  ${!c.noindex ? `try{var SL='${esc(s.slug)}',EP='${EVENT_ENDPOINT}';function ev(n,extra){try{if(window.gtag)gtag('event',n,extra||{});}catch(e){}try{var body=JSON.stringify({slug:SL,event:n,page:location.pathname.slice(0,200)});if(navigator.sendBeacon)navigator.sendBeacon(EP,body);else fetch(EP,{method:'POST',body:body,keepalive:true,mode:'no-cors'});}catch(e){}}
+    ev('page_view');document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a');if(!a)return;var h=a.getAttribute('href')||'';if(/^tel:/.test(h))ev('phone_click');else if(/google\\.com\\/maps|maps\\.google|maps\\.apple|goo\\.gl\\/maps/.test(h))ev('directions_click');else if(a.getAttribute('data-ev'))ev(a.getAttribute('data-ev'));},true);
+    var cf2=document.querySelector('.cform');if(cf2)cf2.addEventListener('submit',function(){ev('contact_submit');});}catch(e){}` : ''}
   /* 7) 한/영 토글 */
   var b=document.getElementById('lang');if(!b)return;
   function apply(){document.querySelectorAll('[data-en]').forEach(function(el){el.innerHTML=en?el.getAttribute('data-en'):el.getAttribute('data-ko')});b.textContent=en?'한국어':'EN';d.lang=en?'en':'ko'}
@@ -416,8 +449,22 @@ const crumbs = (c, items) => ({ '@context': 'https://schema.org', '@type': 'Brea
 function onepage(c) {
   const { s, name } = c;
   const title = s.seo.title || `${name} — ${s.tagline || s.category || ''}`.replace(/ — $/, '');
-  const content = [sec.hero(c, 0), sec.promo(c), sec.services(c, 0), sec.highlights(c), sec.brands(c), sec.galleryStrip(c, 0), sec.steps(c), sec.reviews(c), sec.about(c), sec.visit(c, 0), sec.faq(c), sec.contact(c, 0), sec.ctab(c, 0)].join('\n');
+  const content = [sec.hero(c, 0), sec.promo(c), sec.services(c, 0), sec.highlights(c), sec.brands(c), sec.galleryStrip(c, 0), sec.steps(c), sec.reviews(c), sec.about(c), sec.areasHome(c, 0), sec.visit(c, 0), sec.faq(c), sec.contact(c, 0), sec.ctab(c, 0)].join('\n');
   return shell(c, { title, desc: s.seo.description || s.tagline || '', content });
+}
+/* 지역 페이지 파일들 — 원페이지·비즈니스 공통. areas/{slug}/ + (비즈니스) areas/ 목록 */
+function areaFiles(c, files) {
+  const { s, name } = c; if (!s.areas.length) return;
+  const label = s.lang === 'en' ? 'Areas' : '지역';
+  if (c.business) files['areas/index.html'] = shell(c, { title: `${label} | ${name}`, desc: s.seo.description || s.tagline || '', depth: 1, active: 'areas/', canonicalPage: c.canonical + 'areas/', extraSchema: [crumbs(c, [[name, ''], [label, 'areas/']])], content: [sec.pageHead(c, '찾아오시는 지역', 'Areas we serve'), sec.areasIndex(c, 1), sec.ctab(c, 1)].join('\n') });
+  for (const a of s.areas) {
+    const city = pick(s, a, 'city').main; const title = (pick(s, a, 'title').main || `${city} ${s.category || ''} | ${name}`).slice(0, 110);
+    const desc = (pick(s, a, 'description').main || pick(s, a, 'headline').main || String(pick(s, a, 'intro').main || '').slice(0, 155)).slice(0, 160);
+    const local = { '@context': 'https://schema.org', '@type': s.schema_type || 'LocalBusiness', name: s.name, url: c.canonical + `areas/${a.slug}/`, telephone: s.phone || undefined, areaServed: { '@type': 'City', name: city, containedInPlace: a.state ? { '@type': 'State', name: a.state } : undefined }, address: s.address.line1 ? { '@type': 'PostalAddress', streetAddress: [s.address.line1, s.address.line2].filter(Boolean).join(' '), addressLocality: s.address.city, addressRegion: s.address.state, postalCode: s.address.zip, addressCountry: 'US' } : undefined };
+    const extra = [crumbs(c, [[name, ''], ...(c.business ? [[label, 'areas/']] : []), [city, `areas/${a.slug}/`]]), local];
+    if (a.faq.length) extra.push({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: a.faq.slice(0, 6).map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) });
+    files[`areas/${a.slug}/index.html`] = shell(c, { title, desc, depth: 2, active: 'areas/', canonicalPage: c.canonical + `areas/${a.slug}/`, extraSchema: extra, content: sec.areaPage(c, a, 2) });
+  }
 }
 
 /* 비즈니스 등급 — 페이지별 파일 */
@@ -426,7 +473,7 @@ function business(c) {
   const base = s.seo.title || `${name} — ${s.tagline || s.category || ''}`.replace(/ — $/, '');
   const desc = s.seo.description || s.tagline || '';
   const T = (ko, en) => (s.lang === 'en' ? en : ko) + ' | ' + name;
-  files['index.html'] = shell(c, { title: base, desc, depth: 0, active: '', content: [sec.hero(c, 0), sec.promo(c), sec.services(c, 0, { max: 6, more: true }), sec.highlights(c), sec.reviews(c), sec.galleryStrip(c, 0, true), sec.ctab(c, 0)].join('\n') });
+  files['index.html'] = shell(c, { title: base, desc, depth: 0, active: '', content: [sec.hero(c, 0), sec.promo(c), sec.services(c, 0, { max: 6, more: true }), sec.highlights(c), sec.reviews(c), sec.galleryStrip(c, 0, true), sec.areasHome(c, 0), sec.ctab(c, 0)].join('\n') });
   if (s.services.length) files['services/index.html'] = shell(c, { title: T('서비스', 'Services'), desc, depth: 1, active: 'services/', canonicalPage: c.canonical + 'services/', extraSchema: [crumbs(c, [[name, ''], [s.lang === 'en' ? 'Services' : '서비스', 'services/']])], content: [sec.pageHead(c, '서비스', 'Services', s.services_intro ? t(s, s, 'services_intro') : ''), sec.services(c, 1, { full: true }), sec.faq(c), sec.ctab(c, 1)].join('\n') });
   if (s.about.text || s.highlights.length || s.steps.length) files['about/index.html'] = shell(c, { title: T('소개', 'About'), desc, depth: 1, active: 'about/', canonicalPage: c.canonical + 'about/', extraSchema: [crumbs(c, [[name, ''], [s.lang === 'en' ? 'About' : '소개', 'about/']])], content: [sec.pageHead(c, '소개', 'About'), sec.about(c), sec.highlights(c), sec.steps(c), sec.brands(c), sec.reviews(c), sec.ctab(c, 1)].join('\n') });
   if (c.gallery.length >= 3) files['gallery/index.html'] = shell(c, { title: T('갤러리', 'Gallery'), desc, depth: 1, active: 'gallery/', canonicalPage: c.canonical + 'gallery/', extraSchema: [crumbs(c, [[name, ''], [s.lang === 'en' ? 'Gallery' : '갤러리', 'gallery/']])], content: [sec.pageHead(c, '갤러리', 'Gallery'), sec.galleryGrid(c), sec.ctab(c, 1)].join('\n') });
@@ -435,6 +482,7 @@ function business(c) {
     files['blog/index.html'] = shell(c, { title: T('소식', 'Blog'), desc, depth: 1, active: 'blog/', canonicalPage: c.canonical + 'blog/', extraSchema: [crumbs(c, [[name, ''], [s.lang === 'en' ? 'Blog' : '소식', 'blog/']])], content: [sec.pageHead(c, '소식', 'Blog'), sec.blogList(c, 1), sec.ctab(c, 1)].join('\n') });
     for (const p of posts) { const ps = slugify(p.slug); files[`blog/${ps}/index.html`] = shell(c, { title: `${pick(s, p, 'title').main} | ${name}`, desc: p.excerpt || desc, depth: 2, active: 'blog/', canonicalPage: c.canonical + `blog/${ps}/`, extraSchema: [{ '@context': 'https://schema.org', '@type': 'BlogPosting', headline: p.title, datePublished: p.date || undefined, image: p.photo || undefined, author: { '@type': 'Organization', name }, publisher: { '@type': 'Organization', name } }, crumbs(c, [[name, ''], [s.lang === 'en' ? 'Blog' : '소식', 'blog/'], [p.title, `blog/${ps}/`]])], content: [sec.blogPost(c, p), sec.ctab(c, 2)].join('\n') }); }
   }
+  areaFiles(c, files);
   return files;
 }
 
@@ -443,6 +491,7 @@ function render(spec, { origin, noindex }) {
   const canonical = (origin || `https://${s.slug}.sites.bizhigher.com`).replace(/\/$/, '') + '/';
   const c = ctx(s, { canonical, noindex: !!noindex });
   const files = c.business ? business(c) : { 'index.html': onepage(c) };
+  if (!c.business) areaFiles(c, files);
   const urls = Object.keys(files).map((f) => canonical + f.replace(/index\.html$/, ''));
   files['robots.txt'] = noindex ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nAllow: /\nSitemap: ${canonical}sitemap.xml\n`;
   files['sitemap.xml'] = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map((u) => `<url><loc>${esc(u)}</loc></url>`).join('')}</urlset>\n`;

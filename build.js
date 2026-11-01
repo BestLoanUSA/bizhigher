@@ -2642,6 +2642,18 @@ function thanksPage() {
         <input type="text" data-label="참고 사이트" placeholder="마음에 드는 참고 사이트 주소 (있다면)" class="input">
         <input type="text" data-label="선호 분위기" placeholder="선호하는 색·분위기 (예: 깔끔한 화이트, 고급스러운 네이비)" class="input">
       </div>
+      <!-- 구글 계정 (GA4·Search Console 소유) — 웹사이트·분석·SEO·패키지 주문에 표시 -->
+      <div id="google-extra" style="display:none;">
+        <p style="font-weight:800;color:var(--navy-900,#0A1B4D);margin:18px 0 6px;font-size:15px;">📊 방문 통계·검색 데이터 (GA4 · Search Console)</p>
+        <p style="font-size:13.5px;color:var(--ink-600,#5B6472);margin:0 0 10px;line-height:1.6;">사이트 방문·전화 클릭·검색 노출을 매달 리포트로 받으시려면 구글 계정이 하나 필요합니다. 계정은 사장님 소유로 만들고 BizHigher 는 보기 권한만 받습니다. 없으면 BizHigher 가 대신 만들어 두었다가 해지 시 넘겨 드립니다.</p>
+        <select data-label="구글 계정(GA4·서치콘솔 소유)" class="input" id="g-acct">
+          <option value="">구글 계정이 있으신가요?</option>
+          <option>있음 — 내 구글 계정으로 만들어 주세요 (10분 통화로 함께 설정)</option>
+          <option>없음 — BizHigher 계정으로 만들고 해지 시 넘겨 주세요</option>
+          <option>이미 GA4·서치콘솔이 있어요 — hello@bizhigher.com 을 초대할게요</option>
+        </select>
+        <input type="email" data-label="구글 계정 이메일" placeholder="구글 계정 이메일 (Gmail 또는 Workspace — '있음'일 때)" class="input">
+      </div>
 
       <textarea name="notes" placeholder="비즈니스 소개와 요청사항을 자유롭게 적어주세요 — 주 고객층, 강점, 강조하고 싶은 것, 피하고 싶은 표현 등" class="input" rows="5" style="resize:vertical;"></textarea>
       <button type="submit" class="btn btn-primary btn-block">질문지 제출 — 작업 시작하기</button>
@@ -2698,6 +2710,8 @@ function placeBlock() {
 if (svc.indexOf('website') === 0 || (svc.indexOf('local-') === 0 && (svc.indexOf('annual') > -1 || svc.indexOf('installment') > -1))) {
   document.getElementById('website-extra').style.display = 'block';
 }
+// 구글 계정 질문 — 웹사이트·분석·SEO·지역 랜딩·패키지 주문
+if (/^(website|analytics|seo|local-landing|local-)/.test(svc)) document.getElementById('google-extra').style.display = 'block';
 var picked = [];
 var fileInput = document.getElementById('intake-files');
 fileInput.addEventListener('change', function () {
@@ -2752,6 +2766,12 @@ document.getElementById('intake-form').addEventListener('submit', async function
         if (el.value && el.value.trim()) lines.push('[' + el.getAttribute('data-label') + '] ' + el.value.trim());
       });
       if (lines.length) body.notes = '── 웹사이트 질문지 ──\\n' + lines.join('\\n') + (body.notes ? '\\n── 추가 요청 ──\\n' + body.notes : '');
+    }
+    const gx = document.getElementById('google-extra');
+    if (gx && gx.style.display !== 'none') {
+      const gl = [];
+      gx.querySelectorAll('[data-label]').forEach(function (el) { if (el.value && el.value.trim()) gl.push('[' + el.getAttribute('data-label') + '] ' + el.value.trim()); });
+      if (gl.length) body.notes = (body.notes ? body.notes + '\\n\\n' : '') + '── 구글 계정(측정) ──\\n' + gl.join('\\n');
     }
     progress(92, '질문지 보내는 중…', true);
     const res = await fetch('/api/intake', {
@@ -3584,6 +3604,7 @@ const TERMS_HTML = `
 <p>대금이 완납된 결과물의 사용 권리는 고객에게 있습니다. 회사는 고객이 별도로 거부 의사를 밝히지 않는 한, 완성된 결과물을 포트폴리오로 소개할 수 있습니다. 고객이 제공한 자료(로고, 사진 등)에 대한 권리와 책임은 고객에게 있습니다.</p>
 <h2 class="h2-left">6. 고객의 협조</h2>
 <p>일부 서비스는 고객의 계정 권한 부여(예: 구글 비즈니스 프로필 관리자 초대, Search Console 사용자 추가, 광고 계정 접근)가 필요합니다. 권한 미제공으로 인한 지연은 회사의 책임이 아닙니다.</p>
+<p><b>측정 계정의 소유권.</b> 회사가 고객을 대신해 Google Analytics(GA4)·Search Console 등 측정 계정을 만드는 경우, 고객의 구글 계정이 있으면 그 계정 소유로 만들고 회사는 보기·편집 권한만 보유합니다. 고객의 구글 계정이 없어 회사 계정으로 만든 경우, 서비스 해지 시 고객이 요청하면 14일 안에 소유권을 고객 계정으로 이전하며, 이전 전까지의 데이터는 고객 자산으로 취급합니다.</p>
 <h2 class="h2-left">7. 보증의 한계</h2>
 <p>회사는 전문적이고 성실한 서비스 제공을 약속하지만, 검색 순위·광고 성과·매출 등 특정 결과를 보장하지 않습니다. 검색 엔진과 광고 플랫폼의 정책·알고리즘은 회사가 통제할 수 없습니다.</p>
 <h2 class="h2-left">8. 책임 제한</h2>
