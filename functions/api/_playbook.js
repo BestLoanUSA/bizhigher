@@ -74,9 +74,9 @@ export const PLAYBOOK = {
   'analytics-setup': {
     name: '판매 추적·애널리틱스 셋업', steps: [
       S('an-1', '웹사이트 관리자 접근(WordPress/Wix/Squarespace 등) 또는 BizHigher 제작 사이트 확인', 'onboarding', 'customer', 0, { block: '외부 사이트면 로그인·플러그인 권한 필요' }),
-      S('an-2', 'GA4 속성·Google Tag·전환 이벤트(전화·예약·문의·길찾기) 설계', 'setup', 'ai', 10, { verify: true }),
-      S('an-3', '태그 설치 — BizHigher 제작 사이트면 빌드에 자동 삽입, 외부 사이트면 수동', 'setup', 'david', 60, { next: 'GTM 템플릿화(§19-6) → 외부 사이트도 스니펫 1개로' }),
-      S('an-4', 'Search Console 연결·검증 + 전환 테스트 리포트', 'setup', 'david', 20, { next: 'GSC API(서비스 계정)로 검증 자동화' }),
+      S('an-2', 'GA4 속성·전환 이벤트(전화·예약·문의·길찾기) 설계 + 질문지의 구글 계정 선택에 따라 셋업 계획(고객 계정 10분 통화 / BizHigher 계정 / 기존 초대) — docs/analytics-setup-ko.md', 'setup', 'ai', 10, { verify: true }),
+      S('an-3', 'GA4 속성 생성(고객 계정 또는 BizHigher 계정, Claude in Chrome 보조) + 태그 설치 — BizHigher 제작 사이트면 스펙 analytics.ga4 패치로 자동(전환 이벤트 4종 포함), 외부 사이트면 수동 + 서비스 계정 뷰어 추가', 'setup', 'david', 30, { next: 'GTM 템플릿화(§19-6) → 외부 사이트도 스니펫 1개로' }),
+      S('an-4', 'Search Console 속성 추가·검증(BizHigher 사이트는 스펙 analytics.gsc_verification 메타 태그로) + 서비스 계정 사용자 추가 + 전환 테스트', 'setup', 'david', 15, { next: 'Site Verification API 로 검증 자동화' }),
     ],
   },
   'ads-setup': {
@@ -92,7 +92,7 @@ export const PLAYBOOK = {
     name: '지역 랜딩페이지 5개', steps: [
       S('llp-1', '도시 목록 확정 — 고객 승인 (기존 페이지 제외)', 'setup', 'customer', 5),
       S('llp-2', '도시별 페이지 작성 — 타이틀·메타·H1·지역 컨텍스트(실제 랜드마크 확인)·FAQ 3개+스키마·내부 링크 맵', 'setup', 'ai', 20, { verify: true, block: '도시 간 중복률 검사(doorway 방지)는 자동' }),
-      S('llp-3', '적용 — BizHigher 제작 사이트면 빌드·배포 자동, 외부 사이트면 HTML 전달', 'setup', 'auto', 0, { block: '외부 사이트는 고객이 올려야 함 → 고객 대기' }),
+      S('llp-3', '적용 — BizHigher 제작 사이트면 sites.js areas(중복 검사 → 스펙 areas 패치) → 다음 배포에 areas/{도시}/ 페이지·홈 지역 칩·푸터 링크·사이트맵 자동, 외부 사이트면 HTML 전달', 'setup', 'auto', 0, { block: '외부 사이트는 고객이 올려야 함 → 고객 대기' }),
       S('llp-4', '자동 QA(qa.js: 360/768/1280 스크린샷·속도·링크·폼) + 사이트맵 갱신 + 구글 등록 가이드', 'setup', 'auto', 5, { verify: true }),
     ],
   },
@@ -151,7 +151,7 @@ export const PLAYBOOK = {
   },
   'monthly-report': {
     name: '월간 성과 리포트', steps: [
-      S('mr-1', '데이터 수집 — GA4·GSC', 'monthly', 'auto', 0, { block: '서비스 계정 연결 전엔 수동 내보내기', next: 'GA4 Data API + GSC API 서비스 계정(고객이 사용자로 추가)' }),
+      S('mr-1', '데이터 수집 — 우리 비콘 통계(sites.js stats, 항상) + GA4·GSC(analytics.js both, 서비스 계정이 뷰어로 추가된 경우)', 'monthly', 'auto', 0, { block: '서비스 계정 미추가면 GA4·GSC 칸은 리포트의 담당자 확인 칸으로' }),
       S('mr-2', '데이터 수집 — GBP 인사이트(조회·전화·길찾기)·리뷰', 'monthly', 'david', 10, { block: 'GBP API 거절 → 화면 캡처', next: 'GBP API' }),
       S('mr-3', '데이터 수집 — 광고 성과(구글·메타)', 'monthly', 'david', 10, { next: 'Google Ads API 토큰 / Meta 앱 심사' }),
       S('mr-4', '리포트 PDF 생성 — 숫자·전월 대비·다음 달 제안', 'monthly', 'ai', 10, { verify: true }),
@@ -160,14 +160,14 @@ export const PLAYBOOK = {
   },
   'seo-aio': {
     name: 'SEO/AIO 관리 (Premium 블로그 4편)', steps: [
-      S('seo-1', 'Search Console·GA4 사용자 초대 (고객 → hello@bizhigher.com)', 'onboarding', 'customer', 5, { block: '초대 방법 안내문 필요' }),
+      S('seo-1', 'Search Console·GA4 접근 — 고객 계정이면 hello@bizhigher.com 과 서비스 계정 초대, 없으면 an-3·an-4 로 만든다 (docs/analytics-setup-ko.md)', 'onboarding', 'customer', 5),
       S('seo-2', '온보딩 분석 — 2페이지 키워드(11~20위·100임프레션+) 전수 발굴·교정 문구', 'setup', 'ai', 20, { verify: true, next: 'GSC API로 데이터 수집 자동' }),
       S('seo-3', '월 주제 캘린더(키워드 리서치) → 고객 승인', 'monthly', 'customer', 10, { verify: true }),
       S('seo-4', '블로그 4편 집필 — 1,200~1,800자·메타·FAQ 스키마·대표 이미지 (규제 업종 표현 검사)', 'monthly', 'ai', 30, { verify: true }),
       S('seo-5', '발행 — BizHigher 제작 사이트는 자동(블로그 루틴과 동일), 외부 사이트는 docx+html 전달', 'monthly', 'auto', 0, { block: '외부 사이트(WordPress 등)는 고객 또는 David가 올림' }),
       S('seo-6', '기술 SEO·스키마 월간 점검 (크롤러)', 'monthly', 'auto', 5),
       S('seo-7', 'AI 검색 인용 테스트 — ChatGPT·Perplexity에 가게가 나오는지', 'monthly', 'david', 15, { next: '검색 API로 반자동' }),
-      S('seo-8', '분기별 지역 랜딩페이지 1개 추가', 'monthly', 'ai', 10, { verify: true }),
+      S('seo-8', '분기별 지역 랜딩페이지 1개 추가 — BizHigher 사이트면 sites.js areas 로 기존 areas 에 1곳 추가', 'monthly', 'ai', 10, { verify: true }),
     ],
   },
   'shortform-video': {

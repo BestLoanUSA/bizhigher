@@ -14,6 +14,8 @@
  *   node automation/ai-runner/sites.js styles (--job 28 | --spec spec.json) --out dir [--styles luxe,warm,clean] [--upload --task N]
  *                                                                              # 스타일 시안 3종(지금 스타일 + 어울리는 2종) — 같은 스펙을 스타일만 바꿔 렌더·데스크탑+모바일 스크린샷 → style-{key}.jpg + styles-board.jpg
  *                                                                              #   + options.json(고객이 고르는 승인용, patch={"theme":{"style":key}} — 고르면 스펙이 바로 바뀐다). --upload 면 /a/ 에 올려 URL 로 채운다. 비용 0, 약 30초
+ *   node automation/ai-runner/sites.js areas --job 28 --file areas.json [--check-only] [--note …]   # 지역 랜딩 페이지: areas[] 검사(도시당 본문 350자 이상(공백 제외), 도시 간 문장 중복 60% 미만 = doorway 방지, FAQ 2개 이상) → 통과하면 스펙 areas 패치 → 다음 배포에 areas/{slug}/ 생성
+ *   node automation/ai-runner/sites.js stats --job 28 [--month 2026-10]        # 우리 비콘이 센 전환 통계(페이지 보기·전화·길찾기·예약·문의) + 사이트 문의 수 — 리포트 KPI 에 쓴다 (GA4 없어도 됨)
  *   node automation/ai-runner/sites.js frames (--job 28 | --spec spec.json --out spec.json) [--video clip.mp4|URL] [--n 36] [--width 960] [--task 12] [--dir frames]
  *                                                                              # 히어로 "스크롤 재생" 프레임: 클립(또는 spec.hero.video)에서 n장(webp)을 뽑아 /a/ 에 올리고 hero.frames 에 넣는다 → 템플릿 scrub 효과(스크롤에 따라 사진이 영상처럼 재생).
  *                                                                              #   36장×960px ≈ 1.5MB. --job 이면 저장된 스펙에 바로 패치, --spec 이면 파일에만 쓴다(--no-upload 면 로컬 경로)
@@ -170,6 +172,39 @@ function diffKeys(a, b, prefix = '') {
     const r = await api('sites/' + cur.slug + '/leads');
     for (const l of r.leads || []) console.log(`${l.created_at} · ${l.name} · ${l.phone || '-'} · ${l.email || '-'} · ${String(l.message || '').replace(/\s+/g, ' ').slice(0, 120)}`);
     if (!(r.leads || []).length) console.log('문의 없음');
+    return;
+  }
+  if (cmd === 'areas') {
+    const job = Number(opt('job')); const file = opt('file'); if (!job || !file) throw new Error('--job N --file areas.json 이 필요합니다');
+    let areas = JSON.parse(fs.readFileSync(file, 'utf8')); if (!Array.isArray(areas)) areas = areas.areas || [];
+    const text = (a) => [a.headline, a.intro, a.note, ...(a.faq || []).map((f) => (f.q || '') + ' ' + (f.a || ''))].filter(Boolean).join('\n');
+    const sents = (a) => new Set(text(a).split(/[.!?。\n]+/).map((x) => x.trim().replace(/\s+/g, ' ')).filter((x) => x.length > 12));
+    const problems = [];
+    for (const a of areas) {
+      if (!a || !a.city) { problems.push('city 없는 항목'); continue; }
+      const len = text(a).replace(/\s+/g, '').length; if (len < 350) problems.push(`${a.city}: 본문 ${len}자(공백 제외) — 350자 이상 필요(도시 고유 내용·랜드마크·FAQ)`);
+      if (!(a.faq || []).filter((f) => f && f.q && f.a).length || (a.faq || []).length < 2) problems.push(`${a.city}: FAQ 2개 이상 필요`);
+      if (!a.intro) problems.push(`${a.city}: intro 없음`);
+    }
+    for (let i = 0; i < areas.length; i++) for (let j = i + 1; j < areas.length; j++) {
+      const A = sents(areas[i]), B = sents(areas[j]); if (!A.size || !B.size) continue;
+      let common = 0; for (const x of A) if (B.has(x)) common++; const ratio = common / Math.min(A.size, B.size);
+      if (ratio >= 0.6) problems.push(`${areas[i].city} ↔ ${areas[j].city}: 문장 ${Math.round(ratio * 100)}% 동일 — 도시마다 다른 내용으로(doorway 페이지로 보임)`);
+    }
+    if (problems.length) { console.log(JSON.stringify({ ok: false, problems }, null, 2)); process.exit(2); }
+    if (args.includes('--check-only')) { console.log(JSON.stringify({ ok: true, cities: areas.map((a) => a.city) })); return; }
+    const cur = await api('sites/' + job); if (!cur || !cur.spec) throw new Error('저장된 스펙이 없습니다 — spec 명령으로 먼저 만드세요');
+    const r = await api('sites', { job_id: job, spec: { ...cur.spec, areas }, note: opt('note', `지역 페이지 ${areas.length}곳`) });
+    console.log(JSON.stringify({ ok: true, slug: r.slug, version: r.version, cities: areas.map((a) => a.city), urls: areas.map((a) => `https://${PROJECT}.pages.dev/${r.slug}/areas/${(a.slug || a.city).toString().toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}/`) }, null, 2));
+    return;
+  }
+  if (cmd === 'stats') {
+    const job = Number(opt('job')); if (!job) throw new Error('--job N 필요');
+    const cur = await api('sites/' + job); if (!cur) throw new Error('사이트 없음');
+    const r = await api('sites/' + cur.slug + '/stats' + (opt('month') ? '?month=' + opt('month') : '')); const st = r.stats;
+    const E = { page_view: '페이지 보기', phone_click: '전화 클릭', directions_click: '길찾기 클릭', booking_click: '예약 클릭', contact_submit: '문의 제출' };
+    const md = ['| 지표 | ' + st.month + ' | ' + st.prev + ' |', '|---|---|---|', ...Object.keys(E).map((k) => `| ${E[k]} | ${st.events[k] || 0} | ${st.prevEvents[k] || 0} |`), `| 사이트 문의(폼) | ${st.leads} | – |`];
+    console.log(JSON.stringify({ ...st, markdown: md.join('\n'), source: '우리 비콘(site_events) — GA4 와 수치가 다를 수 있음(광고 차단·봇 제외 기준이 다름)' }, null, 2));
     return;
   }
   if (cmd === 'frames') {

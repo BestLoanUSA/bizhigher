@@ -40,6 +40,9 @@ node automation/ai-runner/qa.js --url https://고객사이트 --out qa --name ho
 node automation/ai-runner/sites.js prep --spec spec.json [--job 28 --task 12]  # 사진 준비(v3): 900px 미만 업스케일 → /a/ 교체, 갤러리 3장 미만이면 분위기 이미지 생성(gallery_generated). FAL_KEY 없으면 크기 보고만. spec 저장 전에
 node automation/ai-runner/sites.js spec --job 28 --file spec.json           # 고객 사이트 스펙 저장 → slug·미리보기 주소 + 바뀐 키 (web-2 첫 생성)
 node automation/ai-runner/sites.js styles --job 28 --upload --task 12 --out styles     # 사이트 스타일 시안 3종(지금 스타일 + 어울리는 2종, 데스크탑+모바일 스크린샷 카드 + 보드) + styles/options.json(선택지마다 patch={theme.style}) → runner submit --options. 고르면 스펙이 바로 바뀌고 needs-deploy = yes (web-2)
+node automation/ai-runner/sites.js areas --job 28 --file areas.json [--check-only]   # 지역 랜딩 페이지: 검사(본문 350자·FAQ 2개·도시 간 중복 60% 미만) → 스펙 areas 패치 → 다음 배포에 areas/{도시}/ (llp-3·seo-8)
+node automation/ai-runner/sites.js stats --job 28 [--month 2026-10]             # 우리 비콘 전환 통계(페이지 보기·전화·길찾기·예약·문의·폼) — 리포트 KPI, GA4 없어도
+node automation/ai-runner/analytics.js both --job 28 [--month 2026-10]          # GA4·Search Console 월간 숫자(서비스 계정 GOOGLE_SA_JSON, 스펙 analytics.ga4_property·gsc_site) → JSON + 마크다운 표
 node automation/ai-runner/sites.js frames --job 28 --video clip.mp4 [--n 36] [--task 12]   # 히어로 스크롤 재생 프레임(webp 36장) → hero.frames 패치 → 템플릿 scrub 효과 (sites.js prep --grade 도 같이 쓴다)
 node automation/ai-runner/sites.js patch --job 28 --file patch.json [--note …]  # 수정 요청 반영: 바뀐 키만 깊은 병합(null 은 삭제) → 새 버전. 전체 재작성 금지
 node automation/ai-runner/sites.js diff --job 28 [--file new.json]           # 마지막 두 버전(또는 파일 vs 저장본)의 바뀐 키 — 결과물 요약에

@@ -26,7 +26,7 @@ import { authenticate, login, logoutCookie } from './_auth.js';
 import { notify, sendEmail, esc as escHtml } from '../api/_notify.js';
 import { syncReviews } from '../api/_reviews.js';
 import { wakeRoutine, runnerStatus } from '../api/_runner.js';
-import { ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady, ensurePortalToken, sweepAutoApprovals, parseOptions, approveDeliverable, deepPatch, specDiff, patchSiteSpec } from '../api/_orders.js';
+import { ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady, ensurePortalToken, sweepAutoApprovals, parseOptions, approveDeliverable, deepPatch, specDiff, patchSiteSpec, siteStats } from '../api/_orders.js';
 import { PLAYBOOK, COMMON_ONBOARDING, WHO, PHASES, tasksFor, summarize, DELIVER_KEYS, APPROVAL_KEYS, outputKind, OUTPUT_LABEL } from '../api/_playbook.js';
 import { appHtml, loginHtml } from './_ui.js';
 
@@ -300,6 +300,11 @@ async function api(env, method, seg, body, url) {
     const s = await db.prepare(`SELECT id FROM sites WHERE slug = ?`).bind(String(id)).first(); if (!s) return undefined;
     const rows = (await db.prepare(`SELECT id, version, note, changed, created_at, spec FROM site_versions WHERE site_id = ? ORDER BY version DESC LIMIT 30`).bind(s.id).all()).results || [];
     return { versions: rows.map((v) => ({ ...v, changed: parseJson(v.changed, []), spec: parseJson(v.spec, {}) })) };
+  }
+  if (res === 'sites' && id && sub === 'stats' && method === 'GET') {
+    // 전환 통계(우리 비콘) — ?month=YYYY-MM. 리포트 c-5 와 작업 페이지가 쓴다
+    const s = await db.prepare(`SELECT id FROM sites WHERE slug = ? OR job_id = ?`).bind(String(id), Number(id) || 0).first(); if (!s) return undefined;
+    return { stats: await siteStats(db, s.id, url.searchParams.get('month') || '') };
   }
   if (res === 'sites' && id && sub === 'leads' && method === 'GET') {
     const s = await db.prepare(`SELECT id FROM sites WHERE slug = ?`).bind(String(id)).first(); if (!s) return undefined;

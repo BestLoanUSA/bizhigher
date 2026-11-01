@@ -132,6 +132,16 @@ const SCHEMA = [
     created_at TEXT DEFAULT (datetime('now'))
   )`,
   `CREATE INDEX IF NOT EXISTS idx_site_versions ON site_versions(site_id, version)`,
+  `CREATE TABLE IF NOT EXISTS site_events (
+    site_id INTEGER NOT NULL,
+    job_id INTEGER,
+    slug TEXT,
+    day TEXT NOT NULL,
+    event TEXT NOT NULL,
+    page TEXT NOT NULL DEFAULT '/',
+    n INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (site_id, day, event, page)
+  )`,
   `CREATE TABLE IF NOT EXISTS site_leads (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     site_id INTEGER,
@@ -217,6 +227,18 @@ export function parseOptions(s) {
 }
 /* 선택지 필드: key·label·image(썸네일, 필수에 가깝다)·video(mp4 — 고객 페이지에서 재생)·note·styles[](사이트 스타일과 맞추는 무응답 기본값)·default·
  * patch(사이트 스펙 부분 패치 — 고르는 순간 patchSiteSpec 으로 적용, 예 {"theme":{"style":"luxe"}}. 웹사이트 스타일 선택이 쓴다) */
+
+/* ---------- 사이트 전환 통계 (site_events, GA4 없이 센 것) — 관리자 sites/:slug/stats · sites.js stats · 리포트가 쓴다 ---------- */
+export async function siteStats(db, siteId, month) {
+  const m = /^\d{4}-\d{2}$/.test(month || '') ? month : new Date().toISOString().slice(0, 7);
+  const prevD = new Date(m + '-01T00:00:00Z'); prevD.setUTCMonth(prevD.getUTCMonth() - 1); const prev = prevD.toISOString().slice(0, 7);
+  const sum = async (mm) => { const rows = (await db.prepare(`SELECT event, SUM(n) n FROM site_events WHERE site_id = ? AND day LIKE ? GROUP BY event`).bind(siteId, mm + '-%').all()).results || []; const o = {}; for (const r of rows) o[r.event] = r.n; return o; };
+  const cur = await sum(m), before = await sum(prev);
+  const pages = (await db.prepare(`SELECT page, SUM(n) n FROM site_events WHERE site_id = ? AND day LIKE ? AND event = 'page_view' GROUP BY page ORDER BY n DESC LIMIT 10`).bind(siteId, m + '-%').all()).results || [];
+  const days = (await db.prepare(`SELECT day, SUM(n) n FROM site_events WHERE site_id = ? AND day LIKE ? AND event = 'page_view' GROUP BY day ORDER BY day`).bind(siteId, m + '-%').all()).results || [];
+  const leads = await db.prepare(`SELECT COUNT(*) n FROM site_leads WHERE site_id = ? AND created_at LIKE ?`).bind(siteId, m + '-%').first();
+  return { month: m, prev, events: cur, prevEvents: before, pages, days, leads: (leads && leads.n) || 0 };
+}
 
 /* ---------- 사이트 스펙 부분 패치 (관리자 sites/:slug/patch · 선택지 patch 공용) ---------- */
 export function deepPatch(base, patch) {
