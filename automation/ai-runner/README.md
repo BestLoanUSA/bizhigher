@@ -30,6 +30,8 @@ node automation/ai-runner/runner.js wake [--reason …] [--force]   # 루틴 깨
 
 node automation/ai-runner/creative.js caption --video clip.mp4 --text "훅|자막2|자막3" --brand "New Optix" [--logo URL] [--cta "지금 예약 (714) …"] [--music bgm.mp3] --out final.mp4   # 자막·로고·CTA 합성(Playwright PNG + /usr/bin/ffmpeg overlay). *단어* 는 브랜드 색 강조. sv-2 완성본
 node automation/ai-runner/creative.js promo --job 28 [--clip clip.mp4] [--props over.json] [--hook "리드|문장|강조어"] --out promo.mp4 [--upload --task 12]   # 사이트 스펙 → Remotion 프로모 20초(훅·서비스 ≤3·왜 우리·엔드카드, automation/video). --clip 은 훅 배경(Kling), 없으면 사진 켄번스. 렌더 약 1.5분·비용 0. sv-2 스토리 완성본
+node automation/ai-runner/creative.js photos --job 28 --out photos [--pick 3,1,7] [--ratios 1:1,9:16,16:9] [--look auto] [--upload --task 12]   # 사진 선별·크롭·보정: 점수·컨택트 시트(sheet.jpg) → 베스트를 규격별 스마트 크롭 + 자동 레벨·WB·룩 필터. 먼저 돌려 시트를 보고 --pick 으로 번호 지정
+node automation/ai-runner/creative.js report --data report.json --out rep [--upload --job 28 --task 12]   # 고객 리포트: 로고·표지·KPI·표·차트·비포/애프터·다음 달 계획 → report.html + PDF + 미리보기 → submit --kind html --file report.html --url {pdf_url}
 node automation/ai-runner/creative.js pick --videos final1.mp4,final2.mp4,promo.mp4 --labels "훅 1|훅 2|프로모 20초" --default 3 --job 28 --task 12 --out pick   # 영상 선택지: 포스터 추출 + mp4·포스터 업로드 + pick/options.json → runner submit --kind video --options (sv-2, 고객이 재생해 보고 고른다)
 node automation/ai-runner/creative.js print --job 28 --preview --upload --task 12 --out kit   # 리뷰 QR 시안 3종(A 사진 콜라주·B 네이비 골드·C 미니멀) + 보드 + kit/options.json → runner submit --options 로 고객이 고른다 (qr-2)
 node automation/ai-runner/creative.js print --job 28 --look B --upload --task 13 --out kit   # 고른 룩으로 전체 키트: 텐트·포스터·카드·스티커·모바일 PNG 300dpi + 인쇄용 PDF(재단선) + 가이드 (qr-3). --look auto = 사이트 스타일. 사진 없으면 FAL 로 분위기 이미지 2장

@@ -38,7 +38,7 @@ function body(d) {
   const pdfs = uniq.filter((u) => /\.pdf(\?|$)/i.test(u));
   const sites = uniq.filter((u) => EMBED_RE.test(u) && !isMedia(u) && !/\/a\//.test(u));
   let html = '';
-  if (k === 'html' && text) html += `<iframe sandbox="" srcdoc="${esc(text.slice(0, 200000))}" style="width:100%;height:520px;border:1px solid #e5e7eb;border-radius:12px;background:#fff"></iframe>`;
+  if (k === 'html' && text) html += `<iframe sandbox="" srcdoc="${esc(text.slice(0, 200000))}" style="width:100%;height:${/class="cover"/.test(text) ? 900 : 520}px;border:1px solid #e5e7eb;border-radius:12px;background:#fff"></iframe>`; // 리포트(creative.js report)는 길어서 더 높게
   if (imgs.length) html += '<div class="grid">' + imgs.slice(0, 24).map((u) => `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="" loading="lazy"></a>`).join('') + '</div>';
   if (vids.length) html += '<div class="grid">' + vids.slice(0, 6).map((u) => `<video src="${esc(u)}" controls playsinline preload="metadata"></video>`).join('') + '</div>';
   for (const u of pdfs.slice(0, 3)) html += `<object data="${esc(u)}" type="application/pdf" style="width:100%;height:480px;border:1px solid #e5e7eb;border-radius:12px;margin:8px 0"><a class="btn ghost" href="${esc(u)}" target="_blank" rel="noopener">PDF 열기 →</a></object>`;

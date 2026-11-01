@@ -23,6 +23,9 @@
  *       사진 선별·크롭·보정(_photos.js): 모든 사진을 점수화(선명도·노출·해상도·색) → 컨택트 시트(sheet.jpg, 번호·점수·플래그) → 베스트(--pick 번호 또는 점수 상위 --top)를
  *       규격별 스마트 크롭 + 자동 레벨·화이트밸런스·룩 필터·비네트로 저장({out}/{번호}-{비율}.jpg). --job 이면 질문지 첨부(로고·PDF 제외)와 사이트 스펙 사진을 모으고 룩은 사이트 스타일.
  *       루틴 사용법: 먼저 --no-pick 없이 돌려 sheet.jpg 를 Read 로 보고, 마음에 드는 번호를 --pick 으로 다시 돌린다(점수는 기계 판단, 장면 선택은 눈). 비용 0, 8장 기준 약 20초
+ *   node automation/ai-runner/creative.js report --data report.json --out dir [--name report] [--upload --job 28 --task 12]
+ *       고객 리포트(_report.js): BizHigher 로고·표지·한눈에 보기·지표 카드·표·차트·비포/애프터·사진·다음 달 계획·David 입력 칸 → report.html(자체 완결) + report.pdf(레터) + 1쪽 미리보기 PNG.
+ *       --upload 면 PDF·미리보기를 올려 URL 을 준다 → runner submit --kind html --file report.html --url {pdf URL} (고객 페이지·관리자가 같은 화면을 iframe 으로 보여 준다). 형식은 _report.js 머리말. 비용 0, 약 15초
  *   node automation/ai-runner/creative.js pick --videos final1.mp4,final2.mp4,promo.mp4 [--labels "훅 1|훅 2|프로모 20초"] [--notes "…|…|…"] [--default 1] --job 28 --task 12 --out dir
  *       고객이 고르는 승인(영상): 편마다 1초 지점 포스터(jpg)를 뽑아 mp4·포스터를 올리고 {out}/options.json([{key,label,image,video,note,default}]) 을 쓴다 → runner.js submit --options.
  *       고객 페이지에서 재생해 보고 [이 영상으로 진행]. 비용 0, 편당 몇 초
@@ -442,6 +445,20 @@ async function upload() {
   console.log(await uploadFile(file, { job: opt('job'), task: opt('task'), label: opt('label') }));
 }
 
+/* ───────── report: 고객 리포트 HTML + PDF ───────── */
+async function report() {
+  const R = require('./_report.js');
+  const data = opt('data'); if (!data || !fs.existsSync(data)) throw new Error('--data report.json 이 필요합니다');
+  const r = JSON.parse(fs.readFileSync(data, 'utf8')); const out = path.resolve(opt('out', 'report')); const name = opt('name', 'report');
+  const files = await R.renderFiles(r, out, { name });
+  const res = { ...files, title: r.title, sections: (r.sections || []).length, kpis: (r.kpis || []).length };
+  if (args.includes('--upload') && opt('job')) {
+    res.pdf_url = await uploadFile(files.pdf, { job: opt('job'), task: opt('task'), label: `${r.title || '리포트'} PDF` });
+    res.preview_url = await uploadFile(files.preview, { job: opt('job'), task: opt('task'), label: `${r.title || '리포트'} 미리보기` });
+  }
+  console.log(JSON.stringify(res, null, 2));
+}
+
 /* ───────── photos: 사진 선별·크롭·보정 ───────── */
 async function photos() {
   const P = require('./_photos.js');
@@ -523,6 +540,7 @@ async function pick() {
   if (cmd === 'gen') return gen();
   if (cmd === 'pick') return pick();
   if (cmd === 'photos') return photos();
+  if (cmd === 'report') return report();
   if (cmd === 'compose') return compose();
   if (cmd === 'upload') return upload();
   if (cmd === 'video') return video();
@@ -530,5 +548,5 @@ async function pick() {
   if (cmd === 'promo') return promo();
   if (cmd === 'print') return printKit();
   if (cmd === 'crop') return cropImage(opt('image'), opt('ratio', '9:16'), opt('out', 'cropped.jpg')).then((o) => console.log(o));
-  console.log('사용법: gen --prompt … --out bg.jpg | compose --bg bg.jpg --headline … --out dir | upload --file a.jpg [--job N --task N] | video --image 사진URL또는파일 [--crop 9:16] [--prompt …] [--duration 5] --out clip.mp4 [--job N --task N] | caption --video clip.mp4 --text "자막1|자막2" [--brand …] [--logo …] [--cta …] [--music bgm.mp3] --out final.mp4 | promo (--job N | --spec spec.json) [--clip clip.mp4] [--props over.json] [--hook "리드|문장|강조어"] [--cta …] [--upload --task N] --out promo.mp4 | photos (--job N | --files a,b) --out dir [--ratios 1:1,9:16] [--look auto] [--pick 2,5] [--upload --task N] | pick --videos a.mp4,b.mp4 [--labels "…|…"] [--default 1] --job N --task N --out dir | print (--job N | --place-id … --name …) [--look A|B|C|auto] [--preview] --out dir [--upload --task N] | crop --image a.jpg --ratio 9:16 --out b.jpg');
+  console.log('사용법: gen --prompt … --out bg.jpg | compose --bg bg.jpg --headline … --out dir | upload --file a.jpg [--job N --task N] | video --image 사진URL또는파일 [--crop 9:16] [--prompt …] [--duration 5] --out clip.mp4 [--job N --task N] | caption --video clip.mp4 --text "자막1|자막2" [--brand …] [--logo …] [--cta …] [--music bgm.mp3] --out final.mp4 | promo (--job N | --spec spec.json) [--clip clip.mp4] [--props over.json] [--hook "리드|문장|강조어"] [--cta …] [--upload --task N] --out promo.mp4 | report --data report.json --out dir [--upload --job N --task N] | photos (--job N | --files a,b) --out dir [--ratios 1:1,9:16] [--look auto] [--pick 2,5] [--upload --task N] | pick --videos a.mp4,b.mp4 [--labels "…|…"] [--default 1] --job N --task N --out dir | print (--job N | --place-id … --name …) [--look A|B|C|auto] [--preview] --out dir [--upload --task N] | crop --image a.jpg --ratio 9:16 --out b.jpg');
 })().catch((e) => { console.error('오류:', e.message); process.exit(1); });
