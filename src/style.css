@@ -2625,7 +2625,7 @@ img { max-width: 100%; display: block; }
 .big-line-track em { font-style: normal; }
 /* 데스크톱 + JS: 150vh 구간에 고정, 한 줄로 가로 이동 */
 .big-line.big-line-on { height: 120vh; padding: 0; }
-.big-line.big-line-on .big-line-sticky { position: sticky; top: 0; height: 100vh; display: flex; align-items: center; overflow: clip; }
+.big-line.big-line-on .big-line-sticky { position: sticky; top: 20vh; height: 60vh; display: flex; align-items: center; overflow: clip; }
 .big-line.big-line-on .big-line-track { font-size: clamp(96px, 10.5vw, 168px); max-width: none; margin: 0; text-align: left; white-space: nowrap; will-change: transform; }
 /* 쇼케이스 — 커버 영상(기본은 포스터), 무대 요소 패럴랙스 */
 .sc-cover { position: relative; overflow: hidden; }
@@ -2635,4 +2635,36 @@ img { max-width: 100%; display: block; }
 .sc-stage-in > :nth-child(3) { transform: translateY(calc((var(--par, .5) - .5) * -16px)) rotate(-2deg); }
 @media (prefers-reduced-motion: reduce) {
   .sc-stage-in > :nth-child(1), .sc-stage-in > :nth-child(2), .sc-stage-in > :nth-child(3) { transform: none; }
+}
+
+/* ==========================================================
+   v47 — 데이터 밴드: 사진 위 유리 카드 + 거대 숫자, 가로 스냅 줄 (스마틀리 적용안 7)
+   숫자는 데이터 리포트 homeBand.stats 그대로. 배경 사진은 연출 이미지(밴드 각주에 명시)
+   ========================================================== */
+.dcards { display: flex; gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding: 6px 0 14px; margin: 30px -24px 0; padding-left: 24px; padding-right: 24px; scrollbar-width: none; }
+.dcards::-webkit-scrollbar { display: none; }
+.dcard {
+  position: relative; flex: 0 0 clamp(290px, 31.4%, 420px); aspect-ratio: 4 / 3; min-height: 230px;
+  border-radius: 22px; overflow: hidden; scroll-snap-align: start;
+  background-size: cover; background-position: center; display: flex; align-items: flex-end; padding: 18px;
+  box-shadow: 0 24px 60px rgba(10, 27, 77, 0.18);
+}
+.dcard::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5, 10, 31, 0.25), rgba(5, 10, 31, 0.78)); }
+.dcard-glass {
+  position: relative; width: 100%; padding: 18px 20px 16px; border-radius: 16px;
+  background: rgba(8, 15, 40, 0.42); border: 1px solid rgba(255, 255, 255, 0.18);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2);
+  text-align: left;
+}
+.data-band-quiet .dcard .stat { font-size: clamp(44px, 4.6vw, 64px); line-height: 1; margin-bottom: 8px; background: linear-gradient(120deg, #fff 30%, var(--blue-300)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: #fff; }
+.data-band-quiet .dcard:nth-child(2) .stat { background: linear-gradient(120deg, #fff 30%, #FFB4A8); -webkit-background-clip: text; background-clip: text; }
+.data-band-quiet .dcard:nth-child(3) .stat { background: linear-gradient(120deg, #fff 30%, #7EF0C6); -webkit-background-clip: text; background-clip: text; }
+.data-band-quiet .dcard .stat-label { color: rgba(255, 255, 255, 0.86); font-size: 13.5px; line-height: 1.5; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .dcard { transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+  .dcard:hover { transform: translateY(-3px); box-shadow: 0 30px 70px rgba(10, 27, 77, 0.26); }
+}
+@media (max-width: 767px) {
+  .dcards { margin: 24px -20px 0; padding-left: 20px; padding-right: 20px; gap: 12px; }
+  .dcard { flex-basis: 78vw; min-height: 200px; }
 }

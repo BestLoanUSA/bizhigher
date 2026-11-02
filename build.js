@@ -562,15 +562,15 @@ function dataBandSection() {
     <p class="eyebrow">OUR OWN DATA</p>
     <h2 class="h2">${headline}</h2>
     ${sub.split('\n\n').map((t) => `<p class="data-band-sub">${t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')}</p>`).join('')}
-    <div class="grid3">
-      ${stats.map((x) => `<div class="stat-box"><div class="stat" data-count="${x.n}" data-suffix="곳">${x.n.toLocaleString('en-US')}곳</div><p class="stat-label">${x.label}</p></div>`).join('')}
+    <div class="dcards" aria-label="직접 센 숫자">
+      ${stats.map((x, i) => `<div class="dcard" style="background-image:url('${[SC_IMG.interior, SC_IMG.seafood, SC_IMG.galbi][i % 3]}')"><div class="dcard-glass"><div class="stat" data-count="${x.n}" data-suffix="곳">${x.n.toLocaleString('en-US')}곳</div><p class="stat-label">${x.label}</p></div></div>`).join('')}
     </div>
     ${note ? `<p class="data-band-sub" style="margin-top:18px;">${note}</p>` : ''}
     <div class="data-band-links">
       <a class="btn btn-ghost" href="${link.href}">${link.text} →</a>
       <a class="data-band-more" href="/data/">전체 데이터 리포트 →</a>
     </div>
-    <p class="data-band-note">${asOf} 기준 · BizHigher 직접 점검</p>
+    <p class="data-band-note">${asOf} 기준 · BizHigher 직접 점검 · 카드 배경은 연출 이미지입니다</p>
   </div>
 </section>`;
 }
