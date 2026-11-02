@@ -81,6 +81,7 @@ items:
     target: [content/blog/ads-hub.md, content/blog/ai-search-hub.md, content/blog/review-management-hub.md, content/blog/website-hub.md]
     notes: >
       content/blog-upgrade-queue.md 맨 위에 4편을 넣고 메모 "본문 1,800자 이상으로 — 각 스포크 요약을 2문장 + '언제 읽을 글인지' 한 줄로, FAQ 4개".
+      2026-11-02: website-hub 는 이미 1,800자를 넘겨 baseline 에서 지울 수 있다(seo-check "고쳐짐"). 나머지 3편 남음.
       업그레이드 루틴이 고치면 다음 seo-check 가 "고쳐짐" 을 알려 주고, 그때 check-baseline.json 에서 지운다(실행 루틴의 다음 PR 에 포함).
 
   - id: L-01
@@ -133,6 +134,16 @@ items:
       audit_leads.source · tool_leads.source 에 저장(없으면 ALTER TABLE 로 열 추가). 관리자 리드 탭에 출처 칩. 전략 루틴은 매주
       seo-data latest-ga4-extra.json 의 aiVisits + 관리자 leads API 의 source 를 세어 주간 보고서 "AI 검색" 절에 적는다.
       성공 지표: 측정 자체(AI 세션·리드 수가 0 이 아닌 주가 언제 오는지).
+
+  - id: K-03
+    title: /pricing/ 에 FAQPage — 비용 질문형 FAQ 4개
+    source: 2026-11-02 (페이지 평가 - dist/pricing 에 FAQPage 스키마 없음, 검색어 "마케팅 대행사 비용" 노출)
+    status: ready
+    path: structure
+    target: [build.js, /pricing/]
+    notes: >
+      가격 숫자는 services.json 에서 빌드가 넣은 값만(손으로 적지 않음). 질문 예: 대행사 대비 왜 저렴한가 · 해지는 어떻게 · 추가 비용이 있나 · 6개월/12개월 차이.
+      O-02 와 같은 PR 에서 처리해도 된다. 성공 지표: 4주 뒤 pricing 노출 증가.
 
   - id: D-01
     title: GitHub 설정 — Actions 가 PR 을 만들 수 있게
