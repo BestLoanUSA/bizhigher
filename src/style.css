@@ -26,6 +26,9 @@
   --grad-brand: linear-gradient(120deg, #0A4DF5 0%, #2F6BFF 45%, #22D3EE 100%);
   --grad-btn: linear-gradient(135deg, #0A4DF5 0%, #2F6BFF 100%);
   --glow-blue: 0 8px 28px rgba(10, 77, 245, 0.35);
+  /* v43 — 호버·전환 공통 곡선 (카드 들림·버튼 화살표·나브 밑줄이 전부 같은 리듬) */
+  --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --dur: .35s;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -2532,4 +2535,42 @@ img { max-width: 100%; display: block; }
 @media (prefers-reduced-motion: reduce) {
   .prod-card.pv-go .pv .pa, .prod-card.pv-go .pv .pb, .prod-card.pv-go .pv .pl, .prod-card.pv-go .pd-seg i, .prod-card.pv-go .pd-dots i { animation: none !important; }
   .pv-grid .prod-card:hover { transform: none; }
+}
+
+/* ==========================================================
+   v43 — 호버·전환 전역 토큰 + 제목 강조어 (2026-11-02, 스마틀리 분석 적용안 4·5)
+   · 전환 곡선은 :root --ease/--dur 하나로. 카드는 3px 들림+그림자, 버튼 화살표 4px, 나브 밑줄은 왼쪽에서 그려짐
+   · 터치 기기에는 호버가 없으므로 (hover:hover) 안에서만. 움직임 줄이기면 전환 없음
+   · 섹션 제목의 <em>은 베네핏 구절 하나만(기능 설명 금지). 밝은 바탕은 파랑, 어두운 밴드는 시안
+   ========================================================== */
+.h2 em, .h2-left em { font-style: normal; color: var(--blue-600); }
+.section-navy .h2 em, .pkg-band .h2 em, .mega-cta .h2 em, .tool-dark-panel .h2 em { color: var(--cyan-400); }
+.btn-arr { display: inline-block; font-style: normal; margin-left: .1em; }
+.nav-link { position: relative; }
+.nav-link::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -5px; height: 1.5px; border-radius: 1px;
+  background: currentColor; transform: scaleX(0); transform-origin: left center;
+}
+.nav-link.active::after { transform: scaleX(1); }
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .btn { transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background-color var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease); }
+  .btn-primary:hover, .btn-ghost:hover, .btn-white:hover { transform: translateY(-2px); }
+  .btn-arr { transition: transform var(--dur) var(--ease); }
+  .btn:hover .btn-arr { transform: translateX(4px); }
+  .nav-link { transition: color var(--dur) var(--ease); }
+  .nav-link::after { transition: transform var(--dur) var(--ease); }
+  .nav-link:hover::after { transform: scaleX(1); }
+  /* 카드류 — 같은 들림, 같은 그림자 */
+  .prod-card, .pv-grid .prod-card, .step-card, .tier, .stat-box, .sc-tab, .tool-card, .blog-card, .faq-item summary.faq-q::after, .svc-tabs button, .prod-ico, .card-cta i {
+    transition-duration: var(--dur); transition-timing-function: var(--ease);
+  }
+  .prod-card:hover, .step-card:hover, .stat-box:hover, .pv-grid .prod-card:hover, .tier:hover { transform: translateY(-3px); }
+  .plans-hero .tier:hover { transform: translateY(-6px); }
+  .data-band-quiet .stat-box:hover { box-shadow: 0 14px 34px rgba(10, 27, 77, 0.08); }
+  .faq-item summary.faq-q { transition: color var(--dur) var(--ease); }
+  .faq-item summary.faq-q:hover { color: var(--blue-600); }
+  .faq-item summary.faq-q:hover::after { background: var(--blue-50); transform: rotate(90deg); }
+  .faq-item[open] summary.faq-q:hover::after { transform: rotate(45deg); }
+  .data-band-more, .vs-note a, .demo-note a, .fa-note a { transition: color var(--dur) var(--ease); }
 }

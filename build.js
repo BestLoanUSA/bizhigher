@@ -839,7 +839,7 @@ function showcaseSection() {
 <section class="section showcase" id="showcase">
   <div class="container">
     <p class="eyebrow">WHAT YOU GET</p>
-    <h2 class="h2">이렇게 생긴 것을 받습니다</h2>
+    <h2 class="h2"><em>이렇게 생긴 것</em>을 받습니다</h2>
     <p class="mk-section-sub">설명 대신 결과물로 보여드립니다. 전부 사장님 업소의 정보와 사진으로 제작되고, 전문가 검수 후 전달됩니다.</p>
     <div class="sc-wrap" id="sc-wrap">
       <div class="sc-tabs" role="tablist" aria-label="결과물 종류">${tabs}</div>
@@ -1032,7 +1032,7 @@ function packageMatrixSection(opts = {}) {
         <a class="pk-more" href="/package/${p.slug}/">플랜 자세히 보기 →</a>
       </div>`;
   }).join('');
-  const title = opts.home ? '통째로 맡기면 훨씬 저렴합니다' : '우리 가게 마케팅, 통째로 맡기세요';
+  const title = opts.home ? '통째로 맡기면 <em>훨씬 저렴합니다</em>' : '우리 가게 마케팅, 통째로 맡기세요';
   const sub = opts.home
     ? '개별 구독을 합친 것보다 최대 58% 저렴하고, 플랜이 높을수록·기간이 길수록 무료 셋업이 커집니다. 견적 미팅 없이 지금 결제하면 오늘 시작됩니다.'
     : '';
@@ -1747,7 +1747,7 @@ function homePage(posts) {
 <section class="section section-gray">
   <div class="container">
     <p class="eyebrow">HOW IT WORKS</p>
-    <h2 class="h2">차원이 다른 광고를 경험하세요</h2>
+    <h2 class="h2"><em>차원이 다른</em> 광고를 경험하세요</h2>
     <div class="stack-zone">
       <div class="stack-card has-viz"><div class="stack-txt"><span class="stack-num">01</span><h3 class="stack-title">AI의 초고속 자동화에 20년 전문가의 디테일을 더하다</h3><p class="stack-desc">독자적인 병렬 AI 에이전트가 24시간 쉬지 않고 기획·카피·디자인을 동시다발적으로 처리하고, 마케팅 전문가가 최종 검수하여 압축된 시간 안에 최상의 품질을 완성합니다.</p></div><div class="stack-viz" aria-hidden="true"><svg viewBox="0 0 320 200" role="presentation"><g class="v-lanes"><rect x="6" y="28" width="74" height="32" rx="16"/><rect x="6" y="84" width="74" height="32" rx="16"/><rect x="6" y="140" width="74" height="32" rx="16"/></g><g class="v-lbl"><text x="43" y="49">기획</text><text x="43" y="105">카피</text><text x="43" y="161">디자인</text></g><g class="v-base"><path d="M80 44 C150 44 160 100 222 100"/><path d="M80 100 L222 100"/><path d="M80 156 C150 156 160 100 222 100"/></g><g class="v-flow"><path class="f1" d="M80 44 C150 44 160 100 222 100"/><path class="f2" d="M80 100 L222 100"/><path class="f3" d="M80 156 C150 156 160 100 222 100"/></g><circle class="v-ring" cx="252" cy="100" r="30"/><circle class="v-node" cx="252" cy="100" r="30"/><path class="v-chk" pathLength="100" d="M239 100 l9 10 l17 -20"/><text class="v-cap" x="252" y="152">전문가 검수</text><g class="v-clock"><circle cx="292" cy="26" r="13"/><path class="v-hand" d="M292 26 L292 17"/></g><text class="v-24" x="292" y="54">24h</text></svg></div></div>
       <div class="stack-card stack-c2 has-viz"><div class="stack-txt"><span class="stack-num">02</span><h3 class="stack-title">미팅도 거품도 Zero, 클릭 몇 번으로 시작하는 반값 마케팅</h3><p class="stack-desc">100% 공개된 투명한 정찰제로 지루한 견적 미팅이나 영업 전화 없이 쇼핑하듯 바로 시작하며, 불필요한 인건비를 완전히 줄여 기존 대행사 대비 절반 이하의 비용을 제공합니다.</p></div><div class="stack-viz" aria-hidden="true"><svg viewBox="0 0 320 200" role="presentation"><g class="v-chip"><rect x="6" y="12" width="112" height="30" rx="15"/><rect x="128" y="12" width="112" height="30" rx="15"/><text x="62" y="32">견적 미팅</text><text x="184" y="32">영업 전화</text></g><path class="v-strike s1" pathLength="100" d="M16 27 L108 27"/><path class="v-strike s2" pathLength="100" d="M138 27 L230 27"/><text class="v-bl" x="6" y="86">일반 대행사</text><rect class="v-bar0" x="6" y="94" width="300" height="24" rx="8"/><text class="v-bl b" x="6" y="148">BizHigher</text><rect class="v-bar1" x="6" y="156" width="136" height="24" rx="8"/><text class="v-half" x="154" y="174">절반 이하</text></svg></div></div>
@@ -1792,7 +1792,7 @@ ${showcaseSection()}
 <section class="section vs-section">
   <div class="container">
     <p class="eyebrow">BIZHIGHER vs 대행사</p>
-    <h2 class="h2">같은 일을 절반 이하의 가격으로, 몇 배 빠르게</h2>
+    <h2 class="h2">같은 일을 <em>절반 이하의 가격</em>으로, 몇 배 빠르게</h2>
     <p class="vs-sub">사람이 손으로 하던 일을 AI가 먼저 끝내고, 20년 경력 마케터가 마지막을 확인합니다. 그래서 더 싸고, 더 빠르고, 꾸준합니다.</p>
     <div class="vs-race" id="vs-race" aria-hidden="true">
       <div class="vr-row vr-old"><span class="vr-name">일반 대행사</span><div class="vr-track"><span class="vr-fill"></span><span class="vr-step" style="--x:22%">미팅</span><span class="vr-step" style="--x:48%">견적</span><span class="vr-step" style="--x:74%">계약</span><span class="vr-end">시작 2주+</span></div></div>
@@ -1990,6 +1990,8 @@ ${showcaseSection()}
     });
   }
   apply('pick');
+  /* 등장 애니메이션(fill both)이 남아 있으면 호버 들림이 먹지 않으므로 끝나는 즉시 클래스를 뗀다 */
+  grid.addEventListener('animationend', function (e) { if (e.target.classList && e.target.classList.contains('svc-pop')) e.target.classList.remove('svc-pop'); });
   tabs.addEventListener('click', function (e) {
     var b = e.target.closest('button[data-cat]'); if (!b) return;
     tabs.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
@@ -2026,7 +2028,7 @@ function homeToolsSection() {
 <section class="section home-tools">
   <div class="container">
     <p class="eyebrow">FREE TOOLS</p>
-    <h2 class="h2">돈 쓰기 전에, 무료로 먼저 확인하세요</h2>
+    <h2 class="h2">돈 쓰기 전에, <em>무료로</em> 먼저 확인하세요</h2>
     <p class="home-tools-sub">우리 가게가 지도에서 몇 위인지, AI가 우리 가게를 아는지 — 저희가 고객 가게를 맡을 때 처음 확인하는 것들을 무료 도구로 열어 두었습니다. 가입 없이 이메일만 있으면 됩니다.</p>
     <div class="tool-dark-panel"><div class="grid3 home-tools-grid">${picks.map(toolCard).join('')}</div></div>
     <div class="hero-ctas" style="margin-top:26px;justify-content:center;"><a href="/tools/" class="btn btn-ghost">무료 도구 ${TOOLS.own.length}개 전체 보기 →</a></div>
@@ -2043,7 +2045,7 @@ function blogStripSection(posts) {
   <div class="container blog-strip-head">
     <div>
       <p class="eyebrow" style="text-align:left;">BLOG</p>
-      <h2 class="h2" style="text-align:left;margin-bottom:8px;">사장님을 위한 실전 가이드</h2>
+      <h2 class="h2" style="text-align:left;margin-bottom:8px;">사장님을 위한 <em>실전</em> 가이드</h2>
       <p class="blog-strip-sub">구글 노출·리뷰·광고·AI 검색 — 주 3편, 미국 한인 사장님 눈높이로 씁니다. 마우스를 올리면 멈춥니다.</p>
     </div>
     <div class="blog-strip-ctl">
@@ -4277,8 +4279,11 @@ function footerColsHtml() {
   return _footerCols;
 }
 
+/* 버튼 끝의 "→"를 <i class="btn-arr">로 감싼다 — 호버 때 화살표만 4px 움직이게(v43). 중첩 태그 없는 .btn 링크만 */
+const BTN_ARROW_RE = /(<a\b[^>]*\bclass="[^"]*\bbtn\b[^"]*"[^>]*>[^<]*?)\s*→(\s*<\/a>)/g;
 function write(rel, content) {
   if (typeof content === 'string' && content.includes('<!--FOOTER_COLS-->')) content = content.replace('<!--FOOTER_COLS-->', footerColsHtml());
+  if (typeof content === 'string' && rel.endsWith('.html')) content = content.replace(BTN_ARROW_RE, '$1 <i class="btn-arr" aria-hidden="true">→</i>$2');
   const full = path.join(DIST, rel);
   fs.mkdirSync(path.dirname(full), { recursive: true });
   fs.writeFileSync(full, content);
