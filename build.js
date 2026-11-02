@@ -1388,7 +1388,7 @@ function homePage(posts) {
         </div>
         <div class="demo-plan" id="dm-plan"><span id="dm-plan-txt">🚀 180일 실행 플랜 시작</span></div>
       </div>
-      <p class="demo-note">가상의 예시 업체로 구성한 시연 화면입니다 · <a href="/report/sample">실제 리포트 샘플 보기 →</a></p>
+      <p class="demo-note"><span class="demo-scrub" id="dm-scrub" hidden>↓ 스크롤하면 180일이 흐릅니다</span>가상의 예시 업체로 구성한 시연 화면입니다 · <a href="/report/sample">실제 리포트 샘플 보기 →</a></p>
     </div>
   </div>
   <div class="marquee"><div class="marquee-track" id="mq-track">
@@ -1514,7 +1514,12 @@ function homePage(posts) {
       ticking = false;
       var r = track.getBoundingClientRect();
       var total = r.height - window.innerHeight;
-      var p = total > 0 ? clamp(-r.top / total, 0, 1) : 1;
+      var scrolled = -r.top, vh = window.innerHeight;
+      /* 데스크톱(v45): 트랙 450vh = 기존 연출 240vh + 데모 스크럽 112vh(214→326vh) + 마무리 축소 24vh. 좁은 화면은 기존 그대로 */
+      var base = narrow ? total : Math.min(total, vh * 2.4);
+      var p = base > 0 ? clamp(scrolled / base, 0, 1) : 1;
+      var demoP = narrow ? 0 : seg(scrolled, vh * 2.14, total - vh * 0.24);
+      if (window.__bhDemoScrub && !narrow) window.__bhDemoScrub(demoP);
 
       /* 워드마크: i점만 남기고 일찍 퇴장 */
       center.style.opacity = String(1 - seg(p, 0.06, 0.18));
@@ -1582,8 +1587,8 @@ function homePage(posts) {
       s2.style.transform = 'translateY(' + (44 * (1 - e2)) + 'px)';
       s2.style.pointerEvents = e2 > 0.5 ? 'auto' : 'none';
 
-      /* 마무리 축소 */
-      var e3 = seg(p, 0.92, 1);
+      /* 마무리 축소 — 데스크톱은 트랙 맨 끝 24vh, 좁은 화면은 기존 비율 */
+      var e3 = narrow ? seg(p, 0.92, 1) : seg(scrolled, total - vh * 0.24, total);
       sticky.style.transform = 'scale(' + (1 - 0.05 * e3) + ')';
       sticky.style.borderRadius = (36 * e3) + 'px';
     }
@@ -1676,6 +1681,48 @@ function homePage(posts) {
     if (planBtn) { planBtn.classList.add('show', 'done'); planTxt.textContent = '✓ 180일 실행 플랜 완료'; }
   }
   if (reduced) { setFinal(); return; }
+  /* v45 — 데스크톱 시네마틱 히어로에서는 시간이 아니라 스크롤이 180일을 흐르게 한다(되감기 가능).
+     히어로 frame() 이 demoP(0~1) 를 넘긴다: 이름 타이핑 → 형편없는 점수·문제 칩 → 플랜 시작 버튼 → DAY 카운트·점수 급상승·문제가 장점으로 반전 → 완료 */
+  var heroEl = document.getElementById('cine-hero');
+  var narrowMQ = window.matchMedia('(max-width: 991px)').matches;
+  if (heroEl && heroEl.classList.contains('cine-on') && !narrowMQ) {
+    var sb = BIZ[Math.floor(Math.random() * BIZ.length)];
+    var hint = document.getElementById('dm-scrub');
+    var swapped = [false, false], lastN = -1;
+    function sseg(v, a, c) { return Math.max(0, Math.min(1, (v - a) / (c - a))); }
+    function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+    function lerp(a, c, t) { return a + (c - a) * t; }
+    fills.forEach(function (f) { f.style.transition = 'width .25s ease-out'; });
+    setBars(sb.b0, false); setChips(sb.prob, false, false);
+    if (hint) hint.hidden = false;
+    window.__bhDemoScrub = function (d) {
+      var n = Math.round(sb.name.length * sseg(d, 0, 0.1));
+      if (n !== lastN) { lastN = n; typeEl.textContent = sb.name.slice(0, n); typeEl.parentNode.classList.toggle('named', n >= sb.name.length); }
+      var run = easeOut(sseg(d, 0.5, 0.82));
+      fills.forEach(function (f, i) {
+        var v0 = sb.b0[i] * easeOut(sseg(d, 0.06 + i * 0.03, 0.28 + i * 0.03));
+        var v = lerp(v0, sb.b1[i], run);
+        f.style.width = v + '%'; fillNums[i].textContent = Math.round(v);
+      });
+      var sc = Math.round(lerp(sb.s0 * easeOut(sseg(d, 0.08, 0.3)), sb.s1, run));
+      scoreEl.textContent = sc; if (ring) ring.style.setProperty('--p', sc);
+      chips.forEach(function (c, i) {
+        c.classList.toggle('show', d >= 0.3 + i * 0.06);
+        var win = d >= 0.6 + i * 0.07;
+        if (win !== swapped[i]) { swapped[i] = win; c.textContent = win ? sb.win[i] : sb.prob[i]; c.classList.toggle('demo-chip-ok', win); c.classList.toggle('demo-chip-warn', !win); }
+      });
+      if (planBtn) {
+        planBtn.classList.toggle('show', d >= 0.42);
+        planBtn.classList.toggle('press', d >= 0.47 && d < 0.5);
+        planBtn.classList.toggle('running', d >= 0.5 && d < 0.82);
+        planBtn.classList.toggle('done', d >= 0.82);
+        planTxt.textContent = d < 0.5 ? '🚀 180일 실행 플랜 시작' : (d < 0.82 ? '플랜 진행 중 · DAY ' + Math.max(1, Math.round(180 * sseg(d, 0.5, 0.82))) : '✓ 180일 실행 플랜 완료');
+      }
+      if (hint) hint.style.opacity = String(1 - sseg(d, 0.45, 0.6));
+    };
+    window.dispatchEvent(new Event('scroll'));
+    return;
+  }
   var timers = [];
   function t(fn, ms) { timers.push(setTimeout(fn, ms)); }
   function reset() {

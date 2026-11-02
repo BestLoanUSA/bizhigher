@@ -2608,3 +2608,10 @@ img { max-width: 100%; display: block; }
   .spine-node { width: 8px; height: 8px; margin: -4px 0 0 -4px; border-width: 1.5px; }
 }
 @media (prefers-reduced-motion: reduce) { .spine-dot::after { animation: none; } .spine-node { transition: none; } }
+
+/* ==========================================================
+   v45 — 180일 데모를 스크롤이 움직이게 (스마틀리 적용안 1)
+   데스크톱 시네마틱 트랙을 450vh 로: 기존 연출 240vh + 데모 112vh + 마무리 축소 24vh. 좁은 화면은 시간제 루프 그대로
+   ========================================================== */
+.hero-cine.cine-on:not(.cine-narrow) { height: 450vh; }
+.demo-scrub { display: block; margin-bottom: 6px; font-size: 12.5px; font-weight: 800; letter-spacing: 0.02em; color: var(--cyan-400); transition: opacity .3s ease; }
