@@ -26,6 +26,9 @@
   --grad-brand: linear-gradient(120deg, #0A4DF5 0%, #2F6BFF 45%, #22D3EE 100%);
   --grad-btn: linear-gradient(135deg, #0A4DF5 0%, #2F6BFF 100%);
   --glow-blue: 0 8px 28px rgba(10, 77, 245, 0.35);
+  /* v43 — 호버·전환 공통 곡선 (카드 들림·버튼 화살표·나브 밑줄이 전부 같은 리듬) */
+  --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --dur: .35s;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -2532,4 +2535,104 @@ img { max-width: 100%; display: block; }
 @media (prefers-reduced-motion: reduce) {
   .prod-card.pv-go .pv .pa, .prod-card.pv-go .pv .pb, .prod-card.pv-go .pv .pl, .prod-card.pv-go .pd-seg i, .prod-card.pv-go .pd-dots i { animation: none !important; }
   .pv-grid .prod-card:hover { transform: none; }
+}
+
+/* ==========================================================
+   v43 — 호버·전환 전역 토큰 + 제목 강조어 (2026-11-02, 스마틀리 분석 적용안 4·5)
+   · 전환 곡선은 :root --ease/--dur 하나로. 카드는 3px 들림+그림자, 버튼 화살표 4px, 나브 밑줄은 왼쪽에서 그려짐
+   · 터치 기기에는 호버가 없으므로 (hover:hover) 안에서만. 움직임 줄이기면 전환 없음
+   · 섹션 제목의 <em>은 베네핏 구절 하나만(기능 설명 금지). 밝은 바탕은 파랑, 어두운 밴드는 시안
+   ========================================================== */
+.h2 em, .h2-left em { font-style: normal; color: var(--blue-600); }
+.section-navy .h2 em, .pkg-band .h2 em, .mega-cta .h2 em, .tool-dark-panel .h2 em { color: var(--cyan-400); }
+.btn-arr { display: inline-block; font-style: normal; margin-left: .1em; }
+.nav-link { position: relative; }
+.nav-link::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -5px; height: 1.5px; border-radius: 1px;
+  background: currentColor; transform: scaleX(0); transform-origin: left center;
+}
+.nav-link.active::after { transform: scaleX(1); }
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .btn { transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background-color var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease); }
+  .btn-primary:hover, .btn-ghost:hover, .btn-white:hover { transform: translateY(-2px); }
+  .btn-arr { transition: transform var(--dur) var(--ease); }
+  .btn:hover .btn-arr { transform: translateX(4px); }
+  .nav-link { transition: color var(--dur) var(--ease); }
+  .nav-link::after { transition: transform var(--dur) var(--ease); }
+  .nav-link:hover::after { transform: scaleX(1); }
+  /* 카드류 — 같은 들림, 같은 그림자 */
+  .prod-card, .pv-grid .prod-card, .step-card, .tier, .stat-box, .sc-tab, .tool-card, .blog-card, .faq-item summary.faq-q::after, .svc-tabs button, .prod-ico, .card-cta i {
+    transition-duration: var(--dur); transition-timing-function: var(--ease);
+  }
+  .prod-card:hover, .step-card:hover, .stat-box:hover, .pv-grid .prod-card:hover, .tier:hover { transform: translateY(-3px); }
+  .plans-hero .tier:hover { transform: translateY(-6px); }
+  .data-band-quiet .stat-box:hover { box-shadow: 0 14px 34px rgba(10, 27, 77, 0.08); }
+  .faq-item summary.faq-q { transition: color var(--dur) var(--ease); }
+  .faq-item summary.faq-q:hover { color: var(--blue-600); }
+  .faq-item summary.faq-q:hover::after { background: var(--blue-50); transform: rotate(90deg); }
+  .faq-item[open] summary.faq-q:hover::after { transform: rotate(45deg); }
+  .data-band-more, .vs-note a, .demo-note a, .fa-note a { transition: color var(--dur) var(--ease); }
+}
+
+/* ==========================================================
+   v44 — 실과 점 (스마틀리 적용안 2): 나브 로고 x 에 맞춘 세로 실이 홈 본문을 한 줄로 잇는다
+   · 점(.spine-dot)은 sticky 로 화면 42% 높이에 머물고, 선(.spine-line)은 점까지만 그려진다(JS 가 --thread 를 채움)
+   · 섹션 제목마다 매듭(.spine-node) — 점이 지나가면 켜진다. JS 없음·움직임 줄이기 = 선 전부 그려진 상태
+   · 콘텐츠와 겹치지 않도록 컨테이너 바깥 여백(데스크톱 12px 안쪽, 모바일 8px)에 둔다
+   ========================================================== */
+.home-body { position: relative; }
+.spine { position: absolute; top: 0; bottom: 0; left: max(12px, calc(50% - 560px + 12px)); width: 2px; z-index: 2; pointer-events: none; }
+.spine-line {
+  position: absolute; left: 0; top: 0; width: 2px; height: var(--thread, 100%); border-radius: 1px;
+  background: linear-gradient(180deg, var(--blue-500), var(--cyan-400) 55%, var(--violet-500));
+  opacity: .5;
+}
+.spine-dot {
+  position: sticky; top: 42vh; display: block; width: 12px; height: 12px; margin-left: -5px; border-radius: 50%;
+  background: radial-gradient(circle at 38% 35%, #9FF1FF, var(--cyan-400) 60%, #0FB5CF);
+  box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.16), 0 0 18px rgba(34, 211, 238, 0.85);
+}
+.spine-dot::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 1.5px solid rgba(34, 211, 238, 0.6); animation: pinping 2s ease-out infinite; }
+.spine-node {
+  position: absolute; left: 1px; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%;
+  background: #fff; border: 2px solid var(--blue-300);
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease), transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.spine-node.lit { background: var(--blue-600); border-color: var(--cyan-400); transform: scale(1.3); box-shadow: 0 0 12px rgba(34, 211, 238, 0.7); }
+@media (max-width: 991px) {
+  .spine { left: 8px; }
+  .spine-line { width: 1px; }
+  .spine-dot { width: 8px; height: 8px; margin-left: -3.5px; top: 46vh; }
+  .spine-dot::after { inset: -4px; }
+  .spine-node { width: 8px; height: 8px; margin: -4px 0 0 -4px; border-width: 1.5px; }
+}
+@media (prefers-reduced-motion: reduce) { .spine-dot::after { animation: none; } .spine-node { transition: none; } }
+
+/* ==========================================================
+   v45 — 180일 데모를 스크롤이 움직이게 (스마틀리 적용안 1)
+   데스크톱 시네마틱 트랙을 450vh 로: 기존 연출 240vh + 데모 112vh + 마무리 축소 24vh. 좁은 화면은 시간제 루프 그대로
+   ========================================================== */
+.hero-cine.cine-on:not(.cine-narrow) { height: 450vh; }
+.demo-scrub { display: block; margin-bottom: 6px; font-size: 12.5px; font-weight: 800; letter-spacing: 0.02em; color: var(--cyan-400); transition: opacity .3s ease; }
+
+/* ==========================================================
+   v46 — 거대 가로 문장 한 곳 (스마틀리 적용안 3) + 쇼케이스 움직임 (적용안 6)
+   ========================================================== */
+/* 기본(모바일·no-JS·움직임 줄이기): 줄바꿈되는 정적 밴드 */
+.big-line { background: var(--gray-50); padding: 48px 24px; overflow: hidden; }
+.big-line-track { position: relative; z-index: 3; font-size: clamp(30px, 6vw, 56px); font-weight: 900; letter-spacing: -0.04em; line-height: 1.08; text-align: center; max-width: 900px; margin: 0 auto; color: var(--ink-900); }
+.big-line-track em { font-style: normal; }
+/* 데스크톱 + JS: 150vh 구간에 고정, 한 줄로 가로 이동 */
+.big-line.big-line-on { height: 120vh; padding: 0; }
+.big-line.big-line-on .big-line-sticky { position: sticky; top: 0; height: 100vh; display: flex; align-items: center; overflow: clip; }
+.big-line.big-line-on .big-line-track { font-size: clamp(96px, 10.5vw, 168px); max-width: none; margin: 0; text-align: left; white-space: nowrap; will-change: transform; }
+/* 쇼케이스 — 커버 영상(기본은 포스터), 무대 요소 패럴랙스 */
+.sc-cover { position: relative; overflow: hidden; }
+.sc-cover-v { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.sc-stage-in > :nth-child(1) { transform: translateY(calc((var(--par, .5) - .5) * -10px)); }
+.sc-stage-in > :nth-child(2) { transform: translateY(calc((var(--par, .5) - .5) * 22px)) rotate(3deg); }
+.sc-stage-in > :nth-child(3) { transform: translateY(calc((var(--par, .5) - .5) * -16px)) rotate(-2deg); }
+@media (prefers-reduced-motion: reduce) {
+  .sc-stage-in > :nth-child(1), .sc-stage-in > :nth-child(2), .sc-stage-in > :nth-child(3) { transform: none; }
 }

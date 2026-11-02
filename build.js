@@ -738,7 +738,7 @@ const SC_SCENES = [
     chips: ['사진 12장 추가 · 대표 사진 교체', '게시물 주 2회 자동 게시', '카테고리 "한식당"으로 교정'],
     html: `
 <div class="sc-phone">
-  <div class="sc-cover" style="background-image:url('${SC_IMG.interior}')"></div>
+  <div class="sc-cover" style="background-image:url('${SC_IMG.interior}')"><video class="sc-cover-v" muted loop playsinline preload="none" poster="${SC_IMG.interior}" aria-hidden="true"><source src="/showcase/interior-loop.mp4" type="video/mp4"></video></div>
   <div class="sc-pbody">
     <div class="sc-pname">순두부 하우스</div>
     <div class="sc-prow"><b>4.6</b><span class="sc-stars">★★★★★</span><span class="sc-muted">(203)</span><span class="sc-dot">·</span><span class="sc-muted">한식당</span></div>
@@ -867,6 +867,7 @@ function showcaseSection() {
   function pinMode() { return pinMQ.matches || mobilePin(); }
   function scenePx() { return pinMQ.matches ? 520 : 300; }
   var stage = wrap.querySelector('.sc-stage');
+  var vids = Array.prototype.slice.call(wrap.querySelectorAll('video.sc-cover-v'));
   function fitScene() {
     /* 모바일 고정 모드: 장면이 무대보다 크면 zoom으로 줄여 한 화면에 다 보이게 */
     scenes.forEach(function (sc) { var inr = sc.querySelector('.sc-stage-in'); if (inr) Array.prototype.forEach.call(inr.children, function (c) { c.style.zoom = ''; }); });
@@ -909,6 +910,12 @@ function showcaseSection() {
       }
     }
     progs.forEach(function (p, k) { if (p) p.style.width = k === idx ? ((t - idx * DUR) / DUR * 100) + '%' : '0%'; });
+    /* v46 — 장면 안 진행도(0~1)로 무대 요소가 살짝 어긋나며 떠 있고(패럴랙스), 보이는 장면의 무음 루프만 재생 */
+    if (stage) stage.style.setProperty('--par', ((t - idx * DUR) / DUR).toFixed(3));
+    vids.forEach(function (v) {
+      var on = visible && !reduced && v.closest('.sc-scene') === scenes[idx];
+      if (on && v.paused) { v.play().catch(function () {}); } else if (!on && !v.paused) v.pause();
+    });
   }
   function tick(ts) {
     raf = null;
@@ -945,7 +952,7 @@ function showcaseSection() {
   applyPin(); onScroll();
   if ('IntersectionObserver' in window) {
     var io = new IntersectionObserver(function (en) {
-      en.forEach(function (e) { visible = e.isIntersecting; if (visible) start(); });
+      en.forEach(function (e) { visible = e.isIntersecting; if (visible) start(); else vids.forEach(function (v) { if (!v.paused) v.pause(); }); });
     }, { threshold: 0.1 });
     io.observe(wrap);
   } else { visible = true; start(); }
@@ -1915,6 +1922,36 @@ ${showcaseSection()}
       });
       mo.observe(tb, { attributes: true, attributeFilter: ['class'] });
     }
+  } catch (e) {}
+})();
+</script>
+
+<section class="big-line" id="big-line" aria-label="광고 대행사 절반 이하의 가격으로, 10배 빠르게.">
+  <div class="big-line-sticky">
+    <div class="big-line-track" id="big-line-track"><span>광고 대행사 절반 이하의 가격으로,</span> <em class="grad">10배 빠르게.</em></div>
+  </div>
+</section>
+<script>
+/* 거대 가로 문장(v46) — 데스크톱에서만 150vh 구간에 고정된 채 세로 스크롤이 가로 이동으로 바뀐다.
+   JS 없음·좁은 화면·움직임 줄이기면 보통 제목처럼 줄바꿈된 정적 밴드 */
+(function () {
+  try {
+    var sec = document.getElementById('big-line'), tr = document.getElementById('big-line-track');
+    if (!sec || !tr) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !window.matchMedia('(min-width: 992px)').matches) return;
+    sec.classList.add('big-line-on');
+    var ticking = false;
+    function frame() {
+      ticking = false;
+      var r = sec.getBoundingClientRect(), total = r.height - window.innerHeight;
+      var p = total > 0 ? Math.max(0, Math.min(1, -r.top / total)) : 1;
+      var start = window.innerWidth * 0.55, end = window.innerWidth - tr.scrollWidth - 48;
+      tr.style.transform = 'translateX(' + (start + (end - start) * p).toFixed(1) + 'px)';
+    }
+    function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(frame); } }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    frame();
   } catch (e) {}
 })();
 </script>

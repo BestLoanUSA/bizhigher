@@ -2615,3 +2615,24 @@ img { max-width: 100%; display: block; }
    ========================================================== */
 .hero-cine.cine-on:not(.cine-narrow) { height: 450vh; }
 .demo-scrub { display: block; margin-bottom: 6px; font-size: 12.5px; font-weight: 800; letter-spacing: 0.02em; color: var(--cyan-400); transition: opacity .3s ease; }
+
+/* ==========================================================
+   v46 — 거대 가로 문장 한 곳 (스마틀리 적용안 3) + 쇼케이스 움직임 (적용안 6)
+   ========================================================== */
+/* 기본(모바일·no-JS·움직임 줄이기): 줄바꿈되는 정적 밴드 */
+.big-line { background: var(--gray-50); padding: 48px 24px; overflow: hidden; }
+.big-line-track { position: relative; z-index: 3; font-size: clamp(30px, 6vw, 56px); font-weight: 900; letter-spacing: -0.04em; line-height: 1.08; text-align: center; max-width: 900px; margin: 0 auto; color: var(--ink-900); }
+.big-line-track em { font-style: normal; }
+/* 데스크톱 + JS: 150vh 구간에 고정, 한 줄로 가로 이동 */
+.big-line.big-line-on { height: 120vh; padding: 0; }
+.big-line.big-line-on .big-line-sticky { position: sticky; top: 0; height: 100vh; display: flex; align-items: center; overflow: clip; }
+.big-line.big-line-on .big-line-track { font-size: clamp(96px, 10.5vw, 168px); max-width: none; margin: 0; text-align: left; white-space: nowrap; will-change: transform; }
+/* 쇼케이스 — 커버 영상(기본은 포스터), 무대 요소 패럴랙스 */
+.sc-cover { position: relative; overflow: hidden; }
+.sc-cover-v { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.sc-stage-in > :nth-child(1) { transform: translateY(calc((var(--par, .5) - .5) * -10px)); }
+.sc-stage-in > :nth-child(2) { transform: translateY(calc((var(--par, .5) - .5) * 22px)) rotate(3deg); }
+.sc-stage-in > :nth-child(3) { transform: translateY(calc((var(--par, .5) - .5) * -16px)) rotate(-2deg); }
+@media (prefers-reduced-motion: reduce) {
+  .sc-stage-in > :nth-child(1), .sc-stage-in > :nth-child(2), .sc-stage-in > :nth-child(3) { transform: none; }
+}
