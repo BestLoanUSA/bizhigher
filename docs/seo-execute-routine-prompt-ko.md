@@ -1,6 +1,6 @@
 # SEO 실행 루틴 프롬프트
 
-claude.ai/code 루틴 "BizHigher SEO 실행" (2026-11-02 생성, `trig_` id 는 CLAUDE.md §13-1).
+claude.ai/code 루틴 "BizHigher SEO 실행" `trig_01H648RbWtMsV5YKTeuPTtNA` (2026-11-02 생성).
 
 - cron: `CRON_TZ=America/Los_Angeles 41 7 * * 2,4` (매주 화·목 LA 07:41 — 블로그 업그레이드 루틴 07:00 과 겹치지 않게)
 - 환경 `bizhigher`, 매번 새 세션

@@ -1,6 +1,6 @@
 # SEO 주간 전략 루틴 프롬프트
 
-claude.ai/code 루틴 "BizHigher SEO 주간 전략" (2026-11-02 생성, `trig_` id 는 CLAUDE.md §13-1).
+claude.ai/code 루틴 "BizHigher SEO 주간 전략" `trig_01RFfusrbePqT3vysSrZHrdM` (2026-11-02 생성).
 
 - cron: `CRON_TZ=America/Los_Angeles 41 8 * * 1` (매주 월요일 LA 08:41)
 - 환경 `bizhigher`, 매번 새 세션. 저장소는 루틴이 스스로 붙인다(아래 준비 1)
