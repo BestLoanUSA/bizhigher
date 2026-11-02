@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>모바일에서 느린 가게 사이트, 고객이 떠나기 전에 고치는 법 | BizHigher 블로그</title>
+<meta name="description" content="폰에서 가게 웹사이트가 느리면 손님은 전화 걸기 전에 떠납니다. 무료 도구로 속도를 재는 법, 사진·글꼴·위젯 순으로 고치는 순서, 점검표를 정리했습니다.">
+
+<link rel="canonical" href="https://bizhigher.com/blog/slow-mobile-website-fix/">
+<meta property="og:title" content="모바일에서 느린 가게 사이트, 고객이 떠나기 전에 고치는 법 | BizHigher 블로그">
+<meta property="og:description" content="폰에서 가게 웹사이트가 느리면 손님은 전화 걸기 전에 떠납니다. 무료 도구로 속도를 재는 법, 사진·글꼴·위젯 순으로 고치는 순서, 점검표를 정리했습니다.">
+<meta property="og:url" content="https://bizhigher.com/blog/slow-mobile-website-fix/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="BizHigher">
+<meta property="og:image" content="https://bizhigher.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://bizhigher.com/og-image.png">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="/style.css?v=efb0cb7c">
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"모바일에서 느린 가게 사이트, 고객이 떠나기 전에 고치는 법","description":"폰에서 가게 웹사이트가 느리면 손님은 전화 걸기 전에 떠납니다. 무료 도구로 속도를 재는 법, 사진·글꼴·위젯 순으로 고치는 순서, 점검표를 정리했습니다.","image":"https://bizhigher.com/og-image.png","datePublished":"2026-11-02","dateModified":"2026-11-02","inLanguage":"ko","author":{"@type":"Organization","@id":"https://bizhigher.com/#organization","name":"BizHigher","url":"https://bizhigher.com/","logo":{"@type":"ImageObject","url":"https://bizhigher.com/apple-touch-icon.png","width":180,"height":180}},"publisher":{"@type":"Organization","@id":"https://bizhigher.com/#organization","name":"BizHigher","url":"https://bizhigher.com/","logo":{"@type":"ImageObject","url":"https://bizhigher.com/apple-touch-icon.png","width":180,"height":180}},"articleSection":"웹사이트","abstract":"모바일 속도는 구글의 무료 PageSpeed Insights로 1분 안에 잴 수 있습니다. 구글은 LCP 2.5초 이내, INP 200ms 이내, CLS 0.1 이하를 좋은 기준으로 봅니다. 가장 먼저 용량이 큰 사진부터 줄이세요. 점수보다 실제 폰 체감이 중요합니다.","isPartOf":{"@type":"Blog","@id":"https://bizhigher.com/blog/#blog"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://bizhigher.com/blog/slow-mobile-website-fix/"},"keywords":"모바일 웹사이트 속도, 웹사이트 느림, 페이지 속도 개선, PageSpeed Insights, Core Web Vitals, 가게 홈페이지 속도"},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"홈","item":"https://bizhigher.com/"},{"@type":"ListItem","position":2,"name":"블로그","item":"https://bizhigher.com/blog/"},{"@type":"ListItem","position":3,"name":"웹사이트","item":"https://bizhigher.com/blog/website-hub/"},{"@type":"ListItem","position":4,"name":"모바일에서 느린 가게 사이트, 고객이 떠나기 전에 고치는 법","item":"https://bizhigher.com/blog/slow-mobile-website-fix/"}]},{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"모바일 속도 점수가 몇 점이면 괜찮은가요?","acceptedAnswer":{"@type":"Answer","text":"점수 자체보다 LCP 2.5초, INP 200ms, CLS 0.1 이하라는 세 지표의 '좋음' 기준에 들어오는지를 보세요. 점수는 측정할 때마다 조금씩 달라지므로 두세 번 재서 경향을 보는 것이 좋습니다."}},{"@type":"Question","name":"사이트 속도가 구글 순위에 영향을 주나요?","acceptedAnswer":{"@type":"Answer","text":"구글은 페이지 경험 요소의 하나로 속도를 안내하지만, 내용의 관련성이 더 중요하다고 밝혀 왔습니다. 속도만으로 순위가 오른다고 기대하기보다, 손님이 떠나지 않게 하는 기본 조건으로 보는 편이 현실적입니다."}},{"@type":"Question","name":"개발자 없이 제가 직접 고칠 수 있나요?","acceptedAnswer":{"@type":"Answer","text":"사진 압축, 영상 제거, 쓰지 않는 위젯 삭제는 대부분 직접 할 수 있습니다. 글꼴 교체나 코드 수정이 필요한 부분은 웹사이트 빌더의 설정을 먼저 확인하고, 어려우면 제작한 곳이나 전문가에게 요청하세요."}},{"@type":"Question","name":"고친 뒤 얼마나 지나서 다시 재야 하나요?","acceptedAnswer":{"@type":"Answer","text":"수정 직후 바로 다시 재도 시험 측정값은 반영됩니다. 반면 '실제 사용자 데이터'는 최근 약 28일 방문 기록을 모으므로 변화가 보이기까지 시간이 걸립니다."}}]}]</script>
+
+<script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "yiy7q338pe");
+</script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-6D7XST08PS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-6D7XST08PS');
+
+  /* 리드 이벤트(generate_lead) — seo-data가 GA4에서 "어느 페이지가 문의를 만드는지" 센다.
+     lead_source: free_audit(무료 진단 제출) · free_tool(무료 도구 사용, 이메일 입력 — 세션당 도구마다 1번) · email_consult(상담·신청 메일 링크).
+     결제 링크 클릭은 리드가 아니라 begin_checkout. cb가 있으면 전송 뒤(최대 0.8초) 부른다(페이지 이동 전에 보내기 위해) */
+  /* 유입 출처 — 리드가 어떤 검색·AI·추천에서 왔는지(SEO 루프 M-01). 세션 첫 페이지에서 한 번 정하고 sessionStorage 에 둔다.
+     utm 이 있으면 "utm:source/medium/campaign", 아니면 "ref:호스트", 둘 다 없으면 "direct". 개인정보 없음(호스트·utm 값만, 160자). */
+  window.bhRef = function () {
+    try {
+      var k = 'bh_ref', v = sessionStorage.getItem(k);
+      if (v) return v;
+      var q = new URLSearchParams(location.search), us = q.get('utm_source');
+      if (us) v = 'utm:' + [us, q.get('utm_medium') || '', q.get('utm_campaign') || ''].join('/');
+      else { var h = ''; try { h = document.referrer ? new URL(document.referrer).hostname.replace(/^www./, '') : ''; } catch (e) {} v = h && h !== location.hostname ? 'ref:' + h : 'direct'; }
+      v = v.slice(0, 160); sessionStorage.setItem(k, v); return v;
+    } catch (e) { return ''; }
+  };
+  window.bhRef();
+  window.mkLead = function (src, extra, cb) {
+    var done = false, fin = function () { if (!done) { done = true; if (cb) cb(); } };
+    try { gtag('event', 'generate_lead', Object.assign({ lead_source: src, page_path: location.pathname }, extra || {}, cb ? { event_callback: fin } : {})); } catch (e) {}
+    if (cb) setTimeout(fin, 800);
+  };
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[href]'); if (!a) return;
+    var h = a.getAttribute('href') || '';
+    if (h.indexOf('mailto:') === 0) window.mkLead('email_consult', { link_text: (a.textContent || '').trim().slice(0, 60) });
+    else if (h.indexOf('https://buy.stripe.com/') === 0) { try { gtag('event', 'begin_checkout', { link_text: (a.textContent || '').trim().slice(0, 60), page_path: location.pathname }); } catch (e2) {} }
+  }, true);
+</script>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="logo"><svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#0A4DF5"/><path d="M15 44 h9 v-9 h9 v-9 h6.5" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M38.5 15.5 h10 v10" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Biz<span class="logo-accent">Higher</span></span></a>
+    <div class="nav-links">
+      <a class="nav-link" href="/services/">서비스</a>
+      <a class="nav-link" href="/pricing/">가격</a>
+      <a class="nav-link active" href="/blog/">블로그</a>
+      <a class="nav-link" href="/data/">데이터</a>
+      <a class="nav-link" href="/tools/">무료 도구</a>
+      <a class="nav-link" href="/free-audit/">무료 진단</a>
+    </div>
+    <div class="nav-cta"><a class="btn btn-primary btn-small" href="/free-audit/">무료 진단 받기</a></div>
+    <button class="nav-toggle" aria-label="메뉴 열기" onclick="document.getElementById('mm').classList.toggle('open');this.closest('.nav').classList.toggle('menu-open')">☰</button>
+  </div>
+  <div class="mobile-menu" id="mm">
+    <a href="/services/">서비스</a>
+    <a href="/pricing/">가격</a>
+    <a href="/blog/">블로그</a>
+    <a href="/data/">데이터</a>
+    <a href="/tools/">무료 도구</a>
+    <a href="/free-audit/">무료 진단</a>
+    <a class="btn btn-primary btn-block" href="/free-audit/" style="border-bottom:none;color:#fff;">무료 진단 받기</a>
+  </div>
+</nav>
+<header class="page-head">
+  <div class="container-narrow">
+    <nav class="back-link crumbs" aria-label="현재 위치"><a href="/">홈</a><span class="crumbs-sep" aria-hidden="true">›</span><a href="/blog/">블로그</a><span class="crumbs-sep" aria-hidden="true">›</span><a href="/blog/website-hub/">웹사이트</a><span class="crumbs-sep" aria-hidden="true">›</span><span aria-current="page">모바일에서 느린 가게 사이트, 고객이 떠나기 전에 고치는 법</span></nav>
+    <span class="badge">웹사이트</span>
+    <h1 class="page-title" style="font-size:36px;line-height:1.25;">모바일에서 느린 가게 사이트, 고객이 떠나기 전에 고치는 법</h1>
+    <p class="page-sub">2026-11-02 · 5분 읽기 · BizHigher</p>
+    <a href="/blog/website-hub/" class="hub-callout">🧭 이 글은 <b>가게 웹사이트 완전 가이드 — 만들지 판단하기부터 전화 오게 만들기까지</b> 가이드의 일부입니다 →</a>
+  </div>
+</header>
+<section class="detail-body" style="padding-top:4px;">
+  <div class="container post-layout">
+    <aside class="toc toc-side" id="toc"><b>목차</b><ol><li><a href="#h1" data-h="h1">먼저 속도를 재 보세요</a></li><li><a href="#h2" data-h="h2">직접 확인하는 방법: 폰으로 5분 테스트</a></li><li><a href="#h3" data-h="h3">느려지는 흔한 원인과 고치는 순서</a></li><li><a href="#h4" data-h="h4">업종별로 먼저 볼 곳</a></li><li><a href="#h5" data-h="h5">속도 개선 점검표</a></li><li><a href="#h6" data-h="h6">주의할 점</a></li><li><a href="#h7" data-h="h7">자주 묻는 질문</a></li></ol></aside>
+    <div class="post-main">
+    <div class="post-summary"><b>핵심 요약</b><ul><li>모바일 속도는 구글의 무료 PageSpeed Insights로 1분 안에 잴 수 있습니다.</li><li>구글은 LCP 2.5초 이내, INP 200ms 이내, CLS 0.1 이하를 좋은 기준으로 봅니다.</li><li>가장 먼저 용량이 큰 사진부터 줄이세요. 점수보다 실제 폰 체감이 중요합니다.</li></ul></div>
+    <article class="post-body"><p>가게 웹사이트를 사무실 컴퓨터에서 열어 보면 멀쩡한데, 정작 손님은 폰으로 봅니다. 그것도 매장 근처에서 데이터 신호가 약한 채로 열어 보는 경우가 많습니다. 이때 첫 화면이 몇 초씩 비어 있으면 손님은 전화 버튼을 누르기 전에 뒤로 가기를 누릅니다. 이 글은 사장님이 개발 지식 없이도 속도를 직접 재고, 효과가 큰 순서대로 고치는 방법을 정리합니다.</p>
+<h2 id="h1">먼저 속도를 재 보세요</h2>
+<p>감으로 "느린 것 같다"고 하기보다 숫자로 확인하는 편이 빠릅니다. 구글이 무료로 제공하는 PageSpeed Insights(pagespeed.web.dev)에 홈페이지 주소를 넣으면 모바일 기준 결과가 나옵니다. 화면에 나오는 세 가지 지표를 기억해 두세요. 구글이 공식 문서(web.dev)에서 '좋음'으로 안내하는 기준은 다음과 같습니다.</p>
+<div class="tbl-wrap"><table><thead><tr><th>지표</th><th>무엇을 뜻하나</th><th>좋음 기준</th></tr></thead><tbody><tr><td>LCP</td><td>화면의 가장 큰 사진·제목이 뜨는 시간</td><td>2.5초 이내</td></tr><tr><td>INP</td><td>버튼을 눌렀을 때 반응하는 시간</td><td>200ms 이내</td></tr><tr><td>CLS</td><td>로딩 중 화면이 밀리는 정도</td><td>0.1 이하</td></tr></tbody></table></div>
+<p>방문자가 적은 사이트는 '실제 사용자 데이터' 칸이 비어 있을 수 있습니다. 그럴 때는 아래쪽 '진단' 항목의 시험 측정값을 참고하면 됩니다. 이 값은 실험실 환경에서 나온 추정치이므로, 같은 페이지를 두세 번 재면 조금씩 다르게 나옵니다.</p>
+<h2 id="h2">직접 확인하는 방법: 폰으로 5분 테스트</h2>
+<p>도구 점수와 별개로 실제 폰에서 아래를 해 보세요.</p>
+<ol><li>와이파이를 끄고 데이터로만 연결한 상태에서 주소를 입력합니다.</li><li>첫 화면에서 가게 이름과 전화 버튼이 보일 때까지 초를 셉니다.</li><li>스크롤하는 중에 글자나 버튼이 갑자기 밀리지 않는지 봅니다.</li><li>전화 버튼을 눌렀을 때 바로 반응하는지 확인합니다.</li></ol>
+<p>가능하면 가게에서 가장 신호가 약한 자리에서 해 보세요. 손님이 실제로 겪는 환경에 가장 가깝습니다.</p>
+<h2 id="h3">느려지는 흔한 원인과 고치는 순서</h2>
+<p>대부분의 가게 사이트는 원인이 비슷합니다. 효과가 큰 순서로 정리했습니다.</p>
+<h3>1. 사진 용량이 너무 큽니다</h3>
+<p>휴대폰으로 찍은 원본 사진을 그대로 올리면 한 장이 수 MB가 되기도 합니다. 화면에 작게 보이는 사진도 원본 크기로 내려받습니다. 사진을 올리기 전에 가로 1,600px 안팎으로 줄이고, 가능하면 WebP나 JPG로 저장하세요. 첫 화면 아래에 있는 사진은 '지연 로딩(lazy loading)'을 켜면 스크롤할 때 불러옵니다. 웹사이트 빌더에는 대개 이 옵션이 있습니다.</p>
+<h3>2. 첫 화면에 영상이나 슬라이드쇼를 넣었습니다</h3>
+<p>자동 재생 배경 영상과 큰 슬라이드는 가장 무거운 요소입니다. 멋은 있지만 폰에서는 첫 화면이 늦게 뜨는 대가를 치릅니다. 영상은 클릭해야 재생되게 하고, 첫 화면은 사진 한 장과 전화 버튼으로 가볍게 두는 것을 권합니다.</p>
+<h3>3. 외부 위젯과 스크립트가 많습니다</h3>
+<p>채팅 위젯, 예약 플러그인, SNS 피드, 지도, 분석 도구가 각각 외부 파일을 불러옵니다. 지금도 쓰는 것인지 하나씩 점검하고, 쓰지 않는 것은 지웁니다. 지도는 페이지 맨 아래 '오시는 길'에만 두는 방법이 있습니다.</p>
+<h3>4. 글꼴을 너무 많이 씁니다</h3>
+<p>한글 웹폰트는 파일이 커서 특히 느려지기 쉽습니다. 글꼴은 한 가지, 굵기는 두 가지 이내로 줄이면 부담이 크게 줄어듭니다.</p>
+<h3>5. 화면이 밀립니다 (CLS)</h3>
+<p>사진 크기가 정해지지 않았거나, 늦게 뜨는 배너가 위쪽에 끼어들면 글자가 밀립니다. 손님이 누르려던 전화 버튼이 순간 아래로 내려가 엉뚱한 곳을 누르게 됩니다. 사진에는 가로·세로 크기를 지정하고, 팝업 배너는 화면 위쪽에 끼어들지 않게 합니다.</p>
+<h2 id="h4">업종별로 먼저 볼 곳</h2>
+<div class="tbl-wrap"><table><thead><tr><th>업종</th><th>가장 흔한 원인</th><th>먼저 할 일</th></tr></thead><tbody><tr><td>식당·카페</td><td>음식 사진 수십 장, PDF 메뉴판</td><td>사진 압축, 메뉴를 글자 페이지로</td></tr><tr><td>미용·네일</td><td>전후 비교 사진, 인스타 피드 위젯</td><td>사진 압축, 피드 위젯 제거</td></tr><tr><td>학원·병원</td><td>예약 플러그인, 채팅 위젯</td><td>쓰지 않는 위젯 정리</td></tr><tr><td>부동산·융자</td><td>상담 폼 스크립트, 큰 배너</td><td>배너 크기 줄이기</td></tr></tbody></table></div>
+<p>메뉴를 PDF나 사진으로 올렸다면 속도와 검색 양쪽에서 손해입니다. 글자 메뉴로 바꾸는 방법은 <a href="/blog/online-menu-guide/">메뉴판을 온라인에 올리는 올바른 방법</a>에서 다뤘습니다.</p>
+<h2 id="h5">속도 개선 점검표</h2>
+<ul><li>[ ] PageSpeed Insights에서 모바일 결과를 캡처해 '고치기 전' 기록을 남겼다</li><li>[ ] 올린 사진을 가로 1,600px 안팎으로 줄였다</li><li>[ ] 첫 화면 아래 사진에 지연 로딩을 켰다</li><li>[ ] 자동 재생 영상·큰 슬라이드를 첫 화면에서 뺐다</li><li>[ ] 쓰지 않는 플러그인·위젯을 지웠다</li><li>[ ] 글꼴을 한 가지로 줄였다</li><li>[ ] 폰 데이터 연결에서 전화 버튼이 바로 눌린다</li><li>[ ] 고친 뒤 다시 재서 '고치기 후' 기록을 남겼다</li></ul>
+<h2 id="h6">주의할 점</h2>
+<p>점수 100점을 목표로 삼지 마세요. 점수를 올리려고 사진을 지나치게 줄이거나 필요한 기능을 빼면 손님이 보기에는 오히려 나빠집니다. 기준은 '손님이 폰에서 원하는 정보와 전화 버튼을 빨리 만나는가'입니다. 또한 속도는 순위를 결정하는 여러 요소 중 하나일 뿐, 속도만 고쳐서 검색 순위가 오른다고 보장할 수는 없습니다. 다만 느려서 손님이 떠나는 문제는 확실히 줄일 수 있습니다.</p>
+<p>속도를 고친 뒤에도 전화가 늘지 않는다면 첫 화면 구성이 원인일 수 있습니다. 점검법은 <a href="/blog/website-visitors-no-calls/">홈페이지 방문자는 있는데 전화가 안 오는 이유</a>를, 웹사이트 전체 흐름은 <a href="/blog/website-hub/">가게 웹사이트 완전 가이드</a>를 참고하세요.</p>
+<h2 id="h7">자주 묻는 질문</h2>
+<h3>모바일 속도 점수가 몇 점이면 괜찮은가요?</h3>
+<p>점수 자체보다 LCP 2.5초, INP 200ms, CLS 0.1 이하라는 세 지표의 '좋음' 기준에 들어오는지를 보세요. 점수는 측정할 때마다 조금씩 달라지므로 두세 번 재서 경향을 보는 것이 좋습니다.</p>
+<h3>사이트 속도가 구글 순위에 영향을 주나요?</h3>
+<p>구글은 페이지 경험 요소의 하나로 속도를 안내하지만, 내용의 관련성이 더 중요하다고 밝혀 왔습니다. 속도만으로 순위가 오른다고 기대하기보다, 손님이 떠나지 않게 하는 기본 조건으로 보는 편이 현실적입니다.</p>
+<h3>개발자 없이 제가 직접 고칠 수 있나요?</h3>
+<p>사진 압축, 영상 제거, 쓰지 않는 위젯 삭제는 대부분 직접 할 수 있습니다. 글꼴 교체나 코드 수정이 필요한 부분은 웹사이트 빌더의 설정을 먼저 확인하고, 어려우면 제작한 곳이나 전문가에게 요청하세요.</p>
+<h3>고친 뒤 얼마나 지나서 다시 재야 하나요?</h3>
+<p>수정 직후 바로 다시 재도 시험 측정값은 반영됩니다. 반면 '실제 사용자 데이터'는 최근 약 28일 방문 기록을 모으므로 변화가 보이기까지 시간이 걸립니다.</p></article>
+    <div class="post-cta">
+      <b>우리 가게는 지금 몇 점일까요?</b>
+      <p>이 글에서 다룬 항목들을 60초 만에 자동으로 점검해 드립니다. 가입 없이 업체명과 도시만 입력하세요.</p>
+      <a href="/free-audit/" class="btn btn-primary">무료 AI 진단 받기 <i class="btn-arr" aria-hidden="true">→</i></a>
+      <a href="/service/website/" class="btn btn-ghost">맡기고 싶다면: 웹사이트 제작 ($199~)</a>
+    </div>
+    <a href="/data/korean-business-digital-basics-2026-q4/" class="hub-callout" style="margin-top:16px;">📊 실측 데이터: <b>한인 업소 디지털 기본기 점검 2026-Q4</b> →</a><a href="/data/korean-business-websites-2026-q3/" class="hub-callout" style="margin-top:16px;">📊 실측 데이터: <b>한인 업소 웹사이트 첫 화면 점검 2026-Q3</b> →</a>
+    <h2 class="h2-left" style="margin-top:48px;">함께 읽으면 좋은 글</h2><div class="grid3">
+<a href="/blog/landing-page-vs-homepage-for-ads/" class="prod-card">
+  <span class="badge">웹사이트</span>
+  <h3 class="h3">랜딩페이지와 홈페이지, 광고를 돌릴 때 뭐가 다를까</h3>
+  <p class="body-sm">광고 클릭이 홈페이지로 가면 손님이 길을 잃기 쉽습니다. 랜딩페이지와 홈페이지의 역할 차이, 광고용 페이지에 꼭 넣을 것, 만들기 전 판단 기준을 정리했습니다.</p>
+  <div class="price-row"><span class="price-sub">2026-10-21 · 4분 읽기</span></div>
+  <span class="card-cta">읽어보기 →</span>
+</a>
+<a href="/blog/website-visitors-no-calls/" class="prod-card">
+  <span class="badge">웹사이트</span>
+  <h3 class="h3">홈페이지 방문자는 있는데 전화가 안 오는 이유</h3>
+  <p class="body-sm">방문자 통계는 늘어나는데 전화·예약·문의가 없다면 원인은 트래픽이 아니라 페이지에 있습니다. 5초 점검 항목과 우선순위별 수정 순서, 측정 방법을 정리했습니다.</p>
+  <div class="price-row"><span class="price-sub">2026-10-05 · 5분 읽기</span></div>
+  <span class="card-cta">읽어보기 →</span>
+</a>
+<a href="/blog/google-ads-vs-meta-ads-for-local-business/" class="prod-card">
+  <span class="badge">광고</span>
+  <h3 class="h3">구글 광고 vs 메타 광고 — 한인 가게는 어디에 먼저 쓸까</h3>
+  <p class="body-sm">구글 광고와 메타(페이스북·인스타그램) 광고의 차이를 손님 행동 기준으로 비교하고, 식당·뷰티·학원·융자 등 업종별로 어디에 먼저 예산을 쓸지 정리했습니다.</p>
+  <div class="price-row"><span class="price-sub">2026-10-30 · 6분 읽기</span></div>
+  <span class="card-cta">읽어보기 →</span>
+</a></div>
+    </div><!-- /post-main -->
+  </div>
+</section>
+<script>
+/* 목차 스크롤스파이 — 실패해도 목차·본문 표시엔 영향 없음 */
+(function () {
+  try {
+    if (!('IntersectionObserver' in window)) return;
+    var links = document.querySelectorAll('#toc a[data-h]');
+    if (!links.length) return;
+    var map = {};
+    links.forEach(function (a) { map[a.getAttribute('data-h')] = a; });
+    var current = null;
+    var hs = document.querySelectorAll('.post-body h2[id]');
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          if (current) current.classList.remove('on');
+          current = map[en.target.id];
+          if (current) current.classList.add('on');
+        }
+      });
+    }, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+    hs.forEach(function (h) { io.observe(h); });
+  } catch (e) {}
+})();
+</script>
+
+<section class="mega-cta mega-cta-form" id="footer-audit">
+  <div class="container">
+    <div class="fa-grid">
+      <div class="fa-copy">
+        <p class="eyebrow eyebrow-cyan">무료 · 60초 · 가입 불필요</p>
+        <h2 class="fa-title">내 가게 마케팅,<br><span class="grad">몇 점일까요?</span></h2>
+        <p class="fa-sub">구글에서 우리 가게가 어떻게 보이는지 AI가 분석합니다. 완료되면 이 화면에서 바로 리포트가 열립니다. 스팸은 보내지 않습니다.</p>
+        <p class="fa-note">📄 <a href="/report/sample">리포트가 어떻게 생겼는지 먼저 보기 →</a></p>
+      </div>
+      <form class="audit-form fa-form" id="fa-form">
+        <input type="text" name="business" placeholder="업체명 (예: 청기와 순두부)" class="input" required>
+        <input type="text" name="location" placeholder="도시 (예: Los Angeles CA) 또는 구글 프로필 링크" class="input" required>
+        <input type="email" name="email" placeholder="이메일" class="input" required>
+        <button type="submit" class="btn btn-primary btn-block">무료 진단 시작 →</button>
+        <div class="bh-loader audit-loader" aria-live="polite"><div class="bh-word" data-text="BizHigher"><span class="bh-fill">BizHigher</span></div><div class="bh-step"></div></div>
+        <div class="form-msg" id="fa-msg"></div>
+        <p class="fa-form-note">분석에 20~40초 정도 걸립니다 · 완료되면 리포트 화면으로 자동 이동합니다</p>
+      </form>
+    </div>
+  </div>
+</section>
+<script>
+(function () {
+  var form = document.getElementById('fa-form'); if (!form) return;
+  function mkAuditLoader(form) {
+  var box = form.querySelector('.bh-loader');
+  if (!box) return { start: function () {}, done: function () {}, stop: function () {} };
+  var fill = box.querySelector('.bh-fill'), step = box.querySelector('.bh-step'), iv = null, t0 = 0;
+  var STEPS = [[0, '구글에서 우리 가게 찾는 중…'], [18, '주변 경쟁 가게 3곳 찾는 중…'], [40, '웹사이트·리뷰 점검 중…'], [62, '100점 만점으로 채점 중…'], [78, 'AI가 리포트를 쓰는 중…']];
+  function set(p, txt) { fill.style.width = p + '%'; if (txt !== undefined) step.textContent = txt; }
+  return {
+    start: function () {
+      clearInterval(iv); box.classList.add('on', 'busy'); t0 = Date.now(); set(3, STEPS[0][1]);
+      iv = setInterval(function () {
+        var sec = (Date.now() - t0) / 1000, p = 92 * (1 - Math.exp(-sec / 14)), txt = STEPS[0][1];
+        STEPS.forEach(function (x) { if (p >= x[0]) txt = x[1]; });
+        set(Math.max(3, p), txt);
+      }, 400);
+    },
+    done: function (txt) { clearInterval(iv); box.classList.remove('busy'); set(100, txt || '리포트 여는 중…'); },
+    stop: function () { clearInterval(iv); box.classList.remove('on', 'busy'); set(0, ''); }
+  };
+}
+  var ld = mkAuditLoader(form);
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var msg = document.getElementById('fa-msg');
+    var btn = form.querySelector('button');
+    btn.disabled = true; btn.textContent = 'AI가 분석 중입니다…';
+    ld.start();
+    try {
+      var body = Object.fromEntries(new FormData(form).entries()); body.ref = window.bhRef ? window.bhRef() : '';
+      var res = await fetch('/api/audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error('server');
+      var result = await res.json();
+      if (result.reportUrl) { btn.textContent = '리포트 여는 중...'; ld.done(); window.mkLead('free_audit', {}, function () { window.location.href = result.reportUrl; }); return; }
+      ld.stop(); window.mkLead('free_audit', { report: 'no' });
+      msg.className = 'form-msg success';
+      msg.textContent = '접수되었습니다! 영업일 1일 안에 진단 리포트를 이메일로 보내드릴게요.';
+      form.reset(); btn.textContent = '접수 완료 ✓';
+    } catch (err) {
+      ld.stop();
+      msg.className = 'form-msg error';
+      msg.textContent = '일시적인 오류가 발생했습니다. 잠시 후 다시 시도하시거나 hello@bizhigher.com 로 보내주세요.';
+      btn.disabled = false; btn.textContent = '무료 진단 시작 →';
+    }
+  });
+})();
+</script>
+<footer class="footer">
+  <div class="container">
+    <div class="footer-cols footer-cols-rich">
+      <div class="footer-brand">
+        <span class="logo"><svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#0A4DF5"/><path d="M15 44 h9 v-9 h9 v-9 h6.5" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M38.5 15.5 h10 v10" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Biz<span class="logo-accent">Higher</span></span></span>
+        <p class="footer-desc">미국 한인 비즈니스를 위한 AI 광고회사. 견적 미팅 없는 정찰제로, 대행사 절반 이하의 가격에 더 빠르게.</p>
+        <a href="mailto:hello@bizhigher.com" class="footer-link">hello@bizhigher.com</a>
+        <a href="/free-audit/" class="btn btn-primary footer-cta">무료 AI 진단 받기 <i class="btn-arr" aria-hidden="true">→</i></a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">인기 서비스</span>
+        <a href="/service/google-profile-optimization/" class="footer-link">구글 비즈니스 프로필 최적화</a><a href="/service/review-qr-kit/" class="footer-link">구글 리뷰 QR 키트</a><a href="/service/website/" class="footer-link">웹사이트 제작</a><a href="/service/seo-aio/" class="footer-link">SEO/AIO 관리</a><a href="/service/ads-management/" class="footer-link">광고 운영</a><a href="/service/gbp-posting/" class="footer-link">포스팅 관리</a>
+        <a href="/services/" class="footer-link footer-more">전체 서비스 16개 →</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">플랜·가격</span>
+        <a href="/package/local-starter/" class="footer-link">Local Starter 플랜</a><a href="/package/local-growth/" class="footer-link">Local Growth 플랜</a><a href="/package/local-premium/" class="footer-link">Local Premium 플랜</a>
+        <a href="/pricing/" class="footer-link">가격 한눈에 보기</a>
+        <a href="/free-audit/" class="footer-link">무료 AI 진단</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">무료 도구</span>
+        <a href="/tools/local-rank/" class="footer-link">구글 지도 순위 체크</a><a href="/tools/review-link/" class="footer-link">구글 리뷰 링크·QR 포스터 생성…</a><a href="/tools/ai-check/" class="footer-link">AI 추천 체크</a><a href="/tools/competitor-reviews/" class="footer-link">경쟁 가게 리뷰 비교</a><a href="/tools/ads-budget/" class="footer-link">구글 광고 예산 계산기</a>
+        <a href="/tools/" class="footer-link footer-more">무료 도구 15개 전체 →</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">마케팅 가이드</span>
+        <a href="/blog/ads-hub/" class="footer-link">광고 가이드</a><a href="/blog/ai-search-hub/" class="footer-link">AI 검색 가이드</a><a href="/blog/website-hub/" class="footer-link">웹사이트 가이드</a><a href="/blog/content-sns-hub/" class="footer-link">콘텐츠·SNS 가이드</a><a href="/blog/review-management-hub/" class="footer-link">리뷰·평판 가이드</a><a href="/blog/google-business-profile-hub/" class="footer-link">구글 노출 가이드</a>
+        <a href="/blog/" class="footer-link footer-more">블로그 전체 →</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">BizHigher</span>
+        <a href="/data/" class="footer-link">데이터 리포트</a>
+        <a href="/privacy/" class="footer-link">개인정보처리방침</a>
+        <a href="/terms/" class="footer-link">이용약관</a>
+      </div>
+    </div>
+    <p class="footer-copy">© 2026 BizHigher. All rights reserved.</p>
+  </div>
+</footer>
+<script>
+/* 스크롤 리빌 — IO 지원 시에만 숨겼다가 나타남 (기본은 항상 보임) + 3초 강제 표시 안전장치 */
+(function () {
+  if (!('IntersectionObserver' in window)) return;
+  var els = document.querySelectorAll('.prod-card, .step-card, .tier:not(.pk-card), .stat-box, .faq-item, .price-item');
+  if (!els.length) return;
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+    });
+  }, { threshold: 0, rootMargin: '0px 0px -40px 0px' });
+  els.forEach(function (el, i) {
+    el.classList.add('rv');
+    el.style.transitionDelay = Math.min((i % 6) * 60, 300) + 'ms';
+    io.observe(el);
+  });
+  setTimeout(function () {
+    els.forEach(function (el) { el.classList.add('in'); });
+  }, 3000);
+})();
+
+/* 인터랙션 팩 — 네비 스크롤 상태 · 카운트업 · 카드 3D 틸트 (모두 선택적 강화, 실패해도 콘텐츠 표시에 영향 없음) */
+(function () {
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* 0) 플로팅 네비 — 스크롤 시 글래스 강화 */
+  var nav = document.querySelector('.nav');
+  if (nav) {
+    var navUpd = function () { nav.classList.toggle('scrolled', window.scrollY > 40); };
+    window.addEventListener('scroll', navUpd, { passive: true });
+    navUpd();
+  }
+
+  /* 1) 숫자 카운트업 — 뷰포트 진입 시 1회 */
+  if (!reduced && 'IntersectionObserver' in window) {
+    var stats = document.querySelectorAll('[data-count]');
+    if (stats.length) {
+      var sio = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          sio.unobserve(en.target);
+          var el = en.target;
+          var target = parseInt(el.getAttribute('data-count'), 10) || 0;
+          var pre = el.getAttribute('data-prefix') || '', suf = el.getAttribute('data-suffix') || '';
+          var start = null;
+          function step(ts) {
+            if (!start) start = ts;
+            var p = Math.min((ts - start) / 1200, 1);
+            el.textContent = pre + Math.round(target * (1 - Math.pow(1 - p, 3))).toLocaleString('en-US') + suf;
+            if (p < 1) requestAnimationFrame(step);
+          }
+          requestAnimationFrame(step);
+        });
+      }, { threshold: 0 });
+      stats.forEach(function (el) { sio.observe(el); });
+    }
+  }
+
+  /* 2) 스텝 카드 순차 하이라이트 — 섹션이 보이는 동안 부드럽게 순환 */
+  var steps = document.getElementById('steps');
+  if (steps && !reduced && 'IntersectionObserver' in window) {
+    var cards = steps.querySelectorAll('.step-card');
+    if (cards.length) {
+      var idx = 0, iv = null;
+      function cycle() {
+        cards.forEach(function (c, i) { c.classList.toggle('step-active', i === idx); });
+        idx = (idx + 1) % cards.length;
+      }
+      var stio = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting && !iv) { cycle(); iv = setInterval(cycle, 2200); }
+          else if (!en.isIntersecting && iv) {
+            clearInterval(iv); iv = null;
+            cards.forEach(function (c) { c.classList.remove('step-active'); });
+          }
+        });
+      }, { threshold: 0.3 });
+      stio.observe(steps);
+    }
+  }
+
+  /* 3) 카드 3D 틸트 — 데스크톱(정밀 포인터)에서만 */
+  if (!reduced && window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
+    var tiltEls = document.querySelectorAll('.prod-card, .tier, .step-card');
+    tiltEls.forEach(function (el) {
+      el.addEventListener('mousemove', function (e) {
+        var r = el.getBoundingClientRect();
+        var rx = ((e.clientY - r.top) / r.height - 0.5) * -5;
+        var ry = ((e.clientX - r.left) / r.width - 0.5) * 5;
+        el.style.transform = 'perspective(800px) rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg) translateY(-4px)';
+      });
+      el.addEventListener('mouseleave', function () { el.style.transform = ''; });
+    });
+  }
+})();
+</script>
+</body>
+</html>
