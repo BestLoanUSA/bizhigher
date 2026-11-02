@@ -1744,6 +1744,8 @@ function homePage(posts) {
 })();
 </script>
 
+<div class="home-body" id="home-body">
+<div class="spine" id="spine" aria-hidden="true"><i class="spine-line"></i><i class="spine-dot"></i></div>
 <section class="section section-gray">
   <div class="container">
     <p class="eyebrow">HOW IT WORKS</p>
@@ -2015,6 +2017,48 @@ ${blogStripSection(posts)}
     ${DATA.faqs.map((f, i) => `<details class="faq-item"${i === 0 ? ' open' : ''}><summary class="faq-q">${f.q}</summary><p class="faq-a">${f.a}</p></details>`).join('')}
   </div>
 </section>
+</div><!-- /home-body -->
+<script>
+/* 실과 점(v44) — 나브에 도킹한 i점에서 가는 선이 내려와 홈을 한 줄로 잇는다.
+   점은 sticky 로 화면 42% 높이에 머물고, 선은 점까지만 그려진다(--thread). 섹션 제목마다 매듭(node)이 있어 점이 지나가면 켜진다.
+   JS 가 없거나 움직임 줄이기면 선은 처음부터 끝까지 그려진 상태(CSS 기본 100%), 점만 sticky 로 따라온다 */
+(function () {
+  try {
+    var body = document.getElementById('home-body'), spine = document.getElementById('spine');
+    if (!body || !spine) return;
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var dot = spine.querySelector('.spine-dot');
+    var heads = Array.prototype.slice.call(body.querySelectorAll('.h2')).filter(function (h) { return !h.closest('.showcase'); });
+    var nodes = heads.map(function () { var n = document.createElement('i'); n.className = 'spine-node'; spine.appendChild(n); return n; });
+    var top = 0, height = 1, dotTop = 0, ys = [];
+    function layout() {
+      var r = spine.getBoundingClientRect();
+      top = r.top + window.scrollY; height = Math.max(1, r.height);
+      dotTop = parseFloat(getComputedStyle(dot).top) || 0;
+      ys = heads.map(function (h, i) {
+        var hr = h.getBoundingClientRect();
+        var y = hr.top + window.scrollY - top + hr.height / 2;
+        nodes[i].style.top = y + 'px';
+        return y;
+      });
+      spine.classList.add('spine-on');
+    }
+    var ticking = false;
+    function frame() {
+      ticking = false;
+      var thread = Math.max(0, Math.min(height, window.scrollY + dotTop + 6 - top));
+      if (!reduced) spine.style.setProperty('--thread', thread.toFixed(0) + 'px');
+      for (var i = 0; i < nodes.length; i++) nodes[i].classList.toggle('lit', reduced || ys[i] <= thread);
+    }
+    function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(frame); } }
+    layout(); frame();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', function () { layout(); frame(); }, { passive: true });
+    /* 폰트·이미지 로드 뒤 높이가 바뀌므로 한 번 더 */
+    window.addEventListener('load', function () { layout(); frame(); });
+  } catch (e) {}
+})();
+</script>
 ` + FOOTER;
 }
 
