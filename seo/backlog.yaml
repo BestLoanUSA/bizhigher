@@ -81,6 +81,7 @@ items:
     target: [content/blog/ads-hub.md, content/blog/ai-search-hub.md, content/blog/review-management-hub.md, content/blog/website-hub.md]
     notes: >
       content/blog-upgrade-queue.md 맨 위에 4편을 넣고 메모 "본문 1,800자 이상으로 — 각 스포크 요약을 2문장 + '언제 읽을 글인지' 한 줄로, FAQ 4개".
+      2026-11-02: website-hub 는 이미 1,800자를 넘겨 baseline 에서 지울 수 있다(seo-check "고쳐짐"). 나머지 3편 남음.
       업그레이드 루틴이 고치면 다음 seo-check 가 "고쳐짐" 을 알려 주고, 그때 check-baseline.json 에서 지운다(실행 루틴의 다음 PR 에 포함).
 
   - id: L-01
@@ -134,16 +135,36 @@ items:
       seo-data latest-ga4-extra.json 의 aiVisits + 관리자 leads API 의 source 를 세어 주간 보고서 "AI 검색" 절에 적는다.
       성공 지표: 측정 자체(AI 세션·리드 수가 0 이 아닌 주가 언제 오는지).
 
+  - id: I-03
+    title: 크롤링은 됐지만 색인 안 된 블로그 2편 — near-me-search-ranking · korean-business-directory-list
+    source: 2026-11-02 (index-latest.md 2026-11-01 — "Crawled - currently not indexed", 마지막 크롤링 10/13·10/18)
+    status: ready
+    path: upgrade-queue
+    target: [/blog/near-me-search-ranking/, /blog/korean-business-directory-list/]
+    notes: >
+      구글이 읽고도 색인하지 않았다 = 내용 차별성·내부 링크 부족 의심. 업그레이드 루틴이 각 글에 질문형 소제목·표·출처 있는 수치를 보강하고
+      /tools/local-rank/ · /service/local-listing-care/ 로 문맥 링크를 단다(K-01·I-01 과 겹치지 않게 본문만). 성공 지표: 3주 뒤 두 글이 색인됨.
+
+  - id: K-03
+    title: /pricing/ 에 FAQPage — 비용 질문형 FAQ 4개
+    source: 2026-11-02 (페이지 평가 - dist/pricing 에 FAQPage 스키마 없음, 검색어 "마케팅 대행사 비용" 노출)
+    status: ready
+    path: structure
+    target: [build.js, /pricing/]
+    notes: >
+      가격 숫자는 services.json 에서 빌드가 넣은 값만(손으로 적지 않음). 질문 예: 대행사 대비 왜 저렴한가 · 해지는 어떻게 · 추가 비용이 있나 · 6개월/12개월 차이.
+      O-02 와 같은 PR 에서 처리해도 된다. 성공 지표: 4주 뒤 pricing 노출 증가.
+
   - id: D-02
     title: 전략 루틴 설정에 seo-data 저장소 붙이기 — 없으면 매주 "데이터 없는 주"
     source: 2026-11-02 (첫 실행 PR #121 — "seo-data 가 세션 접근 범위 밖")
-    status: needs-david
+    status: done
     path: david
     target: [claude.ai/code → Routines → "BizHigher SEO 주간 전략" → 편집 → Repositories]
     notes: >
       세션의 GitHub 범위는 시작할 때 붙인 저장소로 고정되고 add_repo 로 넓힐 수 없다. 루틴 편집 화면 Repositories 에
       BestLoanUSA/seo-data 를 추가(읽기면 충분)하면 다음 실행부터 metrics/bizhigher/ 를 읽는다. cpacedesk SEO 루틴과 같은 방식.
-      확인: 다음 주간 보고서 "이번 주 숫자" 에 노출·클릭·색인이 채워지면 done.
+      확인: 2026-11-02 재실행에서 seo-data 읽기 성공 → done.
 
   - id: D-01
     title: GitHub 설정 — Actions 가 PR 을 만들 수 있게

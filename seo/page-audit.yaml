@@ -1,0 +1,11 @@
+# 페이지 평가 상태 — 전략 루틴이 매주 8페이지씩 갱신. scores: tech/gap/ai 각 0~2 (gap·ai 는 검색 경쟁 조사 전이면 null)
+# 2026-11-02 첫 평가는 기술(A) 항목만 — seo-data·검색 경쟁 조사(B) 없이 빌드 결과로 확인.
+pages:
+  - {url: /tools/local-rank/, target: [구글 지도 순위 체크, 구글순위체크], audited: 2026-11-02, scores: {tech: 2, gap: null, ai: null}, gaps: ["FAQPage·BreadcrumbList 있음", "가이드 md 4.5KB — 질문형 ## 보강 필요(K-01)"], backlog: [K-01]}
+  - {url: /pricing/, target: [마케팅 대행 비용, 한인 마케팅 비용], audited: 2026-11-02, scores: {tech: 1, gap: null, ai: null}, gaps: ["FAQPage 스키마 없음", "title 은 이미 '마케팅 대행 비용' 포함 — O-02 는 설명문 중심으로"], backlog: [O-02, K-03]}
+  - {url: /free-audit/, target: [무료 마케팅 진단, 구글 지도 노출 진단], audited: 2026-11-02, scores: {tech: 1, gap: null, ai: null}, gaps: ["owner 제목·H1 에 묶음 키워드 없음"], backlog: [K-02]}
+  - {url: /service/google-profile-optimization/, target: [구글 프로필 관리 대행], audited: 2026-11-02, scores: {tech: 2, gap: null, ai: null}, gaps: ["pkg-local-starter 와 키워드 중복"], backlog: [K-02]}
+  - {url: /service/review-qr-kit/, target: [구글 리뷰 QR], audited: 2026-11-02, scores: {tech: 2, gap: null, ai: null}, gaps: ["tool-review-link 와 '구글 리뷰 링크 만들기' 중복"], backlog: [K-02]}
+  - {url: /tools/review-link/, target: [구글 리뷰 링크 만들기], audited: 2026-11-02, scores: {tech: 2, gap: null, ai: null}, gaps: ["서비스 페이지와 키워드 중복"], backlog: [K-02]}
+  - {url: /tools/nap-check/, target: [NAP 일관성], audited: 2026-11-02, scores: {tech: 2, gap: null, ai: null}, gaps: ["색인 상태는 seo-data 필요"], backlog: []}
+  - {url: /package/local-starter/, target: [Local Starter 패키지], audited: 2026-11-02, scores: {tech: 2, gap: null, ai: null}, gaps: ["owner 제목·H1 에 묶음 키워드 없음"], backlog: [K-02]}
