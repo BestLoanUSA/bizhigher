@@ -4211,7 +4211,7 @@ function toolsIndexPage() {
   const ext = TOOLS.externalGroups.map((g) => `
     <h3 class="h3 tool-ext-head">${g.name}</h3>
     <div class="tool-ext-list">
-      ${g.items.map((x) => `<a class="tool-ext" href="${x.url}" target="_blank" rel="noopener">
+      ${g.items.map((x) => `<a class="tool-ext"${x.id ? ` id="${x.id}"` : ''} href="${x.url}" target="_blank" rel="noopener">
         <span class="tool-ext-top"><b>${x.name}</b><span class="tool-ext-by">${x.by}</span></span>
         <span class="tool-ext-desc">${x.desc}</span>
         <span class="tool-ext-meta"><span class="chip">${x.free}</span>${x.ko ? '<span class="chip">한국어 지원</span>' : '<span class="chip chip-muted">영어</span>'}</span>

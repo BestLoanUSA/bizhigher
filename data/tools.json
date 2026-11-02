@@ -179,7 +179,8 @@
       "name": "웹사이트 점검",
       "items": [
         {
-          "name": "PageSpeed Insights",
+          "id": "ext-pagespeed",
+    "name": "PageSpeed Insights",
           "by": "Google",
           "url": "https://pagespeed.web.dev/",
           "desc": "내 웹사이트 속도와 폰 화면 품질 점수. 손님 체감 속도(Core Web Vitals)까지 보여줍니다.",
