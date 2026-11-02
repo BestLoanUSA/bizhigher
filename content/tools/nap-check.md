@@ -29,7 +29,7 @@ NAP는 가게 이름(Name)·주소(Address)·전화번호(Phone)입니다. 이 �
 | 누르면 전화가 걸리는 버튼(tel: 링크) | 웹사이트 첫 화면 |
 | 업소 정보 구조화 데이터(LocalBusiness 계열) | 웹사이트 첫 화면 |
 
-이름은 표기 방식이 다양해 자동 판정하지 않습니다. "Seoul Garden"과 "Seoul Garden Korean BBQ"처럼 간판·구글·웹사이트 표기가 같은지 눈으로 확인해 주세요. 정보를 함께 맞춰야 할 주요 등록처는 [한인 업소 등록처 목록](/blog/korean-business-directory-list/)에 정리해 두었습니다.
+이름은 표기 방식이 다양해 자동 판정하지 않습니다. "Seoul Garden"과 "Seoul Garden Korean BBQ"처럼 간판·구글·웹사이트 표기가 같은지 눈으로 확인해 주세요. 정보를 함께 맞춰야 할 주요 등록처는 [한인 업소 등록처 목록](/blog/korean-business-directory-list/)에 정리해 두었습니다. 이사나 번호 변경처럼 등록처 전체를 다시 고쳐야 할 때는 [로컬 등록 관리](/service/local-listing-care/)가 목록 전체에 일괄 반영합니다.
 
 ## 자주 묻는 질문
 

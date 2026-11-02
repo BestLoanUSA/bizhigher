@@ -9,9 +9,10 @@
 
 | 상태 | slug | 카테고리 | 우선 이유 |
 |---|---|---|---|
+| ⬜ | korean-business-directory-list | 구글 노출 | [SEO I-01] 본문에서 이사·번호 변경 시 등록처 일괄 수정 문맥으로 [로컬 등록 관리](/service/local-listing-care/) 링크 1개 추가(판매 문구 없이 정보 문맥). 지금 블로그에서 이 서비스로 가는 링크가 0 |
+| ⬜ | google-business-profile-hours-update | 구글 노출 | [SEO I-01] 영업시간 변경이 디렉토리에도 퍼져야 한다는 문단에 /service/local-listing-care/ 링크 1개 |
 | ⬜ | negative-review-response-guide | 리뷰·평판 | 고의도 검색, 예문 보강 여지 |
 | ⬜ | near-me-search-ranking | 구글 노출 | 순위 원리, 최신 반영 필요 |
-| ⬜ | korean-business-directory-list | 구글 노출 | 한인 특화, 링크·폐업 사이트 점검 필요 |
 | ⬜ | google-ads-small-budget-guide | 광고 | 광고 UI·정책 변화가 잦음 |
 | ⬜ | store-photo-guide | 구글 노출 | 초기 글 |
 | ⬜ | yelp-management-guide | 리뷰·평판 | 옐프 정책 최신화 |
@@ -27,7 +28,6 @@
 | ⬜ | google-ai-overviews-local-business | AI 검색 | |
 | ⬜ | local-marketing-2026-review-2027-prep | AI 검색 | 연말 전 2027 내용 보강 |
 | ⬜ | google-business-profile-qa-removed | 구글 노출 | |
-| ⬜ | google-business-profile-hours-update | 구글 노출 | |
 | ⬜ | review-qr-code-placement | 리뷰·평판 | |
 | ⬜ | email-sms-marketing-basics | 콘텐츠·SNS | 법규(스팸·동의) 최신화 |
 | ⬜ | landing-page-vs-homepage-for-ads | 웹사이트 | |
