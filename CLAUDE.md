@@ -104,6 +104,9 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | 지역 랜딩 페이지(도시별 입구 페이지) | 템플릿 `automation/sites/render.js`(`areas[]` → `areas/{slug}/`·홈 칩·푸터·사이트맵·areaServed 스키마) · 검사·패치 `sites.js areas --job N --file areas.json`(본문 350자·FAQ 2개·도시 간 중복 60% 미만) · 설계 §4 |
 | GA4·Search Console 셋업·읽기 | 스펙 `analytics{ga4,ga4_property,gsc_site,gsc_verification}`(템플릿이 gtag·전환 이벤트·인증 메타, 실제 도메인에서만) · 비콘 `functions/api/site-event.js` → D1 `site_events` → 관리자 `sites/:slug/stats`·`sites.js stats` · 서비스 계정 읽기 `automation/ai-runner/analytics.js`(`GOOGLE_SA_JSON`) · 절차 `docs/analytics-setup-ko.md` · 질문지 "구글 계정(측정)" 블록 · 약관 §6 소유권 |
 | 루틴 자동 깨움(할 일 생길 때만 실행) | `functions/api/_runner.js`(`wakeRoutine`·`hasAiWork`) · 관리자 `runner/wake`·`runner/status` · `runner.js wake` · 환경변수 `ROUTINE_FIRE_URL`·`ROUTINE_FIRE_TOKEN` (§12-2) |
+| SEO 자동 점검(규칙·예외) | `scripts/seo-check.js`(규칙은 머리말) · 예외 `seo/check-baseline.json` · `npm run check` = 빌드 + 점검 · CI `.github/workflows/seo-check.yml` (§13-1) |
+| SEO 루프 기억(할 일·키워드 지도·변경 기록·주간 보고) | `seo/backlog.yaml` · `seo/keyword-map.yaml`(한 키워드 한 페이지) · `seo/ledger.md` · `seo/weekly/` · `seo/page-audit.yaml` — 루틴 지시 `docs/seo-strategy-routine-prompt-ko.md`·`docs/seo-execute-routine-prompt-ko.md` (§13-1) |
+| 리드 유입 출처(AI 검색·추천·utm) | 화면 `build.js` `window.bhRef()`(sessionStorage, "ref:호스트"/"utm:…"/"direct") → `audit_leads.source`·`tool_leads.source`(없으면 ALTER 로 추가, `functions/api/audit.js ensureSourceColumn`·`tools/_shared.js`) → 관리자 리드 탭 칩(`_ui.js srcChip`, AI 호스트는 🤖) (§13-1) |
 | 관리자 페이지 `/admin/` | `functions/admin/` (화면 `_ui.js`, API `[[path]].js`, 인증 `_auth.js`). 설정 안내 `docs/admin-setup-ko.md` |
 | Stripe 결제 → 주문·작업 기록 | `functions/api/stripe-webhook.js` + 공용 `functions/api/_orders.js` |
 | 서비스별 작업 단계·자동화 수준(플레이북) | `functions/api/_playbook.js` — 관리자 파이프라인·플레이북 탭·`docs/automation-map-ko.md`의 단일 소스 |
@@ -273,6 +276,8 @@ related: 서비스 slug
 
 > ⚠️ 루틴 프롬프트가 캘린더 경로를 `content/blog/blog-calendar.md`로 적고 있으나 **실제 파일은 `content/blog-calendar.md`**다. 지금은 루틴이 알아서 찾아내고 있지만 프롬프트를 고쳐두는 편이 안전하다.
 
+**발행 전 검사(2026-11-02)**: 발행 루틴(월수금)·업그레이드 루틴(화목토) 모두 push 전에 `node build.js && node scripts/seo-check.js` 를 돌리고(위 규격을 코드가 검사한다 — summary 3문장·FAQ·1,800자·description·"90일 플랜"), Agent 도구가 있으면 검수 서브에이전트의 적대적 검토를 한 번 받는다. main 에 직접 push 되므로 CI(`seo-check.yml`)가 사후에 한 번 더 돌고, 실패하면 이슈 "SEO 점검 실패 — main" 이 열린다. 블로그 글을 SEO 이유로 고칠 때는 글을 직접 쓰지 않고 `content/blog-upgrade-queue.md` 에 넣는다(§13-1).
+
 ---
 
 ## 10. 건드리면 안 되는 것
@@ -397,6 +402,23 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 
 `llms.txt`는 서비스·패키지·블로그 목록을 자동으로 담으므로 `data/services.json`을 고치면 함께 갱신된다.
 
+### 13-1. SEO 루프 — 자동 점검·주간 전략·실행 루틴 (2026-11-02)
+
+cpacedesk·BestLoanUSA 와 같은 구조(`seo/README.md` 가 기준 문서). David 의 5개 업그레이드 표 기준으로:
+
+| 항목 | bizhigher 에서 |
+|---|---|
+| 1. 자동 SEO 점검 | `scripts/seo-check.js` — 빌드 결과(dist)와 블로그 원고를 규칙으로 검사. 막는 규칙: meta·canonical·h1·og / 제목·설명문 중복 / 고아 / 사이트맵 / JSON-LD(BlogPosting·FAQPage·별점 금지) / 카피("90일 플랜"·보장) / 블로그 규격 / llms.txt / keyword-map. 보고만: 제목 폭·설명문·inbound·alt·키워드 불일치. `npm run check`. CI `seo-check.yml`(PR 체크 + main 실패 시 이슈) |
+| 2. 한 키워드 한 페이지 | `seo/keyword-map.yaml` — 묶음 82개 초안(원고 keywords 에서 자동 생성). 한 URL 이 두 묶음 owner 면 점검이 막는다. 서비스=구매·도구=실행·블로그=정보 로 각도 분담 |
+| 3. push 전 2차 AI 검토 | SEO 실행 루틴과 블로그 루틴 2개가 push 전에 검수 서브에이전트(별도 컨텍스트, diff 만 보고 적대적 검토) + seo-check 를 거친다(§9) |
+| 4. 매일 색인 확인 | 이미 `BestLoanUSA/seo-data`(`metrics/bizhigher/index-latest.md`, 사이트맵 84 URL 을 URL 검사 API 로 매일) — 전략 루틴이 매주 읽어 I- 항목으로 만든다 |
+| 5. AI 검색 유입 추적 | seo-data `latest-extra.md` 의 AI 방문(aiVisits) + GA4 generate_lead 출처 + **리드 자체의 `source` 열**(2026-11-02 — 무료 진단·도구 리드에 referrer 호스트·utm 저장, 관리자 리드 탭 🤖 칩). 전략 루틴 주간 보고서 "AI 검색" 절 |
+
+- 루틴 2개(환경 `bizhigher`, 새 세션, 프롬프트는 파일을 읽으라는 한 단락): **"BizHigher SEO 주간 전략"** 월 08:41 PT(`docs/seo-strategy-routine-prompt-ko.md` — seo-data 측정·색인·AI 방문·seo-check 보고서 → backlog 정렬·블로그 큐 제안·`seo/weekly/<date>.md`·ledger 판정·페이지 평가 8개 → 초안 PR) · **"BizHigher SEO 실행"** 화·목 07:41 PT(`docs/seo-execute-routine-prompt-ko.md` — backlog `ready` 1개 → `claude/seo-<id>-<date>` → 검수 → 초안 PR; 열린 `claude/seo-` 브랜치 3개 이상이면 쉼). 루틴 id 는 생성 뒤 여기에 적는다
+- 경로 4개: 새 글은 `content/blog-calendar.md` 대기열(발행 루틴이 씀) · 글 보강은 `content/blog-upgrade-queue.md`(업그레이드 루틴이 고침) · 구조는 실행 루틴 PR · 사람 일은 `path: david`. SEO 루틴은 글을 직접 쓰지 않고 **main 에 직접 push 하지 않는다**
+- 초안 PR 은 `.github/workflows/seo-pr.yml` 이 `claude/seo-**` 첫 push 에 연다 — **저장소 설정 Actions → General → "Allow GitHub Actions to create and approve pull requests" 가 켜져 있어야 한다**(David 1회, backlog D-01)
+- 가격·Stripe 링크(`data/services.json`)와 §10 항목은 SEO 이유로 바꾸지 않는다. 2026-11 기준 노출 64/월·클릭 0·색인 68/84 라 판단 근거는 색인 상태·seo-check·페이지 평가가 대부분이다
+
 **IndexNow** (2026-10-06): 키는 `src/indexnow-key.txt` → 빌드가 `dist/{key}.txt`로 공개. `.github/workflows/indexnow.yml`이 main push마다 `scripts/indexnow.js`로 바뀐 URL만 골라(전역 변경이면 사이트맵 전체) Cloudflare 배포 완료를 기다린 뒤 전송한다. 키를 바꾸면 이전 키 파일은 자동으로 사라지므로 따로 할 일 없음. 수동 확인: `node scripts/indexnow.js <before> <after> --dry-run`
 
 **구조화 데이터 규칙**: 회사는 `@id: https://bizhigher.com/#organization` 하나(`ORG_ENTITY`, 홈에서 정의). 다른 페이지는 `ORG_MIN`/`ORG_REF`로 참조만 한다. 화면 브레드크럼은 `crumbsHtml(items)`, 스키마는 `breadcrumbList(items)` — 같은 items를 넘겨 항상 일치시킨다. `founder`·`sameAs`는 정보 확정 시 `ORG_ENTITY`에 추가
@@ -514,7 +536,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 ## 19. 미결
 
 1. **배포 설정 정리** — 대시보드 확인 후 `wrangler.toml`·`worker/index.js` 삭제, README 수정 (§2)
-2. **블로그 루틴 프롬프트의 캘린더 경로 수정** (§9)
+2. **블로그 루틴 프롬프트의 캘린더 경로 수정** (§9) — 2026-11-02 발행 루틴 프롬프트에 "발행 전 검사" 단락은 넣었다(경로 문구는 그대로)
 3. **BizHigher 자체 GBP 등록** — DBA 취득 대기. 취득 후 주소 숨김 SAB 등록 + 영상 인증 콘텐츠 팩 제작
 4. **파운딩 고객 10곳 영업 실행** (FOUNDING20) — 미착수
 5. **fal.ai** — 2026-10-21 `FAL_KEY` 연결. 정지 이미지(광고 소재·게시물)와 숏폼 클립(이미지→영상 5초)은 루틴이 만든다(§12-2). **자막·로고·CTA 합성도 루틴이 한다**(2026-10-22, `creative.js caption` — Playwright 로 투명 PNG 를 그려 **시스템 ffmpeg** `/usr/bin/ffmpeg`(overlay·libx264 있음; Playwright 번들 ffmpeg 는 없음)로 얹는다. 편당 약 17초, 비용 0). **20초 스토리 완성본은 Remotion 템플릿**(`automation/video`, `creative.js promo`, 2026-10-22 — 사이트 스펙이 있는 고객. 메뉴 리빌·비포/애프터 템플릿은 예정). sv-3 는 David 확인 5분. 음악은 고객이 준 mp3 가 있을 때만(`--music`). 선불 $50 + 자동 충전 OFF 유지. Higgsfield 유료 전환은 보류

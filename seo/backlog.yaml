@@ -1,0 +1,142 @@
+# SEO backlog — seo/README.md 참고.
+#
+# status: ready(실행 루틴이 바로 가능) | blocked(선행 조건, notes 에) | needs-david(David 결정·설정 필요)
+#         | in-progress | done | dropped(사유 기록)
+# path  : structure(실행 루틴 PR) | upgrade-queue(content/blog-upgrade-queue.md 에 넣는 PR → 화목토 루틴이 고침)
+#         | calendar(content/blog-calendar.md 대기열에 넣는 PR → 월수금 루틴이 씀) | david(사람 작업)
+# id    : Q-(오류·규격) O-(제목·설명문) L-(내부 링크) I-(색인) K-(키워드·페이지 보강) C-(새 글) M-(측정) D-(David)
+# source: 근거 — 날짜 + 지표(seo-data metrics/bizhigher/ 의 파일, seo-check 보고서)
+#
+# 우선순위는 ready 항목의 순서로 표현한다 — 위가 먼저. 실행 루틴은 위에서부터 하나를 고른다.
+
+items:
+  # ── 2026-11-02 0단계 (seo-data 2026-11-01 스냅샷 + seo-check 첫 실행) ───────────────────────
+  - id: I-01
+    title: 구글이 모르는 URL 6개 + 발견만 된 5개 — 내부 링크 보강과 IndexNow 재전송
+    source: 2026-11-02 (index-latest.md 2026-11-01 — 사이트맵 84 중 색인 68, "URL is unknown to Google" 6, "Discovered - currently not indexed" 5)
+    status: ready
+    path: structure
+    target: [/service/local-listing-care/, /service/local-listing-setup/, /service/shortform-video/, /blog/google-ads-vs-meta-ads-for-local-business/, /blog/google-business-profile-services-guide/, /blog/yelp-management-guide/, /blog/do-you-need-a-website/, /blog/google-business-profile-category-guide/, /blog/google-business-profile-hours-update/, /blog/small-business-blog-topic-ideas/, /tools/review-calc/]
+    notes: >
+      서비스 3개는 /services/ 와 푸터에 이미 링크돼 있는데도 구글이 모른다 — 사이트맵 lastmod 가 블로그에만 붙는 정책(§10-2)이라
+      새 서비스 페이지는 발견이 느리다. 할 것: ① 관련 블로그 글 본문·허브에서 이 서비스 3개로 가는 문맥 링크(로컬 등록 → 디렉토리 글,
+      숏폼 → 숏폼 가이드) ② /blog/ 글 4편은 같은 카테고리 허브에서 링크됐는지 확인하고 없으면 허브 요약에 추가(upgrade-queue 로 넘겨도 됨)
+      ③ 머지 후 Actions 에서 indexnow.yml 을 수동 실행(workflow_dispatch = 사이트맵 전체 전송). 성공 지표: 2주 뒤 index-latest 에서
+      unknown 0, discovered 3 이하.
+
+  - id: K-01
+    title: /tools/local-rank/ — "구글 지도 순위 체크" 검색어 48~74위에서 1페이지로
+    source: 2026-11-02 (latest.md 2026-11-01 — 노출 상위 검색어 "구글순위체크" 9, "구글 지도 순위 체크" 6, "구글지도순위체크" 4, "구글 지도 순위 조회" 1; tools 섹션이 전체 노출 35/64)
+    status: ready
+    path: structure
+    target: [content/tools/local-rank.md, /tools/local-rank/]
+    notes: >
+      사이트에서 유일하게 검색 수요가 보이는 페이지. 제목·H1 은 이미 "구글 지도 순위 체크". 부족한 것은 깊이 — content/tools/local-rank.md 의
+      가이드 섹션을 질문형 ##(순위가 왜 위치마다 다른가 · 격자 7×7 의 뜻 · 몇 위면 손님이 오나 · 올리는 법 4가지)으로 보강하고 FAQ 를 5개로.
+      "다음맵순위체크"(2) 같은 한국 서비스 검색어는 우리 대상이 아니다 — 첫 문단에 "미국 구글 지도" 를 명시해 걸러낸다.
+      /blog/near-me-search-ranking/ 과 /blog/not-showing-on-google/ 본문에서 이 도구로 가는 링크 추가(지금은 하단 추천 블록만).
+      성공 지표: 4주 뒤 "구글 지도 순위 체크" 류 평균 순위 30 이하, 클릭 1 이상.
+
+  - id: O-01
+    title: 블로그 <title> 태그를 짧게 — 56페이지가 표시 폭 60 초과
+    source: 2026-11-02 (seo-check 보고서 — 제목 폭 60 초과 56/84, 최대 106; 블로그는 "{제목} | BizHigher 블로그" 라 전부 초과)
+    status: ready
+    path: structure
+    target: [build.js, content/blog/*.md]
+    notes: >
+      H1(글 제목)은 그대로 두고 <title> 만 줄인다. build.js 블로그 페이지가 front matter `seo_title` 이 있으면 <title> 에 그것을 쓰도록
+      (없으면 지금처럼 title). 접미는 " | BizHigher" 로 통일(블로그 를 떼면 폭 -6). 1차로 노출이 있는 글 7편과 허브 6편에
+      seo_title(폭 50 이하, 묶음 keywords 의 첫 검색어 포함)을 넣는다 — 나머지는 upgrade-queue 루틴이 글을 손볼 때 채운다(규칙을 blog-calendar 스타일 가이드에 한 줄).
+      seo-check 는 그대로 보고만 한다(막지 않음). 성공 지표: 4주 뒤 블로그 섹션 CTR 과 노출.
+
+  - id: O-02
+    title: /pricing/ 제목·설명문에 "마케팅 대행 비용" — 노출은 받는데 82~92위
+    source: 2026-11-02 (latest.md — "마케팅 대행사 비용" 2, "업종별 마케팅 패키지 비용" 2, "종합광고대행 비용" 1 이 /pricing/ 으로; seo-check — pricing 묶음 키워드가 제목·H1 에 없음)
+    status: ready
+    path: structure
+    target: [build.js, /pricing/]
+    notes: >
+      <title> 과 meta description 만 바꾼다(화면 H1·카피는 §1 원칙대로 베네핏 문구 유지). 예: "한인 마케팅 대행 비용 — 월 $139부터 정찰제 | BizHigher".
+      가격 숫자는 services.json 에서 빌드가 넣는 값만. 성공 지표: 4주 뒤 "비용" 검색어 순위 50 이하.
+
+  - id: K-02
+    title: keyword-map 초안 정리 — 서비스·도구·허브·글이 같은 키워드를 쓰는 25곳의 각도 나누기
+    source: 2026-11-02 (seo-check 보고서 "두 묶음에 같은 키워드" 25, "owner 제목·H1 에 키워드 없음" 26)
+    status: ready
+    path: structure
+    target: [seo/keyword-map.yaml]
+    notes: >
+      keyword-map.yaml 만 고치는 PR. 규칙: 같은 말이라도 서비스 = 구매(…대행, …비용), 도구 = 직접(…만들기, …체크), 블로그 = 정보(…하는 법, …이유)로
+      키워드를 다시 적는다. 허브와 스포크가 같은 키워드면 스포크가 주인(허브는 지도 역할). 예: "구글 리뷰 링크 만들기" → tool-review-link 만,
+      svc-review-qr-kit 는 "리뷰 QR 키트 제작·테이블텐트". owner 제목에 키워드가 없는 26곳은 키워드를 제목 쪽에 맞추거나(정보 글) 제목을 바꿀 O- 항목으로.
+
+  - id: Q-01
+    title: 허브 글 4편이 1,800자 미만(1,579~1,683) — baseline 에서 빼기
+    source: 2026-11-02 (seo-check blog 규칙 — check-baseline.json 의 4건)
+    status: ready
+    path: upgrade-queue
+    target: [content/blog/ads-hub.md, content/blog/ai-search-hub.md, content/blog/review-management-hub.md, content/blog/website-hub.md]
+    notes: >
+      content/blog-upgrade-queue.md 맨 위에 4편을 넣고 메모 "본문 1,800자 이상으로 — 각 스포크 요약을 2문장 + '언제 읽을 글인지' 한 줄로, FAQ 4개".
+      업그레이드 루틴이 고치면 다음 seo-check 가 "고쳐짐" 을 알려 주고, 그때 check-baseline.json 에서 지운다(실행 루틴의 다음 PR 에 포함).
+
+  - id: L-01
+    title: /blog/google-business-profile-qa-removed/ 들어오는 링크 2개뿐
+    source: 2026-11-02 (seo-check — inbound 3 미만 1페이지)
+    status: ready
+    path: upgrade-queue
+    target: [/blog/google-business-profile-guide/, /blog/google-business-profile-posts/]
+    notes: >
+      Q&A 기능 종료 글은 구글 프로필 가이드·게시물 글 본문에서 "Q&A 가 사라진 뒤 질문은 어디로 받나" 문맥으로 링크하면 자연스럽다. 두 글을 upgrade-queue 에 메모와 함께.
+
+  - id: O-03
+    title: /data/korean-business-digital-basics-2026-q4/ 설명문 폭 433 — 155자 규격으로
+    source: 2026-11-02 (seo-check — 설명문 폭 80~320 밖 3; privacy·terms 는 법률 문서라 제외)
+    status: ready
+    path: structure
+    target: [data/reports/2026-Q4-digital-basics.json, build.js]
+    notes: >
+      리포트 페이지 description 이 editorial.dek 전체를 쓰는 것으로 보인다 — 첫 문장 또는 별도 `description` 필드로 155자 이내. 숫자는 리포트 값 그대로.
+      이 페이지는 "Crawled - currently not indexed" 상태이기도 하다(I-01 과 같이 보면 좋다).
+
+  - id: I-02
+    title: /data/ 리포트 3편이 "크롤링됨 - 색인 안 됨" — 데이터 페이지 요약·내부 링크
+    source: 2026-11-02 (index-latest.md — data 섹션 4 중 색인 1; 세 리포트 마지막 크롤링 9/23·10/18)
+    status: blocked
+    path: structure
+    target: [/data/korean-business-online-2026-q3/, /data/korean-business-websites-2026-q3/, /data/korean-business-digital-basics-2026-q4/]
+    notes: >
+      원인 가설 ① 표·CSV 중심이라 본문이 얇게 읽힘 ② 홈 "OUR OWN DATA" 밴드 외 내부 링크가 적음. I-01·O-03 머지 뒤 2주 색인 변화를 본 다음 판단 — 그 전엔 blocked.
+      풀리면: 리포트마다 "이 숫자가 사장님에게 뜻하는 것" 400자 요약 + 관련 블로그 글에서 수치 인용 링크(블로그 루틴 큐).
+
+  - id: C-01
+    title: 노출이 있는데 주인 페이지가 없는 검색어 — 아직 없음
+    source: 2026-11-02 (latest.md 검색어 15개 전부 기존 페이지가 받음)
+    status: blocked
+    path: calendar
+    target: [content/blog-calendar.md]
+    notes: >
+      데이터가 더 쌓여야 한다. 전략 루틴은 매주 topQueries 에서 주인 없는 묶음이 보이면 이 항목을 ready 로 바꾸고 주제 행 초안을 notes 에 적는다.
+      그 전까지 블로그 주제는 blog-calendar.md 대기열(발행 루틴이 스스로 채움)을 그대로 둔다.
+
+  - id: M-01
+    title: AI 검색 유입 추적 — 리드 source 열(referrer·utm) + seo-data AI 방문 + 주간 보고
+    source: 2026-11-02 (David 요청 — 표의 5번 항목; latest-extra.md 에 AI 방문 0)
+    status: done
+    path: structure
+    target: [functions/api/audit.js, functions/api/tools/_shared.js, build.js, src/tools/common.js, functions/admin/_ui.js]
+    notes: >
+      완료 2026-11-02 (이 PR): 무료 진단·도구 리드 POST 에 ref(document.referrer 의 호스트 + utm_source/medium/campaign) 를 담아
+      audit_leads.source · tool_leads.source 에 저장(없으면 ALTER TABLE 로 열 추가). 관리자 리드 탭에 출처 칩. 전략 루틴은 매주
+      seo-data latest-ga4-extra.json 의 aiVisits + 관리자 leads API 의 source 를 세어 주간 보고서 "AI 검색" 절에 적는다.
+      성공 지표: 측정 자체(AI 세션·리드 수가 0 이 아닌 주가 언제 오는지).
+
+  - id: D-01
+    title: GitHub 설정 — Actions 가 PR 을 만들 수 있게
+    source: 2026-11-02 (seo-pr.yml 전제)
+    status: needs-david
+    path: david
+    target: [github.com/BestLoanUSA/bizhigher/settings/actions]
+    notes: >
+      Settings → Actions → General → Workflow permissions → "Allow GitHub Actions to create and approve pull requests" 켜기(1회).
+      켜기 전에는 SEO 루틴이 push 한 claude/seo-* 브랜치에 PR 이 자동으로 안 열린다 — 루틴 보고의 compare 링크로 David 가 직접 연다.

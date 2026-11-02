@@ -61,8 +61,16 @@ async function sha256(s) {
 async function ensureTables(env) {
   await env.DB.batch([
     env.DB.prepare('CREATE TABLE IF NOT EXISTS tool_usage (day TEXT NOT NULL, who TEXT NOT NULL, tool TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (day, who, tool))'),
-    env.DB.prepare('CREATE TABLE IF NOT EXISTS tool_leads (id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, email TEXT NOT NULL, phone TEXT, tool TEXT NOT NULL, business TEXT)'),
+    env.DB.prepare('CREATE TABLE IF NOT EXISTS tool_leads (id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, email TEXT NOT NULL, phone TEXT, tool TEXT NOT NULL, business TEXT, source TEXT)'),
   ]);
+  // 2026-11-02 이전에 만들어진 tool_leads 에는 source 열이 없다 — 한 번 추가
+  if (!ensureTables.sourceChecked) {
+    ensureTables.sourceChecked = true;
+    try {
+      const cols = ((await env.DB.prepare('PRAGMA table_info(tool_leads)').all()).results || []).map((r) => r.name);
+      if (!cols.includes('source')) await env.DB.prepare('ALTER TABLE tool_leads ADD COLUMN source TEXT').run();
+    } catch { ensureTables.sourceChecked = false; }
+  }
 }
 
 /**
@@ -100,10 +108,14 @@ export async function takeQuota(env, request, tool, email) {
 }
 
 /* 도구 이용 리드 저장 — 이메일 처음 보이면 true(알림 보낼지 판단용). 입력 내용·결과는 저장하지 않는다 */
-export async function saveLead(env, { email, phone, tool, business }) {
+export async function saveLead(env, { email, phone, tool, business, source }) {
   try {
     const seen = await env.DB.prepare('SELECT 1 FROM tool_leads WHERE email = ? LIMIT 1').bind(email).first();
-    await env.DB.prepare('INSERT INTO tool_leads (email, phone, tool, business) VALUES (?, ?, ?, ?)').bind(email, phone || null, tool, business || null).run();
+    try {
+      await env.DB.prepare('INSERT INTO tool_leads (email, phone, tool, business, source) VALUES (?, ?, ?, ?, ?)').bind(email, phone || null, tool, business || null, source || null).run();
+    } catch {
+      await env.DB.prepare('INSERT INTO tool_leads (email, phone, tool, business) VALUES (?, ?, ?, ?)').bind(email, phone || null, tool, business || null).run();
+    }
     return !seen;
   } catch {
     return false;

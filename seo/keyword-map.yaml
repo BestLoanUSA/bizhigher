@@ -1,0 +1,532 @@
+# 키워드 묶음 → 주인 URL 하나 (seo/README.md 규칙 — 한 키워드에 한 페이지).
+#
+# 모양이 고정된 파일이다 — scripts/seo-check.js 가 패턴으로 읽는다(YAML 라이브러리 없음).
+#   - id       묶음 이름 (site- svc- pkg- tool- hub- post- data-)
+#     keywords [한 줄 배열] — 이 묶음으로 순위를 노리는 검색어(한국어·영어). 제목·H1·설명문이 이 말을 쓴다
+#     intent   brand | transactional | tool | informational | data
+#     owner    이 묶음의 주인 페이지 하나(끝에 /). 한 URL 이 두 묶음의 owner 면 seo:check 가 막는다
+#     support  같은 주제의 보조 페이지 — 다른 각도로 쓰고 owner 로 링크한다. support 제목이 owner 키워드를 정면으로 노리면 잠식
+#     note     전략 루틴의 메모(실제 검색어·충돌·판단)
+#
+# 0단계 초안(2026-11-02): keywords 는 각 원고의 front matter keywords·서비스명·도구명에서 자동으로 뽑은 가설이다.
+# Search Console 데이터(seo-data metrics/bizhigher/)가 쌓이면 전략 루틴이 실제 검색어로 고친다. 2026-11-01 기준 노출된 검색어 15개뿐.
+# 잠식 의심: 구글 비즈니스 프로필(서비스 google-profile-optimization vs 블로그 허브·가이드), 리뷰(서비스 review-reply·review-qr-kit vs 도구 review-link·블로그) —
+#   서비스 = 구매 의도, 블로그 = 정보 의도, 도구 = 직접 해 보기 로 각도를 나눈다. 제목에 같은 말을 쓰더라도 의도가 다르면 잠식이 아니다.
+
+clusters:
+  # ── 사이트 고정 페이지 ────────────────────────────────────────
+  - id: brand
+    keywords: [비즈하이어, bizhigher, 한인 비즈니스 AI 광고회사, 한인 마케팅 대행, 미주 한인 마케팅 회사]
+    intent: brand
+    owner: /
+    support: [/services/, /pricing/]
+    note: 브랜드 검색. H1 은 가격 우위 문구(CLAUDE.md §1)
+
+  - id: pricing
+    keywords: [한인 마케팅 비용, 소상공인 마케팅 비용, 마케팅 패키지 가격, 마케팅 대행 월 비용]
+    intent: transactional
+    owner: /pricing/
+    support: [/package/local-starter/, /package/local-growth/, /package/local-premium/]
+
+  - id: free-audit
+    keywords: [무료 마케팅 진단, 구글 비즈니스 프로필 진단, 가게 온라인 진단, 구글 지도 노출 진단]
+    intent: tool
+    owner: /free-audit/
+    note: 핵심 리드 수단(§5)
+
+  - id: services-index
+    keywords: [한인 비즈니스 마케팅 서비스, 소상공인 마케팅 서비스 종류]
+    intent: transactional
+    owner: /services/
+
+  - id: tools-index
+    keywords: [무료 마케팅 도구, 소상공인 무료 마케팅 툴, 구글 마케팅 무료 도구]
+    intent: tool
+    owner: /tools/
+
+  - id: blog-index
+    keywords: [한인 소상공인 마케팅 가이드, 가게 마케팅 블로그]
+    intent: informational
+    owner: /blog/
+
+  - id: data-index
+    keywords: [한인 비즈니스 온라인 실태, 한인 업소 웹사이트 통계, 미주 한인 소상공인 데이터]
+    intent: data
+    owner: /data/
+
+  # ── 공개 데이터 ────────────────────────────────────────────────
+  - id: data-online-2026-q3
+    keywords: [LA OC 한인 업소 온라인 실태 조사, 한인 업소 웹사이트 보유율]
+    intent: data
+    owner: /data/korean-business-online-2026-q3/
+    support: [/data/]
+
+  - id: data-websites-2026-q3
+    keywords: [한인 업소 웹사이트 첫 화면 점검, 한인 가게 홈페이지 실태]
+    intent: data
+    owner: /data/korean-business-websites-2026-q3/
+    support: [/data/]
+
+  - id: data-digital-basics-2026-q4
+    keywords: [한인 업소 디지털 기본기 점검, 한인 업소 SNS 웹사이트 유무 통계]
+    intent: data
+    owner: /data/korean-business-digital-basics-2026-q4/
+    support: [/data/]
+
+  # ── 서비스 16 (구매 의도 — 가격은 services.json 이 원본) ────
+  - id: svc-ai-marketing-report
+    keywords: [AI 마케팅 진단 리포트, 가게 온라인 마케팅 진단, 구글 지도 경쟁 업체 비교, 우리 가게 마케팅 뭐부터 해야 하나, 소상공인 마케팅 컨설팅 비용, 구글 프로필 점수 확인, 한인 업소 마케팅 분석, 마케팅 진단 리포트]
+    intent: transactional
+    owner: /service/ai-marketing-report/
+
+  - id: svc-review-qr-kit
+    keywords: [구글 리뷰 QR 키트, 구글 리뷰 늘리는 방법, 구글 리뷰 QR코드 만들기, 구글 리뷰 링크 만들기, 리뷰 부탁하는 법, 식당 리뷰 QR 테이블텐트, 구글 리뷰 요청 문구, google review QR code]
+    intent: transactional
+    owner: /service/review-qr-kit/
+
+  - id: svc-google-profile-optimization
+    keywords: [구글 비즈니스 프로필 최적화, 구글 비즈니스 프로필 최적화, 구글 비즈니스 프로필 최적화 비용, 구글 지도 상위 노출 방법, 구글 지도 순위 올리기, 구글 프로필 카테고리 설정, 구글 맵 가게 노출 안됨, 구글 프로필 관리 대행]
+    intent: transactional
+    owner: /service/google-profile-optimization/
+
+  - id: svc-local-listing-setup
+    keywords: [로컬 등록 셋업, 구글 말고 어디에 가게 등록, 미국 가게 디렉토리 등록, 한인 업소록 등록, 애플 지도 가게 등록, Bing Places 등록, 시티에이션 등록 비용, NAP 일관성]
+    intent: transactional
+    owner: /service/local-listing-setup/
+
+  - id: svc-local-listing-care
+    keywords: [로컬 등록 관리, 가게 이사 후 주소 변경, 영업시간 변경 모든 사이트, 옐프 주소 수정, 디렉토리 정보 관리, 가게 전화번호 바뀜 구글, 업소록 정보 수정, 로컬 등록 관리 비용]
+    intent: transactional
+    owner: /service/local-listing-care/
+
+  - id: svc-website
+    keywords: [웹사이트 제작, 가게 홈페이지 제작 비용, 소상공인 웹사이트 제작, 한인 웹사이트 제작 업체, 식당 홈페이지 만들기, 호스팅비 없는 홈페이지, 원페이지 웹사이트 제작, 웹사이트 빌더 vs 제작 대행]
+    intent: transactional
+    owner: /service/website/
+
+  - id: svc-local-landing-pack
+    keywords: [지역 랜딩페이지 팩, 옆 도시 손님 검색 노출, 지역 랜딩페이지 만들기, 서비스 지역 페이지 SEO, 다른 도시 검색에 가게 나오게, 도시별 페이지 중복 콘텐츠, 지역 SEO 페이지 비용, 한인 업소 웹사이트 지역 노출]
+    intent: transactional
+    owner: /service/local-landing-pack/
+
+  - id: svc-seo-blog-pack
+    keywords: [SEO 블로그 구독, 블로그 대행 비용, 블로그 마케팅 효과, 가게 블로그 해야 하나, SEO 블로그 글 대행, 홈페이지 블로그 글쓰기 대행, 블로그 글 몇 개 써야 검색되나, SEO blog writing service]
+    intent: transactional
+    owner: /service/seo-blog-pack/
+
+  - id: svc-seo-aio
+    keywords: [SEO/AIO 관리, ChatGPT 가게 추천 받는 법, AI 검색 최적화, AIO 뜻, 구글 검색 상위 노출 방법, SEO 관리 비용, 한인 업소 SEO 대행, Search Console 2페이지 키워드]
+    intent: transactional
+    owner: /service/seo-aio/
+
+  - id: svc-ad-creative-pack
+    keywords: [광고 소재 구독, 광고 이미지 제작 비용, 페이스북 광고 이미지 제작, 인스타 광고 소재 제작, 광고 소재 교체 주기, 광고 피로도, 식당 광고 이미지 디자인, 한인 광고 디자인 대행]
+    intent: transactional
+    owner: /service/ad-creative-pack/
+
+  - id: svc-shortform-video
+    keywords: [숏폼 영상 구독, 릴스 제작 비용, 숏폼 영상 제작 비용, 가게 홍보 영상 만들기, 인스타 릴스 대행, 틱톡 마케팅 소상공인, 유튜브 쇼츠 가게 홍보, AI 홍보 영상 제작]
+    intent: transactional
+    owner: /service/shortform-video/
+
+  - id: svc-ads-setup
+    keywords: [광고 셋업, 구글 광고 전환 추적 설정, GA4 설치 대행, 구글 애즈 전환 추적 안됨, 메타 픽셀 설치, 페이스북 전환 API 설정, 광고 셋업 비용, 구글 태그 설치 방법]
+    intent: transactional
+    owner: /service/ads-setup/
+
+  - id: svc-ads-management
+    keywords: [광고 운영, 구글 광고 대행 비용, 광고 대행사 수수료, 메타 광고 대행 비용, 페이스북 인스타 광고 대행, 구글 광고 최소 예산, 광고 대행 vs 직접 운영, 한인 광고 대행사]
+    intent: transactional
+    owner: /service/ads-management/
+
+  - id: svc-review-reply
+    keywords: [리뷰 답글 대행, 구글 리뷰 답글 꼭 달아야 하나, 구글 리뷰 답글 대행 비용, 리뷰 답글 예시, 나쁜 리뷰 답글 다는 법, 리뷰 관리 대행, 구글 리뷰 답글 영어, google review reply service]
+    intent: transactional
+    owner: /service/review-reply/
+
+  - id: svc-gbp-posting
+    keywords: [포스팅 관리, 구글 프로필 게시물 효과, 구글 비즈니스 프로필 포스팅, 인스타 관리 대행 비용, SNS 관리 대행 비용, 페이스북 인스타 관리 대행, 가게 인스타 뭐 올려야 하나, google business profile posts]
+    intent: transactional
+    owner: /service/gbp-posting/
+
+  - id: svc-care-plan
+    keywords: [웹사이트 유지관리, 홈페이지 유지보수 비용, 웹사이트 관리 대행, 가게 홈페이지 수정 대행, 웹사이트 유지관리 월 비용, 홈페이지 메뉴 가격 수정, 웹사이트 백업 보안 관리, 한인 웹사이트 관리 업체]
+    intent: transactional
+    owner: /service/care-plan/
+
+  # ── 패키지 3 ──────────────────────────────────────────────────
+  - id: pkg-local-starter
+    keywords: [Local Starter 패키지, 한인 가게 마케팅 패키지, 소상공인 마케팅 월 관리, 구글 프로필 관리 대행, 리뷰 답글 대행 비용, 동네 가게 마케팅 대행, 식당 마케팅 월 구독]
+    intent: transactional
+    owner: /package/local-starter/
+    support: [/pricing/]
+
+  - id: pkg-local-growth
+    keywords: [Local Growth 패키지, 한인 업소 SEO 패키지, 구글 검색 노출 마케팅 대행, AI 검색 최적화 패키지, ChatGPT 가게 추천 마케팅, 숏폼 영상 마케팅 대행, 로컬 SEO 월 관리 비용]
+    intent: transactional
+    owner: /package/local-growth/
+    support: [/pricing/]
+
+  - id: pkg-local-premium
+    keywords: [Local Premium 패키지, 한인 업소 광고 대행 패키지, 구글 광고 메타 광고 운영 대행, 마케팅 직원 대신 대행, 올인원 마케팅 대행 비용, 한인 마케팅 회사 월 비용, 광고 운영 SEO 영상 패키지]
+    intent: transactional
+    owner: /package/local-premium/
+    support: [/pricing/]
+
+  # ── 무료 도구 15 (직접 해 보기) ────────────────────────
+  - id: tool-local-rank
+    keywords: [구글 지도 순위 체크, 구글 지도 순위 확인, 로컬 순위 체크, 구글 맵 순위, local rank checker, google maps rank grid]
+    intent: tool
+    owner: /tools/local-rank/
+    support: [/service/google-profile-optimization/]
+
+  - id: tool-competitor-reviews
+    keywords: [경쟁 가게 리뷰 비교, 경쟁 가게 리뷰 비교, 구글 리뷰 경쟁사, 리뷰 수 비교, 주변 가게 별점, competitor review comparison]
+    intent: tool
+    owner: /tools/competitor-reviews/
+    support: [/service/review-reply/]
+
+  - id: tool-nap-check
+    keywords: [가게 정보 일치 체크 (NAP), 가게 정보 다르게 나옴, NAP 일관성 체크, 구글 주소 전화번호 확인, NAP checker]
+    intent: tool
+    owner: /tools/nap-check/
+    support: [/service/local-listing-setup/]
+
+  - id: tool-schema-generator
+    keywords: [LocalBusiness 스키마 생성기, LocalBusiness 스키마 만들기, 구조화 데이터 생성기, 가게 스키마 코드, schema markup generator, local business schema]
+    intent: tool
+    owner: /tools/schema-generator/
+    support: [/service/seo-aio/]
+
+  - id: tool-ai-check
+    keywords: [AI 추천 체크, ChatGPT 가게 추천, AI 검색 우리 가게, AI 추천 확인, AI search visibility check]
+    intent: tool
+    owner: /tools/ai-check/
+    support: [/service/seo-aio/]
+
+  - id: tool-review-link
+    keywords: [구글 리뷰 링크·QR 포스터 생성기, 구글 리뷰 링크 만들기, 구글 리뷰 QR코드, 리뷰 요청 링크, google review link generator]
+    intent: tool
+    owner: /tools/review-link/
+    support: [/service/review-qr-kit/]
+
+  - id: tool-review-calc
+    keywords: [구글 리뷰 별점 계산기, 구글 별점 계산, 리뷰 몇개 필요, 별점 올리기 계산기, 4.5점 만들려면, google review rating calculator]
+    intent: tool
+    owner: /tools/review-calc/
+    support: [/service/review-qr-kit/]
+
+  - id: tool-review-reply
+    keywords: [리뷰 답글 생성기 (한/영), 구글 리뷰 답글 예시, 나쁜 리뷰 답글, 리뷰 답글 영어, review reply generator]
+    intent: tool
+    owner: /tools/review-reply/
+    support: [/service/review-reply/]
+
+  - id: tool-ads-budget
+    keywords: [구글 광고 예산 계산기, 구글 광고 비용 계산, 광고 예산 얼마, 구글 광고 최소 예산, google ads budget calculator]
+    intent: tool
+    owner: /tools/ads-budget/
+    support: [/service/ads-setup/]
+
+  - id: tool-ad-keywords
+    keywords: [구글 광고 키워드·제외 키워드 생성기, 구글 광고 키워드 추천, 제외 키워드 목록, 네거티브 키워드, 구글 애즈 키워드 짜기, google ads keyword generator]
+    intent: tool
+    owner: /tools/ad-keywords/
+    support: [/service/ads-setup/]
+
+  - id: tool-ad-copy-check
+    keywords: [광고 문구 글자 수 체커, 구글 광고 글자수, 광고 제목 30자, 한글 글자수 2자, 페이스북 광고 문구 길이, ad copy character counter]
+    intent: tool
+    owner: /tools/ad-copy-check/
+    support: [/service/ads-management/]
+
+  - id: tool-utm-builder
+    keywords: [광고 링크 추적 생성기 (UTM), UTM 링크 만들기, 광고 효과 측정, 전단지 QR 추적, GA4 캠페인 링크, utm builder]
+    intent: tool
+    owner: /tools/utm-builder/
+    support: [/service/ads-setup/]
+
+  - id: tool-gbp-post
+    keywords: [구글 프로필 게시물 생성기, 구글 프로필 게시물 예시, 구글 비즈니스 프로필 포스팅, google business post ideas]
+    intent: tool
+    owner: /tools/gbp-post/
+    support: [/service/gbp-posting/]
+
+  - id: tool-menu-to-web
+    keywords: [메뉴판 → 웹 메뉴 변환기, 온라인 메뉴 만들기, 메뉴판 텍스트 변환, 식당 웹 메뉴, menu to text]
+    intent: tool
+    owner: /tools/menu-to-web/
+    support: [/service/website/]
+
+  - id: tool-bilingual-intro
+    keywords: [한/영 가게 소개문 생성기, 가게 소개 영어로, 구글 프로필 설명 예시, 비즈니스 소개문 영어, business description generator]
+    intent: tool
+    owner: /tools/bilingual-intro/
+    support: [/service/google-profile-optimization/]
+
+  # ── 블로그 (허브 먼저, 그다음 글) — related 는 빌드가 CTA 로 붙이는 서비스 ────
+  - id: hub-ads-hub
+    keywords: [가게 광고, 구글 광고 시작, 소상공인 광고, 광고 성과, 시즌 광고]
+    intent: informational
+    owner: /blog/ads-hub/
+    support: [/blog/ad-performance-metrics-guide/, /blog/google-ads-small-budget-guide/, /blog/google-ads-vs-meta-ads-for-local-business/, /blog/seasonal-marketing-calendar/]
+    related: /service/ad-creative-pack/
+
+  - id: hub-ai-search-hub
+    keywords: [AI 검색 최적화, ChatGPT 가게 추천, 구글 AI 요약, AIO, 로컬 비즈니스 AI 노출]
+    intent: informational
+    owner: /blog/ai-search-hub/
+    support: [/blog/ai-search-optimization-aio/, /blog/google-ai-overviews-local-business/, /blog/local-marketing-2026-review-2027-prep/]
+    related: /service/seo-aio/
+
+  - id: hub-content-sns-hub
+    keywords: [가게 SNS 홍보, 소상공인 콘텐츠 마케팅, 인스타그램 구글 프로필, 이중 언어 마케팅, 구글 게시물]
+    intent: informational
+    owner: /blog/content-sns-hub/
+    support: [/blog/bilingual-marketing-korean-local-customers/, /blog/email-sms-marketing-basics/, /blog/google-business-profile-posts/, /blog/instagram-vs-google-business-profile/, /blog/shortform-video-guide/, /blog/small-business-blog-topic-ideas/]
+    related: /service/seo-blog-pack/
+
+  - id: hub-google-business-profile-hub
+    keywords: [구글 비즈니스 프로필, 구글 지도 등록, 구글 검색 노출, GBP 완전 가이드]
+    intent: informational
+    owner: /blog/google-business-profile-hub/
+    support: [/blog/google-business-profile-category-guide/, /blog/google-business-profile-guide/, /blog/google-business-profile-hours-update/, /blog/google-business-profile-qa-removed/, /blog/google-business-profile-services-guide/, /blog/korean-business-directory-list/, /blog/near-me-search-ranking/, /blog/not-showing-on-google/, /blog/store-photo-guide/, /blog/trade-area-analysis-google-maps/]
+    related: /service/google-profile-optimization/
+
+  - id: hub-review-management-hub
+    keywords: [리뷰 관리, 구글 리뷰, 나쁜 리뷰 대응, 옐프 관리, 리뷰 답글]
+    intent: informational
+    owner: /blog/review-management-hub/
+    support: [/blog/google-review-guide/, /blog/negative-review-response-guide/, /blog/photo-reviews-guide/, /blog/review-qr-code-placement/, /blog/yelp-management-guide/]
+    related: /service/review-reply/
+
+  - id: hub-website-hub
+    keywords: [가게 웹사이트, 소상공인 홈페이지, 온라인 메뉴판, 웹사이트 전환율, 모바일 웹사이트]
+    intent: informational
+    owner: /blog/website-hub/
+    support: [/blog/do-you-need-a-website/, /blog/landing-page-vs-homepage-for-ads/, /blog/online-menu-guide/, /blog/website-visitors-no-calls/]
+    related: /service/website/
+
+  - id: post-ad-performance-metrics-guide
+    keywords: [광고 성과 분석, 구글 광고 전환, 전환당 비용, 클릭률, 검색어 보고서, 소상공인 광고]
+    intent: informational
+    owner: /blog/ad-performance-metrics-guide/
+    support: [/blog/ads-hub/]
+    related: /service/ad-creative-pack/
+
+  - id: post-ai-search-optimization-aio
+    keywords: [AI 검색 최적화, AIO, ChatGPT 가게 추천, AI 검색 노출, AEO, GEO, 구글 AI 요약, how to get recommended by ChatGPT]
+    intent: informational
+    owner: /blog/ai-search-optimization-aio/
+    support: [/blog/ai-search-hub/]
+    related: /service/seo-aio/
+
+  - id: post-bilingual-marketing-korean-local-customers
+    keywords: [이중 언어 마케팅, 한인 가게 영어 마케팅, 한인 손님 현지 손님, 구글 프로필 한국어 영어, 소상공인 마케팅]
+    intent: informational
+    owner: /blog/bilingual-marketing-korean-local-customers/
+    support: [/blog/content-sns-hub/]
+    related: /service/seo-blog-pack/
+
+  - id: post-do-you-need-a-website
+    keywords: [가게 웹사이트, 소상공인 웹사이트, 구글 비즈니스 프로필, 웹사이트 제작 비용, 원페이지 홈페이지, 홈페이지 필요한가, 구글 프로필만으로 충분한가, do I need a website for my small business]
+    intent: informational
+    owner: /blog/do-you-need-a-website/
+    support: [/blog/website-hub/]
+    related: /service/website/
+
+  - id: post-email-sms-marketing-basics
+    keywords: [가게 이메일 마케팅, 문자 마케팅, 단골 관리, 소상공인 재방문, CAN-SPAM, 한인 가게 문자 발송]
+    intent: informational
+    owner: /blog/email-sms-marketing-basics/
+    support: [/blog/content-sns-hub/]
+    related: /service/seo-blog-pack/
+
+  - id: post-google-ads-small-budget-guide
+    keywords: [구글 광고 소액 예산, 구글 애즈 시작, 로컬 비즈니스 광고, 검색 광고 테스트]
+    intent: informational
+    owner: /blog/google-ads-small-budget-guide/
+    support: [/blog/ads-hub/]
+    related: /service/ads-setup/
+
+  - id: post-google-ads-vs-meta-ads-for-local-business
+    keywords: [구글 광고 메타 광고 차이, 페이스북 광고, 인스타그램 광고, 소상공인 광고, 한인 가게 광고, 광고 플랫폼 선택]
+    intent: informational
+    owner: /blog/google-ads-vs-meta-ads-for-local-business/
+    support: [/blog/ads-hub/]
+    related: /service/ad-creative-pack/
+
+  - id: post-google-ai-overviews-local-business
+    keywords: [구글 AI 요약, AI Overviews, 구글 AI 검색 노출, 로컬 검색, 가게 AI 노출]
+    intent: informational
+    owner: /blog/google-ai-overviews-local-business/
+    support: [/blog/ai-search-hub/]
+    related: /service/seo-aio/
+
+  - id: post-google-business-profile-category-guide
+    keywords: [구글 프로필 카테고리, 구글 비즈니스 프로필 주 카테고리, 추가 카테고리, GBP 카테고리 변경, 구글 지도 업종 설정]
+    intent: informational
+    owner: /blog/google-business-profile-category-guide/
+    support: [/blog/google-business-profile-hub/]
+    related: /service/google-profile-optimization/
+
+  - id: post-google-business-profile-guide
+    keywords: [미국 가게 구글 등록, 구글 비즈니스 프로필 만들기, 구글 지도 등록, GBP 인증, 구글 영상 인증, 구글 인증 거절, how to create Google Business Profile, verify Google Business Profile]
+    intent: informational
+    owner: /blog/google-business-profile-guide/
+    support: [/blog/google-business-profile-hub/]
+    related: /service/google-profile-optimization/
+
+  - id: post-google-business-profile-hours-update
+    keywords: [구글 영업시간 변경, 구글 프로필 휴무일, 특별 영업시간, 임시 휴업 설정, 공휴일 영업시간 구글]
+    intent: informational
+    owner: /blog/google-business-profile-hours-update/
+    support: [/blog/google-business-profile-hub/]
+    related: /service/google-profile-optimization/
+
+  - id: post-google-business-profile-posts
+    keywords: [구글 비즈니스 프로필 게시물, GBP posts, 구글 프로필 홍보, 구글 지도 게시물]
+    intent: informational
+    owner: /blog/google-business-profile-posts/
+    support: [/blog/content-sns-hub/]
+    related: /service/gbp-posting/
+
+  - id: post-google-business-profile-qa-removed
+    keywords: [구글 프로필 Q&A, 구글 비즈니스 프로필 질문과 답변, Ask Maps, 구글 지도 AI 답변, GBP Q&A 종료]
+    intent: informational
+    owner: /blog/google-business-profile-qa-removed/
+    support: [/blog/google-business-profile-hub/]
+    related: /service/google-profile-optimization/
+
+  - id: post-google-business-profile-services-guide
+    keywords: [구글 프로필 서비스 항목, 구글 비즈니스 프로필 서비스 추가, 구글 지도 서비스 목록, GBP 서비스 설명, 구글 프로필 상품 등록]
+    intent: informational
+    owner: /blog/google-business-profile-services-guide/
+    support: [/blog/google-business-profile-hub/]
+    related: /service/google-profile-optimization/
+
+  - id: post-google-review-guide
+    keywords: [구글 리뷰 늘리기, 리뷰 요청 방법, 구글 리뷰 정책, 리뷰 QR, 리뷰 링크, 리뷰 게이팅, how to get more Google reviews, Google review policy]
+    intent: informational
+    owner: /blog/google-review-guide/
+    support: [/blog/review-management-hub/]
+    related: /service/review-qr-kit/
+
+  - id: post-instagram-vs-google-business-profile
+    keywords: [인스타그램 구글 프로필, 가게 SNS 홍보, 구글 비즈니스 프로필 인스타그램 차이, 소상공인 마케팅 우선순위]
+    intent: informational
+    owner: /blog/instagram-vs-google-business-profile/
+    support: [/blog/content-sns-hub/]
+    related: /service/gbp-posting/
+
+  - id: post-korean-business-directory-list
+    keywords: [미국 한인 업소록, 비즈니스 디렉토리 등록, 무료 업체 등록, NAP 일관성, 로컬 SEO]
+    intent: informational
+    owner: /blog/korean-business-directory-list/
+    support: [/blog/google-business-profile-hub/]
+    related: /service/local-listing-setup/
+
+  - id: post-landing-page-vs-homepage-for-ads
+    keywords: [랜딩페이지, 홈페이지 차이, 광고 랜딩페이지, 구글 광고 도착 페이지, 소상공인 광고, 전환율]
+    intent: informational
+    owner: /blog/landing-page-vs-homepage-for-ads/
+    support: [/blog/website-hub/]
+    related: /service/local-landing-pack/
+
+  - id: post-local-marketing-2026-review-2027-prep
+    keywords: [2026 로컬 마케팅, 2027 마케팅 준비, 한인 가게 마케팅, 구글 프로필 점검, AI 검색 노출]
+    intent: informational
+    owner: /blog/local-marketing-2026-review-2027-prep/
+    support: [/blog/ai-search-hub/]
+    related: /service/seo-aio/
+
+  - id: post-near-me-search-ranking
+    keywords: [near me 검색, 근처 검색 순위, 구글 지도 거리, 로컬 SEO]
+    intent: informational
+    owner: /blog/near-me-search-ranking/
+    support: [/blog/google-business-profile-hub/]
+    related: /service/seo-aio/
+
+  - id: post-negative-review-response-guide
+    keywords: [나쁜 리뷰 대응, 리뷰 답글 예문, 별점 답글, 구글 리뷰 대응]
+    intent: informational
+    owner: /blog/negative-review-response-guide/
+    support: [/blog/review-management-hub/]
+    related: /service/review-reply/
+
+  - id: post-not-showing-on-google
+    keywords: [구글 검색 안 나옴, 구글 지도 노출 안 됨, 가게 검색 노출, 로컬 SEO, 구글 비즈니스 프로필 안 보임, 구글 프로필 정지, Google Business Profile not showing, local pack]
+    intent: informational
+    owner: /blog/not-showing-on-google/
+    support: [/blog/google-business-profile-hub/]
+    related: /service/seo-aio/
+
+  - id: post-online-menu-guide
+    keywords: [온라인 메뉴판, 식당 메뉴 웹사이트, 메뉴 PDF, 구글 프로필 메뉴, 모바일 메뉴판]
+    intent: informational
+    owner: /blog/online-menu-guide/
+    support: [/blog/website-hub/]
+    related: /service/website/
+
+  - id: post-photo-reviews-guide
+    keywords: [포토 리뷰, 구글 사진 리뷰, 리뷰 사진 늘리기, 구글 지도 리뷰, 리뷰 요청 방법]
+    intent: informational
+    owner: /blog/photo-reviews-guide/
+    support: [/blog/review-management-hub/]
+    related: /service/review-qr-kit/
+
+  - id: post-review-qr-code-placement
+    keywords: [리뷰 QR 코드, 구글 리뷰 QR, QR 코드 위치, 리뷰 요청 방법, 구글 리뷰 링크]
+    intent: informational
+    owner: /blog/review-qr-code-placement/
+    support: [/blog/review-management-hub/]
+    related: /service/review-qr-kit/
+
+  - id: post-seasonal-marketing-calendar
+    keywords: [시즌 마케팅, 명절 마케팅, 한인 가게 프로모션, 설날 추석 마케팅, 연간 마케팅 캘린더]
+    intent: informational
+    owner: /blog/seasonal-marketing-calendar/
+    support: [/blog/ads-hub/]
+    related: /service/ad-creative-pack/
+
+  - id: post-shortform-video-guide
+    keywords: [숏폼 영상, 릴스 가게 홍보, 틱톡 소상공인, 유튜브 쇼츠, 한인 가게 영상 마케팅]
+    intent: informational
+    owner: /blog/shortform-video-guide/
+    support: [/blog/content-sns-hub/]
+    related: /service/shortform-video/
+
+  - id: post-small-business-blog-topic-ideas
+    keywords: [가게 블로그 주제, 소상공인 블로그, 블로그 검색 노출, 블로그 쓸거리, 한인 가게 콘텐츠 마케팅]
+    intent: informational
+    owner: /blog/small-business-blog-topic-ideas/
+    support: [/blog/content-sns-hub/]
+    related: /service/seo-blog-pack/
+
+  - id: post-store-photo-guide
+    keywords: [구글 비즈니스 프로필 사진, 가게 사진 찍는 법, 매장 사진, 구글 지도 사진, 프로필 사진 최적화]
+    intent: informational
+    owner: /blog/store-photo-guide/
+    support: [/blog/google-business-profile-hub/]
+    related: /service/google-profile-optimization/
+
+  - id: post-trade-area-analysis-google-maps
+    keywords: [상권 분석, 구글 지도 경쟁사 분석, 로컬 마케팅, 한인 가게 상권, 경쟁 업체 조사]
+    intent: informational
+    owner: /blog/trade-area-analysis-google-maps/
+    support: [/blog/google-business-profile-hub/]
+    related: /service/ai-marketing-report/
+
+  - id: post-website-visitors-no-calls
+    keywords: [홈페이지 전화 안 옴, 웹사이트 전환율, 소상공인 홈페이지, 모바일 웹사이트, 전화 버튼, 예약 버튼]
+    intent: informational
+    owner: /blog/website-visitors-no-calls/
+    support: [/blog/website-hub/]
+    related: /service/website/
+
+  - id: post-yelp-management-guide
+    keywords: [옐프 관리, Yelp 리뷰, 옐프 필터, 옐프 리뷰 요청, 한인 가게 옐프]
+    intent: informational
+    owner: /blog/yelp-management-guide/
+    support: [/blog/review-management-hub/]
+    related: /service/review-reply/

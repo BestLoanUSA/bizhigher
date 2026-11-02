@@ -112,6 +112,9 @@ const APP_JS = String.raw`
 const $ = (s, el) => (el || document).querySelector(s);
 const esc = (s) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const money = (c) => '$' + ((c || 0) / 100).toLocaleString('en-US', { maximumFractionDigits: 0 });
+// 리드 유입 출처 칩 — "ref:chatgpt.com" 처럼 AI·검색·추천에서 온 것을 한눈에(SEO 루프 M-01). AI 출처는 강조
+const AI_REF = /chatgpt|openai|perplexity|claude|anthropic|gemini|bard\.google|copilot|bing\.com\/chat|you\.com|phind|poe\.com/i;
+const srcChip = (src) => { if (!src || src === 'direct') return ''; const ai = AI_REF.test(src); return ' · <span class="muted" style="' + (ai ? 'color:#0A4DF5;font-weight:600' : '') + '" title="유입 출처">' + (ai ? '🤖 ' : '') + esc(src.replace(/^(ref|utm):/, '')) + '</span>'; };
 const LA = 'America/Los_Angeles';
 const toDate = (s) => { if (!s) return null; const d = new Date(/Z|[+-]\d\d:?\d\d$/.test(s) ? s : s.replace(' ', 'T') + 'Z'); return isNaN(d) ? null : d; };
 function when(s) { const d = toDate(s); return d ? d.toLocaleString('ko-KR', { timeZone: LA, month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : (s || ''); }
@@ -459,8 +462,8 @@ function reviewCard(t) {
 /* ---------- 리드 ---------- */
 async function leads() {
   const d = await api('leads'); if (!d) return;
-  app.innerHTML = '<h1>리드</h1><div class="sec"><div class="sec-h"><h2>무료 진단 신청</h2></div>' + (d.leads.length ? d.leads.map((l) => '<div class="row"><span style="flex:1;min-width:0"><b>' + esc(l.business) + '</b><span class="muted" style="display:block;font-size:12.5px">' + esc(l.location || '') + ' · <a href="mailto:' + esc(l.email) + '">' + esc(l.email) + '</a></span></span>' + (l.report_id ? '<a class="btn ghost sm" target="_blank" href="/report/' + esc(l.report_id) + '">리포트</a>' : '<span class="muted">리포트 없음</span>') + '<span class="muted">' + day(l.created_at) + '</span></div>').join('') : '<div class="empty">아직 신청이 없습니다</div>') + '</div>' +
-    '<div class="sec"><div class="sec-h"><h2>무료 도구 이용자</h2></div>' + (d.toolLeads && d.toolLeads.length ? d.toolLeads.map((l) => '<div class="row"><span style="flex:1;min-width:0"><b>' + esc(l.business || l.email || '') + '</b><span class="muted" style="display:block;font-size:12.5px">' + esc(l.tool || '') + ' · <a href="mailto:' + esc(l.email) + '">' + esc(l.email) + '</a>' + (l.phone ? ' · ' + esc(l.phone) : '') + '</span></span><span class="muted">' + day(l.created_at) + '</span></div>').join('') : '<div class="empty">아직 없음</div>') + '</div>';
+  app.innerHTML = '<h1>리드</h1><div class="sec"><div class="sec-h"><h2>무료 진단 신청</h2></div>' + (d.leads.length ? d.leads.map((l) => '<div class="row"><span style="flex:1;min-width:0"><b>' + esc(l.business) + '</b><span class="muted" style="display:block;font-size:12.5px">' + esc(l.location || '') + ' · <a href="mailto:' + esc(l.email) + '">' + esc(l.email) + '</a>' + srcChip(l.source) + '</span></span>' + (l.report_id ? '<a class="btn ghost sm" target="_blank" href="/report/' + esc(l.report_id) + '">리포트</a>' : '<span class="muted">리포트 없음</span>') + '<span class="muted">' + day(l.created_at) + '</span></div>').join('') : '<div class="empty">아직 신청이 없습니다</div>') + '</div>' +
+    '<div class="sec"><div class="sec-h"><h2>무료 도구 이용자</h2></div>' + (d.toolLeads && d.toolLeads.length ? d.toolLeads.map((l) => '<div class="row"><span style="flex:1;min-width:0"><b>' + esc(l.business || l.email || '') + '</b><span class="muted" style="display:block;font-size:12.5px">' + esc(l.tool || '') + ' · <a href="mailto:' + esc(l.email) + '">' + esc(l.email) + '</a>' + (l.phone ? ' · ' + esc(l.phone) : '') + srcChip(l.source) + '</span></span><span class="muted">' + day(l.created_at) + '</span></div>').join('') : '<div class="empty">아직 없음</div>') + '</div>';
 }
 
 /* ---------- 더보기: 주문 · 질문지 · 리포트 ---------- */

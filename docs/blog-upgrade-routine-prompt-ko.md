@@ -25,7 +25,8 @@ BizHigher 블로그 업그레이드 작업. 이 저장소(BestLoanUSA/bizhigher)
 5-2. **이미지**: 글에 이미지가 없거나 1장뿐이면 `content/blog-calendar.md`의 '이미지 규칙'과 `design/infographic-templates/README.md`에 따라 인포그래픽을 1~2장 넣는다(이미 있는 글은 같은 유형 반복을 피해 부족한 만큼만). 렌더 후 PNG를 직접 열어 확인하고, 이미지 파일은 같은 커밋에 포함한다. 이미지를 못 만들어도 텍스트 개선은 그대로 발행한다.
 6. 같은 카테고리 허브(`hub: true`)가 있으면 허브의 해당 요약·링크를 새 내용에 맞게 고치고 `updated`를 갱신한다.
 7. `content/blog-upgrade-queue.md`의 행을 ✅ 오늘 날짜 + 한 줄 메모(무엇을 보강했는지)로 '업그레이드 완료' 표로 옮긴다.
-8. 변경 파일을 하나의 커밋('blog: {제목} 업그레이드')으로 묶고, 푸시 전 `git fetch origin main && git merge origin/main` 후 main에 푸시한다.
+7-1. **발행 전 검사 (2026-11-02 추가, 필수)**: 커밋 전에 `node build.js && node scripts/seo-check.js` 를 돌린다. 막는 위반이 있으면 **이번에 고친 글에서** 원인을 고쳐 다시 돌린다(대개 summary 3문장·FAQ 3개 이상·본문 1,800자·description 155자·"90일 플랜" 표현). 다른 글의 알려진 위반(`seo/check-baseline.json`)은 건드리지 않고, 검사를 통과시키려고 baseline 에 넣지 않는다. 그다음 Agent 도구가 있으면 **검수 서브에이전트**에게 고친 글 파일과 `content/blog-calendar.md` 의 발행 스타일 가이드만 주고 "출처 없는 수치·확인 안 된 정책·판매 문구·리뷰 대가 표현·90일 플랜·과장을 적대적으로 찾아 '통과' 또는 '고칠 것 목록'" 을 받아 반영한 뒤(최대 2회) 커밋한다. 이 글이 노리는 검색어에 이미 주인 페이지가 있는지 `seo/keyword-map.yaml` 에서 확인하고, 있으면 그 페이지로 본문 링크를 둔다.
+8. 변경 파일을 하나의 커밋('blog: {제목} 업그레이드')으로 묶고, 푸시 전 `git fetch origin main && git merge origin/main` 후 main에 푸시한다. 병합 뒤에도 검사를 한 번 더 돌린다.
 9. 보고: 글 제목, URL(https://bizhigher.com/blog/{slug}/), 추가·삭제·수정한 핵심 내용, 확인 못 해 뺀 항목.
 
 ## 개선 기준

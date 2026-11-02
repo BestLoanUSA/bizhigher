@@ -33,7 +33,7 @@
   /* POST /api/tools/{tool} — 실패하면 사용자에게 보여줄 문장을 담아 throw */
   T.call = function (tool, body) {
     var c = T.contact();
-    body = Object.assign({}, body, { email: c.email, phone: c.phone });
+    body = Object.assign({}, body, { email: c.email, phone: c.phone, ref: window.bhRef ? window.bhRef() : '' });
     return fetch('/api/tools/' + tool, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
