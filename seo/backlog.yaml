@@ -14,7 +14,7 @@ items:
   - id: I-01
     title: 구글이 모르는 URL 6개 + 발견만 된 5개 — 내부 링크 보강과 IndexNow 재전송
     source: 2026-11-02 (index-latest.md 2026-11-01 — 사이트맵 84 중 색인 68, "URL is unknown to Google" 6, "Discovered - currently not indexed" 5)
-    status: ready
+    status: in-progress
     path: structure
     target: [/service/local-listing-care/, /service/local-listing-setup/, /service/shortform-video/, /blog/google-ads-vs-meta-ads-for-local-business/, /blog/google-business-profile-services-guide/, /blog/yelp-management-guide/, /blog/do-you-need-a-website/, /blog/google-business-profile-category-guide/, /blog/google-business-profile-hours-update/, /blog/small-business-blog-topic-ideas/, /tools/review-calc/]
     notes: >
@@ -23,6 +23,9 @@ items:
       숏폼 → 숏폼 가이드) ② /blog/ 글 4편은 같은 카테고리 허브에서 링크됐는지 확인하고 없으면 허브 요약에 추가(upgrade-queue 로 넘겨도 됨)
       ③ 머지 후 Actions 에서 indexnow.yml 을 수동 실행(workflow_dispatch = 사이트맵 전체 전송). 성공 지표: 2주 뒤 index-latest 에서
       unknown 0, discovered 3 이하.
+      2026-11-02 claude/beautiful-meitner-9lwsho: 서비스·도구 가이드에 문맥 링크 3개(nap-check→local-listing-care, google-profile-optimization→local-listing-care,
+      review-qr-kit→tools/review-calc), upgrade-queue 맨 위에 블로그 2편(korean-business-directory-list·google-business-profile-hours-update → local-listing-care).
+      블로그 7편은 이미 카테고리 허브에서 링크됨(확인). 남은 일: 머지 후 David 가 Actions → indexnow.yml → Run workflow(사이트맵 전체 전송).
 
   - id: K-01
     title: /tools/local-rank/ — "구글 지도 순위 체크" 검색어 48~74위에서 1페이지로
