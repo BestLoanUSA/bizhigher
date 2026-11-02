@@ -562,15 +562,15 @@ function dataBandSection() {
     <p class="eyebrow">OUR OWN DATA</p>
     <h2 class="h2">${headline}</h2>
     ${sub.split('\n\n').map((t) => `<p class="data-band-sub">${t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')}</p>`).join('')}
-    <div class="grid3">
-      ${stats.map((x) => `<div class="stat-box"><div class="stat" data-count="${x.n}" data-suffix="곳">${x.n.toLocaleString('en-US')}곳</div><p class="stat-label">${x.label}</p></div>`).join('')}
+    <div class="dcards" aria-label="직접 센 숫자">
+      ${stats.map((x, i) => `<div class="dcard" style="background-image:url('${[SC_IMG.interior, SC_IMG.seafood, SC_IMG.galbi][i % 3]}')"><div class="dcard-glass"><div class="stat" data-count="${x.n}" data-suffix="곳">${x.n.toLocaleString('en-US')}곳</div><p class="stat-label">${x.label}</p></div></div>`).join('')}
     </div>
     ${note ? `<p class="data-band-sub" style="margin-top:18px;">${note}</p>` : ''}
     <div class="data-band-links">
       <a class="btn btn-ghost" href="${link.href}">${link.text} →</a>
       <a class="data-band-more" href="/data/">전체 데이터 리포트 →</a>
     </div>
-    <p class="data-band-note">${asOf} 기준 · BizHigher 직접 점검</p>
+    <p class="data-band-note">${asOf} 기준 · BizHigher 직접 점검 · 카드 배경은 연출 이미지입니다</p>
   </div>
 </section>`;
 }
@@ -738,7 +738,7 @@ const SC_SCENES = [
     chips: ['사진 12장 추가 · 대표 사진 교체', '게시물 주 2회 자동 게시', '카테고리 "한식당"으로 교정'],
     html: `
 <div class="sc-phone">
-  <div class="sc-cover" style="background-image:url('${SC_IMG.interior}')"></div>
+  <div class="sc-cover" style="background-image:url('${SC_IMG.interior}')"><video class="sc-cover-v" muted loop playsinline preload="none" poster="${SC_IMG.interior}" aria-hidden="true"><source src="/showcase/interior-loop.mp4" type="video/mp4"></video></div>
   <div class="sc-pbody">
     <div class="sc-pname">순두부 하우스</div>
     <div class="sc-prow"><b>4.6</b><span class="sc-stars">★★★★★</span><span class="sc-muted">(203)</span><span class="sc-dot">·</span><span class="sc-muted">한식당</span></div>
@@ -839,7 +839,7 @@ function showcaseSection() {
 <section class="section showcase" id="showcase">
   <div class="container">
     <p class="eyebrow">WHAT YOU GET</p>
-    <h2 class="h2">이렇게 생긴 것을 받습니다</h2>
+    <h2 class="h2"><em>이렇게 생긴 것</em>을 받습니다</h2>
     <p class="mk-section-sub">설명 대신 결과물로 보여드립니다. 전부 사장님 업소의 정보와 사진으로 제작되고, 전문가 검수 후 전달됩니다.</p>
     <div class="sc-wrap" id="sc-wrap">
       <div class="sc-tabs" role="tablist" aria-label="결과물 종류">${tabs}</div>
@@ -867,6 +867,7 @@ function showcaseSection() {
   function pinMode() { return pinMQ.matches || mobilePin(); }
   function scenePx() { return pinMQ.matches ? 520 : 300; }
   var stage = wrap.querySelector('.sc-stage');
+  var vids = Array.prototype.slice.call(wrap.querySelectorAll('video.sc-cover-v'));
   function fitScene() {
     /* 모바일 고정 모드: 장면이 무대보다 크면 zoom으로 줄여 한 화면에 다 보이게 */
     scenes.forEach(function (sc) { var inr = sc.querySelector('.sc-stage-in'); if (inr) Array.prototype.forEach.call(inr.children, function (c) { c.style.zoom = ''; }); });
@@ -909,6 +910,12 @@ function showcaseSection() {
       }
     }
     progs.forEach(function (p, k) { if (p) p.style.width = k === idx ? ((t - idx * DUR) / DUR * 100) + '%' : '0%'; });
+    /* v46 — 장면 안 진행도(0~1)로 무대 요소가 살짝 어긋나며 떠 있고(패럴랙스), 보이는 장면의 무음 루프만 재생 */
+    if (stage) stage.style.setProperty('--par', ((t - idx * DUR) / DUR).toFixed(3));
+    vids.forEach(function (v) {
+      var on = visible && !reduced && v.closest('.sc-scene') === scenes[idx];
+      if (on && v.paused) { v.play().catch(function () {}); } else if (!on && !v.paused) v.pause();
+    });
   }
   function tick(ts) {
     raf = null;
@@ -945,7 +952,7 @@ function showcaseSection() {
   applyPin(); onScroll();
   if ('IntersectionObserver' in window) {
     var io = new IntersectionObserver(function (en) {
-      en.forEach(function (e) { visible = e.isIntersecting; if (visible) start(); });
+      en.forEach(function (e) { visible = e.isIntersecting; if (visible) start(); else vids.forEach(function (v) { if (!v.paused) v.pause(); }); });
     }, { threshold: 0.1 });
     io.observe(wrap);
   } else { visible = true; start(); }
@@ -1032,7 +1039,7 @@ function packageMatrixSection(opts = {}) {
         <a class="pk-more" href="/package/${p.slug}/">플랜 자세히 보기 →</a>
       </div>`;
   }).join('');
-  const title = opts.home ? '통째로 맡기면 훨씬 저렴합니다' : '우리 가게 마케팅, 통째로 맡기세요';
+  const title = opts.home ? '통째로 맡기면 <em>훨씬 저렴합니다</em>' : '우리 가게 마케팅, 통째로 맡기세요';
   const sub = opts.home
     ? '개별 구독을 합친 것보다 최대 58% 저렴하고, 플랜이 높을수록·기간이 길수록 무료 셋업이 커집니다. 견적 미팅 없이 지금 결제하면 오늘 시작됩니다.'
     : '';
@@ -1388,7 +1395,7 @@ function homePage(posts) {
         </div>
         <div class="demo-plan" id="dm-plan"><span id="dm-plan-txt">🚀 180일 실행 플랜 시작</span></div>
       </div>
-      <p class="demo-note">가상의 예시 업체로 구성한 시연 화면입니다 · <a href="/report/sample">실제 리포트 샘플 보기 →</a></p>
+      <p class="demo-note"><span class="demo-scrub" id="dm-scrub" hidden>↓ 스크롤하면 180일이 흐릅니다</span>가상의 예시 업체로 구성한 시연 화면입니다 · <a href="/report/sample">실제 리포트 샘플 보기 →</a></p>
     </div>
   </div>
   <div class="marquee"><div class="marquee-track" id="mq-track">
@@ -1514,7 +1521,12 @@ function homePage(posts) {
       ticking = false;
       var r = track.getBoundingClientRect();
       var total = r.height - window.innerHeight;
-      var p = total > 0 ? clamp(-r.top / total, 0, 1) : 1;
+      var scrolled = -r.top, vh = window.innerHeight;
+      /* 데스크톱(v45): 트랙 450vh = 기존 연출 240vh + 데모 스크럽 112vh(214→326vh) + 마무리 축소 24vh. 좁은 화면은 기존 그대로 */
+      var base = narrow ? total : Math.min(total, vh * 2.4);
+      var p = base > 0 ? clamp(scrolled / base, 0, 1) : 1;
+      var demoP = narrow ? 0 : seg(scrolled, vh * 2.14, total - vh * 0.24);
+      if (window.__bhDemoScrub && !narrow) window.__bhDemoScrub(demoP);
 
       /* 워드마크: i점만 남기고 일찍 퇴장 */
       center.style.opacity = String(1 - seg(p, 0.06, 0.18));
@@ -1582,8 +1594,8 @@ function homePage(posts) {
       s2.style.transform = 'translateY(' + (44 * (1 - e2)) + 'px)';
       s2.style.pointerEvents = e2 > 0.5 ? 'auto' : 'none';
 
-      /* 마무리 축소 */
-      var e3 = seg(p, 0.92, 1);
+      /* 마무리 축소 — 데스크톱은 트랙 맨 끝 24vh, 좁은 화면은 기존 비율 */
+      var e3 = narrow ? seg(p, 0.92, 1) : seg(scrolled, total - vh * 0.24, total);
       sticky.style.transform = 'scale(' + (1 - 0.05 * e3) + ')';
       sticky.style.borderRadius = (36 * e3) + 'px';
     }
@@ -1676,6 +1688,48 @@ function homePage(posts) {
     if (planBtn) { planBtn.classList.add('show', 'done'); planTxt.textContent = '✓ 180일 실행 플랜 완료'; }
   }
   if (reduced) { setFinal(); return; }
+  /* v45 — 데스크톱 시네마틱 히어로에서는 시간이 아니라 스크롤이 180일을 흐르게 한다(되감기 가능).
+     히어로 frame() 이 demoP(0~1) 를 넘긴다: 이름 타이핑 → 형편없는 점수·문제 칩 → 플랜 시작 버튼 → DAY 카운트·점수 급상승·문제가 장점으로 반전 → 완료 */
+  var heroEl = document.getElementById('cine-hero');
+  var narrowMQ = window.matchMedia('(max-width: 991px)').matches;
+  if (heroEl && heroEl.classList.contains('cine-on') && !narrowMQ) {
+    var sb = BIZ[Math.floor(Math.random() * BIZ.length)];
+    var hint = document.getElementById('dm-scrub');
+    var swapped = [false, false], lastN = -1;
+    function sseg(v, a, c) { return Math.max(0, Math.min(1, (v - a) / (c - a))); }
+    function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+    function lerp(a, c, t) { return a + (c - a) * t; }
+    fills.forEach(function (f) { f.style.transition = 'width .25s ease-out'; });
+    setBars(sb.b0, false); setChips(sb.prob, false, false);
+    if (hint) hint.hidden = false;
+    window.__bhDemoScrub = function (d) {
+      var n = Math.round(sb.name.length * sseg(d, 0, 0.1));
+      if (n !== lastN) { lastN = n; typeEl.textContent = sb.name.slice(0, n); typeEl.parentNode.classList.toggle('named', n >= sb.name.length); }
+      var run = easeOut(sseg(d, 0.5, 0.82));
+      fills.forEach(function (f, i) {
+        var v0 = sb.b0[i] * easeOut(sseg(d, 0.06 + i * 0.03, 0.28 + i * 0.03));
+        var v = lerp(v0, sb.b1[i], run);
+        f.style.width = v + '%'; fillNums[i].textContent = Math.round(v);
+      });
+      var sc = Math.round(lerp(sb.s0 * easeOut(sseg(d, 0.08, 0.3)), sb.s1, run));
+      scoreEl.textContent = sc; if (ring) ring.style.setProperty('--p', sc);
+      chips.forEach(function (c, i) {
+        c.classList.toggle('show', d >= 0.3 + i * 0.06);
+        var win = d >= 0.6 + i * 0.07;
+        if (win !== swapped[i]) { swapped[i] = win; c.textContent = win ? sb.win[i] : sb.prob[i]; c.classList.toggle('demo-chip-ok', win); c.classList.toggle('demo-chip-warn', !win); }
+      });
+      if (planBtn) {
+        planBtn.classList.toggle('show', d >= 0.42);
+        planBtn.classList.toggle('press', d >= 0.47 && d < 0.5);
+        planBtn.classList.toggle('running', d >= 0.5 && d < 0.82);
+        planBtn.classList.toggle('done', d >= 0.82);
+        planTxt.textContent = d < 0.5 ? '🚀 180일 실행 플랜 시작' : (d < 0.82 ? '플랜 진행 중 · DAY ' + Math.max(1, Math.round(180 * sseg(d, 0.5, 0.82))) : '✓ 180일 실행 플랜 완료');
+      }
+      if (hint) hint.style.opacity = String(1 - sseg(d, 0.45, 0.6));
+    };
+    window.dispatchEvent(new Event('scroll'));
+    return;
+  }
   var timers = [];
   function t(fn, ms) { timers.push(setTimeout(fn, ms)); }
   function reset() {
@@ -1744,10 +1798,12 @@ function homePage(posts) {
 })();
 </script>
 
+<div class="home-body" id="home-body">
+<div class="spine" id="spine" aria-hidden="true"><i class="spine-line"></i><i class="spine-dot"></i></div>
 <section class="section section-gray">
   <div class="container">
     <p class="eyebrow">HOW IT WORKS</p>
-    <h2 class="h2">차원이 다른 광고를 경험하세요</h2>
+    <h2 class="h2"><em>차원이 다른</em> 광고를 경험하세요</h2>
     <div class="stack-zone">
       <div class="stack-card has-viz"><div class="stack-txt"><span class="stack-num">01</span><h3 class="stack-title">AI의 초고속 자동화에 20년 전문가의 디테일을 더하다</h3><p class="stack-desc">독자적인 병렬 AI 에이전트가 24시간 쉬지 않고 기획·카피·디자인을 동시다발적으로 처리하고, 마케팅 전문가가 최종 검수하여 압축된 시간 안에 최상의 품질을 완성합니다.</p></div><div class="stack-viz" aria-hidden="true"><svg viewBox="0 0 320 200" role="presentation"><g class="v-lanes"><rect x="6" y="28" width="74" height="32" rx="16"/><rect x="6" y="84" width="74" height="32" rx="16"/><rect x="6" y="140" width="74" height="32" rx="16"/></g><g class="v-lbl"><text x="43" y="49">기획</text><text x="43" y="105">카피</text><text x="43" y="161">디자인</text></g><g class="v-base"><path d="M80 44 C150 44 160 100 222 100"/><path d="M80 100 L222 100"/><path d="M80 156 C150 156 160 100 222 100"/></g><g class="v-flow"><path class="f1" d="M80 44 C150 44 160 100 222 100"/><path class="f2" d="M80 100 L222 100"/><path class="f3" d="M80 156 C150 156 160 100 222 100"/></g><circle class="v-ring" cx="252" cy="100" r="30"/><circle class="v-node" cx="252" cy="100" r="30"/><path class="v-chk" pathLength="100" d="M239 100 l9 10 l17 -20"/><text class="v-cap" x="252" y="152">전문가 검수</text><g class="v-clock"><circle cx="292" cy="26" r="13"/><path class="v-hand" d="M292 26 L292 17"/></g><text class="v-24" x="292" y="54">24h</text></svg></div></div>
       <div class="stack-card stack-c2 has-viz"><div class="stack-txt"><span class="stack-num">02</span><h3 class="stack-title">미팅도 거품도 Zero, 클릭 몇 번으로 시작하는 반값 마케팅</h3><p class="stack-desc">100% 공개된 투명한 정찰제로 지루한 견적 미팅이나 영업 전화 없이 쇼핑하듯 바로 시작하며, 불필요한 인건비를 완전히 줄여 기존 대행사 대비 절반 이하의 비용을 제공합니다.</p></div><div class="stack-viz" aria-hidden="true"><svg viewBox="0 0 320 200" role="presentation"><g class="v-chip"><rect x="6" y="12" width="112" height="30" rx="15"/><rect x="128" y="12" width="112" height="30" rx="15"/><text x="62" y="32">견적 미팅</text><text x="184" y="32">영업 전화</text></g><path class="v-strike s1" pathLength="100" d="M16 27 L108 27"/><path class="v-strike s2" pathLength="100" d="M138 27 L230 27"/><text class="v-bl" x="6" y="86">일반 대행사</text><rect class="v-bar0" x="6" y="94" width="300" height="24" rx="8"/><text class="v-bl b" x="6" y="148">BizHigher</text><rect class="v-bar1" x="6" y="156" width="136" height="24" rx="8"/><text class="v-half" x="154" y="174">절반 이하</text></svg></div></div>
@@ -1792,7 +1848,7 @@ ${showcaseSection()}
 <section class="section vs-section">
   <div class="container">
     <p class="eyebrow">BIZHIGHER vs 대행사</p>
-    <h2 class="h2">같은 일을 절반 이하의 가격으로, 몇 배 빠르게</h2>
+    <h2 class="h2">같은 일을 <em>절반 이하의 가격</em>으로, 몇 배 빠르게</h2>
     <p class="vs-sub">사람이 손으로 하던 일을 AI가 먼저 끝내고, 20년 경력 마케터가 마지막을 확인합니다. 그래서 더 싸고, 더 빠르고, 꾸준합니다.</p>
     <div class="vs-race" id="vs-race" aria-hidden="true">
       <div class="vr-row vr-old"><span class="vr-name">일반 대행사</span><div class="vr-track"><span class="vr-fill"></span><span class="vr-step" style="--x:22%">미팅</span><span class="vr-step" style="--x:48%">견적</span><span class="vr-step" style="--x:74%">계약</span><span class="vr-end">시작 2주+</span></div></div>
@@ -1866,6 +1922,36 @@ ${showcaseSection()}
       });
       mo.observe(tb, { attributes: true, attributeFilter: ['class'] });
     }
+  } catch (e) {}
+})();
+</script>
+
+<section class="big-line" id="big-line" aria-label="광고 대행사 절반 이하의 가격으로, 10배 빠르게.">
+  <div class="big-line-sticky">
+    <div class="big-line-track" id="big-line-track"><span>광고 대행사 절반 이하의 가격으로,</span> <em class="grad">10배 빠르게.</em></div>
+  </div>
+</section>
+<script>
+/* 거대 가로 문장(v46) — 데스크톱에서만 150vh 구간에 고정된 채 세로 스크롤이 가로 이동으로 바뀐다.
+   JS 없음·좁은 화면·움직임 줄이기면 보통 제목처럼 줄바꿈된 정적 밴드 */
+(function () {
+  try {
+    var sec = document.getElementById('big-line'), tr = document.getElementById('big-line-track');
+    if (!sec || !tr) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !window.matchMedia('(min-width: 992px)').matches) return;
+    sec.classList.add('big-line-on');
+    var ticking = false;
+    function frame() {
+      ticking = false;
+      var r = sec.getBoundingClientRect(), total = r.height - window.innerHeight;
+      var p = total > 0 ? Math.max(0, Math.min(1, -r.top / total)) : 1;
+      var start = window.innerWidth * 0.55, end = window.innerWidth - tr.scrollWidth - 48;
+      tr.style.transform = 'translateX(' + (start + (end - start) * p).toFixed(1) + 'px)';
+    }
+    function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(frame); } }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    frame();
   } catch (e) {}
 })();
 </script>
@@ -1990,6 +2076,8 @@ ${showcaseSection()}
     });
   }
   apply('pick');
+  /* 등장 애니메이션(fill both)이 남아 있으면 호버 들림이 먹지 않으므로 끝나는 즉시 클래스를 뗀다 */
+  grid.addEventListener('animationend', function (e) { if (e.target.classList && e.target.classList.contains('svc-pop')) e.target.classList.remove('svc-pop'); });
   tabs.addEventListener('click', function (e) {
     var b = e.target.closest('button[data-cat]'); if (!b) return;
     tabs.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
@@ -2013,6 +2101,48 @@ ${blogStripSection(posts)}
     ${DATA.faqs.map((f, i) => `<details class="faq-item"${i === 0 ? ' open' : ''}><summary class="faq-q">${f.q}</summary><p class="faq-a">${f.a}</p></details>`).join('')}
   </div>
 </section>
+</div><!-- /home-body -->
+<script>
+/* 실과 점(v44) — 나브에 도킹한 i점에서 가는 선이 내려와 홈을 한 줄로 잇는다.
+   점은 sticky 로 화면 42% 높이에 머물고, 선은 점까지만 그려진다(--thread). 섹션 제목마다 매듭(node)이 있어 점이 지나가면 켜진다.
+   JS 가 없거나 움직임 줄이기면 선은 처음부터 끝까지 그려진 상태(CSS 기본 100%), 점만 sticky 로 따라온다 */
+(function () {
+  try {
+    var body = document.getElementById('home-body'), spine = document.getElementById('spine');
+    if (!body || !spine) return;
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var dot = spine.querySelector('.spine-dot');
+    var heads = Array.prototype.slice.call(body.querySelectorAll('.h2')).filter(function (h) { return !h.closest('.showcase'); });
+    var nodes = heads.map(function () { var n = document.createElement('i'); n.className = 'spine-node'; spine.appendChild(n); return n; });
+    var top = 0, height = 1, dotTop = 0, ys = [];
+    function layout() {
+      var r = spine.getBoundingClientRect();
+      top = r.top + window.scrollY; height = Math.max(1, r.height);
+      dotTop = parseFloat(getComputedStyle(dot).top) || 0;
+      ys = heads.map(function (h, i) {
+        var hr = h.getBoundingClientRect();
+        var y = hr.top + window.scrollY - top + hr.height / 2;
+        nodes[i].style.top = y + 'px';
+        return y;
+      });
+      spine.classList.add('spine-on');
+    }
+    var ticking = false;
+    function frame() {
+      ticking = false;
+      var thread = Math.max(0, Math.min(height, window.scrollY + dotTop + 6 - top));
+      if (!reduced) spine.style.setProperty('--thread', thread.toFixed(0) + 'px');
+      for (var i = 0; i < nodes.length; i++) nodes[i].classList.toggle('lit', reduced || ys[i] <= thread);
+    }
+    function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(frame); } }
+    layout(); frame();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', function () { layout(); frame(); }, { passive: true });
+    /* 폰트·이미지 로드 뒤 높이가 바뀌므로 한 번 더 */
+    window.addEventListener('load', function () { layout(); frame(); });
+  } catch (e) {}
+})();
+</script>
 ` + FOOTER;
 }
 
@@ -2026,7 +2156,7 @@ function homeToolsSection() {
 <section class="section home-tools">
   <div class="container">
     <p class="eyebrow">FREE TOOLS</p>
-    <h2 class="h2">돈 쓰기 전에, 무료로 먼저 확인하세요</h2>
+    <h2 class="h2">돈 쓰기 전에, <em>무료로</em> 먼저 확인하세요</h2>
     <p class="home-tools-sub">우리 가게가 지도에서 몇 위인지, AI가 우리 가게를 아는지 — 저희가 고객 가게를 맡을 때 처음 확인하는 것들을 무료 도구로 열어 두었습니다. 가입 없이 이메일만 있으면 됩니다.</p>
     <div class="tool-dark-panel"><div class="grid3 home-tools-grid">${picks.map(toolCard).join('')}</div></div>
     <div class="hero-ctas" style="margin-top:26px;justify-content:center;"><a href="/tools/" class="btn btn-ghost">무료 도구 ${TOOLS.own.length}개 전체 보기 →</a></div>
@@ -2043,7 +2173,7 @@ function blogStripSection(posts) {
   <div class="container blog-strip-head">
     <div>
       <p class="eyebrow" style="text-align:left;">BLOG</p>
-      <h2 class="h2" style="text-align:left;margin-bottom:8px;">사장님을 위한 실전 가이드</h2>
+      <h2 class="h2" style="text-align:left;margin-bottom:8px;">사장님을 위한 <em>실전</em> 가이드</h2>
       <p class="blog-strip-sub">구글 노출·리뷰·광고·AI 검색 — 주 3편, 미국 한인 사장님 눈높이로 씁니다. 마우스를 올리면 멈춥니다.</p>
     </div>
     <div class="blog-strip-ctl">
@@ -4277,8 +4407,11 @@ function footerColsHtml() {
   return _footerCols;
 }
 
+/* 버튼 끝의 "→"를 <i class="btn-arr">로 감싼다 — 호버 때 화살표만 4px 움직이게(v43). 중첩 태그 없는 .btn 링크만 */
+const BTN_ARROW_RE = /(<a\b[^>]*\bclass="[^"]*\bbtn\b[^"]*"[^>]*>[^<]*?)\s*→(\s*<\/a>)/g;
 function write(rel, content) {
   if (typeof content === 'string' && content.includes('<!--FOOTER_COLS-->')) content = content.replace('<!--FOOTER_COLS-->', footerColsHtml());
+  if (typeof content === 'string' && rel.endsWith('.html')) content = content.replace(BTN_ARROW_RE, '$1 <i class="btn-arr" aria-hidden="true">→</i>$2');
   const full = path.join(DIST, rel);
   fs.mkdirSync(path.dirname(full), { recursive: true });
   fs.writeFileSync(full, content);
