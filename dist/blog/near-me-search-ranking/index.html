@@ -44,6 +44,19 @@
   /* 리드 이벤트(generate_lead) — seo-data가 GA4에서 "어느 페이지가 문의를 만드는지" 센다.
      lead_source: free_audit(무료 진단 제출) · free_tool(무료 도구 사용, 이메일 입력 — 세션당 도구마다 1번) · email_consult(상담·신청 메일 링크).
      결제 링크 클릭은 리드가 아니라 begin_checkout. cb가 있으면 전송 뒤(최대 0.8초) 부른다(페이지 이동 전에 보내기 위해) */
+  /* 유입 출처 — 리드가 어떤 검색·AI·추천에서 왔는지(SEO 루프 M-01). 세션 첫 페이지에서 한 번 정하고 sessionStorage 에 둔다.
+     utm 이 있으면 "utm:source/medium/campaign", 아니면 "ref:호스트", 둘 다 없으면 "direct". 개인정보 없음(호스트·utm 값만, 160자). */
+  window.bhRef = function () {
+    try {
+      var k = 'bh_ref', v = sessionStorage.getItem(k);
+      if (v) return v;
+      var q = new URLSearchParams(location.search), us = q.get('utm_source');
+      if (us) v = 'utm:' + [us, q.get('utm_medium') || '', q.get('utm_campaign') || ''].join('/');
+      else { var h = ''; try { h = document.referrer ? new URL(document.referrer).hostname.replace(/^www./, '') : ''; } catch (e) {} v = h && h !== location.hostname ? 'ref:' + h : 'direct'; }
+      v = v.slice(0, 160); sessionStorage.setItem(k, v); return v;
+    } catch (e) { return ''; }
+  };
+  window.bhRef();
   window.mkLead = function (src, extra, cb) {
     var done = false, fin = function () { if (!done) { done = true; if (cb) cb(); } };
     try { gtag('event', 'generate_lead', Object.assign({ lead_source: src, page_path: location.pathname }, extra || {}, cb ? { event_callback: fin } : {})); } catch (e) {}
@@ -227,7 +240,7 @@
     btn.disabled = true; btn.textContent = 'AI가 분석 중입니다…';
     ld.start();
     try {
-      var body = Object.fromEntries(new FormData(form).entries());
+      var body = Object.fromEntries(new FormData(form).entries()); body.ref = window.bhRef ? window.bhRef() : '';
       var res = await fetch('/api/audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       if (!res.ok) throw new Error('server');
       var result = await res.json();

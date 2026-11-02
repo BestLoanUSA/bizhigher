@@ -1,0 +1,55 @@
+# SEO 루틴 브랜치의 초안 PR 을 연다 (seo/README.md).
+#
+# SEO 루틴 2개(주간 전략·실행)는 세션의 git 프록시로 `claude/seo-…` 브랜치를 push 할 수 있지만 GitHub 커넥터가 없어
+# PR 을 직접 열지 못한다. 이 워크플로가 대신 한다: 그런 브랜치의 첫 push 에 main 으로 가는 초안 PR 을 만들고,
+# 제목은 첫 커밋 제목, 본문은 첫 커밋 본문. 머지는 David 가 평소처럼 — 여기서는 아무것도 머지하지 않는다.
+# PR 이 닫히면(머지든 아니든) 브랜치를 지워, 실행 루틴이 세는 "열린 작업 수"(git ls-remote claude/seo-*)가 맞게 유지된다.
+#
+# 전제: Settings → Actions → General → Workflow permissions → "Allow GitHub Actions to create and approve pull requests" 켜기.
+# cpacedesk 의 같은 워크플로를 가져왔다(2026-11-02).
+name: SEO 브랜치 → 초안 PR
+
+on:
+  push:
+    branches: ['claude/seo-**']
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write # PR 닫힌 뒤 브랜치 삭제
+  pull-requests: write
+
+jobs:
+  open:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: 초안 PR 열기 (이미 있으면 건너뜀)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          if [ -n "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[].number')" ]; then
+            echo "PR already open for $BRANCH"; exit 0
+          fi
+          first=$(git rev-list --reverse origin/main.."origin/$BRANCH" | head -1)
+          [ -n "$first" ] || { echo "no commits ahead of main"; exit 0; }
+          title=$(git log -1 --format=%s "$first")
+          git log -1 --format=%b "$first" > body.md
+          printf '\n---\n`.github/workflows/seo-pr.yml` 이 SEO 루틴의 브랜치 `%s` 로 연 초안 PR 입니다.\n' "$BRANCH" >> body.md
+          gh pr create --draft --base main --head "$BRANCH" --title "$title" --body-file body.md
+          echo "Opened draft PR for $BRANCH" >> "$GITHUB_STEP_SUMMARY"
+
+  cleanup:
+    if: github.event_name == 'pull_request' && startsWith(github.event.pull_request.head.ref, 'claude/seo-')
+    runs-on: ubuntu-latest
+    steps:
+      - name: 브랜치 삭제
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: gh api -X DELETE "repos/${{ github.repository }}/git/refs/heads/$BRANCH" || echo "already gone"

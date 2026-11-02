@@ -30,9 +30,9 @@
 - 웹사이트 유지관리 ($29/월): 월 2회 수정 + 백업 + 모니터링 — 사이트를 늘 최신으로 — https://bizhigher.com/service/care-plan/
 
 ## 패키지 플랜
-- Local Starter: 월 $139(12개월 기준)~$219(월간) — 동네 장사의 기본기 — 매주 콘텐츠가 올라가고, 리뷰가 관리되고, 등록이 쌓입니다
-- Local Growth: 월 $279(12개월 기준)~$439(월간) — 검색과 AI에서 발견되고, 영상까지 — 성장 구간의 표준
-- Local Premium: 월 $479(12개월 기준)~$759(월간) — 광고 운영까지 통째로 — 마케팅 담당 직원 한 명 몫
+- Local Starter: 월 $139(12개월 기준)~$219(월간) — 동네 장사의 기본기 — 매주 콘텐츠가 올라가고, 리뷰가 관리되고, 등록이 쌓입니다 — https://bizhigher.com/package/local-starter/
+- Local Growth: 월 $279(12개월 기준)~$439(월간) — 검색과 AI에서 발견되고, 영상까지 — 성장 구간의 표준 — https://bizhigher.com/package/local-growth/
+- Local Premium: 월 $479(12개월 기준)~$759(월간) — 광고 운영까지 통째로 — 마케팅 담당 직원 한 명 몫 — https://bizhigher.com/package/local-premium/
 
 ## 공개 데이터 (인용 자유, CC BY 4.0)
 - LA·OC 한인 업소 온라인 실태 조사 2026-Q3: https://bizhigher.com/data/korean-business-online-2026-q3/ — 2026-09-19 기준 직접 확인한 129곳 중 자체 도메인 보유 81곳, 웹사이트 없음 47곳. CSV 원자료 제공.

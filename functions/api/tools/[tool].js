@@ -63,7 +63,8 @@ export async function onRequestPost(context) {
     if (qk !== tool) return; // 보조 단계는 리드·남은 횟수에 반영하지 않는다
     q = r;
     const business = clip(input.business || input.bizName || input.query, 120);
-    const first = await saveLead(env, { email, phone, tool, business });
+    const source = clip(input.ref, 160).replace(/[^\w.:/\-+ ]/g, '');
+    const first = await saveLead(env, { email, phone, tool, business, source });
     if (first) {
       context.waitUntil(notify(env, `🧰 무료 도구 새 이용자 — ${TOOL_NAMES[tool] || tool}`, [
         ['도구', esc(TOOL_NAMES[tool] || tool)],

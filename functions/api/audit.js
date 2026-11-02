@@ -13,6 +13,21 @@ import { notify, esc } from './_notify.js';
 import { webcheckSite } from './_webcheck.js';
 import { newReportId, purgeExpiredReports } from './_reports.js';
 
+/* audit_leads 는 코드가 만든 테이블이 아니라 source 열이 없을 수 있다 — 없으면 한 번 추가한다(실패해도 리드 저장은 계속) */
+let sourceColumnReady = null;
+export async function ensureSourceColumn(db, table) {
+  if (sourceColumnReady && sourceColumnReady[table] !== undefined) return sourceColumnReady[table];
+  sourceColumnReady = sourceColumnReady || {};
+  try {
+    const cols = ((await db.prepare(`PRAGMA table_info(${table})`).all()).results || []).map((r) => r.name);
+    if (!cols.includes('source')) await db.prepare(`ALTER TABLE ${table} ADD COLUMN source TEXT`).run();
+    sourceColumnReady[table] = true;
+  } catch {
+    sourceColumnReady[table] = false;
+  }
+  return sourceColumnReady[table];
+}
+
 /* 브라우저·크롤러가 주소를 직접 열면(GET) 진단 폼으로 보낸다 — 예전엔 404였다(GSC 404 보고) */
 export function onRequestGet(context) {
   return Response.redirect(new URL('/free-audit/', context.request.url).toString(), 301);
@@ -33,12 +48,16 @@ export async function onRequestPost(context) {
     return json({ ok: false, error: 'invalid' }, 400);
   }
 
+  // 유입 출처(화면의 window.bhRef — "ref:호스트" / "utm:…" / "direct"). SEO 루프가 AI 검색·추천 리드를 세는 데 쓴다(seo/README.md 규칙 8)
+  const source = String(data.ref || '').trim().slice(0, 160).replace(/[^\w.:/\-+ ]/g, '');
+
   // 1) 리드는 무조건 저장
   let leadId = null;
   try {
-    const r = await env.DB.prepare(
-      'INSERT INTO audit_leads (business, location, email) VALUES (?, ?, ?)'
-    ).bind(business, location, email).run();
+    const withSource = await ensureSourceColumn(env.DB, 'audit_leads');
+    const r = withSource
+      ? await env.DB.prepare('INSERT INTO audit_leads (business, location, email, source) VALUES (?, ?, ?, ?)').bind(business, location, email, source || null).run()
+      : await env.DB.prepare('INSERT INTO audit_leads (business, location, email) VALUES (?, ?, ?)').bind(business, location, email).run();
     leadId = r.meta && r.meta.last_row_id;
   } catch {
     return json({ ok: false, error: 'server' }, 500);

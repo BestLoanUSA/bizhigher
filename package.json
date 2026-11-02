@@ -4,6 +4,8 @@
   "private": true,
   "description": "BizHigher — 미국 한인 비즈니스 AI 마케팅 (정적 사이트)",
   "scripts": {
-    "build": "node build.js"
+    "build": "node build.js",
+    "seo:check": "node scripts/seo-check.js",
+    "check": "node build.js && node scripts/seo-check.js"
   }
 }
