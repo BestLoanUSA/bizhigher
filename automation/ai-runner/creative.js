@@ -6,6 +6,10 @@
  *       fal.ai 로 배경 이미지 1장 생성 (환경변수 FAL_KEY). 사람 얼굴·글자·브랜드 로고는 프롬프트에 넣지 않는다 — 글자는 compose 가 얹는다
  *   node automation/ai-runner/creative.js compose --bg bg.jpg --headline "…" [--sub "…"] [--cta "…"] [--brand "New Optix"] [--color "#0A4DF5"] [--logo logo.png] [--grade warm] --out outdir [--name feed]
  *       1:1(1080²) · 9:16(1080×1920) · 1.91:1(1200×628) JPEG 3장을 outdir 에 쓴다. 한글은 Noto Sans KR(구글 폰트)로 조판
+ *       9:16 은 글자를 아래 320px 위로 올린다(릴스·스토리 UI 안전 영역). 규격마다 {name}-{size}.layout.json(글자 면적·배경 밝기·대비·안전 영역)을 같이 쓴다
+ *   node automation/ai-runner/creative.js precheck --images 1-feed.jpg,2-feed.jpg,3-feed.jpg [--labels "1:첫 방문 20%|2:…|3:…"] [--options options.json] [--default 2] --out dir
+ *       광고 소재 사전 점검(2026-11-02): 글자 면적(20% 이하)·흰 글자 대비(4.5:1)·9:16 안전 영역·노출·선명도·색으로 세트별 점수와 지적을 내고 sheet.jpg 를 그린다.
+ *       --options 가 있으면 1위(또는 --default)를 기본 선택으로 바꾸고 note 에 점수를 붙인다. 시선 추적 예측은 하지 않는다 — 장면·매력은 루틴이 sheet.jpg 를 보고 --default 로 정한다. 비용 0, 3장 약 10초
  *   node automation/ai-runner/creative.js upload --file a.jpg|clip.mp4 [--job 1] [--task 12] [--label "…"]
  *       관리자 API 에 올려 공개 URL(/a/…) 을 받는다 (BIZHIGHER_ADMIN_URL · BIZHIGHER_ADMIN_PASSWORD). R2 가 있으면 60MB 까지
  *   node automation/ai-runner/creative.js video --image 고객사진URL또는파일 [--crop 9:16] [--prompt "subtle camera push-in…"] [--duration 5] --out clip.mp4 [--job 1 --task 12]
@@ -65,13 +69,14 @@ const SIZES = { feed: [1080, 1080], story: [1080, 1920], banner: [1200, 628] };
 function template({ w, h, bg, headline, sub, cta, brand, color, logo }) {
   const tall = h > w * 1.3, wide = w > h * 1.5;
   const hs = wide ? 54 : tall ? 88 : 72, ss = wide ? 26 : tall ? 38 : 32, pad = wide ? 48 : 72;
+  const padB = tall ? 320 : pad; // 9:16 은 릴스·스토리 UI(아래 약 320px)와 겹치지 않게 글자를 위로
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700;900&display=swap">
 <style>
 *{box-sizing:border-box;margin:0}body{width:${w}px;height:${h}px;overflow:hidden;font-family:'Noto Sans KR',sans-serif;color:#fff;background:#111}
 .bg{position:absolute;inset:0;background:url("${bg}") center/cover no-repeat}
 .sh{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05) 0%,rgba(0,0,0,.25) 45%,rgba(0,0,0,.78) 100%)}
-.tx{position:absolute;left:${pad}px;right:${pad}px;bottom:${pad}px;display:flex;flex-direction:column;gap:${wide ? 10 : 18}px}
+.tx{position:absolute;left:${pad}px;right:${pad}px;bottom:${padB}px;display:flex;flex-direction:column;gap:${wide ? 10 : 18}px}
 h1{font-size:${hs}px;font-weight:900;line-height:1.15;letter-spacing:-.02em;text-shadow:0 2px 12px rgba(0,0,0,.35);word-break:keep-all}
 p{font-size:${ss}px;font-weight:500;line-height:1.4;opacity:.95;word-break:keep-all}
 .cta{display:inline-block;align-self:flex-start;margin-top:${wide ? 4 : 10}px;padding:${wide ? '12px 22px' : '18px 30px'};border-radius:999px;background:${color};font-weight:700;font-size:${wide ? 22 : 30}px}
@@ -104,11 +109,94 @@ async function compose() {
     await page.evaluate(() => document.fonts.ready);
     const file = path.join(out, `${name}-${k}.jpg`);
     await page.screenshot({ path: file, type: 'jpeg', quality: 82 });
-    made.push({ size: k, file, bytes: fs.statSync(file).size });
+    const m = await measureLayout(page, w, h);
+    fs.writeFileSync(file.replace(/\.jpg$/, '.layout.json'), JSON.stringify(m));
+    made.push({ size: k, file, bytes: fs.statSync(file).size, ...m });
     await page.close();
   }
   await b.close();
   console.log(JSON.stringify(made));
+}
+
+/* 조판 측정(사전 점검용, 2026-11-02): 글자 박스 면적 비율, 글자 뒤 배경 밝기 → 흰 글자 대비, 9:16 안전 영역 침범 */
+async function measureLayout(page, w, h) {
+  const box = await page.evaluate(() => { const r = document.querySelector('.tx').getBoundingClientRect(); const b = document.querySelector('.br').getBoundingClientRect(); return { tx: [r.left, r.top, r.width, r.height], br: [b.left, b.top, b.width, b.height] }; });
+  // 글자 있는 화면과 숨긴 화면을 비교해 실제 글자 픽셀 비율을 세고, 글자 영역의 배경 밝기(그라디언트 음영 포함)를 잰다
+  const clip = { x: Math.max(0, box.tx[0]), y: Math.max(0, box.tx[1]), width: Math.max(1, Math.min(w - box.tx[0], box.tx[2])), height: Math.max(1, Math.min(h - box.tx[1], box.tx[3])) };
+  const withText = await page.screenshot({ type: 'png', clip });
+  const brBox = await page.screenshot({ type: 'png', clip: { x: Math.max(0, box.br[0]), y: Math.max(0, box.br[1]), width: Math.max(1, box.br[2]), height: Math.max(1, box.br[3]) } });
+  await page.evaluate(() => { document.querySelector('.tx').style.visibility = 'hidden'; document.querySelector('.br').style.visibility = 'hidden'; });
+  const noText = await page.screenshot({ type: 'png', clip });
+  const brNo = await page.screenshot({ type: 'png', clip: { x: Math.max(0, box.br[0]), y: Math.max(0, box.br[1]), width: Math.max(1, box.br[2]), height: Math.max(1, box.br[3]) } });
+  await page.evaluate(() => { document.querySelector('.tx').style.visibility = ''; document.querySelector('.br').style.visibility = ''; });
+  const b64 = (b) => 'data:image/png;base64,' + b.toString('base64');
+  const m = await page.evaluate(([a, b, c, d]) => new Promise((res) => {
+    const load = (src) => new Promise((r) => { const im = new Image(); im.onload = () => r(im); im.src = src; });
+    Promise.all([a, b, c, d].map(load)).then(([ia, ib, ic, id]) => {
+      const px = (im) => { const cv = document.createElement('canvas'); cv.width = im.width; cv.height = im.height; const x = cv.getContext('2d'); x.drawImage(im, 0, 0); return x.getImageData(0, 0, im.width, im.height).data; };
+      const lin = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+      let diff = 0, L = 0, n = 0;
+      [[px(ia), px(ib)], [px(ic), px(id)]].forEach(([A, B]) => { for (let i = 0; i < A.length; i += 4) { if (Math.abs(A[i] - B[i]) + Math.abs(A[i + 1] - B[i + 1]) + Math.abs(A[i + 2] - B[i + 2]) > 60) diff++; } });
+      const B = px(ib); for (let i = 0; i < B.length; i += 4) { L += 0.2126 * lin(B[i]) + 0.7152 * lin(B[i + 1]) + 0.0722 * lin(B[i + 2]); n++; }
+      res({ diff, luma: L / n });
+    });
+  }), [b64(withText), b64(noText), b64(brBox), b64(brNo)]);
+  const luma = m.luma;
+  const textArea = m.diff / (w * h);
+  const contrast = 1.05 / (luma + 0.05); // 흰 글자(상대 휘도 1.0) 대 배경
+  const unsafe = h > w * 1.3 && (box.tx[1] + box.tx[3] > h - 300 || box.tx[1] < 250); // 9:16 위 250·아래 300px
+  return { text_area: Math.round(textArea * 1000) / 10, bg_luma: Math.round(luma * 100) / 100, contrast: Math.round(contrast * 10) / 10, unsafe };
+}
+
+/* ---------- 광고 소재 사전 점검 (2026-11-02, 스마틀리 "Creative Predictive Potential" 의 간이 버전) ----------
+   측정할 수 있는 것만 잰다: 글자 면적(20% 이하 권장) · 글자 대비(4.5:1) · 9:16 안전 영역 · 노출·선명도·색(사진 점수).
+   시선 추적·감정 예측은 하지 않는다. 점수는 참고용이고, 장면·매력은 루틴이 sheet.jpg 를 보고 판단한다 */
+async function precheck() {
+  const files = (opt('images') || '').split(',').map((x) => x.trim()).filter(Boolean);
+  if (!files.length) throw new Error('--images a.jpg,b.jpg 가 필요합니다 (세트별 feed 1:1 이미지)');
+  for (const f of files) if (!fs.existsSync(f)) throw new Error('없는 파일: ' + f);
+  const labels = (opt('labels') || '').split('|').map((x) => x.trim());
+  const out = opt('out', 'precheck'); fs.mkdirSync(out, { recursive: true });
+  const P = require('./_photos.js');
+  const browser = await P.launch();
+  try {
+    const items = await P.analyze(browser, files);
+    const rows = items.map((it, i) => {
+      const side = it.file.replace(/\.jpg$/i, '.layout.json');
+      const lay = fs.existsSync(side) ? JSON.parse(fs.readFileSync(side, 'utf8')) : null;
+      const story = it.file.replace(/-feed\.jpg$/i, '-story.layout.json');
+      const layS = fs.existsSync(story) ? JSON.parse(fs.readFileSync(story, 'utf8')) : null;
+      let score = 100; const notes = [];
+      if (it.error) { score = 0; notes.push('읽기 실패'); }
+      else {
+        if (it.luma < 60) { score -= 12; notes.push('어두움'); } else if (it.luma > 200) { score -= 10; notes.push('과노출'); }
+        if (it.sharp < 28) { score -= 10; notes.push('배경 흐림'); }
+        if (it.color < 10) { score -= 5; notes.push('색이 적음'); }
+        if (it.clipHi > 0.1) { score -= 6; notes.push('하이라이트 날아감'); }
+      }
+      if (lay) {
+        if (lay.text_area > 20) { score -= Math.min(25, Math.round((lay.text_area - 20) * 1.5)); notes.push('글자 면적 ' + lay.text_area + '%'); }
+        if (lay.contrast < 4.5) { score -= 15; notes.push('글자 대비 ' + lay.contrast + ':1'); } else if (lay.contrast < 7) { score -= 5; notes.push('대비 보통 ' + lay.contrast + ':1'); }
+        if (lay.unsafe) { score -= 20; notes.push('9:16 안전 영역 침범'); }
+      } else notes.push('조판 정보 없음(compose 결과물이 아님)');
+      if (layS && layS.unsafe) { score -= 20; notes.push('9:16 안전 영역 침범'); }
+      return { n: i + 1, key: labels[i] ? labels[i].split(':')[0] : String(i + 1), label: labels[i] || path.basename(it.file), file: it.file, score: Math.max(0, score), photo_score: it.score, notes, layout: lay };
+    });
+    const ranked = [...rows].sort((a, b) => b.score - a.score || b.photo_score - a.photo_score);
+    await P.contactSheet(browser, items.map((it, i) => ({ ...it, score: rows[i].score, flags: rows[i].notes })), path.join(out, 'sheet.jpg'), { cols: Math.min(3, items.length), title: '광고 소재 사전 점검 — 번호·점수·지적' });
+    // --options options.json 이 있으면 1위를 기본 선택으로(고객이 바꿀 수 있다)
+    let optionsFile = opt('options'); let best = ranked[0];
+    if (optionsFile && fs.existsSync(optionsFile)) {
+      const options = JSON.parse(fs.readFileSync(optionsFile, 'utf8'));
+      const bestKey = String(opt('default', best.key));
+      options.forEach((o) => { o.default = String(o.key) === bestKey; const r = rows.find((x) => String(x.key) === String(o.key)); if (r) o.note = ((o.note || '') + ` · 사전 점검 ${r.score}점`).replace(/^ · /, ''); });
+      fs.writeFileSync(optionsFile, JSON.stringify(options, null, 2));
+    }
+    const md = ['| 세트 | 점수 | 글자 면적 | 대비 | 지적 |', '|---|---|---|---|---|', ...rows.map((r) => `| ${r.label} | ${r.score} | ${r.layout ? r.layout.text_area + '%' : '-'} | ${r.layout ? r.layout.contrast + ':1' : '-'} | ${r.notes.join(', ') || '없음'} |`)].join('\n');
+    const result = { out, sheet: path.join(out, 'sheet.jpg'), rows, ranking: ranked.map((r) => r.key), best: best.key, markdown: md };
+    fs.writeFileSync(path.join(out, 'precheck.json'), JSON.stringify(result, null, 2));
+    console.log(JSON.stringify(result, null, 2));
+  } finally { await browser.close(); }
 }
 
 /* ---------- 영상: 고객 사진 1장 → 5초 클립 (fal.ai 큐 API) ---------- */
@@ -575,6 +663,7 @@ async function pick() {
   if (cmd === 'photos') return photos();
   if (cmd === 'report') return report();
   if (cmd === 'compose') return compose();
+  if (cmd === 'precheck') return precheck();
   if (cmd === 'upload') return upload();
   if (cmd === 'video') return video();
   if (cmd === 'caption') return caption();

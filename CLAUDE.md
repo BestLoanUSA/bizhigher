@@ -87,6 +87,9 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | 리포트 주소·30일 만료 | `functions/api/_reports.js` — 주소 `/report/{업체명 슬러그}-{4자}`(사용자 입력 업체명을 로마자로, 구글 상호 아님). 옛 16진 12자 주소도 그대로 열린다. 발급 30일 뒤 구글에서 온 값을 지우고 place_id·점수·입력 업체명/지역만 남긴다(열람 시 + 새 진단마다 `purgeExpiredReports`). 만료 화면은 "같은 가게 다시 진단하기" |
 | 구글 지도 출처 표시 | 로고 `src/google-maps-logo.svg`(공식 회색, 높이 18px, `alt="Google Maps" translate="no"`). 리포트 상단·경쟁 업체 카드, Places를 쓰는 도구 4개(`build.js` `PLACES_TOOLS`). Places 데이터를 화면에 보여주는 새 화면에는 반드시 붙인다 |
 | GBP 리뷰 답글·게시물 자동화 실험 | `automation/gbp/` (README 참고. API 승인 전엔 `--dry-run`만) |
+| 광고 표준 트리거 12개(플랫폼 내장 자동 규칙) | `docs/ad-rules-ko.md` — 안전장치·낭비 차단·소재 교체·예산 이동·시간대·주말·프로모 종료·티어 상한·평판 연동. ads-2 설계안이 고객 숫자로 환산한 표를 붙이고 ads-3·ads-4 구축 때 심는다(2026-11-02, 스마틀리 분석 https://claude.ai/artifact/TYMA52t35CWb8Q3RBxSeK5) |
+| 광고 소재 사전 점검(세트 점수·기본 선택) | `automation/ai-runner/creative.js precheck` — 글자 픽셀 비율(20% 이하)·흰 글자 대비(4.5:1)·9:16 안전 영역(compose 가 글자를 아래 320px 위로)·노출·선명도. `--options` 면 1위를 기본 선택으로. 시선 추적 예측은 하지 않는다 |
+| 업종별 광고 학습 메모(우리식 Synapse) | D1 `ad_learnings` · 관리자 `GET/POST/DELETE /admin/api/learnings` · `runner.js learnings --industry` / `learn --industry … --kind keyword|negative|hook|audience|cpa|budget|creative|rule|note`. 업종·도시 수준 집계만, 고객명·이메일·전화·링크 금지(서버가 형식 거절). ads-2·ac-1 전에 읽고 am-5·ads-5 뒤에 한 줄 쓴다 |
 | 고객 결과물 페이지 `/c/{token}` | `functions/c/[token].js` — 묶음 메일·승인 흐름은 §12-3 |
 | 새 리뷰 감시·답글 과제 | `functions/api/_reviews.js` (§12-4) — 위험 단어 목록 `RISK`, 쿨다운 20시간 |
 | 고객 웹사이트 템플릿·빌드·호스팅 | 템플릿 `automation/sites/render.js` · 라우터 `automation/sites/worker.js` · CLI `automation/ai-runner/sites.js` · 스펙 API `functions/admin/[[path]].js`(`sites`) · 설계 `docs/customer-sites-design-ko.md` (§12-5) |
@@ -205,6 +208,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | `deliverables` 추가 열 | `task_id`·`kind`·`summary`·`needs_approval`·`approved_at`·`revise_note`·`packet_id` — 고객 페이지·묶음 발송·승인(§12-3). `jobs.portal_token`도 같이 | `_orders.js EXTRA_COLUMNS` |
 | `tool_usage` | 무료 도구 하루 사용 횟수 (일자·IP 해시·도구) — 자동 생성 | `functions/api/tools/_shared.js` |
 | `review_seen` · `review_sync` | 본 리뷰의 키 해시·별점, 작업별 마지막 Places 확인 시각 — 자동 생성 | `functions/api/_reviews.js` (§12-4) |
+| `ad_learnings` | 업종별 광고 학습 메모(업종·도시·채널·종류·메모·값·표본 수) — 자동 생성, 고객 식별 정보 없음 | 관리자 `learnings` API · `runner.js learnings/learn` (2026-11-02) |
 | `sites` | 고객 웹사이트 스펙 JSON(작업당 1행, slug·domain·live·version) — 자동 생성 | `sites.js` · 관리자 `sites` API (§12-5) |
 | `site_events` | 고객 사이트 전환 비콘 일별 집계(사이트·날짜·이벤트·페이지·n) — 자동 생성 | `functions/api/site-event.js` · `siteStats()` (2026-11-01) |
 | `site_versions` · `site_leads` | 스펙 버전 기록(버전·메모·바뀐 키), 고객 사이트 문의 폼 리드 — 자동 생성 | 관리자 `sites/:slug/versions`·`leads` · `functions/api/site-contact.js` (§12-5 2단계) |
@@ -522,7 +526,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 11. **반자동 등록의 고객당 실소요 시간** — 1~1.5시간은 추정치. 1~2곳 실측 필요 (§15)
 12. 포스팅 3채널 최종 확정 / 예약 발행 툴 선정 / 승인 큐 형태 / ~~무응답 자동 승인 약관 문구~~(2026-10-21 반영) / 월간 리포트 지표 정의 / GBP API 신청 계정 (§15)
 13. **로컬 등록 실행** — 핵심 30곳 마스터 목록(Claude in Chrome 보조 입력용) + 일회성 시티에이션 빌더 업체 선정. `docs/automation-map-ko.md` §3
-14. **Google Ads API 개발자 토큰 신청**(MCC) — 광고 운영 수동 5.4h/월/고객의 유일한 출구
+14. **Google Ads API 개발자 토큰 신청**(MCC) — 광고 운영 수동 5.4h/월/고객의 유일한 출구. 토큰 전에는 플랫폼 자동 규칙(`docs/ad-rules-ko.md`)으로 약 3.5h, 토큰 뒤 `ads.js report/propose/apply`(제안→승인→적용, 스마틀리 분석 §3-4·5·6)로 약 1h
 15. **GBP API 재신청 경로**(A 또는 B, §15) + BestLoanUSA 프로필 재인증
 16. ~~AI 실행 루틴~~ → 2026-10-21 생성(§12-2). 환경 비밀 `BIZHIGHER_ADMIN_PASSWORD`가 들어가야 첫 실행이 성공한다. 파일·이미지·영상 단계는 아직 David 세션 몫
 
