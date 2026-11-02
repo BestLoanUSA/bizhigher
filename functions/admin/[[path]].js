@@ -21,6 +21,7 @@
  *   POST /admin/api/deliverables/:id/drafted  루틴이 Gmail 초안을 만든 뒤 기록
  *   POST /admin/api/deliverables/:id/draft-to-david  고객용 초안 본문을 Resend로 David(NOTIFY_EMAIL)에게 보낸다 — 고객 발송 아님, David가 전달
  *   POST /admin/api/assets {job_id, task_id, label, content_type, base64}  이미지 저장 → 공개 URL /a/{id}.jpg
+ *   GET  /admin/api/learnings?industry=안경점&channel=google   업종별 광고 학습 메모(먹힌 키워드·훅·CPA 범위) · POST /admin/api/learnings {industry,kind,text,…} · DELETE /admin/api/learnings/:id
  */
 import { authenticate, login, logoutCookie } from './_auth.js';
 import { notify, sendEmail, esc as escHtml } from '../api/_notify.js';
@@ -137,6 +138,7 @@ function boardRow(j, ts) {
 
 /* ---------- API ---------- */
 
+const LEARN_KINDS = new Set(['keyword', 'negative', 'hook', 'audience', 'cpa', 'budget', 'creative', 'rule', 'note']);
 async function api(env, method, seg, body, url) {
   const db = env.DB;
   const [res, id, sub, subId] = seg;
@@ -491,6 +493,30 @@ async function api(env, method, seg, body, url) {
     await addEvent(db, d.job_id, 'deliverable', null, null, `✉ Gmail 초안 생성 — ${d.title}${body.note ? ' · ' + String(body.note).slice(0, 200) : ''}`);
     return {};
   }
+
+  /* 업종별 학습 메모(2026-11-02, 스마틀리 Synapse 의 우리 버전) — 고객 식별 정보 없이 업종·도시 수준 집계만.
+     루틴이 ads-2·ac-1 설계 전에 읽고(GET), am-5·ads-5·ac-5 선택 뒤에 한 줄 쓴다(POST, runner.js learn) */
+  if (res === 'learnings' && method === 'GET') {
+    const ind = (url.searchParams.get('industry') || '').trim(); const ch = (url.searchParams.get('channel') || '').trim();
+    const limit = Math.min(200, Number(url.searchParams.get('limit')) || 60);
+    const where = []; const bind = [];
+    if (ind) { where.push(`industry LIKE ?`); bind.push('%' + ind + '%'); }
+    if (ch) { where.push(`channel = ?`); bind.push(ch); }
+    const rows = (await db.prepare(`SELECT id, industry, city, state, channel, kind, text, value, sample_n, job_id, task_key, created_at FROM ad_learnings ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY id DESC LIMIT ${limit}`).bind(...bind).all()).results || [];
+    return { learnings: rows.map((r) => ({ ...r, value: r.value ? JSON.parse(r.value) : null })) };
+  }
+  if (res === 'learnings' && method === 'POST') {
+    const L = body || {};
+    const industry = String(L.industry || '').trim().slice(0, 60); const kind = String(L.kind || 'note').trim();
+    const text = String(L.text || '').trim().slice(0, 600);
+    if (!industry || !text) throw new Error('industry 와 text 가 필요합니다');
+    if (!LEARN_KINDS.has(kind)) throw new Error('kind 는 ' + [...LEARN_KINDS].join('|'));
+    if (/@|https?:\/\/|\(\d{3}\)\s?\d{3}-\d{4}/.test(text)) throw new Error('학습 메모에 이메일·링크·전화번호를 넣지 않습니다 (업종·도시 수준 집계만)');
+    const r = await db.prepare(`INSERT INTO ad_learnings (industry, city, state, channel, kind, text, value, sample_n, job_id, task_key) VALUES (?,?,?,?,?,?,?,?,?,?)`)
+      .bind(industry, String(L.city || '').slice(0, 60) || null, String(L.state || '').slice(0, 10) || null, String(L.channel || '').slice(0, 20) || null, kind, text, L.value ? JSON.stringify(L.value) : null, Math.max(1, Number(L.sample_n) || 1), L.job_id ? Number(L.job_id) : null, String(L.task_key || '').slice(0, 20) || null).run();
+    return { id: r.meta && r.meta.last_row_id };
+  }
+  if (res === 'learnings' && method === 'DELETE' && id) { await db.prepare(`DELETE FROM ad_learnings WHERE id = ?`).bind(Number(id)).run(); return { deleted: Number(id) }; }
 
   /* 설정 */
   if (res === 'settings' && method === 'GET') return { settings: await getSettings(db) };

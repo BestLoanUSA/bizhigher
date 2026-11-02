@@ -12,6 +12,9 @@
  *   node automation/ai-runner/runner.js draft --deliverable 7 --file body.txt    # 결과물 1건만
  *   node automation/ai-runner/runner.js drafted --deliverable 7 [--note "초안 제목"]   # Gmail 초안을 다른 경로로 만든 뒤 기록만
  *   node automation/ai-runner/runner.js note --job 5 --text "…"                      # 타임라인 메모
+ *   node automation/ai-runner/runner.js learnings --industry 안경점 [--channel google]  # 업종별 광고 학습 메모(먹힌 키워드·훅·CPA 범위) — ads-2·ac-1 설계 전에 읽는다
+ *   node automation/ai-runner/runner.js learn --industry 안경점 --kind keyword --text "'eye exam near me' 전환 CPA $18~24, 'glasses' 는 전환 0" --value '{"cpa":[18,24]}' --n 1 --channel google --city "Garden Grove" --state CA --job 28 --task-key am-5
+ *       업종·도시 수준 집계만. 고객명·이메일·전화·링크는 넣지 않는다(서버가 이메일·링크·전화 형식은 거절)
  *
  * 환경변수: BIZHIGHER_ADMIN_PASSWORD (필수), BIZHIGHER_ADMIN_URL (기본 https://bizhigher.com)
  */
@@ -104,5 +107,21 @@ async function api(path, body) {
     console.log('메모 저장');
     return;
   }
-  console.log('사용법: queue | submit --task ID --file F [--url U] [--kind text|html|link|images|video] [--checks "a|b"] [--self-check S] [--options o.json] [--done] | done --task ID | draft --deliverable ID --file F | drafted --deliverable ID | note --job ID --text T | wake [--reason R] [--force]');
+  if (cmd === 'learnings') { // 업종별 학습 메모 읽기 — ads-2·ac-1 설계 전에. 마크다운 표로 출력(없으면 "없음")
+    const q = new URLSearchParams(); if (opt('industry')) q.set('industry', opt('industry')); if (opt('channel')) q.set('channel', opt('channel')); q.set('limit', opt('limit', '40'));
+    const r = await api('learnings?' + q.toString());
+    if (!r.learnings.length) { console.log('학습 메모 없음 — ' + (opt('industry') || '전체')); return; }
+    console.log('| 업종 | 지역 | 채널 | 종류 | 메모 | 표본 | 날짜 |\n|---|---|---|---|---|---|---|');
+    r.learnings.forEach((l) => console.log(`| ${l.industry} | ${[l.city, l.state].filter(Boolean).join(', ') || '-'} | ${l.channel || '-'} | ${l.kind} | ${l.text.replace(/\|/g, '/')}${l.value ? ' `' + JSON.stringify(l.value) + '`' : ''} | ${l.sample_n} | ${String(l.created_at).slice(0, 10)} |`));
+    return;
+  }
+  if (cmd === 'learn') { // 학습 메모 한 줄 쓰기 — am-5·ads-5·ac-5(고객 선택) 뒤에. 고객명·이메일·전화는 넣지 않는다
+    const body = { industry: opt('industry'), city: opt('city'), state: opt('state'), channel: opt('channel'), kind: opt('kind', 'note'), text: opt('text'), sample_n: Number(opt('n', '1')), job_id: opt('job') ? Number(opt('job')) : undefined, task_key: opt('task-key') };
+    if (opt('value')) body.value = JSON.parse(opt('value'));
+    if (!body.industry || !body.text) throw new Error('--industry 와 --text 가 필요합니다');
+    const r = await api('learnings', body);
+    console.log('학습 메모 저장 #' + r.id);
+    return;
+  }
+  console.log('사용법: queue | submit --task ID --file F [--url U] [--kind text|html|link|images|video] [--checks "a|b"] [--self-check S] [--options o.json] [--done] | done --task ID | draft --deliverable ID --file F | drafted --deliverable ID | note --job ID --text T | wake [--reason R] [--force] | learnings [--industry I] [--channel google|meta] | learn --industry I --kind keyword|negative|hook|audience|cpa|budget|creative|rule|note --text T [--value JSON] [--n 3] [--channel C] [--city C --state S] [--job ID] [--task-key am-5]');
 })().catch((e) => { console.error('오류:', e.message); process.exit(1); });

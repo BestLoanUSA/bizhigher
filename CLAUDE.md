@@ -87,6 +87,9 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | 리포트 주소·30일 만료 | `functions/api/_reports.js` — 주소 `/report/{업체명 슬러그}-{4자}`(사용자 입력 업체명을 로마자로, 구글 상호 아님). 옛 16진 12자 주소도 그대로 열린다. 발급 30일 뒤 구글에서 온 값을 지우고 place_id·점수·입력 업체명/지역만 남긴다(열람 시 + 새 진단마다 `purgeExpiredReports`). 만료 화면은 "같은 가게 다시 진단하기" |
 | 구글 지도 출처 표시 | 로고 `src/google-maps-logo.svg`(공식 회색, 높이 18px, `alt="Google Maps" translate="no"`). 리포트 상단·경쟁 업체 카드, Places를 쓰는 도구 4개(`build.js` `PLACES_TOOLS`). Places 데이터를 화면에 보여주는 새 화면에는 반드시 붙인다 |
 | GBP 리뷰 답글·게시물 자동화 실험 | `automation/gbp/` (README 참고. API 승인 전엔 `--dry-run`만) |
+| 광고 표준 트리거 12개(플랫폼 내장 자동 규칙) | `docs/ad-rules-ko.md` — 안전장치·낭비 차단·소재 교체·예산 이동·시간대·주말·프로모 종료·티어 상한·평판 연동. ads-2 설계안이 고객 숫자로 환산한 표를 붙이고 ads-3·ads-4 구축 때 심는다(2026-11-02, 스마틀리 분석 https://claude.ai/artifact/TYMA52t35CWb8Q3RBxSeK5) |
+| 광고 소재 사전 점검(세트 점수·기본 선택) | `automation/ai-runner/creative.js precheck` — 글자 픽셀 비율(20% 이하)·흰 글자 대비(4.5:1)·9:16 안전 영역(compose 가 글자를 아래 320px 위로)·노출·선명도. `--options` 면 1위를 기본 선택으로. 시선 추적 예측은 하지 않는다 |
+| 업종별 광고 학습 메모(우리식 Synapse) | D1 `ad_learnings` · 관리자 `GET/POST/DELETE /admin/api/learnings` · `runner.js learnings --industry` / `learn --industry … --kind keyword|negative|hook|audience|cpa|budget|creative|rule|note`. 업종·도시 수준 집계만, 고객명·이메일·전화·링크 금지(서버가 형식 거절). ads-2·ac-1 전에 읽고 am-5·ads-5 뒤에 한 줄 쓴다 |
 | 고객 결과물 페이지 `/c/{token}` | `functions/c/[token].js` — 묶음 메일·승인 흐름은 §12-3 |
 | 새 리뷰 감시·답글 과제 | `functions/api/_reviews.js` (§12-4) — 위험 단어 목록 `RISK`, 쿨다운 20시간 |
 | 고객 웹사이트 템플릿·빌드·호스팅 | 템플릿 `automation/sites/render.js` · 라우터 `automation/sites/worker.js` · CLI `automation/ai-runner/sites.js` · 스펙 API `functions/admin/[[path]].js`(`sites`) · 설계 `docs/customer-sites-design-ko.md` (§12-5) |
@@ -205,6 +208,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | `deliverables` 추가 열 | `task_id`·`kind`·`summary`·`needs_approval`·`approved_at`·`revise_note`·`packet_id` — 고객 페이지·묶음 발송·승인(§12-3). `jobs.portal_token`도 같이 | `_orders.js EXTRA_COLUMNS` |
 | `tool_usage` | 무료 도구 하루 사용 횟수 (일자·IP 해시·도구) — 자동 생성 | `functions/api/tools/_shared.js` |
 | `review_seen` · `review_sync` | 본 리뷰의 키 해시·별점, 작업별 마지막 Places 확인 시각 — 자동 생성 | `functions/api/_reviews.js` (§12-4) |
+| `ad_learnings` | 업종별 광고 학습 메모(업종·도시·채널·종류·메모·값·표본 수) — 자동 생성, 고객 식별 정보 없음 | 관리자 `learnings` API · `runner.js learnings/learn` (2026-11-02) |
 | `sites` | 고객 웹사이트 스펙 JSON(작업당 1행, slug·domain·live·version) — 자동 생성 | `sites.js` · 관리자 `sites` API (§12-5) |
 | `site_events` | 고객 사이트 전환 비콘 일별 집계(사이트·날짜·이벤트·페이지·n) — 자동 생성 | `functions/api/site-event.js` · `siteStats()` (2026-11-01) |
 | `site_versions` · `site_leads` | 스펙 버전 기록(버전·메모·바뀐 키), 고객 사이트 문의 폼 리드 — 자동 생성 | 관리자 `sites/:slug/versions`·`leads` · `functions/api/site-contact.js` (§12-5 2단계) |
@@ -325,7 +329,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 
 ### 12-2. AI 실행 루틴 (2026-10-21)
 
-- claude.ai/code Routine "BizHigher AI 실행 루틴" `trig_01GhKv3AnLhkwQm9k2CrevXR`, 매번 새 세션, Gmail 커넥터 없음(조직 정책). 코드·절차는 `automation/ai-runner/README.md`
+- claude.ai/code Routine "BizHigher AI 실행 루틴" `trig_01XTs4cefsWCQCVQPbw1ZtL8`(2026-11-02 재생성 — 이전 `trig_01GhKv3AnLhkwQm9k2CrevXR` 은 사라져서 새로 만들었다. id 가 바뀌면 루틴 API 토큰을 다시 발급해 Cloudflare `ROUTINE_FIRE_URL`·`ROUTINE_FIRE_TOKEN` 을 갱신하고 재배포한다), 매번 새 세션, 환경 `bizhigher`(`env_01GEFiPcc32xD2DkSUWS9R3S`), Gmail 커넥터 없음(조직 정책). **프롬프트 원문은 `docs/ai-runner-routine-prompt-ko.md`** — 루틴 설정에는 그 파일을 읽으라는 한 단락만 넣고, 지시 변경은 파일 커밋으로(2026-11-02). 코드·절차는 `automation/ai-runner/README.md`
 - **할 일이 생길 때만 돈다(2026-11-01 David 결정)** — 정기 실행은 LA 07:23 하루 1회(`CRON_TZ=America/Los_Angeles 23 7 * * *`, 사이트 재배포·새 리뷰 확인·7일 무응인 처리용)뿐이고, 그 밖에는 **관리자가 깨운다**: `functions/api/_runner.js wakeRoutine()`이 claude.ai 루틴 API 트리거(`POST https://api.anthropic.com/v1/claude_code/routines/{trig_…}/fire`, 루틴별 토큰 `sk-ant-oat01-…`)를 부른다. 부르는 순간 = 관리자 승인·수정 요청·반려·다시 열기·자동 승인·단계 완료·David 대신 선택·사이트 수정 요청·데모, 질문지 제출(`/api/intake`), Stripe 결제, 고객 페이지 승인·선택·수정 요청, 루틴 자신(`runner.js wake` — 끝날 때 남은 단계가 있으면). **AI 차례(`aiReady`)가 하나도 없으면 부르지 않고**, 3분 안의 중복은 건너뛴다(한 세션이 큐를 전부 처리). 상태는 `settings.runner`(관제탑 하단 한 줄 + "지금 루틴 돌리기" 버튼 = `POST /admin/api/runner/wake {force}`). 환경변수 `ROUTINE_FIRE_URL`·`ROUTINE_FIRE_TOKEN`(§8)이 없으면 조용히 건너뛰고 관제탑에 "미설정"만 보인다 — 그러면 하루 1회만 돈다. 루틴 토큰은 claude.ai/code/routines → 루틴 편집 → Add another trigger → API → Generate token(한 번만 보임), 루틴당 시간당 30회 한도. 이전(2026-10-21~31)의 2시간마다 8회 실행은 빈 실행 비용(회당 약 $0.15) 때문에 폐기
 - 흐름: `runner.js queue`(관리자 API `GET /admin/api/runner/queue` — 같은 서비스 앞 단계가 끝난 AI 단계만) → 플레이북대로 결과물 생성 → `submit`(verify면 검증 큐, 아니면 done) → 전달 대기 결과물은 `summary`(고객용 요약 2~4문장 저장, 메일 없음) → 작업별 메모. 발송은 §12-3
 - **2026-10-21 확장**: 우리 가게 공개 정보는 `places.js lookup`(고객 프로필 단계와 "GBP·구글 프로필 확인" 수정 요청에서 — 주소·전화·웹사이트·카테고리·영업시간·평점·리뷰 수·place_id·지도 링크·사진 수·소개문을 "(Places 공개 정보, 날짜)" 표시로 채운다), 경쟁사 갭 분석은 `places.js competitors`(실시간 조회만, 저장 금지), 광고 소재·게시물 이미지는 `creative.js gen→compose→upload`(fal.ai flux/schnell 배경 + Playwright 한글 조판 1:1·9:16·1.91:1 → D1 `assets` BLOB → `/a/{id}.jpg`, `functions/a/[id].js`) → `submit --kind images`로 검증 큐에 이미지 그리드. 숏폼 영상은 `creative.js video`(고객 사진 1장 → fal.ai Kling 2.1 이미지→영상 5초 클립, 편당 약 $0.25~0.5, `sv-2` auto)로 클립을 만들고 `creative.js caption`(자막 `|` 구분 자동 배분·`*강조*`·로고·브랜드·CTA·선택 음악 → Playwright 투명 PNG + 시스템 ffmpeg overlay, 2026-10-22)으로 완성본 mp4 까지 루틴이 만든다. **스토리 완성본(2026-10-22)**: `creative.js promo --job N --clip 클립`(Remotion 템플릿 `automation/video`)이 사이트 스펙의 상호·서비스·강조점·별점·전화·영업시간만으로 9:16 20초(훅→서비스 ≤3→왜 우리→엔드카드)를 렌더한다 — 비용 0, 약 1.5분, Kling 클립은 훅 배경. 사이트 스펙이 없는 고객은 caption 5초 클립만. David 는 sv-3 에서 확인만. **리뷰 QR 인쇄물(2026-10-27)**: `creative.js print --job N --preview` 가 룩 3종 시안(A 사진 콜라주+보정 · B 네이비·골드 세리프 · C 미니멀+도형)과 `options.json` 을 만들어 고객이 고르고(qr-2 → qr-2b), `--look {선택}` 이 테이블텐트·포스터·카운터 카드·스티커·모바일 PNG(300dpi) + 인쇄용 PDF(레터, 재단선·접는 선, pdfunite) + 가이드를 만든다(qr-3). 비용 0, 시안 40초·키트 30초. 사진이 없으면 FAL 로 분위기 이미지 2장(A 룩용). 리뷰 대가 문구 없음, 구글 로고 미사용, QR 은 writereview 링크. 글꼴은 `_fonts.js` 자체 서빙. 웹사이트 빌드·실사진 합성·리포트 PDF 는 여전히 기획안만 올리고 David 세션이 마무리(인쇄물은 print 로 자동). 자산 업로드는 multipart(R2 60MB, mp4·webm·pdf 포함)
@@ -522,7 +526,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 11. **반자동 등록의 고객당 실소요 시간** — 1~1.5시간은 추정치. 1~2곳 실측 필요 (§15)
 12. 포스팅 3채널 최종 확정 / 예약 발행 툴 선정 / 승인 큐 형태 / ~~무응답 자동 승인 약관 문구~~(2026-10-21 반영) / 월간 리포트 지표 정의 / GBP API 신청 계정 (§15)
 13. **로컬 등록 실행** — 핵심 30곳 마스터 목록(Claude in Chrome 보조 입력용) + 일회성 시티에이션 빌더 업체 선정. `docs/automation-map-ko.md` §3
-14. **Google Ads API 개발자 토큰 신청**(MCC) — 광고 운영 수동 5.4h/월/고객의 유일한 출구
+14. **Google Ads API 개발자 토큰 신청**(MCC) — 광고 운영 수동 5.4h/월/고객의 유일한 출구. 토큰 전에는 플랫폼 자동 규칙(`docs/ad-rules-ko.md`)으로 약 3.5h, 토큰 뒤 `ads.js report/propose/apply`(제안→승인→적용, 스마틀리 분석 §3-4·5·6)로 약 1h
 15. **GBP API 재신청 경로**(A 또는 B, §15) + BestLoanUSA 프로필 재인증
 16. ~~AI 실행 루틴~~ → 2026-10-21 생성(§12-2). 환경 비밀 `BIZHIGHER_ADMIN_PASSWORD`가 들어가야 첫 실행이 성공한다. 파일·이미지·영상 단계는 아직 David 세션 몫
 

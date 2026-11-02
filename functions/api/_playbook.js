@@ -82,10 +82,10 @@ export const PLAYBOOK = {
   'ads-setup': {
     name: '광고 셋업', steps: [
       S('ads-1', 'BizHigher MCC 아래 고객 Google Ads 계정 생성 + 고객 카드 등록(결제 프로필은 고객 명의) · Meta는 Business Manager 파트너 권한', 'onboarding', 'customer', 10, { block: '결정(2026-10-15): MCC 방식. 광고비는 고객 카드로 직접 결제(상품 정책). Meta는 비즈니스 인증 선행' }),
-      S('ads-2', '캠페인 설계안 + Google Ads Editor 가져오기 CSV(캠페인·광고그룹·키워드·제외어·RSA 광고) + Meta 캠페인 설정표', 'setup', 'ai', 15, { verify: true }),
-      S('ads-3', 'Google Ads — Ads Editor 로 CSV 가져오기 → 검토 → 게시 + 전환 연결', 'setup', 'david', 25, { block: 'CSV 가져오기 15분 + 전환 연결 10분. 구축을 손으로 하면 90분', next: 'Google Ads API 개발자 토큰(기본 액세스) + MCC → 일시정지 상태로 자동 생성' }),
-      S('ads-4', 'Meta — 설정표대로 캠페인 복제·픽셀 연결', 'setup', 'david', 40, { block: 'Meta 마케팅 API는 앱 심사 6~8주(§15) → 당분간 수동. 설정표·카피·소재는 ads-2·ac-3 산출물 재사용', next: 'Meta 앱 심사 통과' }),
-      S('ads-5', '전환 테스트 완료 리포트', 'setup', 'ai', 5, { verify: true }),
+      S('ads-2', '캠페인 설계안 + Google Ads Editor 가져오기 CSV(캠페인·광고그룹·키워드·제외어·RSA 광고) + Meta 캠페인 설정표 + 자동 규칙 표(docs/ad-rules-ko.md 12개 중 업종에 맞는 것, 고객 예산으로 환산)', 'setup', 'ai', 15, { verify: true, block: '설계 전에 같은 업종 학습 메모(runner.js learnings --industry)를 읽는다 — 먹힌 키워드·훅·CPA 범위' }),
+      S('ads-3', 'Google Ads — Ads Editor 로 CSV 가져오기 → 검토 → 게시 + 전환 연결 + 자동 규칙 세트 심기(BH-01~11, docs/ad-rules-ko.md)', 'setup', 'david', 35, { block: 'CSV 가져오기 15분 + 전환 연결 10분 + 규칙 8개 10분. 구축을 손으로 하면 90분', next: 'Google Ads API 개발자 토큰(기본 액세스) + MCC → 일시정지 상태로 자동 생성, 알림 규칙은 ads.js propose 로' }),
+      S('ads-4', 'Meta — 설정표대로 캠페인 복제·픽셀 연결 + 자동화된 규칙 세트 심기(docs/ad-rules-ko.md 메타 항목 6개)', 'setup', 'david', 50, { block: 'Meta 마케팅 API는 앱 심사 6~8주(§15) → 당분간 수동. 설정표·카피·소재는 ads-2·ac-3 산출물 재사용. 규칙은 Ads Manager 자동화된 규칙(계정당 250개)', next: 'Meta 앱 심사 통과' }),
+      S('ads-5', '전환 테스트 완료 리포트 + 업종 학습 메모 1줄(runner.js learn)', 'setup', 'ai', 5, { verify: true }),
     ],
   },
   'local-landing-pack': {
@@ -133,7 +133,7 @@ export const PLAYBOOK = {
       S('ac-2', '카피 — 헤드라인 5·본문 2·CTA 한/영, 광고 정책 검사', 'monthly', 'auto', 0),
       S('ac-3', '이미지 — 매장 실사진 합성(배경 제거) 또는 생성, 1:1·9:16·1.91:1 규격, 수량 30~50% 여유', 'monthly', 'auto', 0, { block: '루틴이 fal.ai(FAL_KEY) 배경 생성 + 한글 조판으로 3규격 제작, 검증 큐에서 확인. 매장 실사진 합성은 David 세션' }),
       S('ac-4', 'David 큐레이션 — 20장 선별 (검수가 아니라 선별)', 'monthly', 'david', 15, { verify: true }),
-      S('ac-5', '세트별 소재 묶음 + 카피 문서 + 업로드 가이드 → 고객이 세트를 고른다(선택지 = ac-3 세트 3개, 고객 페이지)', 'monthly', 'auto', 2, { block: '루틴이 ac-3 세트(헤드라인·피드 이미지)를 options 로 붙여 올린다. 고객이 고르면 deliverables.choice 에 기록 — David 가 ads-3 구축 때 그 세트를 쓴다' }),
+      S('ac-5', '세트별 소재 묶음 + 카피 문서 + 업로드 가이드 → 고객이 세트를 고른다(선택지 = ac-3 세트 3개, 고객 페이지) · 사전 점검 점수로 기본 선택', 'monthly', 'auto', 2, { block: '루틴이 creative.js precheck(글자 면적·대비·안전 영역·노출)로 세트 3개를 점수화해 1위를 기본 선택으로 options 에 붙여 올린다. 고객이 고르면 deliverables.choice 에 기록 — David 가 ads-3 구축 때 그 세트를 쓴다' }),
     ],
   },
   'local-listing-care': {
@@ -182,10 +182,10 @@ export const PLAYBOOK = {
   'ads-management': {
     name: '광고 운영 2채널', steps: [
       S('am-1', '캠페인 구축 (광고 셋업 선행)', 'setup', 'david', 60, { next: 'Google Ads API' }),
-      S('am-2', '주간 최적화 — 입찰·네거티브·소재 교체 (구글)', 'weekly', 'david', 45, { block: 'Google Ads API 개발자 토큰·MCC 없음', next: '기본 액세스 토큰 → 리포트·네거티브 자동, 입찰 제안은 AI+검수' }),
+      S('am-2', '주간 최적화 — 자동 규칙 알림 확인·제안 승인 + 입찰·소재 교체 (구글)', 'weekly', 'david', 30, { block: '안전장치·CTR 급락·예산 이동은 플랫폼 자동 규칙(docs/ad-rules-ko.md)이 처리, David 는 알림 규칙(제외 키워드·품질점수)만 판단. Google Ads API 토큰 전', next: '기본 액세스 토큰 → ads.js report/propose/apply: 제안을 검증 큐로, 승인 시 API 적용(5분)' }),
       S('am-3', '주간 최적화 — 메타', 'weekly', 'david', 30, { block: 'Meta API 앱 심사 전', next: 'Meta 앱 심사' }),
       S('am-4', '광고비 티어 상한 모니터링 (2개월 연속 초과 시 상위 티어 7일 전 안내)', 'monthly', 'david', 5, { next: 'API 연결 후 자동' }),
-      S('am-5', '월간 성과 리포트 + 개선 제안', 'monthly', 'ai', 15, { verify: true }),
+      S('am-5', '월간 성과 리포트 + 개선 제안 + 업종 학습 메모 1줄(runner.js learn)', 'monthly', 'ai', 15, { verify: true }),
     ],
   },
 };
