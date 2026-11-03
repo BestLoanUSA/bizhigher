@@ -31,7 +31,9 @@ function customerText(text) {
   return String(text || '')
     .replace(/\n+\[David 승인 메모\][^\n]*/g, '')
     .split('\n')
-    .filter((l) => !/^\s*\**\s*\[(고객 안내|David|내부|검수)[^\]]*\]\s*\**\s*$/.test(l) && !/^\s*참고한 스킬\s*:/.test(l) && !/^\s*\[(David|내부)[^\]]*\]/.test(l))
+    // 줄 맨 앞의 내부 라벨("**[고객 안내]** 이번 달…")은 라벨만 지우고 문장은 남긴다
+    .map((l) => l.replace(/^\s*\**\s*\[(고객 안내|검수)[^\]]*\]\s*\**\s*/, ''))
+    .filter((l, i, a) => !(l === '' && a[i - 1] === '') && !/^\s*참고한 스킬\s*:/.test(l) && !/^\s*\**\s*\[(David|내부)[^\]]*\]/.test(l))
     .map((l) => l.replace(/^\s*제목\s*:\s*/, '### '))
     .join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
@@ -54,7 +56,12 @@ function mdHtml(src) {
       i--;
       const cells = (r) => r.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
       const body = rows.filter((r) => !/^\s*\|[\s:|-]+\|\s*$/.test(r));
-      if (body.length) out += `<div class="tw"><table><thead><tr>${cells(body[0]).map((c) => `<th>${inline(c)}</th>`).join('')}</tr></thead><tbody>${body.slice(1).map((r) => `<tr>${cells(r).map((c) => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+      if (body.length) {
+        const head = cells(body[0]);
+        // 열이 5개 이상인 표는 폰에서 글자가 한 줄에 한 자씩 깨진다(2026-11-03 데모: 게시물 캘린더 7열) → 행마다 카드(제목: 값)로
+        if (head.length >= 5) out += `<div class="mdcards">${body.slice(1).map((r) => { const c = cells(r); return `<dl>${head.map((h, k) => c[k] ? `<dt>${inline(h)}</dt><dd>${inline(c[k])}</dd>` : '').join('')}</dl>`; }).join('')}</div>`;
+        else out += `<div class="tw"><table><thead><tr>${head.map((c) => `<th>${inline(c)}</th>`).join('')}</tr></thead><tbody>${body.slice(1).map((r) => `<tr>${cells(r).map((c) => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+      }
       continue;
     }
     const li = /^\s*(?:[-*•]|(\d+)[.)])\s+(.*)$/.exec(l);
@@ -134,7 +141,7 @@ function page(job, ds, { preview, msg, site, siteTask, env }) {
 header{background:var(--navy);color:#fff;padding:22px 18px}header .logo{font-weight:800;font-size:18px}header .logo span{color:#7FA6FF}header h1{font-size:22px;margin:10px 0 4px}header p{margin:0;opacity:.85;font-size:14px}
 main{max-width:720px;margin:0 auto;padding:16px}
 .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 16px;margin-bottom:14px}.card.draft{border-style:dashed;background:#FFFBEB}.card h2{font-size:17px;margin:2px 0 8px}.meta{font-size:12px;color:var(--muted)}.sum{font-size:15px;line-height:1.6;margin:0 0 10px}
-.md{background:#F8FAFC;border:1px solid var(--line);border-radius:12px;padding:4px 14px;margin:8px 0;font-size:15px;line-height:1.65}.md p,.md ul,.md ol{margin:10px 0}.md ul,.md ol{padding-left:20px}.md li{margin:4px 0}.mdh{font-size:16px;margin:16px 0 6px}.md .tw{overflow-x:auto;margin:10px 0}.md table{border-collapse:collapse;width:100%;font-size:14px;background:#fff}.md th,.md td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}.md th{background:#EEF2F7}.md a{word-break:break-all}
+.md{background:#F8FAFC;border:1px solid var(--line);border-radius:12px;padding:4px 14px;margin:8px 0;font-size:15px;line-height:1.65}.md p,.md ul,.md ol{margin:10px 0}.md ul,.md ol{padding-left:20px}.md li{margin:4px 0}.mdh{font-size:16px;margin:16px 0 6px}.md .tw{overflow-x:auto;margin:10px 0}.md table{border-collapse:collapse;width:100%;font-size:14px;background:#fff}.md th,.md td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}.md th{background:#EEF2F7}.md a{word-break:break-all}.mdcards dl{display:grid;grid-template-columns:minmax(72px,30%) 1fr;gap:4px 10px;margin:10px 0;padding:10px 12px;background:#fff;border:1px solid var(--line);border-radius:10px;font-size:14px}.mdcards dt{color:#5B6472;font-weight:700}.mdcards dd{margin:0}
 pre{white-space:pre-wrap;word-break:break-word;font:14px/1.6 inherit;background:#F8FAFC;border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0;max-height:520px;overflow:auto}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:8px 0}.grid img,.grid video{width:100%;border-radius:10px;border:1px solid var(--line);display:block;background:#000}
 .btn{display:inline-block;background:var(--blue);color:#fff;border:0;border-radius:999px;padding:12px 18px;font-weight:700;font-size:15px;cursor:pointer;text-decoration:none;font-family:inherit}.btn.ghost{background:#fff;color:var(--blue);border:1.5px solid var(--blue)}
