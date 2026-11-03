@@ -1703,8 +1703,7 @@ function homePage(posts) {
   if (reduced) { setFinal(); return; }
   /* v45 — 데스크톱 시네마틱 히어로에서는 시간이 아니라 스크롤이 180일을 흐르게 한다(되감기 가능).
      히어로 frame() 이 demoP(0~1) 를 넘긴다: 이름 타이핑 → 형편없는 점수·문제 칩 → 플랜 시작 버튼 → DAY 카운트·점수 급상승·문제가 장점으로 반전 → 완료 */
-  /* 좁은 화면(991px 이하)은 카드가 고정되지 않고 일반 흐름에 있으므로, 카드가 화면을 지나가는 위치로 demoP 를 직접 계산한다
-     (카드 위쪽이 화면 높이 90% 지점 → 맨 위까지 0→1, 360×740 실측으로 플랜 버튼·DAY 카운트가 카드 전체가 보일 때 돌도록 맞춤). 페이지 길이는 그대로, 위로 스크롤하면 되감긴다 */
+  /* 좁은 화면(991px 이하)은 히어로 스티키 밖 일반 흐름에 있는 카드를 자체 트랙(.demo-pin-track)으로 상단에 고정해 스크럽한다(아래 narrowMQ 분기) */
   var heroEl = document.getElementById('cine-hero');
   var narrowMQ = window.matchMedia('(max-width: 991px)').matches;
   var demoCard = document.getElementById('demo-card');
@@ -1744,17 +1743,38 @@ function homePage(posts) {
       if (hint) hint.style.opacity = String(1 - sseg(d, 0.45, 0.6));
     };
     if (narrowMQ) {
-      var DM_START = 0.9, DM_END = 0, dmTick = false;
-      /* 힌트는 카드 아래에 있으면 진행 중엔 화면 밖이라 카드 위로 옮긴다 */
-      if (hint) demoCard.parentNode.insertBefore(hint, demoCard);
+      /* 모바일 고정 스크럽: 카드가 내비 바로 아래(상단)에 닿으면 고정되고, 그 뒤 PIN_VH 만큼 더 스크롤하는 동안 180일이 빠르게 흐른 뒤 풀린다.
+         다가오는 동안(화면 85% → 상단)은 "비포"(이름 타이핑·낮은 점수·문제 칩, d 0→PRE)만 보여 빈 카드로 도착하지 않게 한다.
+         카드가 화면에 다 안 들어가는 낮은 화면이면 고정하지 않고 위치 기반으로만 진행한다 */
+      var PRE = 0.32, PIN_VH = 0.75, dmTick = false;
+      var demoBox = demoCard.parentNode;
+      if (hint) demoBox.insertBefore(hint, demoCard);
+      var pinTrack = document.createElement('div');
+      pinTrack.className = 'demo-pin-track';
+      demoBox.parentNode.insertBefore(pinTrack, demoBox);
+      pinTrack.appendChild(demoBox);
+      var navEl = document.querySelector('.nav');
+      var pinTop = 0, pinDist = 0, pinned = false;
+      var dmLayout = function () {
+        var vh = window.innerHeight;
+        pinTop = Math.round((navEl ? Math.max(0, navEl.getBoundingClientRect().bottom) : 0) + 8);
+        pinned = demoBox.offsetHeight + pinTop <= vh;
+        pinDist = pinned ? Math.round(vh * PIN_VH) : 0;
+        pinTrack.style.height = pinned ? (demoBox.offsetHeight + pinDist) + 'px' : '';
+        demoBox.classList.toggle('demo-pinned', pinned);
+        demoBox.style.top = pinned ? pinTop + 'px' : '';
+      };
       var dmFrame = function () {
         dmTick = false;
-        var vh = window.innerHeight, top = demoCard.getBoundingClientRect().top;
-        window.__bhDemoScrub(sseg(vh * DM_START - top, 0, vh * (DM_START - DM_END)));
+        var vh = window.innerHeight, t = pinTrack.getBoundingClientRect().top;
+        var pre = sseg(vh * 0.85 - t, 0, vh * 0.85 - pinTop);
+        var run = pinned ? sseg(pinTop - t, 0, pinDist) : sseg(pinTop - t, 0, vh * 0.5);
+        window.__bhDemoScrub(run > 0 ? PRE + (1 - PRE) * run : PRE * pre);
       };
       var dmOn = function () { if (!dmTick) { dmTick = true; requestAnimationFrame(dmFrame); } };
       window.addEventListener('scroll', dmOn, { passive: true });
-      window.addEventListener('resize', dmOn, { passive: true });
+      window.addEventListener('resize', function () { dmLayout(); dmOn(); }, { passive: true });
+      dmLayout();
       dmFrame();
     } else {
       window.dispatchEvent(new Event('scroll'));
