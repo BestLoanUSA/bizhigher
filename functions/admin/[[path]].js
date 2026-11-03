@@ -24,7 +24,7 @@
  *   GET  /admin/api/learnings?industry=안경점&channel=google   업종별 광고 학습 메모(먹힌 키워드·훅·CPA 범위) · POST /admin/api/learnings {industry,kind,text,…} · DELETE /admin/api/learnings/:id
  */
 import { authenticate, login, logoutCookie } from './_auth.js';
-import { notify, sendEmail, esc as escHtml } from '../api/_notify.js';
+import { notify, notifyTo, sendEmail, esc as escHtml } from '../api/_notify.js';
 import { syncReviews } from '../api/_reviews.js';
 import { wakeRoutine, retryPendingWake, runnerStatus } from '../api/_runner.js';
 import { isClaimed, ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady, ensurePortalToken, sweepAutoApprovals, parseOptions, approveDeliverable, deepPatch, specDiff, patchSiteSpec, siteStats } from '../api/_orders.js';
@@ -452,7 +452,7 @@ async function api(env, method, seg, body, url) {
       ${body.note ? `<p style="background:#F6F7F9;border-radius:12px;padding:12px">${escHtml(String(body.note).slice(0, 2000))}</p>` : ''}
       <p>수정은 언제든 이 메일에 회신하시거나 페이지에서 요청하실 수 있습니다(수정 1회 무료). 전화로 확인하셔도 됩니다.</p>
       <p>BizHigher 드림 · <a href="https://bizhigher.com">bizhigher.com</a> · hello@bizhigher.com</p></div>`;
-    const ok = await sendEmail(env, { to: j.customer_email, bcc: env.NOTIFY_EMAIL || undefined, subject, html: htmlBody });
+    const ok = await sendEmail(env, { to: j.customer_email, bcc: notifyTo(env), subject, html: htmlBody });
     if (!ok) throw bad('메일 발송 실패 — Resend 응답 오류 (도메인 인증·발신 주소 확인)');
     const pid = 'pk_' + Date.now().toString(36);
     await db.prepare(`UPDATE deliverables SET sent_at = datetime('now'), packet_id = ? WHERE job_id = ? AND sent_at IS NULL`).bind(pid, j.id).run();
