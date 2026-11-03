@@ -9,7 +9,7 @@
  * 사이트 수정 요청·데모 생성, 질문지 제출(/api/intake), Stripe 결제, 고객 페이지 승인·선택·수정 요청, 루틴 자신(runner.js wake — 남은 일이 있을 때).
  * 실제로 AI 차례(aiReady)가 하나도 없으면 부르지 않는다. 3분 안에 또 부르면 건너뛴다(한 세션이 큐를 전부 처리한다).
  */
-import { aiReady } from './_orders.js';
+import { aiReady, isClaimed } from './_orders.js';
 
 const DEBOUNCE_MS = 3 * 60 * 1000;
 
@@ -20,9 +20,9 @@ export async function hasAiWork(db) {
   const jobs = (await db.prepare(`SELECT id FROM jobs WHERE status NOT IN ('done','hold') ORDER BY id DESC LIMIT 200`).all()).results || [];
   if (!jobs.length) return { work: 0, drafts: 0 };
   const ids = jobs.map((j) => j.id);
-  const rows = (await db.prepare(`SELECT id, job_id, key, service, sort, who, status FROM job_tasks WHERE job_id IN (${ids.map(() => '?').join(',')})`).bind(...ids).all()).results || [];
+  const rows = (await db.prepare(`SELECT id, job_id, key, service, sort, who, status, claimed_at FROM job_tasks WHERE job_id IN (${ids.map(() => '?').join(',')})`).bind(...ids).all()).results || [];
   const by = {}; for (const t of rows) (by[t.job_id] = by[t.job_id] || []).push(t);
-  let work = 0; for (const id of ids) work += aiReady(by[id] || []).length;
+  let work = 0; for (const id of ids) work += aiReady(by[id] || []).filter((t) => !isClaimed(t)).length; // 실행 중인 세션이 가져간 단계는 빼고
   const d = await db.prepare(`SELECT COUNT(*) n FROM deliverables d JOIN jobs j ON j.id = d.job_id LEFT JOIN job_tasks t ON t.id = d.task_id WHERE d.sent_at IS NULL AND (d.summary IS NULL OR d.summary = '') AND j.status NOT IN ('done','hold') AND (COALESCE(t.result_text,'') != '' OR COALESCE(d.url,'') != '')`).first();
   return { work, drafts: (d && d.n) || 0 };
 }

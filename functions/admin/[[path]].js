@@ -27,7 +27,7 @@ import { authenticate, login, logoutCookie } from './_auth.js';
 import { notify, sendEmail, esc as escHtml } from '../api/_notify.js';
 import { syncReviews } from '../api/_reviews.js';
 import { wakeRoutine, retryPendingWake, runnerStatus } from '../api/_runner.js';
-import { ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady, ensurePortalToken, sweepAutoApprovals, parseOptions, approveDeliverable, deepPatch, specDiff, patchSiteSpec, siteStats } from '../api/_orders.js';
+import { isClaimed, ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady, ensurePortalToken, sweepAutoApprovals, parseOptions, approveDeliverable, deepPatch, specDiff, patchSiteSpec, siteStats } from '../api/_orders.js';
 import { PLAYBOOK, COMMON_ONBOARDING, WHO, PHASES, tasksFor, summarize, DELIVER_KEYS, APPROVAL_KEYS, outputKind, OUTPUT_LABEL, customerTitle } from '../api/_playbook.js';
 import { appHtml, loginHtml } from './_ui.js';
 
@@ -200,12 +200,12 @@ async function api(env, method, seg, body, url) {
     }
     if (sub === 'revise') {
       if (!note) throw bad('무엇을 고칠지 적어 주세요');
-      await db.prepare(`UPDATE job_tasks SET status = 'doing', revise_note = ?, decided_at = datetime('now') WHERE id = ?`).bind(note, t.id).run();
+      await db.prepare(`UPDATE job_tasks SET status = 'doing', claimed_at = NULL, revise_note = ?, decided_at = datetime('now') WHERE id = ?`).bind(note, t.id).run();
       await addEvent(db, t.job_id, 'task', null, null, `✎ 수정 요청 — ${t.title}: ${note}`);
       return { next: await nextReview(db, t.id), __wake: `수정 요청 — ${t.title.slice(0, 60)}` };
     }
     if (sub === 'reject') {
-      await db.prepare(`UPDATE job_tasks SET status = 'todo', note = ?, decided_at = datetime('now') WHERE id = ?`).bind(note ? '반려: ' + note : '반려', t.id).run();
+      await db.prepare(`UPDATE job_tasks SET status = 'todo', claimed_at = NULL, note = ?, decided_at = datetime('now') WHERE id = ?`).bind(note ? '반려: ' + note : '반려', t.id).run();
       await addEvent(db, t.job_id, 'task', null, null, `⛔ 반려 — ${t.title}${note ? ': ' + note : ''}`);
       return { next: await nextReview(db, t.id), __wake: `반려 — ${t.title.slice(0, 60)}` };
     }
@@ -222,14 +222,14 @@ async function api(env, method, seg, body, url) {
     }
     if (sub === 'undo') {
       // "받았음"·"완료"를 되돌린다 — 다시 대기로. 타임라인에 남긴다
-      await db.prepare(`UPDATE job_tasks SET status = 'todo', done_at = NULL WHERE id = ?`).bind(t.id).run();
+      await db.prepare(`UPDATE job_tasks SET status = 'todo', claimed_at = NULL, done_at = NULL WHERE id = ?`).bind(t.id).run();
       await addEvent(db, t.job_id, 'task', null, null, `↩ 완료 취소 — ${t.title}${note ? ': ' + note : ''}`);
       return {};
     }
     if (sub === 'reopen') {
       // 완료된 AI 단계를 다시 열어 수정 요청
       if (!note) throw bad('무엇을 고칠지 적어 주세요');
-      await db.prepare(`UPDATE job_tasks SET status = 'doing', revise_note = ?, done_at = NULL, decided_at = datetime('now') WHERE id = ?`).bind(note, t.id).run();
+      await db.prepare(`UPDATE job_tasks SET status = 'doing', claimed_at = NULL, revise_note = ?, done_at = NULL, decided_at = datetime('now') WHERE id = ?`).bind(note, t.id).run();
       await addEvent(db, t.job_id, 'task', null, null, `↩ 다시 열어 수정 요청 — ${t.title}: ${note}`);
       return { __wake: `다시 열기 — ${t.title.slice(0, 60)}` };
     }
@@ -370,7 +370,7 @@ async function api(env, method, seg, body, url) {
     const tmap = await tasksByJob(db, jobs.map((j) => j.id));
     const items = [];
     for (const j of jobs) {
-      const ready = aiReady(await syncPlaybook(db, j, tmap[j.id] || []));
+      const ready = aiReady(await syncPlaybook(db, j, tmap[j.id] || [])).filter((t) => !isClaimed(t)); // 다른 루틴 세션이 처리 중인 단계는 빼고
       if (!ready.length) continue;
       const intake = j.intake_id ? await db.prepare(`SELECT * FROM intakes WHERE id = ?`).bind(j.intake_id).first() : null;
       const profile = j.customer_email ? await safeFirst(db, `SELECT * FROM customer_profiles WHERE lower(email) = ? ORDER BY rowid DESC LIMIT 1`, j.customer_email.toLowerCase()) : null;
@@ -381,6 +381,9 @@ async function api(env, method, seg, body, url) {
           job: { id: j.id, business: j.business, service_slug: j.service_slug, service_name: j.service_name || j.o_service_name, customer_email: j.customer_email, due_date: j.due_date, created_at: j.created_at, intake, profile, done_results: done } });
       }
     }
+    // 넘긴 단계는 이 세션 몫으로 표시 — 동시에 깨어난 다른 세션이 같은 단계를 또 만들지 않게 (2026-11-03 데모: qr-2·web-2 를 두 세션이 동시에 만들었다)
+    const claimIds = items.map((i) => i.task.id);
+    for (let i = 0; i < claimIds.length; i += 80) { const ids = claimIds.slice(i, i + 80); await db.prepare(`UPDATE job_tasks SET claimed_at = datetime('now') WHERE id IN (${ids.map(() => '?').join(',')})`).bind(...ids).run(); }
     // 고객용 요약(summary)이 없는 결과물 — 루틴이 요약만 쓴다. 발송은 David가 관리자 "고객에게 묶음 보내기"로 (고객 페이지 /c/{token})
     const drafts = (await db.prepare(`SELECT d.*, j.business, j.customer_email, j.service_name, t.result_kind, substr(t.result_text, 1, 3000) AS result_text FROM deliverables d JOIN jobs j ON j.id = d.job_id LEFT JOIN job_tasks t ON t.id = d.task_id WHERE d.sent_at IS NULL AND (d.summary IS NULL OR d.summary = '') AND j.status NOT IN ('done','hold') AND (COALESCE(t.result_text,'') != '' OR COALESCE(d.url,'') != '') ORDER BY d.id ASC LIMIT 20`).all()).results || [];
     return { items, pendingDrafts: drafts, reviewSync, rules: ['고객에게 자동 발송 금지 — Gmail 초안까지', 'verify 단계는 status review, 아니면 done', '경쟁사 갭 분석 선행(노출·SEO)', '리뷰 대가·게이팅·가짜 리뷰 금지', '의료·치과 환자 암시 금지', '실행 플랜은 180일', '웹 산출물 360px 실측'] };
@@ -770,7 +773,7 @@ async function reopenSiteTask(db, jobId, note) {
   const t = await db.prepare(`SELECT id, status, revise_note FROM job_tasks WHERE job_id = ? AND key = 'web-2' ORDER BY id DESC LIMIT 1`).bind(jobId).first();
   if (!t) return null;
   const merged = t.status === 'doing' && t.revise_note ? t.revise_note + '\n' + note : note; // 이미 열려 있으면 요청을 이어 붙인다
-  await db.prepare(`UPDATE job_tasks SET status = 'doing', revise_note = ?, done_at = NULL WHERE id = ?`).bind(merged, t.id).run();
+  await db.prepare(`UPDATE job_tasks SET status = 'doing', claimed_at = NULL, revise_note = ?, done_at = NULL WHERE id = ?`).bind(merged, t.id).run();
   return t;
 }
 async function getSettings(db) {

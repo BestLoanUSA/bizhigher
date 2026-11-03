@@ -174,7 +174,7 @@ export async function onRequestPost({ params, env, request, waitUntil }) {
     if (!note) return html('수정 내용을 적어 주세요', 400);
     const t = await env.DB.prepare(`SELECT id, status, revise_note FROM job_tasks WHERE job_id = ? AND key = 'web-2' ORDER BY id DESC LIMIT 1`).bind(data.job.id).first().catch(() => null);
     const tagged = '[고객 수정 요청] ' + note;
-    if (t) await env.DB.prepare(`UPDATE job_tasks SET status = 'doing', revise_note = ?, done_at = NULL WHERE id = ?`).bind(t.status === 'doing' && t.revise_note ? t.revise_note + '\n' + tagged : tagged, t.id).run();
+    if (t) await env.DB.prepare(`UPDATE job_tasks SET status = 'doing', claimed_at = NULL, revise_note = ?, done_at = NULL WHERE id = ?`).bind(t.status === 'doing' && t.revise_note ? t.revise_note + '\n' + tagged : tagged, t.id).run();
     await addEvent(env.DB, data.job.id, 'customer', null, null, `✎ 웹사이트 수정 요청 (고객 페이지) — ${note.slice(0, 200)}${t ? '' : ' (web-2 단계 없음 — 수동 처리)'}`);
     wake('고객 웹사이트 수정 요청');
     return Response.redirect(new URL(`/c/${params.token}?ok=site`, request.url).toString(), 303);
@@ -192,7 +192,7 @@ export async function onRequestPost({ params, env, request, waitUntil }) {
   if (action === 'revise') {
     if (!note) return html('수정 내용을 적어 주세요', 400);
     await db.prepare(`UPDATE deliverables SET revise_note = ?, approved_at = NULL WHERE id = ?`).bind(note, d.id).run();
-    if (d.task) await db.prepare(`UPDATE job_tasks SET status = 'doing', revise_note = ?, done_at = NULL WHERE id = ?`).bind('[고객 수정 요청] ' + note, d.task.id).run();
+    if (d.task) await db.prepare(`UPDATE job_tasks SET status = 'doing', claimed_at = NULL, revise_note = ?, done_at = NULL WHERE id = ?`).bind('[고객 수정 요청] ' + note, d.task.id).run();
     await addEvent(db, data.job.id, 'customer', null, null, `✎ 고객 수정 요청 (고객 페이지) — ${d.title}: ${note}`);
     wake(`고객 수정 요청 — ${d.title.slice(0, 50)}`);
     return Response.redirect(new URL(`/c/${params.token}?ok=revise`, request.url).toString(), 303);
