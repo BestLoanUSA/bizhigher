@@ -375,6 +375,7 @@ export function isClaimed(t, now = Date.now()) {
   return !!(t && t.claimed_at && (t.status === 'todo' || t.status === 'doing') && now - Date.parse(t.claimed_at.replace(' ', 'T') + 'Z') < CLAIM_MS);
 }
 
+const RECURRING = new Set(['weekly', 'daily']);
 export function aiReady(tasks) {
   const all = tasks || [];
   // 공통 온보딩(ob-*: 결제·질문지·프로필·자료·킥오프)은 다른 서비스 전체의 게이트. 공통 단계 자신(ob-3 프로필·ob-5 킥오프)은
@@ -384,7 +385,9 @@ export function aiReady(tasks) {
   return all.filter((t) => {
     if (!(t.who === 'auto' || t.who === 'ai') || !(t.status === 'todo' || t.status === 'doing')) return false;
     if (commonOpen && t.service !== 'common') return false;
-    return !all.some((x) => x.service === t.service && x.sort < t.sort && !CLOSED.has(x.status));
+    // 주간·일간 반복 단계(rr-5·rr-6·am-2·am-3·post-5 등)는 한 줄짜리 행이라 영영 '완료'가 되지 않는다 → 뒤 단계를 막지 않는다
+    // (2026-11-03 데모: 월간 리뷰 요약 rr-7·광고 성과 리포트 am-5 가 이 때문에 영원히 막혀 있었다)
+    return !all.some((x) => x.service === t.service && x.sort < t.sort && !CLOSED.has(x.status) && !RECURRING.has(x.phase));
   });
 }
 
@@ -567,6 +570,8 @@ export async function seedTasks(db, jobId, slug, { force } = {}) {
   for (let i = 0; i < stmts.length; i += 50) await db.batch(stmts.slice(i, i + 50));
   // 자동 단계 중 이미 끝난 것: 결제 기록(ob-1)
   await db.prepare(`UPDATE job_tasks SET status = 'done', done_at = datetime('now') WHERE job_id = ? AND key = 'ob-1'`).bind(jobId).run();
+  // 광고 셋업(ads-3·ads-4 구축)과 광고 운영이 같이 든 주문(Premium 등)은 am-1 '캠페인 구축'이 같은 일을 두 번 센다 → 해당 없음 (2026-11-03)
+  if (tasks.some((t) => t.service === 'ads-setup') && tasks.some((t) => t.k === 'am-1')) await db.prepare(`UPDATE job_tasks SET status = 'skipped', result_text = ? WHERE job_id = ? AND key = 'am-1' AND status = 'todo'`).bind('광고 셋업 ads-3·ads-4 에서 구축 — 중복 단계', jobId).run();
   await addEvent(db, jobId, 'system', null, null, `플레이북 ${tasks.length}단계 생성 (${slug})`);
   return stmts.length;
 }
