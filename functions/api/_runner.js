@@ -20,7 +20,7 @@ export async function hasAiWork(db) {
   const jobs = (await db.prepare(`SELECT id FROM jobs WHERE status NOT IN ('done','hold') ORDER BY id DESC LIMIT 200`).all()).results || [];
   if (!jobs.length) return { work: 0, drafts: 0 };
   const ids = jobs.map((j) => j.id);
-  const rows = (await db.prepare(`SELECT id, job_id, key, service, sort, who, status, claimed_at FROM job_tasks WHERE job_id IN (${ids.map(() => '?').join(',')})`).bind(...ids).all()).results || [];
+  const rows = (await db.prepare(`SELECT id, job_id, key, service, sort, who, status, phase, claimed_at FROM job_tasks WHERE job_id IN (${ids.map(() => '?').join(',')})`).bind(...ids).all()).results || [];
   const by = {}; for (const t of rows) (by[t.job_id] = by[t.job_id] || []).push(t);
   let work = 0; for (const id of ids) work += aiReady(by[id] || []).filter((t) => !isClaimed(t)).length; // 실행 중인 세션이 가져간 단계는 빼고
   const d = await db.prepare(`SELECT COUNT(*) n FROM deliverables d JOIN jobs j ON j.id = d.job_id LEFT JOIN job_tasks t ON t.id = d.task_id WHERE d.sent_at IS NULL AND (d.summary IS NULL OR d.summary = '') AND j.status NOT IN ('done','hold') AND (COALESCE(t.result_text,'') != '' OR COALESCE(d.url,'') != '')`).first();

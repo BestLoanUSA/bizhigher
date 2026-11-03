@@ -63,11 +63,11 @@ export const PLAYBOOK = {
   'local-listing-setup': {
     name: '로컬 등록 셋업', steps: [
       S('lls-1', '디렉토리 마스터 목록(등록 URL·인증 방식·자동화 가능 여부) 확정', 'setup', 'auto', 0, { block: 'docs/listings-master-30-ko.md(2026-10-21) 기준. 업종별 추가 디렉토리는 루틴이 보강해 lls-3 NAP 문서에 붙인다' }),
-      S('lls-2', '고객 전용 인증 이메일 발급 — {고객}@listings.bizhigher.com (Cloudflare Email Routing)', 'setup', 'david', 5, { next: 'Cloudflare API로 자동 발급' }),
+      S('lls-2', '고객 전용 인증 이메일 지정 — {slug}-listings@bizhigher.com (bizhigher.com catch-all 이 David 메일로 전달 — 따로 만들 것 없음, 2026-11-03)', 'setup', 'auto', 0),
       S('lls-3', 'NAP 표준 문서·설명문·카테고리·사진 세트 준비', 'setup', 'ai', 5, { verify: true }),
       S('lls-4', 'Bing Places — GBP 가져오기', 'setup', 'david', 10),
       S('lls-5', 'Apple Business Connect — 등록·인증', 'setup', 'david', 20, { block: '인증 까다로움, 온보딩 초반에 시작' }),
-      S('lls-6', 'Yelp·Nextdoor·한인 디렉토리 등 나머지 등록 — 곳당 10~15분, 이메일·전화·CAPTCHA 인증', 'setup', 'david', 600, { block: 'Premium 120곳 = 20~30시간. 브라우저 자동화·CAPTCHA 우회 금지(§15). 지금 구조로는 Premium 셋업에서 가장 큰 병목', next: '방향(2026-10-15): 핵심 30곳은 David + Claude in Chrome 보조 입력(사람이 보는 앞에서 폼 채우기, CAPTCHA·전화 인증은 David) → 곳당 3~5분. 나머지는 일회성 시티에이션 빌더(곳당 $2~3, 영구 등록). Yext류 구독 애그리게이터는 해지 시 등록이 사라져 제외' }),
+      S('lls-6', '핵심 30곳 등록 — David + Claude in Chrome 보조 입력(곳당 약 5분, 전화·엽서 인증은 고객과 10분 통화로 몰아서) · 나머지는 일회성 시티에이션 빌더 발주(lls-3 의 발주 CSV, 곳당 $2~3 영구)', 'setup', 'david', 165, { block: '추정치 — 실측 1~2곳 필요(§19-11). 브라우저 자동화·CAPTCHA 우회 금지, 사람이 화면을 보는 보조 입력만(§15)', next: '2026-10-15 결정 ④ 반영(2026-11-03): 120곳 전수 수작업 600분 → 핵심 30곳 보조 입력 + 빌더 발주' }),
       S('lls-7', '등록 완료 리포트(링크 목록) → Drive → Gmail 초안', 'setup', 'auto', 3, { verify: true }),
     ],
   },
@@ -132,8 +132,8 @@ export const PLAYBOOK = {
       S('ac-1', '크리에이티브 브리프 — 컨셉 3방향, 시즌·프로모션 반영(월 1회)', 'monthly', 'ai', 5, { verify: true }),
       S('ac-2', '카피 — 헤드라인 5·본문 2·CTA 한/영, 광고 정책 검사', 'monthly', 'auto', 0),
       S('ac-3', '이미지 — 매장 실사진 합성(배경 제거) 또는 생성, 1:1·9:16·1.91:1 규격, 수량 30~50% 여유', 'monthly', 'auto', 0, { block: '루틴이 fal.ai(FAL_KEY) 배경 생성 + 한글 조판으로 3규격 제작, 검증 큐에서 확인. 매장 실사진 합성은 David 세션' }),
-      S('ac-4', 'David 큐레이션 — 20장 선별 (검수가 아니라 선별)', 'monthly', 'david', 15, { verify: true }),
-      S('ac-5', '세트별 소재 묶음 + 카피 문서 + 업로드 가이드 → 고객이 세트를 고른다(선택지 = ac-3 세트 3개, 고객 페이지) · 사전 점검 점수로 기본 선택', 'monthly', 'auto', 2, { block: '루틴이 creative.js precheck(글자 면적·대비·안전 영역·노출)로 세트 3개를 점수화해 1위를 기본 선택으로 options 에 붙여 올린다. 고객이 고르면 deliverables.choice 에 기록 — David 가 ads-3 구축 때 그 세트를 쓴다' }),
+      S('ac-4', '자동 선별 — creative.js precheck 로 ac-3 세트 점수화(글자 면적·대비·9:16 안전 영역·노출) → 상위 3세트를 ac-5 선택지로 (David 큐레이션 대체, 2026-11-03)', 'monthly', 'auto', 0),
+      S('ac-5', '세트별 소재 묶음 + 카피 문서 + 업로드 가이드 → David 가 세트 3개를 한 번 보고 승인 → 고객이 세트를 고른다(선택지 = ac-3 세트 3개, 고객 페이지) · 사전 점검 점수로 기본 선택', 'monthly', 'auto', 3, { verify: true, block: '루틴이 creative.js precheck(글자 면적·대비·안전 영역·노출)로 세트 3개를 점수화해 1위를 기본 선택으로 options 에 붙여 올린다. 고객이 고르면 deliverables.choice 에 기록 — David 가 ads-3 구축 때 그 세트를 쓴다' }),
     ],
   },
   'local-listing-care': {
@@ -155,7 +155,7 @@ export const PLAYBOOK = {
       S('mr-2', '데이터 수집 — GBP 인사이트(조회·전화·길찾기)·리뷰', 'monthly', 'david', 10, { block: 'GBP API 거절 → 화면 캡처', next: 'GBP API' }),
       S('mr-3', '데이터 수집 — 광고 성과(구글·메타)', 'monthly', 'david', 10, { next: 'Google Ads API 토큰 / Meta 앱 심사' }),
       S('mr-4', '리포트 PDF 생성 — 숫자·전월 대비·다음 달 제안', 'monthly', 'ai', 10, { verify: true }),
-      S('mr-5', 'Gmail 초안 → David 발송', 'monthly', 'david', 2, { block: '고객 자동 발송 금지(§12)' }),
+      S('mr-5', '고객에게 묶음 보내기 — 월간 리포트(관리자 "고객에게 묶음 보내기" 1번, §12-3)', 'monthly', 'david', 2),
     ],
   },
   'seo-aio': {
@@ -167,17 +167,17 @@ export const PLAYBOOK = {
       S('seo-1', 'Search Console·GA4 접근 — 고객 계정이면 hello@bizhigher.com 과 서비스 계정 초대, 없으면 an-3·an-4 로 만든다 (docs/analytics-setup-ko.md)', 'onboarding', 'customer', 5),
       S('seo-2', '온보딩 분석 — 2페이지 키워드(11~20위·100임프레션+) 전수 발굴·교정 문구', 'setup', 'ai', 20, { verify: true, next: 'GSC API로 데이터 수집 자동' }),
       S('seo-6', '기술 SEO·스키마 월간 점검 (크롤러)', 'monthly', 'auto', 5),
-      S('seo-7', 'AI 검색 인용 테스트 — ChatGPT·Perplexity에 가게가 나오는지', 'monthly', 'david', 15, { next: '검색 API로 반자동' }),
       S('seo-8', '분기별 지역 랜딩페이지 1개 추가 — BizHigher 사이트면 sites.js areas 로 기존 areas 에 1곳 추가', 'monthly', 'ai', 10, { verify: true }),
+      S('seo-7', 'AI 검색 인용 테스트 — ChatGPT·Perplexity에 가게가 나오는지', 'monthly', 'david', 15, { next: '검색 API로 반자동' }),
     ],
   },
   'shortform-video': {
     name: '숏폼 영상 (Premium 4편/월)', steps: [
       S('sv-1', '월초 기획안 4편 — 훅·장면·자막·음악 (docs/shortform-playbook-ko.md) — 고객 페이지에 [이대로 진행]/[수정 요청]', 'monthly', 'ai', 10, { verify: true }),
       S('sv-1b', '고객 기획안 승인 (고객 페이지, 7일 무응답 승인 간주)', 'monthly', 'customer', 0),
-      S('sv-2', '영상 생성 — 고객 매장 사진으로 5초 클립(릴스·틱톡·쇼츠 9:16) + 자막·로고·CTA 자동 합성, 사이트 스펙이 있으면 20초 스토리 완성본(Remotion)까지', 'monthly', 'auto', 0, { block: '루틴이 fal.ai 이미지→영상(Kling 2.1, 편당 약 $0.25~0.5)으로 클립을 만들고(creative.js video) 기획안 자막·로고·CTA 를 Playwright+ffmpeg 로 얹는다(creative.js caption). 사이트 스펙이 있는 고객은 creative.js promo 로 훅→서비스→왜 우리→엔드카드 20초 완성본도 렌더(비용 0). 음악은 고객이 준 mp3 가 있을 때만', next: '메뉴 리빌·비포/애프터 템플릿, 배경음악 라이브러리(저작권 프리) 자동 선택' }),
+      S('sv-2', '영상 생성 — 고객 매장 사진으로 5초 클립(릴스·틱톡·쇼츠 9:16) + 자막·로고·CTA 자동 합성, 사이트 스펙이 있으면 20초 스토리 완성본(Remotion)까지 — David 는 검증 큐에서 자막 타이밍·오탈자·톤을 본다', 'monthly', 'auto', 5, { verify: true, block: '루틴이 fal.ai 이미지→영상(Kling 2.1, 편당 약 $0.25~0.5)으로 클립을 만들고(creative.js video) 기획안 자막·로고·CTA 를 Playwright+ffmpeg 로 얹는다(creative.js caption). 사이트 스펙이 있는 고객은 creative.js promo 로 훅→서비스→왜 우리→엔드카드 20초 완성본도 렌더(비용 0). 음악은 고객이 준 mp3 가 있을 때만', next: '메뉴 리빌·비포/애프터 템플릿, 배경음악 라이브러리(저작권 프리) 자동 선택' }),
       S('sv-2b', '고객이 먼저 올릴 영상을 고른다 — 고객 페이지에서 완성본을 재생해 보고 [이 영상으로 진행] (무응답 7일 → 추천 표시된 것). 선택은 sv-3·sv-4 메모에 "[고객 선택]"으로', 'monthly', 'customer', 0),
-      S('sv-3', 'David 확인 (자막 타이밍·오탈자·톤) — 재편집은 수정 요청으로', 'monthly', 'david', 5, { verify: true }),
+      S('sv-3', '확인 완료 — 영상은 sv-2 검증 큐에서 David 가 이미 봤고 고객이 골랐다(중복 확인 제거, 2026-11-03). 재편집은 sv-2 수정 요청으로', 'monthly', 'auto', 0),
       S('sv-4', '게시 — 릴스·틱톡·쇼츠', 'monthly', 'david', 20, { block: '세 플랫폼 모두 앱 심사 없이는 API 게시 불가', next: '예약 툴(Publer·Later류)로 한 번에 예약' }),
     ],
   },
@@ -186,8 +186,8 @@ export const PLAYBOOK = {
       S('am-1', '캠페인 구축 (광고 셋업 선행)', 'setup', 'david', 60, { next: 'Google Ads API' }),
       S('am-2', '주간 최적화 — 자동 규칙 알림 확인·제안 승인 + 입찰·소재 교체 (구글)', 'weekly', 'david', 30, { block: '안전장치·CTR 급락·예산 이동은 플랫폼 자동 규칙(docs/ad-rules-ko.md)이 처리, David 는 알림 규칙(제외 키워드·품질점수)만 판단. Google Ads API 토큰 전', next: '기본 액세스 토큰 → ads.js report/propose/apply: 제안을 검증 큐로, 승인 시 API 적용(5분)' }),
       S('am-3', '주간 최적화 — 메타', 'weekly', 'david', 30, { block: 'Meta API 앱 심사 전', next: 'Meta 앱 심사' }),
-      S('am-4', '광고비 티어 상한 모니터링 (2개월 연속 초과 시 상위 티어 7일 전 안내)', 'monthly', 'david', 5, { next: 'API 연결 후 자동' }),
       S('am-5', '월간 성과 리포트 + 개선 제안 + 업종 학습 메모 1줄(runner.js learn)', 'monthly', 'ai', 15, { verify: true }),
+      S('am-4', '광고비 티어 상한 모니터링 (2개월 연속 초과 시 상위 티어 7일 전 안내)', 'monthly', 'david', 5, { next: 'API 연결 후 자동' }),
     ],
   },
 };
@@ -257,10 +257,10 @@ const TIER = {
 function tierize(step, svc, tier) {
   if (!tier) return step;
   const t = { ...step };
-  if (t.k === 'lls-6') { t.min = tier.listMin; t.block = `${tier.listings}곳 × 10~15분 = ${Math.round(tier.listMin / 60)}시간. ` + t.block.replace(/^Premium 120곳 = 20~30시간\. /, ''); }
-  if (t.k === 'ac-4') { t.t = `David 큐레이션 — ${tier.creatives}장 선별 (검수가 아니라 선별)`; t.min = tier.curateMin; }
+  // 로컬 등록: 핵심 30곳 보조 입력(곳당 약 5분) + 나머지는 시티에이션 빌더 발주 15분 (2026-10-15 결정 ④)
+  if (t.k === 'lls-6') { const rest = Math.max(0, tier.listings - 30); t.min = 150 + (rest ? 15 : 0); t.t = t.t.replace('나머지는', rest ? `나머지 ${rest}곳은` : '나머지는(없음)'); }
   if (t.k === 'seo-4') { t.t = t.t.replace('블로그 4편', `블로그 ${tier.blogs}편`); t.min = Math.round(7.5 * tier.blogs); }
-  if (t.k === 'sv-1' || t.k === 'sv-3' || t.k === 'sv-4') { t.t = t.t.replace('4편', `${tier.videos}편`); t.min = Math.round((t.min / 4) * tier.videos); }
+  if (t.k === 'sv-1' || t.k === 'sv-2' || t.k === 'sv-4') { t.t = t.t.replace('4편', `${tier.videos}편`); t.min = Math.round((t.min / 4) * tier.videos); }
   return t;
 }
 function tierName(svc, tier) {
