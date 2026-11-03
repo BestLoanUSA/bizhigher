@@ -35,16 +35,21 @@ async function writeState(db, s) {
 }
 
 /** 루틴을 깨운다. 반환: { fired, reason, skipped } — 실패해도 예외를 던지지 않는다(호출한 쪽 작업을 막지 않기 위해) */
-export async function wakeRoutine(db, env, reason, { force = false } = {}) {
+export async function wakeRoutine(db, env, reason, { force = false, end = false } = {}) {
   const state = await readState(db);
   const now = Date.now();
+  // end = 루틴 자신이 끝나며 부른 것(runner.js wake). 실행 중인 세션이 없다는 신호라 디바운스 대상이 아니다
+  if (end) state.lastEndAt = new Date(now).toISOString();
   const log = (patch) => writeState(db, { ...state, ...patch, lastReason: reason, lastAt: new Date(now).toISOString() });
   try {
     if (!runnerConfigured(env)) { await log({ skipped: '미설정 — ROUTINE_FIRE_URL · ROUTINE_FIRE_TOKEN', pending: true }); return { fired: false, skipped: 'unconfigured' }; }
     if (!force) {
       const w = await hasAiWork(db);
       if (!w.work && !w.drafts) { await log({ skipped: 'AI 차례 없음', pending: false }); return { fired: false, skipped: 'no-work' }; }
-      if (state.lastFiredAt && now - Date.parse(state.lastFiredAt) < DEBOUNCE_MS) { await log({ skipped: '3분 안에 이미 깨움', pending: true }); return { fired: false, skipped: 'debounce' }; }
+      // 3분 디바운스는 "마지막으로 깨운 세션이 아직 돌고 있을 때"만. 그 세션이 끝났다고 알려 왔으면(lastEndAt ≥ lastFiredAt) 바로 깨운다.
+      // 예전엔 시간만 봐서, 1분 만에 끝난 루틴 직후의 승인이 "3분 안에 이미 깨움"으로 버려지고 다시 깨울 장치가 없어 다음 날까지 멈췄다(2026-11-03 데모)
+      const running = state.lastFiredAt && now - Date.parse(state.lastFiredAt) < DEBOUNCE_MS && !(state.lastEndAt && Date.parse(state.lastEndAt) >= Date.parse(state.lastFiredAt));
+      if (running && !end) { await log({ skipped: '루틴 실행 중 — 끝나면 이어서 깨움', pending: true }); return { fired: false, skipped: 'debounce' }; }
     }
     const r = await fetch(env.ROUTINE_FIRE_URL, {
       method: 'POST',
@@ -64,4 +69,14 @@ export async function wakeRoutine(db, env, reason, { force = false } = {}) {
 export async function runnerStatus(db, env) {
   const s = await readState(db);
   return { configured: runnerConfigured(env), lastAt: s.lastAt || null, lastReason: s.lastReason || '', lastFiredAt: s.lastFiredAt || null, lastSession: s.lastSession || '', skipped: s.skipped || '', pending: !!s.pending, fires: s.fires || 0 };
+}
+
+/** 보류된 깨움 재시도 — 디바운스·API 오류로 pending 이 남았고 마지막 깨움에서 3분이 지났으면 다시 깨운다.
+ *  관리자 API 요청마다 waitUntil 로 부른다(설정 읽기 1회라 가볍다). 루틴 끝 신호를 놓쳐도 David 가 관리자를 열면 이어진다 */
+export async function retryPendingWake(db, env) {
+  if (!runnerConfigured(env)) return null;
+  const s = await readState(db);
+  if (!s.pending) return null;
+  if (s.lastFiredAt && Date.now() - Date.parse(s.lastFiredAt) < DEBOUNCE_MS && !(s.lastEndAt && Date.parse(s.lastEndAt) >= Date.parse(s.lastFiredAt))) return null;
+  return wakeRoutine(db, env, `보류된 깨움 재시도 — ${s.lastReason || ''}`.slice(0, 200));
 }

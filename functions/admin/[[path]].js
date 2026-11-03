@@ -26,7 +26,7 @@
 import { authenticate, login, logoutCookie } from './_auth.js';
 import { notify, sendEmail, esc as escHtml } from '../api/_notify.js';
 import { syncReviews } from '../api/_reviews.js';
-import { wakeRoutine, runnerStatus } from '../api/_runner.js';
+import { wakeRoutine, retryPendingWake, runnerStatus } from '../api/_runner.js';
 import { ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady, ensurePortalToken, sweepAutoApprovals, parseOptions, approveDeliverable, deepPatch, specDiff, patchSiteSpec, siteStats } from '../api/_orders.js';
 import { PLAYBOOK, COMMON_ONBOARDING, WHO, PHASES, tasksFor, summarize, DELIVER_KEYS, APPROVAL_KEYS, outputKind, OUTPUT_LABEL } from '../api/_playbook.js';
 import { appHtml, loginHtml } from './_ui.js';
@@ -67,6 +67,7 @@ export async function onRequest(context) {
     const out = await api(env, request.method, seg, body, url);
     if (out === undefined) return json({ ok: false, error: 'not found' }, 404);
     if (out.__wake) { const reason = out.__wake; delete out.__wake; context.waitUntil(wakeRoutine(env.DB, env, reason)); } // AI 차례가 생겼을 수 있는 변경 → 루틴 깨움 (응답은 기다리지 않는다)
+    else if (seg[0] !== 'runner') context.waitUntil(retryPendingWake(env.DB, env).catch(() => {})); // 보류된 깨움이 있으면 이어서 (runner/* 는 루틴 자신의 호출이라 제외)
     return json({ ok: true, ...out });
   } catch (e) {
     return json({ ok: false, error: String((e && e.message) || e) }, e && e.status ? e.status : 500);
@@ -357,7 +358,7 @@ async function api(env, method, seg, body, url) {
   }
   if (res === 'runner' && id === 'wake' && method === 'POST') {
     // 루틴 깨우기 — 관제탑 "지금 루틴 돌리기"(force) 또는 루틴 자신(runner.js wake: 남은 일이 있을 때)
-    const r = await wakeRoutine(db, env, String(body.reason || '관리자에서 직접'), { force: !!body.force });
+    const r = await wakeRoutine(db, env, String(body.reason || '관리자에서 직접'), { force: !!body.force, end: !!body.end });
     return { ...r, status: await runnerStatus(db, env) };
   }
   if (res === 'runner' && id === 'status' && method === 'GET') return { status: await runnerStatus(db, env) };
