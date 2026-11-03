@@ -24,7 +24,10 @@ export async function hasAiWork(db) {
   const by = {}; for (const t of rows) (by[t.job_id] = by[t.job_id] || []).push(t);
   let work = 0; for (const id of ids) work += aiReady(by[id] || []).filter((t) => !isClaimed(t)).length; // 실행 중인 세션이 가져간 단계는 빼고
   const d = await db.prepare(`SELECT COUNT(*) n FROM deliverables d JOIN jobs j ON j.id = d.job_id LEFT JOIN job_tasks t ON t.id = d.task_id WHERE d.sent_at IS NULL AND (d.summary IS NULL OR d.summary = '') AND j.status NOT IN ('done','hold') AND (COALESCE(t.result_text,'') != '' OR COALESCE(d.url,'') != '')`).first();
-  return { work, drafts: (d && d.n) || 0 };
+  // 사이트 재배포 대기(고객이 스타일을 고름·관리자 패치 등)도 할 일이다 — 예전엔 AI 단계만 세서 고객이 고른 스타일이 다음 날 07:23 정기 실행까지 반영되지 않았다(2026-11-03 데모)
+  let deploy = 0;
+  try { const st = await db.prepare(`SELECT value FROM settings WHERE key = 'admin'`).first(); if (st && JSON.parse(st.value || '{}').sitesDirty) deploy = 1; } catch {}
+  return { work, drafts: (d && d.n) || 0, deploy };
 }
 
 async function readState(db) {
@@ -45,7 +48,7 @@ export async function wakeRoutine(db, env, reason, { force = false, end = false 
     if (!runnerConfigured(env)) { await log({ skipped: '미설정 — ROUTINE_FIRE_URL · ROUTINE_FIRE_TOKEN', pending: true }); return { fired: false, skipped: 'unconfigured' }; }
     if (!force) {
       const w = await hasAiWork(db);
-      if (!w.work && !w.drafts) { await log({ skipped: 'AI 차례 없음', pending: false }); return { fired: false, skipped: 'no-work' }; }
+      if (!w.work && !w.drafts && !w.deploy) { await log({ skipped: 'AI 차례 없음', pending: false }); return { fired: false, skipped: 'no-work' }; }
       // 3분 디바운스는 "마지막으로 깨운 세션이 아직 돌고 있을 때"만. 그 세션이 끝났다고 알려 왔으면(lastEndAt ≥ lastFiredAt) 바로 깨운다.
       // 예전엔 시간만 봐서, 1분 만에 끝난 루틴 직후의 승인이 "3분 안에 이미 깨움"으로 버려지고 다시 깨울 장치가 없어 다음 날까지 멈췄다(2026-11-03 데모)
       const running = state.lastFiredAt && now - Date.parse(state.lastFiredAt) < DEBOUNCE_MS && !(state.lastEndAt && Date.parse(state.lastEndAt) >= Date.parse(state.lastFiredAt));
