@@ -9,7 +9,6 @@
 
 | 상태 | slug | 카테고리 | 우선 이유 |
 |---|---|---|---|
-| ⬜ | korean-business-directory-list | 구글 노출 | [SEO I-01] 본문에서 이사·번호 변경 시 등록처 일괄 수정 문맥으로 [로컬 등록 관리](/service/local-listing-care/) 링크 1개 추가(판매 문구 없이 정보 문맥). 지금 블로그에서 이 서비스로 가는 링크가 0 |
 | ⬜ | google-business-profile-hours-update | 구글 노출 | [SEO I-01] 영업시간 변경이 디렉토리에도 퍼져야 한다는 문단에 /service/local-listing-care/ 링크 1개 |
 | ⬜ | negative-review-response-guide | 리뷰·평판 | 고의도 검색, 예문 보강 여지 |
 | ⬜ | near-me-search-ranking | 구글 노출 | 순위 원리, 최신 반영 필요 |
@@ -41,3 +40,4 @@
 | ✅ 2026-10-27 | google-review-guide | 첫 문단 직접 답, 구글 공식 정책(대가·게이팅·할당량·문구 지시 금지) 표, 오해 vs 사실 이미지, 점검표, 내부 링크 6개, FAQ 보강. 근거 없던 "90%가 잊는다"·와이파이 스팸 필터·서비스 제공 허용 취지 삭제 |
 | ✅ 2026-10-29 | ai-search-optimization-aio | 첫 문단 직접 답, 재료 표·구조도 이미지, 구글 AI 요약(별도 요건 없음)·ChatGPT(OAI-SearchBot) 공식 안내 반영, 점검표·하지 말 것 추가, 리뷰 문구 유도 권유와 "FAQ 스키마가 AI 요약에 유리" 주장 삭제, 내부 링크 6개, FAQ 5개 |
 | ✅ 2026-10-31 | do-you-need-a-website | 첫 문단 직접 답, 판단 흐름도 이미지, 5신호 표·업종별 예시·계약 전 확인 표(도메인 명의), 구글 공식 로컬 순위 3요소 반영, 구글 프로필 무료 웹사이트 2024년 종료 명시, 근거 없던 가격·제작기간·유지관리 금액(판매 문구) 삭제, 내부 링크 7개, FAQ 5개 |
+| ✅ 2026-11-03 | korean-business-directory-list | 첫 문단 직접 답, 구글 공식 인지도(prominence) 설명 반영, 디렉토리별 무료·유료·주의 표(BBB 인증 유료·Nextdoor·Yelp·Apple 인증), 한인 업소록은 확인 안 된 한국일보·중앙일보·라코텔 단정 삭제하고 확인 질문 3개로 대체, 피라미드 이미지, 내부 링크 6개·로컬 등록 관리 링크 1개(I-01), FAQ 5개 |

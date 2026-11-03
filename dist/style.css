@@ -2668,3 +2668,8 @@ img { max-width: 100%; display: block; }
   .dcards { margin: 24px -20px 0; padding-left: 20px; padding-right: 20px; gap: 12px; }
   .dcard { flex-basis: 78vw; min-height: 200px; }
 }
+
+/* 모바일 홈 데모 고정 스크럽 — build.js 가 .demo-pin-track(카드 높이 + 75vh)을 만들고 상단 고정 위치(top)를 넣는다.
+   JS 가 없으면 트랙이 생기지 않아 평소 흐름 그대로 */
+.demo-pin-track { position: relative; }
+.hero-demo.demo-pinned { position: sticky; z-index: 2; }
