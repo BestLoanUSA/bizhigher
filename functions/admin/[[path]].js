@@ -659,8 +659,14 @@ async function api(env, method, seg, body, url) {
         db.prepare(`DELETE FROM payments WHERE order_id = ?`).bind(j.order_id || -1), db.prepare(`DELETE FROM orders WHERE id = ? AND stripe_session_id LIKE 'demo_%'`).bind(j.order_id || -1), db.prepare(`DELETE FROM jobs WHERE id = ?`).bind(j.id),
       ]);
       if (j.intake_id) await safeRun(db, `DELETE FROM intakes WHERE id = ? AND (business LIKE '%(데모)%' OR lower(email) LIKE '%@%.example')`, j.intake_id);
+      // 데모 사이트도 지운다 — 남겨 두면 다음 데모가 newoptix-2 같은 슬러그를 받고, 옛 사이트가 계속 재배포된다(2026-11-03)
+      const site = await safeFirst(db, `SELECT id FROM sites WHERE job_id = ?`, j.id);
+      if (site) { for (const t of ['site_versions', 'site_events', 'site_leads']) await safeRun(db, `DELETE FROM ${t} WHERE site_id = ?`, site.id); await safeRun(db, `DELETE FROM sites WHERE id = ?`, site.id); }
     }
     await safeRun(db, `DELETE FROM intakes WHERE lower(email) LIKE '%@%.example'`);
+    // 작업이 이미 없는 사이트(이전 데모 삭제가 남긴 것) — 쓰는 곳이 없다
+    const orphans = await (async () => { try { return (await db.prepare(`SELECT id FROM sites WHERE job_id IS NOT NULL AND job_id NOT IN (SELECT id FROM jobs)`).all()).results || []; } catch { return []; } })();
+    for (const o of orphans) { for (const t of ['site_versions', 'site_events', 'site_leads']) await safeRun(db, `DELETE FROM ${t} WHERE site_id = ?`, o.id); await safeRun(db, `DELETE FROM sites WHERE id = ?`, o.id); }
     return { removed: jobs.length };
   }
   if (res === 'demo' && method === 'POST') {
