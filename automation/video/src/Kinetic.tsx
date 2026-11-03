@@ -47,7 +47,8 @@ export const KineticCaption: React.FC<{ text: string; at?: number; accent: strin
   return (
     <div style={{ position: 'absolute', left: 56, right: 56, top, bottom, textAlign: 'center', fontFamily: FONT, color, fontSize: size, fontWeight: 900, lineHeight: 1.12, letterSpacing: '-0.03em', wordBreak: 'keep-all', zIndex: 10 }}>
       {tokens.map((tk, i) => {
-        const em = /^\*.+\*$/.test(tk); const w = tk.replace(/^\*|\*$/g, '');
+        // "*편하게*," 처럼 강조 뒤에 문장부호가 붙어도 강조로 본다 — 예전엔 강조가 빠지고 "편하게*," 로 별표가 화면에 찍혔다(2026-11-03 데모)
+        const m = /^\*(.+?)\*([.,!?…·:;)'"”’]*)$/.exec(tk); const em = !!m; const w = m ? m[1] + m[2] : tk.replace(/\*/g, '');
         const s = spring({ frame: frame - at - i * stagger, fps, config: { damping: 14, stiffness: 120 } });
         return (
           <span key={i} style={{ display: 'inline-block', position: 'relative', marginRight: 20, opacity: s, transform: `translateY(${(1 - s) * 64}px)`, color: em ? accent : color, textShadow: em && !dark ? `-3px -3px 0 ${INK}, 3px -3px 0 ${INK}, -3px 3px 0 ${INK}, 3px 3px 0 ${INK}, 0 6px 22px rgba(0,0,0,.55)` : stroke }}>
