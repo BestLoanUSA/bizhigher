@@ -28,7 +28,7 @@ import { notify, sendEmail, esc as escHtml } from '../api/_notify.js';
 import { syncReviews } from '../api/_reviews.js';
 import { wakeRoutine, retryPendingWake, runnerStatus } from '../api/_runner.js';
 import { ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady, ensurePortalToken, sweepAutoApprovals, parseOptions, approveDeliverable, deepPatch, specDiff, patchSiteSpec, siteStats } from '../api/_orders.js';
-import { PLAYBOOK, COMMON_ONBOARDING, WHO, PHASES, tasksFor, summarize, DELIVER_KEYS, APPROVAL_KEYS, outputKind, OUTPUT_LABEL } from '../api/_playbook.js';
+import { PLAYBOOK, COMMON_ONBOARDING, WHO, PHASES, tasksFor, summarize, DELIVER_KEYS, APPROVAL_KEYS, outputKind, OUTPUT_LABEL, customerTitle } from '../api/_playbook.js';
 import { appHtml, loginHtml } from './_ui.js';
 
 export const TASK_STATUSES = [['todo', '대기'], ['doing', '진행'], ['review', '검증 대기'], ['done', '완료'], ['blocked', '막힘'], ['skipped', '해당 없음']];
@@ -431,8 +431,9 @@ async function api(env, method, seg, body, url) {
     if (!j) return undefined;
     if (!env.RESEND_API_KEY) throw bad('RESEND_API_KEY 가 없어 보낼 수 없습니다');
     if (!j.customer_email) throw bad('고객 이메일이 없습니다');
-    const ds = (await db.prepare(`SELECT * FROM deliverables WHERE job_id = ? AND sent_at IS NULL ORDER BY id ASC`).bind(j.id).all()).results || [];
+    const ds = (await db.prepare(`SELECT d.*, t.key AS task_key FROM deliverables d LEFT JOIN job_tasks t ON t.id = d.task_id WHERE d.job_id = ? AND d.sent_at IS NULL ORDER BY d.id ASC`).bind(j.id).all()).results || [];
     if (!ds.length) throw bad('전달할 결과물이 없습니다');
+    for (const d of ds) d.title = customerTitle(d.task_key, d.title); // 메일에는 고객용 제목(내부 단계 설명 대신)
     const token = await ensurePortalToken(db, j);
     const portal = `${url.origin}/c/${token}`;
     const biz = (j.business || '').replace(/\s*\(데모\)/, '');

@@ -303,3 +303,33 @@ export function summarize(tasks) {
   const total = tasks.length || 1;
   return { by, total: tasks.length, verify, setupMin: Math.round(setupMin), monthMin: Math.round(monthMin), autoPct: Math.round(((by.auto + by.ai) / total) * 100), bottlenecks };
 }
+
+/** 고객에게 보이는 결과물 제목 — 단계 제목은 내부 작업 설명(“무응답 시 승인 간주”, “→ Drive → Gmail 초안” 등)이라 고객 페이지·묶음 메일에서는 이걸 쓴다 (2026-11-03 데모) */
+export const CUSTOMER_TITLE = {
+  'ob-5': '시작 안내 — 180일 일정과 준비할 것',
+  'gpo-5': '구글 프로필 정리 전·후 리포트',
+  'qr-2': '리뷰 QR 인쇄물 — 디자인 고르기',
+  'qr-3': '리뷰 QR 인쇄물 — 인쇄용 파일',
+  'lls-7': '로컬 등록 완료 리포트',
+  'ads-5': '광고 전환 테스트 리포트',
+  'llp-4': '지역 페이지 점검 결과',
+  'web-4': '웹사이트 점검 결과',
+  'post-2': '이번 달 게시물 캘린더',
+  'post-7': '이번 달 게시물 리포트',
+  'rr-7': '이번 달 리뷰 요약',
+  'ac-5': '광고 소재 — 먼저 쓸 세트 고르기',
+  'cp-2': '웹사이트 수정 반영',
+  'mr-4': '월간 리포트',
+  'seo-3': '이번 달 블로그 주제',
+  'seo-4': '이번 달 블로그 글',
+  'seo-8': '새 지역 페이지',
+  'sv-1': '이번 달 숏폼 영상 기획안',
+  'sv-2': '숏폼 영상 — 먼저 올릴 영상 고르기',
+  'am-5': '광고 성과 리포트',
+  'llc-2': '로컬 등록 점검 리포트',
+  'web-2': '웹사이트 시안 — 스타일 고르기',
+};
+export function customerTitle(key, title) {
+  if (key && CUSTOMER_TITLE[key]) return CUSTOMER_TITLE[key];
+  return String(title || '').split(/ — | → /)[0].replace(/\s*\([^)]*\)\s*$/, '').trim() || String(title || '');
+}
