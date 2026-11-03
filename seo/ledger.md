@@ -10,3 +10,4 @@
 |---|---|---|---|---|---|---|
 | (머지 후) | 0단계 · M-01 | — | 없음 (llms.txt 에 패키지 URL 3줄 추가, 리드 폼 숨은 필드) | seo/ 디렉터리, `scripts/seo-check.js`, CI 2개, 리드 source 추적, SEO 루틴 2개 | GSC 2026-10-02~10-29 노출 64 · 클릭 0 · 색인 68/84 (seo-data 2026-11-01) | 대상 아님 |
 | (머지 후) | I-01 | — | /service/local-listing-care/ · /tools/nap-check/ · /service/google-profile-optimization/ · /service/review-qr-kit/ | 문맥 링크 3개 + 블로그 링크 큐 2편 | 색인 68/84, unknown 6, discovered 5 (2026-11-01) | 
+| (머지 후) | K-01 | — | /tools/local-rank/ · (큐) /blog/near-me-search-ranking/ · /blog/not-showing-on-google/ | 가이드 깊이 보강 + FAQ 5개 + 블로그 링크 큐 2편 | "구글 지도 순위 체크" 류 평균 순위 48~74, 클릭 0 (2026-11-01) | |
