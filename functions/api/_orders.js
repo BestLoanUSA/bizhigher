@@ -209,6 +209,7 @@ const EXTRA_COLUMNS = {
     ['revise_note', 'TEXT'],      // 수정 요청 내용
     ['decided_at', 'TEXT'],
     ['options', 'TEXT'],         // JSON [{key,label,image,note,styles[],default}] — 고객이 고르는 선택지(시안·세트). 승인 시 deliverables.options 로 복사
+    ['claimed_at', 'TEXT'],      // 루틴 큐가 이 단계를 세션에 넘긴 시각 — 90분 동안 다른 세션 큐에서 빠진다(동시 실행 중복 제작 방지, 2026-11-03)
   ],
 };
 
@@ -368,6 +369,12 @@ export function currentPhaseTasks(tasks) {
 
 /** AI가 지금 할 수 있는 단계 — 온보딩이 끝났고, 같은 서비스 안에서 앞선 단계가 모두 끝난 AI(auto·ai) 단계.
  *  (2026-10-21) phase 전체가 아니라 서비스 단위로 본다 — 한 서비스의 셋업이 David 차례에서 멈춰 있어도 다른 서비스의 월간 단계는 돈다 */
+/** 루틴 세션이 가져가 처리 중인 단계 — 큐가 넘긴 지 90분 안이고 아직 결과를 안 냈다 */
+export const CLAIM_MS = 90 * 60 * 1000;
+export function isClaimed(t, now = Date.now()) {
+  return !!(t && t.claimed_at && (t.status === 'todo' || t.status === 'doing') && now - Date.parse(t.claimed_at.replace(' ', 'T') + 'Z') < CLAIM_MS);
+}
+
 export function aiReady(tasks) {
   const all = tasks || [];
   // 공통 온보딩(ob-*: 결제·질문지·프로필·자료·킥오프)은 다른 서비스 전체의 게이트. 공통 단계 자신(ob-3 프로필·ob-5 킥오프)은

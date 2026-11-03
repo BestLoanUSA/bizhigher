@@ -2838,6 +2838,22 @@ function thanksPage() {
         <input type="text" data-label="참고 사이트" placeholder="마음에 드는 참고 사이트 주소 (있다면)" class="input">
         <input type="text" data-label="선호 분위기" placeholder="선호하는 색·분위기 (예: 깔끔한 화이트, 고급스러운 네이비)" class="input">
       </div>
+      <!-- 광고 예산·목표 — 광고 셋업·운영·소재·Premium 주문에 표시 (2026-11-03: 질문지에 예산이 없어 광고 설계(ads-2)가 일 $20 으로 가정하고 [확인 필요]를 달았다) -->
+      <div id="ads-extra" style="display:none;">
+        <p style="font-weight:800;color:var(--navy-900,#0A1B4D);margin:18px 0 6px;font-size:15px;">📣 광고 예산·목표</p>
+        <p style="font-size:13.5px;color:var(--ink-600,#5B6472);margin:0 0 10px;line-height:1.6;">광고비는 사장님 카드로 구글·메타에 직접 결제되고, BizHigher 요금에는 들어 있지 않습니다. 대략적인 범위만 알려 주시면 그 안에서 설계합니다.</p>
+        <select data-label="월 광고비 예산" class="input">
+          <option value="">한 달 광고비는 어느 정도 생각하세요?</option>
+          <option>$300 미만</option>
+          <option>$300~600</option>
+          <option>$600~1,000</option>
+          <option>$1,000~2,000</option>
+          <option>$2,000 이상</option>
+          <option>아직 모르겠어요 — 추천해 주세요</option>
+        </select>
+        <input type="text" data-label="광고 목표" placeholder="광고로 가장 원하는 것 (예: 검안 예약 전화, 첫 방문 손님, 단체 주문)" class="input">
+        <input type="text" data-label="광고에 넣을 혜택" placeholder="광고에 넣을 혜택·이벤트와 종료일 (있다면, 예: 첫 방문 검안 $20 할인 — 12/31까지)" class="input">
+      </div>
       <!-- 구글 계정 (GA4·Search Console 소유) — 웹사이트·분석·SEO·패키지 주문에 표시 -->
       <div id="google-extra" style="display:none;">
         <p style="font-weight:800;color:var(--navy-900,#0A1B4D);margin:18px 0 6px;font-size:15px;">📊 방문 통계·검색 데이터 (GA4 · Search Console)</p>
@@ -2908,6 +2924,7 @@ if (svc.indexOf('website') === 0 || (svc.indexOf('local-') === 0 && (svc.indexOf
 }
 // 구글 계정 질문 — 웹사이트·분석·SEO·지역 랜딩·패키지 주문
 if (/^(website|analytics|seo|local-landing|local-)/.test(svc)) document.getElementById('google-extra').style.display = 'block';
+if (/^(ads-|ad-creative|local-premium)/.test(svc)) document.getElementById('ads-extra').style.display = 'block';
 var picked = [];
 var fileInput = document.getElementById('intake-files');
 fileInput.addEventListener('change', function () {
@@ -2962,6 +2979,12 @@ document.getElementById('intake-form').addEventListener('submit', async function
         if (el.value && el.value.trim()) lines.push('[' + el.getAttribute('data-label') + '] ' + el.value.trim());
       });
       if (lines.length) body.notes = '── 웹사이트 질문지 ──\\n' + lines.join('\\n') + (body.notes ? '\\n── 추가 요청 ──\\n' + body.notes : '');
+    }
+    const ax = document.getElementById('ads-extra');
+    if (ax && ax.style.display !== 'none') {
+      const al = [];
+      ax.querySelectorAll('[data-label]').forEach(function (el) { if (el.value && el.value.trim()) al.push('[' + el.getAttribute('data-label') + '] ' + el.value.trim()); });
+      if (al.length) body.notes = (body.notes ? body.notes + '\\n\\n' : '') + '── 광고 ──\\n' + al.join('\\n');
     }
     const gx = document.getElementById('google-extra');
     if (gx && gx.style.display !== 'none') {

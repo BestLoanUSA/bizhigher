@@ -6,6 +6,7 @@
  */
 import { ensureSchema, addEvent, approveDeliverable, parseOptions } from '../api/_orders.js';
 import { wakeRoutine } from '../api/_runner.js';
+import { customerTitle } from '../api/_playbook.js';
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const EMBED_RE = /^https:\/\/([a-z0-9-]+\.)*(bizhigher-sites\.pages\.dev|sites\.bizhigher\.com|bizhigher\.com)(\/|$)/i;
@@ -25,10 +26,57 @@ async function load(env, token) {
   return { job, site, siteTask, ds: ds.map((d) => ({ ...d, task: byId.get(d.task_id) || null })) };
 }
 
+/* 고객에게 보이면 안 되는 내부 줄 — 루틴이 결과물에 남기는 작업 메모 (2026-11-03 데모: "[고객 안내 — David가 검토한 뒤…]"·"참고한 스킬"·"제목:"이 그대로 보였다) */
+function customerText(text) {
+  return String(text || '')
+    .replace(/\n+\[David 승인 메모\][^\n]*/g, '')
+    .split('\n')
+    .filter((l) => !/^\s*\**\s*\[(고객 안내|David|내부|검수)[^\]]*\]\s*\**\s*$/.test(l) && !/^\s*참고한 스킬\s*:/.test(l) && !/^\s*\[(David|내부)[^\]]*\]/.test(l))
+    .map((l) => l.replace(/^\s*제목\s*:\s*/, '### '))
+    .join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+/* 작은 마크다운 → HTML (먼저 전부 이스케이프하므로 안전). 제목·굵게·목록·표·문단만 */
+function mdHtml(src) {
+  const inline = (t) => esc(t).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?)])/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+  const lines = String(src || '').split('\n');
+  let out = '', list = null, para = [];
+  const flush = () => { if (para.length) { out += `<p>${para.map(inline).join('<br>')}</p>`; para = []; } if (list) { out += `</${list}>`; list = null; } };
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    if (!l.trim()) { flush(); continue; }
+    const h = /^(#{1,4})\s+(.*)$/.exec(l);
+    if (h) { flush(); out += `<h${Math.min(4, h[1].length + 2)} class="mdh">${inline(h[2])}</h${Math.min(4, h[1].length + 2)}>`; continue; }
+    if (/^\s*\|.*\|\s*$/.test(l)) {
+      flush();
+      const rows = [];
+      while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) { rows.push(lines[i]); i++; }
+      i--;
+      const cells = (r) => r.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
+      const body = rows.filter((r) => !/^\s*\|[\s:|-]+\|\s*$/.test(r));
+      if (body.length) out += `<div class="tw"><table><thead><tr>${cells(body[0]).map((c) => `<th>${inline(c)}</th>`).join('')}</tr></thead><tbody>${body.slice(1).map((r) => `<tr>${cells(r).map((c) => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+      continue;
+    }
+    const li = /^\s*(?:[-*•]|(\d+)[.)])\s+(.*)$/.exec(l);
+    if (li) {
+      const tag = li[1] ? 'ol' : 'ul';
+      if (para.length) { out += `<p>${para.map(inline).join('<br>')}</p>`; para = []; }
+      if (list !== tag) { if (list) out += `</${list}>`; out += `<${tag}>`; list = tag; }
+      out += `<li>${inline(li[2])}</li>`;
+      continue;
+    }
+    if (list) { out += `</${list}>`; list = null; }
+    para.push(l);
+  }
+  flush();
+  return out;
+}
+
 /* 결과물 본문 — 관리자 공용 미리보기(_ui.js previewHtml)와 같은 규칙: 종류와 상관없이 이미지·영상·PDF·우리 사이트를 그 자리에서 */
 function body(d) {
   const k = d.kind || (d.task && d.task.result_kind) || (d.url ? 'link' : 'text');
-  const text = (d.task ? d.task.result_text || '' : '').replace(/\n+\[David 승인 메모\][^\n]*/g, '').trim(); // David 내부 메모는 고객에게 보이지 않는다
+  const raw = (d.task ? d.task.result_text || '' : '').replace(/\n+\[David 승인 메모\][^\n]*/g, '').trim(); // David 내부 메모는 고객에게 보이지 않는다
+  const text = k === 'html' ? raw : customerText(raw);
   const url = d.url || (d.task && d.task.result_url) || '';
   const all = (text + '\n' + url).match(/https?:\/\/[^\s<>"')\]]+/g) || [];
   const uniq = [...new Set(all.map((u) => u.replace(/[.,;:!?]+$/, '')))];
@@ -45,7 +93,7 @@ function body(d) {
   for (const u of sites.slice(0, 1)) html += `<iframe src="${esc(u)}" title="사이트 미리보기" loading="lazy" style="width:100%;height:560px;border:1px solid #e5e7eb;border-radius:12px;background:#fff;margin:8px 0"></iframe><p><a class="btn" href="${esc(u)}" target="_blank" rel="noopener">사이트 열기 →</a></p>`;
   if (text && k !== 'html') {
     const rest = text.split('\n').filter((l) => !(imgs.concat(vids).some((u) => l.includes(u)) && l.trim().length < 200)).join('\n').trim(); // 이미지 주소만 있는 줄은 숨김
-    if (rest) html += `<pre>${esc(rest.slice(0, 12000))}</pre>`;
+    if (rest) html += `<div class="md">${mdHtml(rest.slice(0, 12000))}</div>`;
   }
   if (url && !imgs.includes(url) && !vids.includes(url) && !pdfs.includes(url) && !sites.includes(url)) html += `<p><a class="btn ghost" href="${esc(url)}" target="_blank" rel="noopener">파일·링크 열기 →</a></p>`;
   return html || '<p class="muted">내용은 담당자 안내 메일을 참고해 주세요.</p>';
@@ -77,7 +125,7 @@ function page(job, ds, { preview, msg, site, siteTask, env }) {
         ${options.length ? choiceCards : `<form method="post" class="row"><input type="hidden" name="id" value="${d.id}"><input type="hidden" name="action" value="approve"><button class="btn" type="submit">✓ 이대로 진행해 주세요</button></form>`}
         <details${d.revise_note ? ' open' : ''}><summary>수정 요청하기</summary>${d.revise_note ? `<div class="rev">✎ 접수된 요청: ${esc(d.revise_note)} — 반영 후 다시 올려드립니다</div>` : ''}<form method="post"><input type="hidden" name="id" value="${d.id}"><input type="hidden" name="action" value="revise"><textarea name="note" required placeholder="무엇을 어떻게 고칠지 적어 주세요 (예: 2주차 게시물 가격 문구 삭제)"></textarea><button class="btn ghost" type="submit">수정 요청 보내기</button></form></details>
       </div>` : d.approved_at ? `<div class="ok">✓ ${esc(d.approved_at.slice(0, 10))} 승인됨${chosen ? ` · 선택: ${esc(chosen.key)}. ${esc(chosen.label)}` : ''}</div>${chosen && chosen.image ? `<div class="grid"><a href="${esc(chosen.image)}" target="_blank" rel="noopener"><img src="${esc(chosen.image)}" alt="" loading="lazy"></a></div>` : ''}` : '';
-    return `<section class="card${d.sent_at ? '' : ' draft'}"><div class="meta">${d.sent_at ? esc(d.sent_at.slice(0, 10)) : '전달 전 (미리보기)'}</div><h2>${esc(d.title)}</h2>${d.summary ? `<p class="sum">${esc(d.summary)}</p>` : ''}${body(d)}${approval}</section>`;
+    return `<section class="card${d.sent_at ? '' : ' draft'}"><div class="meta">${d.sent_at ? esc(d.sent_at.slice(0, 10)) : '전달 전 (미리보기)'}</div><h2>${esc(customerTitle(d.task && d.task.key, d.title))}</h2>${d.summary ? `<p class="sum">${esc(d.summary)}</p>` : ''}${body(d)}${approval}</section>`;
   }).join('');
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>${biz} — BizHigher 결과물</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
@@ -86,6 +134,7 @@ function page(job, ds, { preview, msg, site, siteTask, env }) {
 header{background:var(--navy);color:#fff;padding:22px 18px}header .logo{font-weight:800;font-size:18px}header .logo span{color:#7FA6FF}header h1{font-size:22px;margin:10px 0 4px}header p{margin:0;opacity:.85;font-size:14px}
 main{max-width:720px;margin:0 auto;padding:16px}
 .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 16px;margin-bottom:14px}.card.draft{border-style:dashed;background:#FFFBEB}.card h2{font-size:17px;margin:2px 0 8px}.meta{font-size:12px;color:var(--muted)}.sum{font-size:15px;line-height:1.6;margin:0 0 10px}
+.md{background:#F8FAFC;border:1px solid var(--line);border-radius:12px;padding:4px 14px;margin:8px 0;font-size:15px;line-height:1.65}.md p,.md ul,.md ol{margin:10px 0}.md ul,.md ol{padding-left:20px}.md li{margin:4px 0}.mdh{font-size:16px;margin:16px 0 6px}.md .tw{overflow-x:auto;margin:10px 0}.md table{border-collapse:collapse;width:100%;font-size:14px;background:#fff}.md th,.md td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}.md th{background:#EEF2F7}.md a{word-break:break-all}
 pre{white-space:pre-wrap;word-break:break-word;font:14px/1.6 inherit;background:#F8FAFC;border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0;max-height:520px;overflow:auto}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:8px 0}.grid img,.grid video{width:100%;border-radius:10px;border:1px solid var(--line);display:block;background:#000}
 .btn{display:inline-block;background:var(--blue);color:#fff;border:0;border-radius:999px;padding:12px 18px;font-weight:700;font-size:15px;cursor:pointer;text-decoration:none;font-family:inherit}.btn.ghost{background:#fff;color:var(--blue);border:1.5px solid var(--blue)}
@@ -125,7 +174,7 @@ export async function onRequestPost({ params, env, request, waitUntil }) {
     if (!note) return html('수정 내용을 적어 주세요', 400);
     const t = await env.DB.prepare(`SELECT id, status, revise_note FROM job_tasks WHERE job_id = ? AND key = 'web-2' ORDER BY id DESC LIMIT 1`).bind(data.job.id).first().catch(() => null);
     const tagged = '[고객 수정 요청] ' + note;
-    if (t) await env.DB.prepare(`UPDATE job_tasks SET status = 'doing', revise_note = ?, done_at = NULL WHERE id = ?`).bind(t.status === 'doing' && t.revise_note ? t.revise_note + '\n' + tagged : tagged, t.id).run();
+    if (t) await env.DB.prepare(`UPDATE job_tasks SET status = 'doing', claimed_at = NULL, revise_note = ?, done_at = NULL WHERE id = ?`).bind(t.status === 'doing' && t.revise_note ? t.revise_note + '\n' + tagged : tagged, t.id).run();
     await addEvent(env.DB, data.job.id, 'customer', null, null, `✎ 웹사이트 수정 요청 (고객 페이지) — ${note.slice(0, 200)}${t ? '' : ' (web-2 단계 없음 — 수동 처리)'}`);
     wake('고객 웹사이트 수정 요청');
     return Response.redirect(new URL(`/c/${params.token}?ok=site`, request.url).toString(), 303);
@@ -143,7 +192,7 @@ export async function onRequestPost({ params, env, request, waitUntil }) {
   if (action === 'revise') {
     if (!note) return html('수정 내용을 적어 주세요', 400);
     await db.prepare(`UPDATE deliverables SET revise_note = ?, approved_at = NULL WHERE id = ?`).bind(note, d.id).run();
-    if (d.task) await db.prepare(`UPDATE job_tasks SET status = 'doing', revise_note = ?, done_at = NULL WHERE id = ?`).bind('[고객 수정 요청] ' + note, d.task.id).run();
+    if (d.task) await db.prepare(`UPDATE job_tasks SET status = 'doing', claimed_at = NULL, revise_note = ?, done_at = NULL WHERE id = ?`).bind('[고객 수정 요청] ' + note, d.task.id).run();
     await addEvent(db, data.job.id, 'customer', null, null, `✎ 고객 수정 요청 (고객 페이지) — ${d.title}: ${note}`);
     wake(`고객 수정 요청 — ${d.title.slice(0, 50)}`);
     return Response.redirect(new URL(`/c/${params.token}?ok=revise`, request.url).toString(), 303);

@@ -55,12 +55,18 @@ function row(p) {
   if (cmd !== 'competitors') { console.log('사용법: lookup --query "상호 도시 주" [--pick N] | competitors --query "…" [--me place_id] [--n 3]'); return; }
   const q = opt('query'); if (!q) throw new Error('--query 필요');
   const n = Number(opt('n', 3));
-  const r = await fetch('https://places.googleapis.com/v1/places:searchText', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': KEY, 'X-Goog-FieldMask': 'places.id,places.displayName,places.rating,places.userRatingCount' }, body: JSON.stringify({ textQuery: q, languageCode: 'en', maxResultCount: Math.min(10, n + 3) }) });
+  const r = await fetch('https://places.googleapis.com/v1/places:searchText', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': KEY, 'X-Goog-FieldMask': 'places.id,places.displayName,places.rating,places.userRatingCount,places.primaryType' }, body: JSON.stringify({ textQuery: q, languageCode: 'en', maxResultCount: 10 }) });
   if (!r.ok) throw new Error('searchText ' + r.status + ' ' + (await r.text()).slice(0, 200));
   const found = (await r.json()).places || [];
   const me = opt('me');
-  const comps = found.filter((p) => p.id !== me).slice(0, n);
-  const out = { me: me ? row(await details(me)) : null, competitors: [] };
+  // 대형 일반 소매(마트·쇼핑몰 등)는 검색어와 상관없이 상위에 끼어든다(2026-11-03 데모: 안경점 경쟁사 3곳 중 1곳이 한인 마트). 우리 가게가 그 업종이 아니면 뺀다. --keep-all 로 끔
+  const BIG = new Set(['asian_grocery_store', 'grocery_store', 'supermarket', 'hypermarket', 'shopping_mall', 'department_store', 'convenience_store', 'discount_store', 'warehouse_store', 'market', 'food_store', 'gas_station']);
+  const meRow = me ? row(await details(me)) : null;
+  const keepAll = args.includes('--keep-all') || (meRow && BIG.has(meRow.primaryType));
+  const skipped = keepAll ? [] : found.filter((p) => p.id !== me && BIG.has(p.primaryType)).map((p) => p.displayName && p.displayName.text);
+  const comps = found.filter((p) => p.id !== me && (keepAll || !BIG.has(p.primaryType))).slice(0, n);
+  if (skipped.length) console.error('[대형 소매 제외] ' + skipped.join(', '));
+  const out = { me: meRow, competitors: [] };
   for (const c of comps) out.competitors.push(row(await details(c.id)));
   const all = [out.me, ...out.competitors].filter(Boolean);
   const md = ['| 항목 | ' + all.map((p) => p.name + (p === out.me ? ' (우리)' : '')).join(' | ') + ' |', '|---|' + all.map(() => '---').join('|') + '|',

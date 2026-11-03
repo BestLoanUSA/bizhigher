@@ -98,7 +98,8 @@ async function api(path, body) {
     return;
   }
   if (cmd === 'wake') { // 루틴이 끝날 때 남은 일이 있으면 자신을 다시 깨운다(관리자가 ROUTINE_FIRE_URL 로 발사). 3분 디바운스·AI 차례 없으면 건너뜀
-    const r = await api('runner/wake', { reason: opt('reason', '루틴 — 남은 단계'), force: args.includes('--force') });
+    // end: 루틴이 끝나며 부르는 것이라 서버가 "실행 중" 디바운스를 풀고 바로 다음 실행을 깨운다(2026-11-03)
+    const r = await api('runner/wake', { reason: opt('reason', '루틴 — 남은 단계'), force: args.includes('--force'), end: true });
     console.log(r.fired ? `루틴 깨움: ${r.session || ''}` : `건너뜀: ${r.skipped}${r.status && r.status.skipped ? ' — ' + r.status.skipped : ''}`);
     return;
   }
