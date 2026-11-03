@@ -370,10 +370,13 @@ export function currentPhaseTasks(tasks) {
  *  (2026-10-21) phase 전체가 아니라 서비스 단위로 본다 — 한 서비스의 셋업이 David 차례에서 멈춰 있어도 다른 서비스의 월간 단계는 돈다 */
 export function aiReady(tasks) {
   const all = tasks || [];
-  // 공통 온보딩(ob-*: 결제·질문지·프로필·자료·킥오프)만 전체 게이트. 서비스별 온보딩(gpo-1 초대, ads-1 계정 등)은 그 서비스 안에서만 막는다
-  if (all.some((x) => x.service === 'common' && !CLOSED.has(x.status))) return [];
+  // 공통 온보딩(ob-*: 결제·질문지·프로필·자료·킥오프)은 다른 서비스 전체의 게이트. 공통 단계 자신(ob-3 프로필·ob-5 킥오프)은
+  // 앞 공통 단계가 끝나면 AI 차례다 — 예전엔 게이트가 자기 자신까지 막아 질문지 뒤 루틴이 영영 시작되지 않았다(2026-11-03 데모에서 발견).
+  // 서비스별 온보딩(gpo-1 초대, ads-1 계정 등)은 그 서비스 안에서만 막는다
+  const commonOpen = all.some((x) => x.service === 'common' && !CLOSED.has(x.status));
   return all.filter((t) => {
     if (!(t.who === 'auto' || t.who === 'ai') || !(t.status === 'todo' || t.status === 'doing')) return false;
+    if (commonOpen && t.service !== 'common') return false;
     return !all.some((x) => x.service === t.service && x.sort < t.sort && !CLOSED.has(x.status));
   });
 }
@@ -469,6 +472,25 @@ export async function createJobForOrder(db, order, { deliveryDays } = {}) {
   return id;
 }
 
+/** 질문지 한 장으로 이미 끝난 고객 단계를 닫는다 — ob-2(제출) · ob-4(자료: 첨부 1개 이상) · web-1(웹사이트 질문지 블록이 있을 때).
+ *  예전엔 ob-2 만 닫아서, 사진을 질문지에 같이 올려도 ob-4 "고객 자료 수령"이 열린 채 공통 게이트가 모든 서비스를 막았다(2026-11-03) */
+export async function closeIntakeSteps(db, jobId, intake) {
+  if (!jobId) return;
+  const notes = String((intake && intake.notes) || '');
+  const files = (notes.match(/→\s*https?:\/\/\S+\/a\/\S+/g) || []).length;
+  const hasWeb = /── 웹사이트 질문지 ──\s*\n\s*\[/.test(notes);
+  const close = (key, text) => db.prepare(`UPDATE job_tasks SET status = 'done', done_at = COALESCE(done_at, datetime('now')), result_text = COALESCE(NULLIF(result_text, ''), ?) WHERE job_id = ? AND key = ? AND status NOT IN ('done','skipped')`).bind(text, jobId, key).run();
+  await close('ob-2', `질문지 #${intake && intake.id} 제출`);
+  if (files) await close('ob-4', `질문지 첨부 ${files}개로 수령${files < 10 ? ' (권장 10장+ — 사이트 사진 준비가 부족분을 분위기 이미지로 채우고, 더 받으면 질문지 재제출·관리자 첨부)' : ''}`);
+  if (hasWeb) await close('web-1', `질문지의 "웹사이트 질문지" 블록으로 수령${files ? ` · 사진 ${files}개` : ''}`);
+  // 측정 접근: 사이트를 우리가 만들면 an-1(외부 사이트 관리자 접근)은 필요 없다
+  const web = await db.prepare(`SELECT COUNT(*) n FROM job_tasks WHERE job_id = ? AND service = 'website'`).bind(jobId).first();
+  if (web && web.n) await close('an-1', 'BizHigher 제작 사이트 — 태그·전환 이벤트는 스펙 analytics 로 들어간다(외부 사이트 접근 불필요)');
+  // seo-1(GSC·GA4 초대)은 "이미 있어요"일 때만 고객 일. 있음(통화로 고객 계정 생성)·없음(BizHigher 계정)은 an-3·an-4 에서 David 가 만든다
+  const acct = (/\[구글 계정[^\]]*\]\s*(.+)/.exec(notes) || [])[1] || '';
+  if (acct && !/이미/.test(acct)) await db.prepare(`UPDATE job_tasks SET status = 'skipped', result_text = COALESCE(NULLIF(result_text, ''), ?) WHERE job_id = ? AND key = 'seo-1' AND status = 'todo'`).bind(`질문지 구글 계정 답 "${acct.slice(0, 40)}" — 접근은 an-3·an-4 에서 만든다`, jobId).run();
+}
+
 /** 질문지(intake)를 작업에 붙인다. 주문이 있으면 그 작업에, 없으면 질문지만으로 작업을 만든다. */
 export async function attachIntake(db, intake, { deliveryDays } = {}) {
   const email = (intake.email || '').toLowerCase();
@@ -488,7 +510,7 @@ export async function attachIntake(db, intake, { deliveryDays } = {}) {
     if (prev) {
       await db.prepare(`UPDATE jobs SET intake_id = ?, updated_at = datetime('now') WHERE id = ?`).bind(intake.id, prev.id).run();
       await addEvent(db, prev.id, 'system', prev.status, prev.status, `질문지 #${intake.id} 다시 제출됨 — 이전 질문지 #${prev.intake_id || '-'} 대신 이 내용을 씁니다`);
-      await db.prepare(`UPDATE job_tasks SET status = 'done', done_at = COALESCE(done_at, datetime('now')) WHERE job_id = ? AND key = 'ob-2'`).bind(prev.id).run();
+      await closeIntakeSteps(db, prev.id, intake);
       return prev.id;
     }
   }
@@ -503,7 +525,7 @@ export async function attachIntake(db, intake, { deliveryDays } = {}) {
       .run();
     await addEvent(db, job.id, 'system', job.status, job.status === 'new' ? 'info' : job.status, `질문지 #${intake.id} 제출됨 — 딜리버리 기한 시작`);
     await seedTasks(db, job.id, job.service_slug || intake.service);
-    await db.prepare(`UPDATE job_tasks SET status = 'done', done_at = datetime('now') WHERE job_id = ? AND key = 'ob-2'`).bind(job.id).run();
+    await closeIntakeSteps(db, job.id, intake);
     return job.id;
   }
   const r = await db
@@ -515,7 +537,7 @@ export async function attachIntake(db, intake, { deliveryDays } = {}) {
   const id = r.meta && r.meta.last_row_id;
   await addEvent(db, id, 'system', null, 'info', `질문지 #${intake.id} 제출됨 (Stripe 결제 기록 없음 — 이메일 신청이거나 웹훅 미수신)`);
   await seedTasks(db, id, intake.service);
-  await db.prepare(`UPDATE job_tasks SET status = 'done', done_at = datetime('now') WHERE job_id = ? AND key = 'ob-2'`).bind(id).run();
+  await closeIntakeSteps(db, id, intake);
   return id;
 }
 

@@ -45,9 +45,9 @@ export const COMMON_ONBOARDING = [
 export const PLAYBOOK = {
   'google-profile-optimization': {
     name: '구글 프로필 최적화', steps: [
-      S('gpo-1', 'GBP 관리자 초대 — 사장님이 hello@bizhigher.com 을 관리자로 추가', 'onboarding', 'customer', 5, { block: '소유자만 초대 가능. 안내문 automation/gbp/docs/owner-invite-ko.md' }),
       S('gpo-2', '경쟁사 3곳 갭 분석 — 카테고리·속성·리뷰 속도(90일)·게시물 활동 (Places API)', 'setup', 'auto', 0, { block: '루틴이 places.js로 평점·리뷰 수·최근 리뷰 날짜·카테고리·웹사이트 유무를 뽑는다. 속성 상세·게시물 활동은 API에 없어 수동 보강 10분' }),
       S('gpo-3', '콘텐츠 팩 — 카테고리 교정안·설명 750자(한/영)·서비스 20개·Q&A 10세트·첫 게시물 4건', 'setup', 'ai', 20, { verify: true }),
+      S('gpo-1', 'GBP 관리자 초대 — 사장님이 hello@bizhigher.com 을 관리자로 추가', 'onboarding', 'customer', 5, { block: '소유자만 초대 가능. 안내문 automation/gbp/docs/owner-invite-ko.md' }),
       S('gpo-4', 'Before 스크린샷 → 프로필에 적용 → After 스크린샷', 'setup', 'david', 30, { block: 'GBP API 승인 전엔 손으로 입력', next: 'GBP API 승인(재신청: BestLoanUSA 재인증 후 david@ 또는 BizHigher 프로필 60일) → 설명·서비스·속성 자동 반영' }),
       S('gpo-5', 'Before/After 리포트 PDF + 4주 후 성과 리포트 리마인더', 'setup', 'ai', 5, { verify: true }),
     ],
@@ -73,16 +73,16 @@ export const PLAYBOOK = {
   },
   'analytics-setup': {
     name: '판매 추적·애널리틱스 셋업', steps: [
-      S('an-1', '웹사이트 관리자 접근(WordPress/Wix/Squarespace 등) 또는 BizHigher 제작 사이트 확인', 'onboarding', 'customer', 0, { block: '외부 사이트면 로그인·플러그인 권한 필요' }),
       S('an-2', 'GA4 속성·전환 이벤트(전화·예약·문의·길찾기) 설계 + 질문지의 구글 계정 선택에 따라 셋업 계획(고객 계정 10분 통화 / BizHigher 계정 / 기존 초대) — docs/analytics-setup-ko.md', 'setup', 'ai', 10, { verify: true }),
+      S('an-1', '웹사이트 관리자 접근(WordPress/Wix/Squarespace 등) 또는 BizHigher 제작 사이트 확인', 'onboarding', 'customer', 0, { block: '외부 사이트면 로그인·플러그인 권한 필요' }),
       S('an-3', 'GA4 속성 생성(고객 계정 또는 BizHigher 계정, Claude in Chrome 보조) + 태그 설치 — BizHigher 제작 사이트면 스펙 analytics.ga4 패치로 자동(전환 이벤트 4종 포함), 외부 사이트면 수동 + 서비스 계정 뷰어 추가', 'setup', 'david', 30, { next: 'GTM 템플릿화(§19-6) → 외부 사이트도 스니펫 1개로' }),
       S('an-4', 'Search Console 속성 추가·검증(BizHigher 사이트는 스펙 analytics.gsc_verification 메타 태그로) + 서비스 계정 사용자 추가 + 전환 테스트', 'setup', 'david', 15, { next: 'Site Verification API 로 검증 자동화' }),
     ],
   },
   'ads-setup': {
     name: '광고 셋업', steps: [
-      S('ads-1', 'BizHigher MCC 아래 고객 Google Ads 계정 생성 + 고객 카드 등록(결제 프로필은 고객 명의) · Meta는 Business Manager 파트너 권한', 'onboarding', 'customer', 10, { block: '결정(2026-10-15): MCC 방식. 광고비는 고객 카드로 직접 결제(상품 정책). Meta는 비즈니스 인증 선행' }),
       S('ads-2', '캠페인 설계안 + Google Ads Editor 가져오기 CSV(캠페인·광고그룹·키워드·제외어·RSA 광고) + Meta 캠페인 설정표 + 자동 규칙 표(docs/ad-rules-ko.md 12개 중 업종에 맞는 것, 고객 예산으로 환산)', 'setup', 'ai', 15, { verify: true, block: '설계 전에 같은 업종 학습 메모(runner.js learnings --industry)를 읽는다 — 먹힌 키워드·훅·CPA 범위' }),
+      S('ads-1', 'BizHigher MCC 아래 고객 Google Ads 계정 생성 + 고객 카드 등록(결제 프로필은 고객 명의) · Meta는 Business Manager 파트너 권한', 'onboarding', 'customer', 10, { block: '결정(2026-10-15): MCC 방식. 광고비는 고객 카드로 직접 결제(상품 정책). Meta는 비즈니스 인증 선행' }),
       S('ads-3', 'Google Ads — Ads Editor 로 CSV 가져오기 → 검토 → 게시 + 전환 연결 + 자동 규칙 세트 심기(BH-01~11, docs/ad-rules-ko.md)', 'setup', 'david', 35, { block: 'CSV 가져오기 15분 + 전환 연결 10분 + 규칙 8개 10분. 구축을 손으로 하면 90분', next: 'Google Ads API 개발자 토큰(기본 액세스) + MCC → 일시정지 상태로 자동 생성, 알림 규칙은 ads.js propose 로' }),
       S('ads-4', 'Meta — 설정표대로 캠페인 복제·픽셀 연결 + 자동화된 규칙 세트 심기(docs/ad-rules-ko.md 메타 항목 6개)', 'setup', 'david', 50, { block: 'Meta 마케팅 API는 앱 심사 6~8주(§15) → 당분간 수동. 설정표·카피·소재는 ads-2·ac-3 산출물 재사용. 규칙은 Ads Manager 자동화된 규칙(계정당 250개)', next: 'Meta 앱 심사 통과' }),
       S('ads-5', '전환 테스트 완료 리포트 + 업종 학습 메모 1줄(runner.js learn)', 'setup', 'ai', 5, { verify: true }),
@@ -90,7 +90,7 @@ export const PLAYBOOK = {
   },
   'local-landing-pack': {
     name: '지역 랜딩페이지 5개', steps: [
-      S('llp-1', '도시 목록 확정 — 고객 승인 (기존 페이지 제외)', 'setup', 'customer', 5),
+      S('llp-1', '도시 목록 제안 — 가게 위치·질문지 기준 5곳(기존 페이지 제외), David 확인. 고객 수정은 킥오프 답장·고객 페이지로 (2026-11-03: 고객 승인 대기가 지역 페이지 전체를 막아 AI 제안으로 바꿈)', 'setup', 'ai', 5, { verify: true }),
       S('llp-2', '도시별 페이지 작성 — 타이틀·메타·H1·지역 컨텍스트(실제 랜드마크 확인)·FAQ 3개+스키마·내부 링크 맵', 'setup', 'ai', 20, { verify: true, block: '도시 간 중복률 검사(doorway 방지)는 자동' }),
       S('llp-3', '적용 — BizHigher 제작 사이트면 sites.js areas(중복 검사 → 스펙 areas 패치) → 다음 배포에 areas/{도시}/ 페이지·홈 지역 칩·푸터 링크·사이트맵 자동, 외부 사이트면 HTML 전달', 'setup', 'auto', 0, { block: '외부 사이트는 고객이 올려야 함 → 고객 대기' }),
       S('llp-4', '자동 QA(qa.js: 360/768/1280 스크린샷·속도·링크·폼) + 사이트맵 갱신 + 구글 등록 가이드', 'setup', 'auto', 5, { verify: true }),
@@ -107,10 +107,10 @@ export const PLAYBOOK = {
   },
   'gbp-posting': {
     name: '포스팅 관리 3채널 (주 2회)', steps: [
-      S('post-1', 'IG·FB 페이지 접근 — Meta Business Suite 파트너 권한 또는 예약 툴 연결', 'onboarding', 'customer', 10, { block: 'Meta API 없이도 Business Suite 예약 발행은 가능. 고객이 파트너 추가해야 함' }),
       S('post-2', '월간 캘린더 8건 초안 — 주제·캡션 한/영·CTA·사진 촬영 가이드', 'monthly', 'ai', 15, { verify: true }),
       S('post-3', '고객 캘린더 승인 (월 1회, 기한 내 무응답 시 승인 간주 — 2026-10-15 확정)', 'monthly', 'customer', 0, { block: '약관 문구 작성 필요(§19-12)', next: '/portal 승인 페이지 + 무응답 자동 승인' }),
       S('post-4', '이미지 제작 — 고객 사진 + 템플릿 조판 (한글 텍스트는 PIL 오버레이)', 'weekly', 'auto', 0, { block: '루틴이 fal.ai 배경 + 한글 조판(creative.js)으로 제작, 검증 큐에서 확인. 고객 사진 있으면 그걸 배경으로 — 없으면 생성 이미지라 품질 편차' }),
+      S('post-1', 'IG·FB 페이지 접근 — Meta Business Suite 파트너 권한 또는 예약 툴 연결', 'onboarding', 'customer', 10, { block: 'Meta API 없이도 Business Suite 예약 발행은 가능. 고객이 파트너 추가해야 함' }),
       S('post-5', 'GBP 게시 — 주 2회', 'weekly', 'david', 10, { block: 'GBP API 신청 거절(2026-10-07). 지금은 앱에서 붙여넣기 또는 Publer류 예약 툴($10~30/월)', next: 'GBP API 재신청 통과 → 완전 자동' }),
       S('post-6', 'IG·FB 게시 — 주 2회', 'weekly', 'david', 10, { block: 'Meta API 앱 심사 전 → Business Suite 예약 발행 수동', next: '예약 툴 도입 시 GBP와 함께 한 번에 예약' }),
       S('post-7', '월간 게시·조회 리포트', 'monthly', 'david', 10, { block: 'GBP 인사이트는 API 없이 화면 캡처', next: 'GBP API' }),
@@ -160,11 +160,12 @@ export const PLAYBOOK = {
   },
   'seo-aio': {
     name: 'SEO/AIO 관리 (Premium 블로그 4편)', steps: [
-      S('seo-1', 'Search Console·GA4 접근 — 고객 계정이면 hello@bizhigher.com 과 서비스 계정 초대, 없으면 an-3·an-4 로 만든다 (docs/analytics-setup-ko.md)', 'onboarding', 'customer', 5),
-      S('seo-2', '온보딩 분석 — 2페이지 키워드(11~20위·100임프레션+) 전수 발굴·교정 문구', 'setup', 'ai', 20, { verify: true, next: 'GSC API로 데이터 수집 자동' }),
-      S('seo-3', '월 주제 캘린더(키워드 리서치) → 고객 승인', 'monthly', 'customer', 10, { verify: true }),
+      S('seo-3', '월 주제 캘린더 초안(키워드 리서치) — 고객 페이지에 [이대로 진행]/[수정 요청]', 'monthly', 'ai', 10, { verify: true }),
+      S('seo-3b', '고객 캘린더 승인 (고객 페이지, 7일 무응답 승인 간주)', 'monthly', 'customer', 0),
       S('seo-4', '블로그 4편 집필 — 1,200~1,800자·메타·FAQ 스키마·대표 이미지 (규제 업종 표현 검사)', 'monthly', 'ai', 30, { verify: true }),
       S('seo-5', '발행 — BizHigher 제작 사이트는 자동(블로그 루틴과 동일), 외부 사이트는 docx+html 전달', 'monthly', 'auto', 0, { block: '외부 사이트(WordPress 등)는 고객 또는 David가 올림' }),
+      S('seo-1', 'Search Console·GA4 접근 — 고객 계정이면 hello@bizhigher.com 과 서비스 계정 초대, 없으면 an-3·an-4 로 만든다 (docs/analytics-setup-ko.md)', 'onboarding', 'customer', 5),
+      S('seo-2', '온보딩 분석 — 2페이지 키워드(11~20위·100임프레션+) 전수 발굴·교정 문구', 'setup', 'ai', 20, { verify: true, next: 'GSC API로 데이터 수집 자동' }),
       S('seo-6', '기술 SEO·스키마 월간 점검 (크롤러)', 'monthly', 'auto', 5),
       S('seo-7', 'AI 검색 인용 테스트 — ChatGPT·Perplexity에 가게가 나오는지', 'monthly', 'david', 15, { next: '검색 API로 반자동' }),
       S('seo-8', '분기별 지역 랜딩페이지 1개 추가 — BizHigher 사이트면 sites.js areas 로 기존 areas 에 1곳 추가', 'monthly', 'ai', 10, { verify: true }),
@@ -172,7 +173,8 @@ export const PLAYBOOK = {
   },
   'shortform-video': {
     name: '숏폼 영상 (Premium 4편/월)', steps: [
-      S('sv-1', '월초 기획안 4편 — 훅·장면·자막·음악 → 고객 승인', 'monthly', 'customer', 10, { verify: true }),
+      S('sv-1', '월초 기획안 4편 — 훅·장면·자막·음악 (docs/shortform-playbook-ko.md) — 고객 페이지에 [이대로 진행]/[수정 요청]', 'monthly', 'ai', 10, { verify: true }),
+      S('sv-1b', '고객 기획안 승인 (고객 페이지, 7일 무응답 승인 간주)', 'monthly', 'customer', 0),
       S('sv-2', '영상 생성 — 고객 매장 사진으로 5초 클립(릴스·틱톡·쇼츠 9:16) + 자막·로고·CTA 자동 합성, 사이트 스펙이 있으면 20초 스토리 완성본(Remotion)까지', 'monthly', 'auto', 0, { block: '루틴이 fal.ai 이미지→영상(Kling 2.1, 편당 약 $0.25~0.5)으로 클립을 만들고(creative.js video) 기획안 자막·로고·CTA 를 Playwright+ffmpeg 로 얹는다(creative.js caption). 사이트 스펙이 있는 고객은 creative.js promo 로 훅→서비스→왜 우리→엔드카드 20초 완성본도 렌더(비용 0). 음악은 고객이 준 mp3 가 있을 때만', next: '메뉴 리빌·비포/애프터 템플릿, 배경음악 라이브러리(저작권 프리) 자동 선택' }),
       S('sv-2b', '고객이 먼저 올릴 영상을 고른다 — 고객 페이지에서 완성본을 재생해 보고 [이 영상으로 진행] (무응답 7일 → 추천 표시된 것). 선택은 sv-3·sv-4 메모에 "[고객 선택]"으로', 'monthly', 'customer', 0),
       S('sv-3', 'David 확인 (자막 타이밍·오탈자·톤) — 재편집은 수정 요청으로', 'monthly', 'david', 5, { verify: true }),
@@ -205,14 +207,14 @@ const GIFTS = {
 
 /** slug(서비스 또는 패키지-기간) → 적용할 서비스 slug 목록 */
 /* 승인·완료 시 "결과물 · 발송" 목록(고객 전달)에 올라가는 단계 — 나머지는 내부 작업물이라 올리지 않는다 (2026-10-21: 매 단계마다 초안 메일이 가던 문제) */
-export const DELIVER_KEYS = new Set(['ob-5', 'gpo-5', 'qr-2', 'qr-3', 'lls-7', 'ads-5', 'llp-4', 'web-4', 'post-2', 'post-7', 'rr-7', 'ac-5', 'cp-2', 'mr-4', 'seo-3', 'seo-4', 'seo-8', 'sv-2', 'am-5', 'llc-2']);
+export const DELIVER_KEYS = new Set(['sv-1', 'ob-5', 'gpo-5', 'qr-2', 'qr-3', 'lls-7', 'ads-5', 'llp-4', 'web-4', 'post-2', 'post-7', 'rr-7', 'ac-5', 'cp-2', 'mr-4', 'seo-3', 'seo-4', 'seo-8', 'sv-2', 'am-5', 'llc-2']);
 
 /* 고객 승인이 필요한 결과물 — 고객 페이지에 [승인]/[수정 요청] 버튼이 붙고, 승인하면 같은 서비스의 다음 고객 차례 단계가 완료된다 */
 /** 결과물 종류 — 관리자 "AI가 했음"에서 완성물(고객 전달·업로드용)과 내부 작업·계획을 나눈다 (2026-10-27 David 요청)
  *  media 이미지·영상·인쇄물 · text 글·본문·답글 · site 사이트·페이지·링크 · report 리포트·전달 묶음 · plan 파일 대신 기획안만 올라온 것(David 가 파일을 만들어야 함) · internal 프로필·분석·설계·설정 */
 export const OUTPUT_KIND = {
   'ac-3': 'media', 'post-4': 'media', 'sv-2': 'media', 'qr-2': 'media', 'qr-3': 'media',
-  'gpo-3': 'text', 'llp-2': 'text', 'seo-4': 'text', 'post-2': 'text', 'rr-1': 'text', 'rr-live': 'text', 'ac-2': 'text', 'lls-3': 'text', 'ob-5': 'text', 'seo-3': 'text',
+  'gpo-3': 'text', 'llp-2': 'text', 'seo-4': 'text', 'post-2': 'text', 'rr-1': 'text', 'rr-live': 'text', 'ac-2': 'text', 'lls-3': 'text', 'ob-5': 'text', 'seo-3': 'text', 'sv-1': 'text',
   'web-2': 'site', 'web-4': 'site', 'llp-3': 'site', 'llp-4': 'site', 'cp-2': 'site', 'seo-5': 'site', 'seo-8': 'site',
   'gpo-5': 'report', 'lls-7': 'report', 'ads-5': 'report', 'post-7': 'report', 'rr-7': 'report', 'ac-5': 'report', 'mr-4': 'report', 'am-5': 'report', 'llc-2': 'report',
 };
@@ -231,7 +233,7 @@ export function outputKind(t) {
   return DELIVER_KEYS.has(t.key) ? 'report' : 'internal';
 }
 
-export const APPROVAL_KEYS = new Set(['post-2', 'seo-3', 'ac-5', 'sv-2', 'qr-2', 'web-2']); // qr-2·web-2·sv-2·ac-5 = 고객이 고르는 승인(선택지 카드). 선택지가 붙은 결과물은 이 목록과 무관하게 승인(선택)이 필요하다
+export const APPROVAL_KEYS = new Set(['post-2', 'seo-3', 'sv-1', 'ac-5', 'sv-2', 'qr-2', 'web-2']); // qr-2·web-2·sv-2·ac-5 = 고객이 고르는 승인(선택지 카드). 선택지가 붙은 결과물은 이 목록과 무관하게 승인(선택)이 필요하다
 
 export function servicesFor(slug) {
   if (!slug) return [];
