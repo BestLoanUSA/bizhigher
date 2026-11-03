@@ -1703,9 +1703,12 @@ function homePage(posts) {
   if (reduced) { setFinal(); return; }
   /* v45 — 데스크톱 시네마틱 히어로에서는 시간이 아니라 스크롤이 180일을 흐르게 한다(되감기 가능).
      히어로 frame() 이 demoP(0~1) 를 넘긴다: 이름 타이핑 → 형편없는 점수·문제 칩 → 플랜 시작 버튼 → DAY 카운트·점수 급상승·문제가 장점으로 반전 → 완료 */
+  /* 좁은 화면(991px 이하)은 카드가 고정되지 않고 일반 흐름에 있으므로, 카드가 화면을 지나가는 위치로 demoP 를 직접 계산한다
+     (카드 위쪽이 화면 높이 90% 지점 → 맨 위까지 0→1, 360×740 실측으로 플랜 버튼·DAY 카운트가 카드 전체가 보일 때 돌도록 맞춤). 페이지 길이는 그대로, 위로 스크롤하면 되감긴다 */
   var heroEl = document.getElementById('cine-hero');
   var narrowMQ = window.matchMedia('(max-width: 991px)').matches;
-  if (heroEl && heroEl.classList.contains('cine-on') && !narrowMQ) {
+  var demoCard = document.getElementById('demo-card');
+  if ((heroEl && heroEl.classList.contains('cine-on') && !narrowMQ) || (narrowMQ && demoCard)) {
     var sb = BIZ[Math.floor(Math.random() * BIZ.length)];
     var hint = document.getElementById('dm-scrub');
     var swapped = [false, false], lastN = -1;
@@ -1740,7 +1743,22 @@ function homePage(posts) {
       }
       if (hint) hint.style.opacity = String(1 - sseg(d, 0.45, 0.6));
     };
-    window.dispatchEvent(new Event('scroll'));
+    if (narrowMQ) {
+      var DM_START = 0.9, DM_END = 0, dmTick = false;
+      /* 힌트는 카드 아래에 있으면 진행 중엔 화면 밖이라 카드 위로 옮긴다 */
+      if (hint) demoCard.parentNode.insertBefore(hint, demoCard);
+      var dmFrame = function () {
+        dmTick = false;
+        var vh = window.innerHeight, top = demoCard.getBoundingClientRect().top;
+        window.__bhDemoScrub(sseg(vh * DM_START - top, 0, vh * (DM_START - DM_END)));
+      };
+      var dmOn = function () { if (!dmTick) { dmTick = true; requestAnimationFrame(dmFrame); } };
+      window.addEventListener('scroll', dmOn, { passive: true });
+      window.addEventListener('resize', dmOn, { passive: true });
+      dmFrame();
+    } else {
+      window.dispatchEvent(new Event('scroll'));
+    }
     return;
   }
   var timers = [];
