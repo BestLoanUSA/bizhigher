@@ -229,7 +229,7 @@ Cloudflare 프로젝트 → Settings → Environment variables (Production).
 | `GOOGLE_PLACES_API_KEY` | **필수** | 리드만 저장되고 채점·리포트가 안 나온다 |
 | `ANTHROPIC_API_KEY` | 선택 | 템플릿 해석으로 대체 |
 | `CLAUDE_MODEL` | 선택 | 기본 `claude-haiku-4-5` |
-| `RESEND_API_KEY` · `NOTIFY_EMAIL` · `NOTIFY_FROM` | 선택 | 이메일 알림이 안 간다. 알림 메일은 전부 David 전용이며 푸터에 그렇게 적힌다(`_notify.js`). 고객에게는 어떤 메일도 자동으로 가지 않는다 |
+| `RESEND_API_KEY` · `NOTIFY_EMAIL` · `NOTIFY_FROM` | 선택 | 이메일 알림이 안 간다. 알림 메일은 전부 David 전용이며 푸터에 그렇게 적힌다(`_notify.js`). 고객에게는 어떤 메일도 자동으로 가지 않는다. **`NOTIFY_EMAIL` 은 Cloudflare 에 만들지 않았다** — 코드 기본값 `hello@bizhigher.com`(Email Routing → david@bestloanusa.com)을 쓰고, 고객 묶음 메일 BCC 도 같은 주소(`notifyTo`). 2026-11-03 전에는 기본값이 옛 주소라 알림이 오지 않았다 |
 | `CUSTOMER_FROM` | 선택 | 고객 묶음 메일 발신 주소(예 `BizHigher <hello@bizhigher.com>`, Resend 도메인 인증 필요). 없으면 `NOTIFY_FROM` |
 | `CLOUDFLARE_API_TOKEN` · `CLOUDFLARE_ACCOUNT_ID` · `SITES_PROJECT` | 선택 | 고객 도메인을 Pages 프로젝트에 자동 추가(§12-5). 없으면 D1 기록만 하고 David가 대시보드에서 추가. 같은 두 변수가 `bizhigher` 루틴 환경에도 있어야 배포가 된다 |
 | `ADMIN_PASSWORD` | 관리자 페이지 필수 | `/admin/`이 503으로 잠긴다 |

@@ -2,14 +2,18 @@
  * David에게 보내는 알림 이메일 — Resend API 사용
  * 환경변수:
  *   RESEND_API_KEY  (필수 — 없으면 알림 없이 조용히 넘어감, 폼은 정상 동작)
- *   NOTIFY_EMAIL    (선택 — 기본 maxinchoi@gmail.com)
+ *   NOTIFY_EMAIL    (선택 — 기본 hello@bizhigher.com. Cloudflare Email Routing 이 david@bestloanusa.com 으로 전달한다(CLAUDE.md §15, 2026-10-22).
+ *                    2026-11-03 전까지 기본값이 옛 주소 maxinchoi@gmail.com 이었고 Cloudflare 에 이 변수가 없어 알림·묶음 BCC 가 David 에게 오지 않았다)
  *   NOTIFY_FROM     (선택 — 기본 "BizHigher <onboarding@resend.dev>",
  *                    bizhigher.com 도메인 인증 후 "BizHigher 알림 <alerts@bizhigher.com>" 권장)
  */
 
+/** David 가 받는 주소 — 알림 메일과 고객 묶음 메일 BCC 공용 */
+export function notifyTo(env) { return (env && env.NOTIFY_EMAIL) || 'hello@bizhigher.com'; }
+
 export async function notify(env, subject, rows, opts = {}) {
   if (!env.RESEND_API_KEY) return;
-  const to = env.NOTIFY_EMAIL || 'maxinchoi@gmail.com';
+  const to = notifyTo(env);
   const from = env.NOTIFY_FROM || 'BizHigher <onboarding@resend.dev>';
 
   const table = rows
