@@ -101,8 +101,8 @@ export const PLAYBOOK = {
       S('web-1', '웹사이트 질문지(도메인·참고 사이트·페이지·기능) + 사진·로고', 'onboarding', 'customer', 0, { block: '월 분납 플랜은 2회차 납부 후 착수(§4)' }),
       S('web-2', '사이트 생성 — 질문지·사진·Places 공개 정보로 스펙 JSON 작성(sites.js spec) → 빌드·배포(sites.js build/deploy) → 임시 주소 {slug}.sites.bizhigher.com 검증 + 스타일 시안 3종(sites.js styles → 고객이 고른다)', 'setup', 'ai', 15, { verify: true, block: '맞춤형(예약·주문)은 외부 툴 연동이 수동' }),
       S('web-2b', '고객이 사이트 스타일을 고른다 — 고객 페이지에서 시안 3종(지금 스타일 + 어울리는 2종, sites.js styles) 중 [이 디자인으로 진행]. 고르면 스펙 theme.style 이 바로 바뀌고 다음 루틴 실행에 재배포 (무응답 7일 → 지금 스타일)', 'setup', 'customer', 0),
-      S('web-3', '도메인 연결 — 고객이 CNAME → bizhigher-sites.pages.dev 로 바꾸면 관리자 "웹사이트 → 연결"(색인 허용). 안내문은 web-2 결과물에', 'setup', 'customer', 15, { block: '고객이 DNS를 못 만지면 David가 원격 안내 30분' }),
       S('web-4', '자동 QA 리포트(qa.js: 360/768/1280 스크린샷·속도·링크·폼) → David 검토 → 수정 1회 반영 → 인도', 'setup', 'ai', 10, { verify: true, block: '리포트의 "수정할 것"이 비면 인도. 수정은 cp-2 경로' }),
+      S('web-3', '도메인 연결 — 고객이 CNAME → bizhigher-sites.pages.dev 로 바꾸면 관리자 "웹사이트 → 연결"(색인 허용). 안내문은 web-2 결과물에', 'setup', 'customer', 15, { block: '고객이 DNS를 못 만지면 David가 원격 안내 30분' }),
     ],
   },
   'gbp-posting': {
