@@ -20,7 +20,8 @@ export async function onRequestPost(context) {
   const phone = (data.phone || '').trim().slice(0, 50);
   const email = (data.email || '').trim().slice(0, 200);
   const links = (data.links || '').trim().slice(0, 1000);
-  const notes = (data.notes || '').trim().slice(0, 3000);
+  // 자유 메모 + 웹사이트·구글 프로필·첨부(최대 30개 URL)·측정 블록이 한 칸에 모인다 — 3000자에서 자르면 맨 뒤 첨부 링크가 잘렸다(2026-11-03)
+  const notes = (data.notes || '').trim().slice(0, 12000);
 
   if (!business || !email || !email.includes('@')) {
     return json({ ok: false, error: 'invalid' }, 400);
@@ -41,7 +42,7 @@ export async function onRequestPost(context) {
     await ensureSchema(env.DB);
     const catalog = await loadCatalog(env, request.url);
     const item = catalogLookup(catalog, { slug: service });
-    await attachIntake(env.DB, { id: intakeId, service, service_name: item && item.name, business, email }, { deliveryDays: item && item.deliveryDays });
+    await attachIntake(env.DB, { id: intakeId, service, service_name: item && item.name, business, email, notes }, { deliveryDays: item && item.deliveryDays });
     context.waitUntil(wakeRoutine(env.DB, env, `질문지 제출 — ${business || ''}`)); // ob-3(프로필)부터 AI 차례 → 루틴 깨움
   } catch {
     // 관리자 페이지 연결 실패는 조용히 무시
