@@ -86,7 +86,10 @@ function body(d) {
   const text = k === 'html' ? raw : customerText(raw);
   const url = d.url || (d.task && d.task.result_url) || '';
   const all = (text + '\n' + url).match(/https?:\/\/[^\s<>"')\]]+/g) || [];
-  const uniq = [...new Set(all.map((u) => u.replace(/[.,;:!?]+$/, '')))];
+  const uniq0 = [...new Set(all.map((u) => u.replace(/[.,;:!?]+$/, '')))];
+  // 선택 카드(시안·영상)에 이미 나오는 이미지·영상은 본문에서 또 보여주지 않는다(같은 영상이 6개씩 보이던 문제, 2026-11-03)
+  const inOptions = new Set(parseOptions(d.options).flatMap((o) => [o.image, o.video]).filter(Boolean));
+  const uniq = uniq0.filter((u) => !inOptions.has(u));
   const isMedia = (u) => /\.(jpe?g|png|webp|gif|mp4|webm|pdf)(\?|$)/i.test(u);
   const imgs = uniq.filter((u) => /\.(jpe?g|png|webp|gif)(\?|$)/i.test(u));
   const vids = uniq.filter((u) => /\.(mp4|webm)(\?|$)/i.test(u));
@@ -99,7 +102,7 @@ function body(d) {
   for (const u of pdfs.slice(0, 3)) html += `<object data="${esc(u)}" type="application/pdf" style="width:100%;height:480px;border:1px solid #e5e7eb;border-radius:12px;margin:8px 0"><a class="btn ghost" href="${esc(u)}" target="_blank" rel="noopener">PDF 열기 →</a></object>`;
   for (const u of sites.slice(0, 1)) html += `<iframe src="${esc(u)}" title="사이트 미리보기" loading="lazy" style="width:100%;height:560px;border:1px solid #e5e7eb;border-radius:12px;background:#fff;margin:8px 0"></iframe><p><a class="btn" href="${esc(u)}" target="_blank" rel="noopener">사이트 열기 →</a></p>`;
   if (text && k !== 'html') {
-    const rest = text.split('\n').filter((l) => !(imgs.concat(vids).some((u) => l.includes(u)) && l.trim().length < 200)).join('\n').trim(); // 이미지 주소만 있는 줄은 숨김
+    const rest = text.split('\n').filter((l) => !(imgs.concat(vids, [...inOptions]).some((u) => l.includes(u)) && l.trim().length < 200)).join('\n').trim(); // 이미지 주소만 있는 줄은 숨김
     if (rest) html += `<div class="md">${mdHtml(rest.slice(0, 12000))}</div>`;
   }
   if (url && !imgs.includes(url) && !vids.includes(url) && !pdfs.includes(url) && !sites.includes(url)) html += `<p><a class="btn ghost" href="${esc(url)}" target="_blank" rel="noopener">파일·링크 열기 →</a></p>`;
