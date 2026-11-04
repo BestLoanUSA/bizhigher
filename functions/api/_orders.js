@@ -197,7 +197,7 @@ import { tasksFor } from './_playbook.js';
 // 기존 테이블에 나중에 추가된 컬럼 — CREATE TABLE IF NOT EXISTS 는 컬럼을 못 더하므로 PRAGMA 로 확인 후 ALTER
 const EXTRA_COLUMNS = {
   jobs: [['portal_token', 'TEXT']],        // 고객 결과물 페이지 /c/{token} (없으면 처음 열 때 생성)
-  deliverables: [['drafted_at', 'TEXT'], ['task_id', 'INTEGER'], ['kind', 'TEXT'], ['summary', 'TEXT'], ['needs_approval', 'INTEGER'], ['approved_at', 'TEXT'], ['revise_note', 'TEXT'], ['packet_id', 'TEXT'], ['options', 'TEXT'], ['choice', 'TEXT'], ['choice_at', 'TEXT']], // 고객 페이지·묶음 발송·승인 · options/choice = 고객이 고르는 승인(2026-10-27)
+  deliverables: [['customer_reply', 'TEXT'], ['reply_at', 'TEXT'], ['drafted_at', 'TEXT'], ['task_id', 'INTEGER'], ['kind', 'TEXT'], ['summary', 'TEXT'], ['needs_approval', 'INTEGER'], ['approved_at', 'TEXT'], ['revise_note', 'TEXT'], ['packet_id', 'TEXT'], ['options', 'TEXT'], ['choice', 'TEXT'], ['choice_at', 'TEXT']], // 고객 페이지·묶음 발송·승인 · options/choice = 고객이 고르는 승인(2026-10-27)
   assets: [['r2_key', 'TEXT']],           // R2 에 넣었으면 객체 키(a/{id}.jpg). 없으면 data(BLOB) 가 D1 에 있다
   job_tasks: [
     ['result_kind', 'TEXT'],      // text | html | link

@@ -35,22 +35,13 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 
 **PR 프리뷰**: 브랜치를 push할 때마다 Cloudflare Pages가 프리뷰를 배포한다. 주소는 `https://<브랜치이름>.bizhigher-site.pages.dev` (프로젝트 이름이 옛 이름이라 `bizhigher.pages.dev`로는 열리지 않는다). PR의 "Cloudflare Pages" 체크 Details에서도 찾을 수 있다. 프리뷰 환경에는 Production의 D1·환경변수가 묶여 있지 않으므로 진단 폼·`/report/*`는 프리뷰에서 동작하지 않을 수 있다 — 디자인·문구 확인용
 
-### ⚠️ 배포 설정이 두 벌 들어 있다 — 하나는 죽은 코드다
+### 배포 방식 — Pages Functions 하나 (2026-11-04 정리)
 
-| 파일 | 방식 | 상태 |
-|---|---|---|
-| `functions/` | Cloudflare **Pages Functions** | **살아 있음** |
-| `wrangler.toml` + `worker/index.js` | Cloudflare **Worker** | **동작하지 않음** |
+예전에는 `wrangler.toml` + `worker/index.js`(Cloudflare **Worker** 방식) 설정이 함께 들어 있었지만 실제로는 동작하지 않는 죽은 코드였다(2026-09-18 라이브 확인: `functions/report/[id].js` 가 실행됨 = Pages Functions). **2026-11-04 두 파일을 지우고 README 를 Pages 기준으로 고쳤다.**
 
-2026-09-18 라이브 확인: 존재하지 않는 `/report/아무거나`가 `/free-audit/`로 302 리다이렉트됐다. 이는 `functions/report/[id].js`의 `onRequestGet`이 실행된다는 뜻이고, Worker 배포에서는 `functions/`가 라우팅되지 않는다.
-
-따라서:
-
-- **`worker/index.js`를 고쳐도 사이트는 바뀌지 않는다.** 그 안의 `/api/audit`은 리드만 저장하는 축소판이고, 실제로 도는 것은 Places 채점·Claude 해석·이메일 알림까지 하는 `functions/api/audit.js`다
-- `wrangler.toml`의 `[assets]`·`not_found_handling`·D1 바인딩 선언은 읽히지 않는다. 실제 바인딩은 Cloudflare 대시보드에 있다
-- **`npx wrangler deploy`를 실행하지 말 것.** 별도 Worker가 하나 더 생겨 도메인 라우팅이 충돌한다. README의 해당 안내는 낡았다
-
-> 정리 과제: 대시보드에서 프로젝트 종류를 확인한 뒤 `wrangler.toml`과 `worker/index.js`를 삭제하고 README를 고친다.
+- 실제로 도는 API 는 전부 `functions/`(Pages Functions)다. 바인딩(D1 `DB`·R2 `R2_ASSETS`)·환경변수는 Cloudflare 대시보드의 Pages 프로젝트 설정에만 있다
+- **`npx wrangler deploy`를 실행하지 말 것.** 별도 Worker가 하나 더 생겨 도메인 라우팅이 충돌한다
+- 로컬 Functions 테스트는 `wrangler pages dev`(§14). 루트에 `wrangler.toml` 을 다시 만들지 않는다
 
 ### 저장소에 쓰는 방법 — 2026-09-18 갱신
 
@@ -305,9 +296,9 @@ i점 좌표(`oy = top + height × 0.215`, `ox = left + width × 0.56` 등)는 **
 
 Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌리기 어려운 실수다 — §11의 승인 정책을 따른다.
 
-### 10-6. `worker/index.js`와 `wrangler.toml`
+### 10-6. 배포 설정
 
-§2 참고. 죽은 코드이므로 여기를 고쳐서 문제를 해결하려 하지 말 것.
+§2 참고. Worker 방식 설정 파일은 2026-11-04 지웠다 — 다시 만들지 말 것.
 
 ---
 
@@ -386,7 +377,7 @@ Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌�
 - 결과물은 이 페이지가 만들지 않는다 — fulfillment 스킬이 만들고 Drive 링크를 여기 붙인다. 고객 자동 발송 금지는 그대로
 - **서비스 파이프라인(2026-10-15)**: 작업이 생기면 `_playbook.js`의 단계가 `job_tasks`로 펼쳐진다. 단계마다 🟢자동 / 🟡AI+검수 / 🔵David 수동 / 🟠고객 대기 / 🔴막힘과 David 분, 검증 필수 표시. 단계 상태는 대기→진행→검증 대기→완료(막힘·해당 없음). 플레이북 탭은 작업 없이 상품별 자동화 지도를 보여준다. 관제탑 하단 데모 버튼 2개(2026-10-21): "데모: New Optix Premium 새 주문 1곳"은 결제 직후 상태(단계 전부 비움, **질문지 없음**)라 실제 고객처럼 David가 `/thanks/` 질문지(데모 이메일 미리 채워진 링크가 열림)를 써서 붙여야 ob-3부터 루틴이 돈다 · "데모 고객 4곳 (진행 중 상태)"는 화면 확인용으로 단계가 미리 채워져 있다. 둘 다 실제 결제 없이 같은 코드 경로(업체명에 "(데모)", "데모 삭제"로 제거). API는 `POST /admin/api/demo {only, fresh}`
 - **자동화 현황과 병목은 `docs/automation-map-ko.md`.** Premium 12개월 1곳 = 83단계, 자동+AI 46%, David 셋업 21h + 월 14h(목표선 §15의 7~14배). 상위 병목: 광고 운영 수동(5.4h/월) · 로컬 등록 120곳(10h) · GBP API 거절 · 고객 대기 14단계. 플레이북 숫자를 바꾸면 문서 §7 표를 다시 생성한다
-- **데모 재실행에서 찾은 병목 정리(2026-11-03)**: ① `aiReady` 의 공통 온보딩 게이트가 ob-3·ob-5 자신까지 막아 질문지 뒤 루틴이 시작되지 않았다 → 공통 단계는 앞 공통 단계가 끝나면 AI 차례 ② 질문지가 이미 답한 고객 단계는 `closeIntakeSteps`(`_orders.js`)가 닫는다 — ob-4(첨부 1개 이상)·web-1(웹사이트 질문지 블록)·an-1(우리가 만드는 사이트)·seo-1(구글 계정 답이 "이미 있어요"가 아니면 skipped) ③ 권한 단계(gpo-1·an-1·ads-1·post-1)는 그 권한이 실제로 필요한 단계 바로 앞으로 옮겼다 — 갭 분석·콘텐츠 팩·측정 설계·광고 설계·캘린더는 권한 없이 먼저 돈다 ④ "AI가 만들고 고객이 승인"인데 고객 단계로만 있던 seo-3·sv-1 은 AI 단계 + 승인 단계(seo-3b·sv-1b)로 나눴다, llp-1 도시 목록은 AI 제안 + David 확인 ⑤ 질문지 notes 한도 3000 → 12000자(첨부 링크가 맨 뒤라 잘렸다). 킥오프 뒤 바로 도는 AI 단계 6 → 13개. ⑥ 깨움 디바운스: 3분 창이 "세션이 아직 도는가"를 몰라 1분 만에 끝난 루틴 직후의 승인을 버리고 다시 깨우지 않았다 → `runner.js wake` 가 `end:true`(루틴 끝 신호, `settings.runner.lastEndAt`)를 보내고, 디바운스는 마지막 깨움 뒤 끝 신호가 없을 때만. 남은 pending 은 관리자 API 요청마다 `retryPendingWake` 가 이어서 깨운다. ⑦ 고객 페이지가 결과물 글을 `<pre>` 원문으로 보여 마크다운 기호·내부 메모("[고객 안내 — David가 검토한 뒤…]"·"참고한 스킬")·내부 단계 제목이 고객에게 그대로 보였다 → `c/[token].js` `customerText`(내부 줄 제거)·`mdHtml`(제목·굵게·목록·표만, 이스케이프 후 변환), 제목은 `_playbook.js customerTitle`(고객 페이지·묶음 메일 공용). ⑧ 질문지에 광고 예산이 없어 ads-2 가 일 $20 을 가정했다 → `/thanks/` 에 "📣 광고 예산·목표" 블록(`#ads-extra`, 광고 셋업·운영·소재·Premium 주문만 — 월 예산 범위·목표·혜택과 종료일 → notes "── 광고 ──") ⑨ `places.js competitors` 가 대형 소매(한인 마트 등)를 경쟁사로 잡았다 → primaryType 이 마트·쇼핑몰·편의점 계열이면 제외(우리 가게가 그 업종이면 유지, `--keep-all`). ⑩ 루틴 두 세션이 같은 단계를 동시에 만들었다(긴 실행 중 3분이 지나 '단계 완료' 깨움이 새 세션을 띄움 → qr-2·web-2 중복) → 큐가 넘긴 단계에 `job_tasks.claimed_at` 을 찍고 90분 동안 다른 세션 큐·`hasAiWork` 에서 뺀다(`isClaimed`). 수정 요청·반려·다시 열기는 claim 을 지운다. 그래서 동시 실행은 서로 다른 단계를 나눠 하는 병렬 처리가 된다. ⑪ 고객이 웹사이트 스타일을 골라도 깨움 판정이 AI 단계만 세서 재배포가 다음 날 07:23까지 밀렸다 → `hasAiWork` 가 `settings.admin.sitesDirty`(재배포 대기)도 할 일로 센다 ⑫ web-4(QA)가 web-3(고객 도메인 연결) 뒤라 고객이 DNS 를 바꾸기 전엔 QA·인도가 멈췄다 → QA 를 임시 주소로 먼저(web-4 → web-3). ⑬ 숏폼 키네틱 자막에서 강조어 뒤에 문장부호가 붙으면("*편하게*,") 강조가 빠지고 별표가 화면에 찍혔다 → `Kinetic.tsx` 가 강조 뒤 문장부호를 허용. ⑭ 자동 QA(llp-4·web-4)가 DELIVER_KEYS 라 Lighthouse 점수·템플릿 결함 목록이 고객에게 갔다 → 전달 대상에서 뺐다(사이트는 고객 페이지 '내 웹사이트' 카드). 고객 페이지가 선택 카드의 이미지·영상을 본문에서 또 보여줘 같은 영상이 6개씩 보였다 → 본문에서 선택지 미디어 제외. ⑮ **David 단계 줄이기(2026-11-03)** — lls-2 인증 이메일은 catch-all 로 자동(5분→0) · lls-6 로컬 등록을 10-15 결정 ④대로 핵심 30곳 보조 입력 + 나머지 시티에이션 빌더 발주(Premium 600분→165분, 추정치·실측 필요) · ac-4 David 큐레이션 → precheck 자동 선별, David 는 ac-5 에서 세트 3개 한 번 승인 · sv-3 영상 확인은 sv-2 검증 큐와 중복이라 자동 완료 · am-1 캠페인 구축은 광고 셋업(ads-3·ads-4)과 같은 주문이면 seedTasks 가 skipped · mr-5 는 '고객에게 묶음 보내기'. Premium 12개월 David 셋업 1,072→572분 · 주간·일간 반복 단계(rr-5·rr-6·am-2·am-3 등)는 한 줄 행이라 영영 완료되지 않아 월간 리뷰 요약 rr-7·광고 리포트 am-5 를 영원히 막았다 → `aiReady` 가 반복 단계(phase weekly·daily)를 막는 단계로 보지 않는다 · seo-7(AI 검색 테스트)·am-4(티어 상한)를 각각 seo-8·am-5 뒤로 진행 중인 작업에 새 순서를 적용하려면 관리자 API `POST jobs/{id}/tasks/seed {force:true}`(todo 단계만 다시 펼침)
+- **데모 재실행에서 찾은 병목 정리(2026-11-03)**: ① `aiReady` 의 공통 온보딩 게이트가 ob-3·ob-5 자신까지 막아 질문지 뒤 루틴이 시작되지 않았다 → 공통 단계는 앞 공통 단계가 끝나면 AI 차례 ② 질문지가 이미 답한 고객 단계는 `closeIntakeSteps`(`_orders.js`)가 닫는다 — ob-4(첨부 1개 이상)·web-1(웹사이트 질문지 블록)·an-1(우리가 만드는 사이트)·seo-1(구글 계정 답이 "이미 있어요"가 아니면 skipped) ③ 권한 단계(gpo-1·an-1·ads-1·post-1)는 그 권한이 실제로 필요한 단계 바로 앞으로 옮겼다 — 갭 분석·콘텐츠 팩·측정 설계·광고 설계·캘린더는 권한 없이 먼저 돈다 ④ "AI가 만들고 고객이 승인"인데 고객 단계로만 있던 seo-3·sv-1 은 AI 단계 + 승인 단계(seo-3b·sv-1b)로 나눴다, llp-1 도시 목록은 AI 제안 + David 확인 ⑤ 질문지 notes 한도 3000 → 12000자(첨부 링크가 맨 뒤라 잘렸다). 킥오프 뒤 바로 도는 AI 단계 6 → 13개. ⑥ 깨움 디바운스: 3분 창이 "세션이 아직 도는가"를 몰라 1분 만에 끝난 루틴 직후의 승인을 버리고 다시 깨우지 않았다 → `runner.js wake` 가 `end:true`(루틴 끝 신호, `settings.runner.lastEndAt`)를 보내고, 디바운스는 마지막 깨움 뒤 끝 신호가 없을 때만. 남은 pending 은 관리자 API 요청마다 `retryPendingWake` 가 이어서 깨운다. ⑦ 고객 페이지가 결과물 글을 `<pre>` 원문으로 보여 마크다운 기호·내부 메모("[고객 안내 — David가 검토한 뒤…]"·"참고한 스킬")·내부 단계 제목이 고객에게 그대로 보였다 → `c/[token].js` `customerText`(내부 줄 제거)·`mdHtml`(제목·굵게·목록·표만, 이스케이프 후 변환), 제목은 `_playbook.js customerTitle`(고객 페이지·묶음 메일 공용). ⑧ 질문지에 광고 예산이 없어 ads-2 가 일 $20 을 가정했다 → `/thanks/` 에 "📣 광고 예산·목표" 블록(`#ads-extra`, 광고 셋업·운영·소재·Premium 주문만 — 월 예산 범위·목표·혜택과 종료일 → notes "── 광고 ──") ⑨ `places.js competitors` 가 대형 소매(한인 마트 등)를 경쟁사로 잡았다 → primaryType 이 마트·쇼핑몰·편의점 계열이면 제외(우리 가게가 그 업종이면 유지, `--keep-all`). ⑩ 루틴 두 세션이 같은 단계를 동시에 만들었다(긴 실행 중 3분이 지나 '단계 완료' 깨움이 새 세션을 띄움 → qr-2·web-2 중복) → 큐가 넘긴 단계에 `job_tasks.claimed_at` 을 찍고 90분 동안 다른 세션 큐·`hasAiWork` 에서 뺀다(`isClaimed`). 수정 요청·반려·다시 열기는 claim 을 지운다. 그래서 동시 실행은 서로 다른 단계를 나눠 하는 병렬 처리가 된다. ⑪ 고객이 웹사이트 스타일을 골라도 깨움 판정이 AI 단계만 세서 재배포가 다음 날 07:23까지 밀렸다 → `hasAiWork` 가 `settings.admin.sitesDirty`(재배포 대기)도 할 일로 센다 ⑫ web-4(QA)가 web-3(고객 도메인 연결) 뒤라 고객이 DNS 를 바꾸기 전엔 QA·인도가 멈췄다 → QA 를 임시 주소로 먼저(web-4 → web-3). ⑬ 숏폼 키네틱 자막에서 강조어 뒤에 문장부호가 붙으면("*편하게*,") 강조가 빠지고 별표가 화면에 찍혔다 → `Kinetic.tsx` 가 강조 뒤 문장부호를 허용. ⑭ 자동 QA(llp-4·web-4)가 DELIVER_KEYS 라 Lighthouse 점수·템플릿 결함 목록이 고객에게 갔다 → 전달 대상에서 뺐다(사이트는 고객 페이지 '내 웹사이트' 카드). 고객 페이지가 선택 카드의 이미지·영상을 본문에서 또 보여줘 같은 영상이 6개씩 보였다 → 본문에서 선택지 미디어 제외. ⑮ **David 단계 줄이기(2026-11-03)** — lls-2 인증 이메일은 catch-all 로 자동(5분→0) · lls-6 로컬 등록을 10-15 결정 ④대로 핵심 30곳 보조 입력 + 나머지 시티에이션 빌더 발주(Premium 600분→165분, 추정치·실측 필요) · ac-4 David 큐레이션 → precheck 자동 선별, David 는 ac-5 에서 세트 3개 한 번 승인 · sv-3 영상 확인은 sv-2 검증 큐와 중복이라 자동 완료 · am-1 캠페인 구축은 광고 셋업(ads-3·ads-4)과 같은 주문이면 seedTasks 가 skipped · mr-5 는 '고객에게 묶음 보내기'. Premium 12개월 David 셋업 1,072→572분 · 주간·일간 반복 단계(rr-5·rr-6·am-2·am-3 등)는 한 줄 행이라 영영 완료되지 않아 월간 리뷰 요약 rr-7·광고 리포트 am-5 를 영원히 막았다 → `aiReady` 가 반복 단계(phase weekly·daily)를 막는 단계로 보지 않는다 · seo-7(AI 검색 테스트)·am-4(티어 상한)를 각각 seo-8·am-5 뒤로 ⑯ **고객 답변 칸(2026-11-04)**: 승인 버튼 없는 결과물(킥오프 등)에 '답변·질문 남기기'(킥오프는 '확인 질문에 답하기', 기본 펼침) → `deliverables.customer_reply`·`reply_at` + ob-3 프로필 결과 맨 앞에 `[고객 답변 날짜 — 제목]` + 타임라인 + David 알림. 이전엔 킥오프 확인 질문에 메일 말고 답할 곳이 없었다 · 배경 영상 히어로의 강조어·눈썹 글자는 `accentOnDark`(8스타일 모두 WCAG 4.5:1 이상) 진행 중인 작업에 새 순서를 적용하려면 관리자 API `POST jobs/{id}/tasks/seed {force:true}`(todo 단계만 다시 펼침)
 - **AI 단계는 저절로 돌지 않는다(2026-10-21 확인).** 관리자 페이지는 추적기이고 실행기가 아니다. AI 차례(`who` auto·ai, status todo·doing)인 단계는 (a) 고객 여정의 "AI 실행 지시 복사" → claude.ai fulfillment 스킬에 붙여넣기, 또는 (b) 루틴(§19-16)이 실행해 `job_tasks`에 결과물을 붙여야 움직인다. 관제탑 "AI 차례인데 멈춤" 타일과 고객 보드 "AI n일 멈춤" 배지가 이걸 잡는다. 스킬에 넣을 연동 문구는 `docs/fulfillment-skill-addendum-ko.md`
 - 완료된 AI 단계는 "AI가 했음"에서 펼쳐 결과물을 보고 **수정 요청(다시 열림)** 또는 **직접 고치기**(result_text·url 편집)가 된다. 검증 불필요 단계도 `result_text`에 한 일을 남기는 것이 규칙
 - **"AI가 했음"은 완성물과 내부 작업을 나눠 보여준다**(2026-10-27 David 요청): 고객에게 전달하거나 올릴 **완성 결과물**(이미지·영상 / 글·본문 / 사이트·링크 / 리포트·전달 / **파일 대기(기획안)** — 루틴 규칙 (d)로 파일 대신 기획안만 올라온 것, David 가 만들 목록)이 위에 칩 필터와 함께, **내부 작업·계획**(프로필·분석·설계·설정)은 접힌 목록으로. 분류는 `_playbook.js`의 `OUTPUT_KIND`(단계 키 → 종류) + `outputKind()`(실제 결과물에 이미지·영상·사이트 주소가 있으면 그걸 우선). 새 단계를 플레이북에 넣으면 `OUTPUT_KIND`에도 종류를 적는다(없으면 DELIVER_KEYS 면 리포트, 아니면 내부)
@@ -434,7 +425,7 @@ cpacedesk·BestLoanUSA 와 같은 구조(`seo/README.md` 가 기준 문서). Dav
 - **로컬 크론(CronCreate 류)으로 정기 작업을 만들지 말 것** — 세션 종료 시 소멸한다. 스케줄 작업은 반드시 claude.ai 루틴으로
 - **스킬(fulfillment 등) 수정은 파일을 고쳐도 무효**다. `propose_skills` 제안 카드를 David가 저장해야 반영된다
 - 클라우드 세션의 egress: **bizhigher.com·api.cloudflare.com 모두 열려 있다**(2026-10-21 확인, 이전 "curl 차단" 메모는 낡았다). 관리자 API를 `BIZHIGHER_ADMIN_PASSWORD`로 직접 호출할 수 있다 — AI 실행 루틴이 이 경로를 쓴다
-- **Functions 로컬 테스트**는 `npx wrangler pages dev dist --d1 DB=<id> --binding ADMIN_PASSWORD=x --binding STRIPE_WEBHOOK_SECRET=x --persist-to <스크래치 경로>`(루트 `wrangler.toml`은 Worker용이라 `--config`로 못 넘긴다). 로컬 에뮬레이터는 브라우저 navigate 요청에 Functions 대신 404.html을 주는 버그가 있다 — 프로덕션은 Functions 우선이므로 curl이나 Playwright `route.fetch`로 `sec-fetch-mode`를 바꿔 확인한다. 생성되는 `.wrangler/`는 커밋하지 말 것
+- **Functions 로컬 테스트**는 `npx wrangler pages dev dist --d1 DB=<id> --binding ADMIN_PASSWORD=x --binding STRIPE_WEBHOOK_SECRET=x --persist-to <스크래치 경로>`(설정 파일 없이 플래그로 바인딩을 넘긴다). 로컬 에뮬레이터는 브라우저 navigate 요청에 Functions 대신 404.html을 주는 버그가 있다 — 프로덕션은 Functions 우선이므로 curl이나 Playwright `route.fetch`로 `sec-fetch-mode`를 바꿔 확인한다. 생성되는 `.wrangler/`는 커밋하지 말 것
 - **Google Places는 진단용 실시간 조회에만 쓴다.** 조회 결과를 저장해 재게시하지 않는다. 약관(ToS §3.2.3, Places 약관 §14.3): 저장은 place_id만 무기한, 좌표는 30일까지. 그래서 리포트는 30일 뒤 정리되고 noindex를 유지한다(2026-10-23). 리포트 열람은 D1만 읽어 Places·Claude 비용이 들지 않는다 — [[marketingkorean]]과의 경계에서 특히 중요(§16)
 
 ---
@@ -536,7 +527,7 @@ cpacedesk·BestLoanUSA 와 같은 구조(`seo/README.md` 가 기준 문서). Dav
 
 ## 19. 미결
 
-1. **배포 설정 정리** — 대시보드 확인 후 `wrangler.toml`·`worker/index.js` 삭제, README 수정 (§2)
+1. ~~배포 설정 정리~~ → 2026-11-04 `wrangler.toml`·`worker/index.js` 삭제, README Pages 기준으로 수정 (§2)
 2. **블로그 루틴 프롬프트의 캘린더 경로 수정** (§9) — 2026-11-02 발행 루틴 프롬프트에 "발행 전 검사" 단락은 넣었다(경로 문구는 그대로)
 3. **BizHigher 자체 GBP 등록** — DBA 취득 대기. 취득 후 주소 숨김 SAB 등록 + 영상 인증 콘텐츠 팩 제작
 4. **파운딩 고객 10곳 영업 실행** (FOUNDING20) — 미착수
@@ -558,6 +549,6 @@ cpacedesk·BestLoanUSA 와 같은 구조(`seo/README.md` 가 기준 문서). Dav
 ## 20. 다음 작업 순서
 
 1. 이 파일을 저장소 루트에 `CLAUDE.md`로 추가
-2. Cloudflare 대시보드에서 프로젝트 종류 확인 → 죽은 배포 설정 정리 (§2)
+2. ~~죽은 배포 설정 정리~~ (2026-11-04 완료)
 3. 블로그 루틴 프롬프트의 캘린더 경로 수정 (§9)
 4. §15의 로컬 스타터 자동화를 승인할지 결정 — 승인되면 "제안 단계" 표기를 걷어내고 §15를 확정 섹션으로 옮긴다

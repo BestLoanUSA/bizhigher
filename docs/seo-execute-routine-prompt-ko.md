@@ -29,7 +29,7 @@ claude.ai/code 루틴 "BizHigher SEO 실행" `trig_01H648RbWtMsV5YKTeuPTtNA` (20
 
 ## path 별로 하는 일
 
-- `structure` — 사이트 구조. 고칠 수 있는 파일: `build.js`(템플릿·메타·제목 규칙·내부 링크 블록·스키마), `content/services|tools|packages|pages/*.md`(가이드·FAQ), `seo/keyword-map.yaml`, `src/style.css`(표시에 꼭 필요할 때만), `data/tools.json`·`data/reports/*.json` 의 설명 문구. **고치지 않는 것**: `data/services.json` 의 가격·Stripe 링크(§10-5·§11), `worker/`·`wrangler.toml`(§10-6), `functions/`(SEO 항목이 아니다), 히어로 캘리브레이션 값(§10-4), CSS 버전 문자열(§10-3), 사이트맵 lastmod 정책(§10-2), 콘텐츠 가시성 장치·3초 폴백(§10-1), 기존 URL(바꿔야 하면 `REDIRECTS` 에 301 을 넣고 항목 notes 에 David 확인 요청). 페이지 문구는 §1 카피 원칙(베네핏·180일)대로.
+- `structure` — 사이트 구조. 고칠 수 있는 파일: `build.js`(템플릿·메타·제목 규칙·내부 링크 블록·스키마), `content/services|tools|packages|pages/*.md`(가이드·FAQ), `seo/keyword-map.yaml`, `src/style.css`(표시에 꼭 필요할 때만), `data/tools.json`·`data/reports/*.json` 의 설명 문구. **고치지 않는 것**: `data/services.json` 의 가격·Stripe 링크(§10-5·§11), `functions/`(SEO 항목이 아니다), 히어로 캘리브레이션 값(§10-4), CSS 버전 문자열(§10-3), 사이트맵 lastmod 정책(§10-2), 콘텐츠 가시성 장치·3초 폴백(§10-1), 기존 URL(바꿔야 하면 `REDIRECTS` 에 301 을 넣고 항목 notes 에 David 확인 요청). 페이지 문구는 §1 카피 원칙(베네핏·180일)대로.
 - `upgrade-queue` — `content/blog-upgrade-queue.md` 의 ⬜ 표 **맨 위**에 해당 slug 행을 넣고 메모 칸에 무엇을 보강할지 구체적으로(FAQ 질문 목록, 추가할 표, 링크할 slug, 바꿀 seo_title). 글 본문은 쓰지 않는다 — 화목토 업그레이드 루틴이 쓴다.
 - `calendar` — `content/blog-calendar.md` 발행 대기열 표에 주제 행을 넣는다(제목·slug·category·related·한 줄 각도·노릴 검색어). 글은 월수금 발행 루틴이 쓴다. keyword-map 에 그 검색어의 주인이 없는지 먼저 확인하고, 묶음을 keyword-map 에 `planned` 로 추가한다.
 - 항목이 생각보다 크거나(파일 5개 초과, 템플릿 구조 변경) 사실을 확인할 수 없으면 억지로 하지 않는다 — notes 에 막힌 이유를 적고 `status: blocked` 로 바꾸는 작은 PR 만 올리거나, 아무것도 push 하지 않고 보고한다.

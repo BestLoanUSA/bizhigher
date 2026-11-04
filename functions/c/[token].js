@@ -7,6 +7,7 @@
 import { ensureSchema, addEvent, approveDeliverable, parseOptions } from '../api/_orders.js';
 import { wakeRoutine } from '../api/_runner.js';
 import { customerTitle } from '../api/_playbook.js';
+import { notify } from '../api/_notify.js';
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const EMBED_RE = /^https:\/\/([a-z0-9-]+\.)*(bizhigher-sites\.pages\.dev|sites\.bizhigher\.com|bizhigher\.com)(\/|$)/i;
@@ -135,7 +136,10 @@ function page(job, ds, { preview, msg, site, siteTask, env }) {
         ${options.length ? choiceCards : `<form method="post" class="row"><input type="hidden" name="id" value="${d.id}"><input type="hidden" name="action" value="approve"><button class="btn" type="submit">✓ 이대로 진행해 주세요</button></form>`}
         <details${d.revise_note ? ' open' : ''}><summary>수정 요청하기</summary>${d.revise_note ? `<div class="rev">✎ 접수된 요청: ${esc(d.revise_note)} — 반영 후 다시 올려드립니다</div>` : ''}<form method="post"><input type="hidden" name="id" value="${d.id}"><input type="hidden" name="action" value="revise"><textarea name="note" required placeholder="무엇을 어떻게 고칠지 적어 주세요 (예: 2주차 게시물 가격 문구 삭제)"></textarea><button class="btn ghost" type="submit">수정 요청 보내기</button></form></details>
       </div>` : d.approved_at ? `<div class="ok">✓ ${esc(d.approved_at.slice(0, 10))} 승인됨${chosen ? ` · 선택: ${esc(chosen.key)}. ${esc(chosen.label)}` : ''}</div>${chosen && chosen.image ? `<div class="grid"><a href="${esc(chosen.image)}" target="_blank" rel="noopener"><img src="${esc(chosen.image)}" alt="" loading="lazy"></a></div>` : ''}` : '';
-    return `<section class="card${d.sent_at ? '' : ' draft'}"><div class="meta">${d.sent_at ? esc(d.sent_at.slice(0, 10)) : '전달 전 (미리보기)'}</div><h2>${esc(customerTitle(d.task && d.task.key, d.title))}</h2>${d.summary ? `<p class="sum">${esc(d.summary)}</p>` : ''}${body(d)}${approval}</section>`;
+    // 승인 버튼이 없는 결과물(킥오프 안내 등)에도 답할 길을 둔다 — 킥오프의 '확인 부탁드려요' 질문에 메일 말고는 답할 곳이 없었다(2026-11-04)
+    const isKick = d.task && d.task.key === 'ob-5';
+    const reply = !d.needs_approval ? `<details class="reply"${isKick && !d.customer_reply ? ' open' : ''}><summary>${isKick ? '확인 질문에 답하기' : '답변·질문 남기기'}</summary>${d.customer_reply ? `<div class="ok">💬 보내 주신 답변: ${esc(d.customer_reply).replace(/\n/g, '<br>')}</div>` : ''}<form method="post"><input type="hidden" name="id" value="${d.id}"><input type="hidden" name="action" value="reply"><textarea name="note" required placeholder="${isKick ? '예: 월·목은 4시에 닫습니다. 카테고리는 안경점으로 바꿔 주세요. 브랜드 이름은 올려도 됩니다.' : '궁금한 점이나 덧붙일 내용을 적어 주세요'}"></textarea><button class="btn ghost" type="submit">보내기</button></form></details>` : '';
+    return `<section class="card${d.sent_at ? '' : ' draft'}"><div class="meta">${d.sent_at ? esc(d.sent_at.slice(0, 10)) : '전달 전 (미리보기)'}</div><h2>${esc(customerTitle(d.task && d.task.key, d.title))}</h2>${d.summary ? `<p class="sum">${esc(d.summary)}</p>` : ''}${body(d)}${approval}${reply}</section>`;
   }).join('');
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>${biz} — BizHigher 결과물</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
@@ -144,7 +148,7 @@ function page(job, ds, { preview, msg, site, siteTask, env }) {
 header{background:var(--navy);color:#fff;padding:22px 18px}header .logo{font-weight:800;font-size:18px}header .logo span{color:#7FA6FF}header h1{font-size:22px;margin:10px 0 4px}header p{margin:0;opacity:.85;font-size:14px}
 main{max-width:720px;margin:0 auto;padding:16px}
 .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 16px;margin-bottom:14px}.card.draft{border-style:dashed;background:#FFFBEB}.card h2{font-size:17px;margin:2px 0 8px}.meta{font-size:12px;color:var(--muted)}.sum{font-size:15px;line-height:1.6;margin:0 0 10px}
-.md{background:#F8FAFC;border:1px solid var(--line);border-radius:12px;padding:4px 14px;margin:8px 0;font-size:15px;line-height:1.65}.md p,.md ul,.md ol{margin:10px 0}.md ul,.md ol{padding-left:20px}.md li{margin:4px 0}.mdh{font-size:16px;margin:16px 0 6px}.md .tw{overflow-x:auto;margin:10px 0}.md table{border-collapse:collapse;width:100%;font-size:14px;background:#fff}.md th,.md td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}.md th{background:#EEF2F7}.md a{word-break:break-all}.mdcards dl{display:grid;grid-template-columns:minmax(72px,30%) 1fr;gap:4px 10px;margin:10px 0;padding:10px 12px;background:#fff;border:1px solid var(--line);border-radius:10px;font-size:14px}.mdcards dt{color:#5B6472;font-weight:700}.mdcards dd{margin:0}
+.md{background:#F8FAFC;border:1px solid var(--line);border-radius:12px;padding:4px 14px;margin:8px 0;font-size:15px;line-height:1.65}.md p,.md ul,.md ol{margin:10px 0}.md ul,.md ol{padding-left:20px}.md li{margin:4px 0}.mdh{font-size:16px;margin:16px 0 6px}.md .tw{overflow-x:auto;margin:10px 0}.md table{border-collapse:collapse;width:100%;font-size:14px;background:#fff}.md th,.md td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}.md th{background:#EEF2F7}.md a{word-break:break-all}.reply{margin-top:12px}.reply summary{cursor:pointer;font-weight:700;color:var(--accent,#0A4DF5)}.reply textarea{width:100%;min-height:90px;margin:8px 0;padding:10px;border:1px solid var(--line);border-radius:10px;font:inherit}.mdcards dl{display:grid;grid-template-columns:minmax(72px,30%) 1fr;gap:4px 10px;margin:10px 0;padding:10px 12px;background:#fff;border:1px solid var(--line);border-radius:10px;font-size:14px}.mdcards dt{color:#5B6472;font-weight:700}.mdcards dd{margin:0}
 pre{white-space:pre-wrap;word-break:break-word;font:14px/1.6 inherit;background:#F8FAFC;border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0;max-height:520px;overflow:auto}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:8px 0}.grid img,.grid video{width:100%;border-radius:10px;border:1px solid var(--line);display:block;background:#000}
 .btn{display:inline-block;background:var(--blue);color:#fff;border:0;border-radius:999px;padding:12px 18px;font-weight:700;font-size:15px;cursor:pointer;text-decoration:none;font-family:inherit}.btn.ghost{background:#fff;color:var(--blue);border:1.5px solid var(--blue)}
@@ -168,7 +172,7 @@ export async function onRequestGet({ params, env, request }) {
   const u = new URL(request.url);
   const preview = u.searchParams.get('preview') === '1';
   const ds = preview ? data.ds : data.ds.filter((d) => d.sent_at);
-  const msg = u.searchParams.get('ok') === 'approve' ? '승인해 주셔서 감사합니다. 예정대로 진행하겠습니다.' : u.searchParams.get('ok') === 'choice' ? '골라 주셔서 감사합니다. 그 디자인으로 나머지를 만들어 올려드리겠습니다.' : u.searchParams.get('ok') === 'revise' ? '수정 요청을 받았습니다. 반영해서 다시 올려드리겠습니다.' : u.searchParams.get('ok') === 'site' ? '웹사이트 수정 요청을 받았습니다. 반영되면 같은 주소에서 보실 수 있습니다.' : '';
+  const msg = u.searchParams.get('ok') === 'approve' ? '승인해 주셔서 감사합니다. 예정대로 진행하겠습니다.' : u.searchParams.get('ok') === 'choice' ? '골라 주셔서 감사합니다. 그 디자인으로 나머지를 만들어 올려드리겠습니다.' : u.searchParams.get('ok') === 'revise' ? '수정 요청을 받았습니다. 반영해서 다시 올려드리겠습니다.' : u.searchParams.get('ok') === 'site' ? '웹사이트 수정 요청을 받았습니다. 반영되면 같은 주소에서 보실 수 있습니다.' : u.searchParams.get('ok') === 'reply' ? '답변 감사합니다. 확인해서 반영하겠습니다.' : '';
   return html(page(data.job, ds, { preview, msg, site: data.site, siteTask: data.siteTask, env }));
 }
 
@@ -188,6 +192,22 @@ export async function onRequestPost({ params, env, request, waitUntil }) {
     await addEvent(env.DB, data.job.id, 'customer', null, null, `✎ 웹사이트 수정 요청 (고객 페이지) — ${note.slice(0, 200)}${t ? '' : ' (web-2 단계 없음 — 수동 처리)'}`);
     wake('고객 웹사이트 수정 요청');
     return Response.redirect(new URL(`/c/${params.token}?ok=site`, request.url).toString(), 303);
+  }
+  if (action === 'reply') {
+    const r = data.ds.find((x) => x.id === id && x.sent_at);
+    if (!r) return html('bad request', 400);
+    if (!note) return html('내용을 적어 주세요', 400);
+    const day = new Date().toISOString().slice(0, 10);
+    const merged = (r.customer_reply ? r.customer_reply + '\n' : '') + `[${day}] ${note}`;
+    await env.DB.prepare(`UPDATE deliverables SET customer_reply = ?, reply_at = datetime('now') WHERE id = ?`).bind(merged.slice(0, 8000), r.id).run();
+    // 고객 프로필(ob-3) 맨 앞에 붙인다 — 뒤 AI 단계가 모두 done_results 로 프로필을 읽으므로 답이 다음 결과물에 바로 반영된다(뒤에 붙이면 4000자 자르기에 잘린다)
+    const tag = `[고객 답변 ${day} — ${customerTitle(r.task && r.task.key, r.title)}] ${note}`;
+    await env.DB.prepare(`UPDATE job_tasks SET result_text = ? || char(10) || char(10) || COALESCE(result_text, '') WHERE job_id = ? AND key = 'ob-3'`).bind(tag.slice(0, 2000), data.job.id).run().catch(() => {});
+    await addEvent(env.DB, data.job.id, 'customer', null, null, `💬 고객 답변 (고객 페이지) — ${r.title}: ${note.slice(0, 300)}`);
+    const biz = (data.job.business || '').replace(/\s*\(데모\)/, '');
+    const p = notify(env, `[BizHigher] ${biz} — 고객 답변 도착`, [['결과물', esc(customerTitle(r.task && r.task.key, r.title))], ['답변', esc(note).replace(/\n/g, '<br>')], ['반영', '고객 프로필(ob-3) 맨 앞에 붙였습니다 — 다음 AI 단계부터 읽습니다. 웹사이트·구글 프로필에 바로 고칠 내용이면 관리자 "AI에게 수정 요청"으로 넘겨 주세요']]).catch(() => {});
+    if (waitUntil) waitUntil(p);
+    return Response.redirect(new URL(`/c/${params.token}?ok=reply`, request.url).toString(), 303);
   }
   const d = data.ds.find((x) => x.id === id && x.sent_at);
   if (!d || !d.needs_approval) return html('bad request', 400);
