@@ -27,7 +27,7 @@ import { authenticate, login, logoutCookie } from './_auth.js';
 import { notify, notifyTo, sendEmail, esc as escHtml } from '../api/_notify.js';
 import { syncReviews } from '../api/_reviews.js';
 import { wakeRoutine, retryPendingWake, runnerStatus } from '../api/_runner.js';
-import { isClaimed, ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady, ensurePortalToken, sweepAutoApprovals, parseOptions, approveDeliverable, deepPatch, specDiff, patchSiteSpec, siteStats } from '../api/_orders.js';
+import { isClaimed, ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady, ensurePortalToken, sweepAutoApprovals, rolloverRecurring, parseOptions, approveDeliverable, deepPatch, specDiff, patchSiteSpec, siteStats } from '../api/_orders.js';
 import { PLAYBOOK, COMMON_ONBOARDING, WHO, PHASES, tasksFor, summarize, DELIVER_KEYS, APPROVAL_KEYS, outputKind, OUTPUT_LABEL, customerTitle } from '../api/_playbook.js';
 import { appHtml, loginHtml } from './_ui.js';
 
@@ -364,6 +364,7 @@ async function api(env, method, seg, body, url) {
   if (res === 'runner' && id === 'status' && method === 'GET') return { status: await runnerStatus(db, env) };
   if (res === 'runner' && id === 'queue' && method === 'GET') {
     await sweepAutoApprovals(db);
+    let rollover = null; try { rollover = await rolloverRecurring(db); } catch (e) { rollover = { error: String(e && e.message || e) }; } // 월간·주간 단계 새 회차
     let reviewSync = null; try { reviewSync = await syncReviews(db, env); } catch (e) { reviewSync = { error: String(e && e.message || e) }; }
     const limit = Math.min(50, Number(url.searchParams.get('limit')) || 20);
     const jobs = (await db.prepare(`SELECT j.*, o.service_name o_service_name, o.customer_name FROM jobs j LEFT JOIN orders o ON o.id = j.order_id WHERE j.status NOT IN ('done','hold') ORDER BY COALESCE(j.due_date,'9999') ASC, j.id ASC LIMIT 200`).all()).results || [];
@@ -386,7 +387,7 @@ async function api(env, method, seg, body, url) {
     for (let i = 0; i < claimIds.length; i += 80) { const ids = claimIds.slice(i, i + 80); await db.prepare(`UPDATE job_tasks SET claimed_at = datetime('now') WHERE id IN (${ids.map(() => '?').join(',')})`).bind(...ids).run(); }
     // 고객용 요약(summary)이 없는 결과물 — 루틴이 요약만 쓴다. 발송은 David가 관리자 "고객에게 묶음 보내기"로 (고객 페이지 /c/{token})
     const drafts = (await db.prepare(`SELECT d.*, j.business, j.customer_email, j.service_name, t.result_kind, substr(t.result_text, 1, 3000) AS result_text FROM deliverables d JOIN jobs j ON j.id = d.job_id LEFT JOIN job_tasks t ON t.id = d.task_id WHERE d.sent_at IS NULL AND (d.summary IS NULL OR d.summary = '') AND j.status NOT IN ('done','hold') AND (COALESCE(t.result_text,'') != '' OR COALESCE(d.url,'') != '') ORDER BY d.id ASC LIMIT 20`).all()).results || [];
-    return { items, pendingDrafts: drafts, reviewSync, rules: ['고객에게 자동 발송 금지 — Gmail 초안까지', 'verify 단계는 status review, 아니면 done', '경쟁사 갭 분석 선행(노출·SEO)', '리뷰 대가·게이팅·가짜 리뷰 금지', '의료·치과 환자 암시 금지', '실행 플랜은 180일', '웹 산출물 360px 실측'] };
+    return { items, pendingDrafts: drafts, reviewSync, rollover, rules: ['고객에게 자동 발송 금지 — Gmail 초안까지', 'verify 단계는 status review, 아니면 done', '경쟁사 갭 분석 선행(노출·SEO)', '리뷰 대가·게이팅·가짜 리뷰 금지', '의료·치과 환자 암시 금지', '실행 플랜은 180일', '웹 산출물 360px 실측'] };
   }
   if (res === 'assets' && method === 'POST') {
     const TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'video/mp4': 'mp4', 'video/webm': 'webm', 'application/pdf': 'pdf' };

@@ -159,15 +159,19 @@ export const PLAYBOOK = {
     ],
   },
   'seo-aio': {
+    // 2026-11-04 David 결정: bizhigher.com 자체 SEO 루프(키워드 지도·검색 데이터로 기존 페이지 개선·색인 확인·자동 점검)를 고객 SEO 에도 넣는다
     name: 'SEO/AIO 관리 (Premium 블로그 4편)', steps: [
-      S('seo-3', '월 주제 캘린더 초안(키워드 리서치) — 고객 페이지에 [이대로 진행]/[수정 요청]', 'monthly', 'ai', 10, { verify: true }),
+      S('seo-11', '키워드 지도 — 페이지마다 주인 키워드 1개(서비스·지역·블로그), 겹치면 합치거나 각도를 나눈다 → 사이트 스펙 seo.keywords 에 저장. 새 주제·지역 페이지는 지도에 없는 키워드만', 'setup', 'ai', 10, { verify: true }),
+      S('seo-3', '월 주제 캘린더 초안(키워드 리서치·키워드 지도에 없는 것만) — 고객 페이지에 [이대로 진행]/[수정 요청]', 'monthly', 'ai', 10, { verify: true }),
       S('seo-3b', '고객 캘린더 승인 (고객 페이지, 7일 무응답 승인 간주)', 'monthly', 'customer', 0),
       S('seo-4', '블로그 4편 집필 — 1,200~1,800자·메타·FAQ 스키마·대표 이미지 (규제 업종 표현 검사)', 'monthly', 'ai', 30, { verify: true }),
-      S('seo-5', '발행 — BizHigher 제작 사이트는 자동(블로그 루틴과 동일), 외부 사이트는 docx+html 전달', 'monthly', 'auto', 0, { block: '외부 사이트(WordPress 등)는 고객 또는 David가 올림' }),
+      S('seo-5', '발행 — 발행 전 자동 SEO 점검(sites.js seocheck) 막는 위반 0 확인 → BizHigher 제작 사이트는 자동, 외부 사이트는 docx+html 전달', 'monthly', 'auto', 0, { block: '외부 사이트(WordPress 등)는 고객 또는 David가 올림' }),
       S('seo-1', 'Search Console·GA4 접근 — 고객 계정이면 hello@bizhigher.com 과 서비스 계정 초대, 없으면 an-3·an-4 로 만든다 (docs/analytics-setup-ko.md)', 'onboarding', 'customer', 5),
       S('seo-2', '온보딩 분석 — 2페이지 키워드(11~20위·100임프레션+) 전수 발굴·교정 문구', 'setup', 'ai', 20, { verify: true, next: 'GSC API로 데이터 수집 자동' }),
-      S('seo-6', '기술 SEO·스키마 월간 점검 (크롤러)', 'monthly', 'auto', 5),
-      S('seo-8', '분기별 지역 랜딩페이지 1개 추가 — BizHigher 사이트면 sites.js areas 로 기존 areas 에 1곳 추가', 'monthly', 'ai', 10, { verify: true }),
+      S('seo-10', '색인 확인(주간) — 사이트맵 URL 을 Search Console URL 검사 API 로(analytics.js index) → 색인 안 된 페이지·사유. 2주 넘게 안 되면 seo-9 개선 대상', 'weekly', 'auto', 0),
+      S('seo-9', '검색 데이터로 기존 페이지 개선(월간) — GSC 지난 28일 노출 많고 순위 4~20·CTR 낮음·하락 페이지 3~5개의 제목·설명·H1·FAQ·본문 보강 → David 승인 → sites.js patch(외부 사이트는 수정안 전달)', 'monthly', 'ai', 10, { verify: true }),
+      S('seo-6', '자동 SEO 점검(월간·발행 때마다) — sites.js seocheck: 제목·설명 누락·중복·길이, H1 1개, canonical·noindex, 사이트맵, 스키마, 고아 페이지, 얇은 글, 키워드 지도 겹침', 'monthly', 'auto', 0),
+      S('seo-8', '분기별 지역 랜딩페이지 1개 추가 — BizHigher 사이트면 sites.js areas 로 기존 areas 에 1곳 추가(키워드 지도에 없는 도시만)', 'monthly', 'ai', 10, { verify: true }),
       S('seo-7', 'AI 검색 인용 테스트 — ChatGPT·Perplexity에 가게가 나오는지', 'monthly', 'david', 15, { next: '검색 API로 반자동' }),
     ],
   },
@@ -216,7 +220,7 @@ export const DELIVER_KEYS = new Set(['sv-1', 'ob-5', 'gpo-5', 'qr-2', 'qr-3', 'l
 export const OUTPUT_KIND = {
   'ac-3': 'media', 'post-4': 'media', 'sv-2': 'media', 'qr-2': 'media', 'qr-3': 'media',
   'gpo-3': 'text', 'llp-2': 'text', 'seo-4': 'text', 'post-2': 'text', 'rr-1': 'text', 'rr-live': 'text', 'ac-2': 'text', 'lls-3': 'text', 'ob-5': 'text', 'seo-3': 'text', 'sv-1': 'text',
-  'web-2': 'site', 'web-4': 'site', 'llp-3': 'site', 'llp-4': 'site', 'cp-2': 'site', 'seo-5': 'site', 'seo-8': 'site',
+  'web-2': 'site', 'web-4': 'site', 'seo-9': 'site', 'llp-3': 'site', 'llp-4': 'site', 'cp-2': 'site', 'seo-5': 'site', 'seo-8': 'site',
   'gpo-5': 'report', 'lls-7': 'report', 'ads-5': 'report', 'post-7': 'report', 'rr-7': 'report', 'ac-5': 'report', 'mr-4': 'report', 'am-5': 'report', 'llc-2': 'report',
 };
 export const OUTPUT_LABEL = { media: '이미지·영상', text: '글·본문', site: '사이트·링크', report: '리포트·전달', plan: '파일 대기(기획안)', internal: '내부 작업' };

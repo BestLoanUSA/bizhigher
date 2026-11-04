@@ -4,6 +4,7 @@
  *
  *   node automation/ai-runner/analytics.js ga4 --property 123456789 [--month 2026-10]      # 세션·사용자·페이지 보기·전환 이벤트(phone_click·directions_click·booking_click·contact_submit)·상위 페이지
  *   node automation/ai-runner/analytics.js gsc --site "sc-domain:example.com" [--month 2026-10]   # 클릭·노출·CTR·평균 순위 + 상위 검색어 10·상위 페이지 10 (sc-domain:… 또는 https://example.com/)
+ *   node automation/ai-runner/analytics.js index --job 28 [--limit 60]                    # 색인 확인(seo-10 주간) — 사이트맵 URL 을 URL 검사 API 로 → 색인 안 된 페이지·구글 상태 (도메인 연결 전이면 건너뜀)
  *   node automation/ai-runner/analytics.js both --job 28 [--month 2026-10]                 # 사이트 스펙 analytics.ga4_property · analytics.gsc_site 로 둘 다 → 리포트 c-5 용 JSON + 마크다운
  *
  * 인증: 환경변수 GOOGLE_SA_JSON = 서비스 계정 키 JSON 전체(또는 파일 경로). 고객이 그 서비스 계정 이메일을
@@ -56,6 +57,26 @@ async function gsc(site, m) {
   const map = (j, k) => (j.rows || []).map((r) => ({ [k]: r.keys[0], clicks: r.clicks, impressions: r.impressions, position: Math.round(r.position * 10) / 10 }));
   return { site, ...R, cur, prev, queries: map(qs, 'query'), pages: map(pg, 'page') };
 }
+/** 색인 확인(seo-10, 2026-11-04) — 사이트맵 URL 을 Search Console URL 검사 API 로 하나씩. 속성당 하루 2,000회·분당 600회 한도라 기본 60개.
+ *  서비스 계정이 그 Search Console 속성의 사용자여야 한다(analytics-setup). 결과: 색인됨/안 됨 + 구글이 준 상태(coverageState)·마지막 크롤 */
+async function indexCheck(site, sitemapUrl, limit) {
+  const { tok } = await token(['https://www.googleapis.com/auth/webmasters.readonly']);
+  const xml = await (await fetch(sitemapUrl)).text();
+  const urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1].trim()).slice(0, limit);
+  const rows = [];
+  for (const u of urls) {
+    const r = await fetch('https://searchconsole.googleapis.com/v1/urlInspection/index:inspect', { method: 'POST', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify({ inspectionUrl: u, siteUrl: site, languageCode: 'ko' }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) { rows.push({ url: u, indexed: null, state: 'API ' + r.status + ' ' + ((j.error && j.error.message) || '').slice(0, 80) }); if (r.status === 403 || r.status === 429) break; continue; }
+    const st = (j.inspectionResult && j.inspectionResult.indexStatusResult) || {};
+    rows.push({ url: u, indexed: st.verdict === 'PASS', verdict: st.verdict || '', state: st.coverageState || '', lastCrawl: (st.lastCrawlTime || '').slice(0, 10), robots: st.robotsTxtState || '', fetch: st.pageFetchState || '' });
+  }
+  const no = rows.filter((x) => x.indexed === false); const err = rows.filter((x) => x.indexed === null);
+  const markdown = [`## 색인 확인 — ${site} (${new Date().toISOString().slice(0, 10)})`, '', `확인 ${rows.length}개 · 색인됨 ${rows.filter((x) => x.indexed).length} · **안 됨 ${no.length}**${err.length ? ` · 확인 실패 ${err.length}` : ''}`, '',
+    ...(no.length ? ['| 페이지 | 구글 상태 | 마지막 크롤 |', '|---|---|---|', ...no.map((x) => `| ${x.url} | ${x.state || x.verdict} | ${x.lastCrawl || '-'} |`)] : ['✓ 확인한 페이지 모두 색인됨']),
+    ...(err.length ? ['', `확인 실패: ${err[0].state}`] : [])].join('\n');
+  return { site, sitemap: sitemapUrl, checked: rows.length, notIndexed: no.length, rows, markdown };
+}
 function md(g, c) {
   const L = [];
   if (g) { L.push(`| GA4 | ${g.month} | ${g.prev} |`, '|---|---|---|', `| 방문(세션) | ${g.cur.sessions} | ${g.prev.sessions} |`, `| 사용자 | ${g.cur.users} | ${g.prev.users} |`, `| 페이지 보기 | ${g.cur.pageviews} | ${g.prev.pageviews} |`, `| 참여율 | ${g.cur.engagement}% | ${g.prev.engagement}% |`, `| 전화 클릭 | ${g.events.phone_click || 0} | – |`, `| 길찾기 클릭 | ${g.events.directions_click || 0} | – |`, `| 예약 클릭 | ${g.events.booking_click || 0} | – |`, `| 문의 제출 | ${g.events.contact_submit || 0} | – |`, ''); if (g.channels.length) L.push('유입 경로: ' + g.channels.map((x) => `${x.channel} ${x.sessions}`).join(' · '), ''); }
@@ -76,5 +97,20 @@ function md(g, c) {
     if (an.gsc_site) { try { out.gsc = await gsc(an.gsc_site, m); } catch (e) { out.errors.push(e.message); } } else out.errors.push('스펙 analytics.gsc_site 없음');
     console.log(JSON.stringify({ ...out, markdown: md(out.ga4, out.gsc) }, null, 2)); return;
   }
-  console.log('사용법: ga4 --property ID [--month YYYY-MM] | gsc --site "sc-domain:…" [--month] | both --job N [--month]');
+  if (cmd === 'index') {
+    let site = opt('site'), sitemap = opt('sitemap');
+    if (opt('job')) {
+      const BASE = (process.env.BIZHIGHER_ADMIN_URL || 'https://bizhigher.com').replace(/\/$/, ''); const PW = (process.env.BIZHIGHER_ADMIN_PASSWORD || '').trim();
+      const r0 = await fetch(BASE + '/admin/login', { method: 'POST', body: new URLSearchParams({ password: PW }), redirect: 'manual' }); const cookie = (r0.headers.get('set-cookie') || '').split(';')[0];
+      const cur = await (await fetch(`${BASE}/admin/api/sites/${Number(opt('job'))}`, { headers: { cookie, 'sec-fetch-mode': 'cors' } })).json();
+      const an = (cur && cur.spec && cur.spec.analytics) || {};
+      if (!(cur && cur.domain && cur.live)) { console.log(JSON.stringify({ skipped: '도메인 연결 전 — 임시 주소는 noindex 라 색인 확인 대상이 아니다', markdown: '색인 확인 건너뜀 — 도메인 연결 전(임시 주소는 noindex)' }, null, 2)); return; }
+      site = site || an.gsc_site; sitemap = sitemap || `https://${cur.domain}/sitemap.xml`;
+      if (!site) { console.log(JSON.stringify({ skipped: '스펙 analytics.gsc_site 없음', markdown: '색인 확인 건너뜀 — Search Console 속성 미연결(an-4·seo-1)' }, null, 2)); return; }
+    }
+    if (!site || !sitemap) throw new Error('--job N 또는 --site … --sitemap URL 필요');
+    const r = await indexCheck(site, sitemap, Number(opt('limit', 60)));
+    console.log(JSON.stringify(r, null, 2)); return;
+  }
+  console.log('사용법: ga4 --property ID [--month YYYY-MM] | gsc --site "sc-domain:…" [--month] | both --job N [--month] | index (--job N | --site "sc-domain:…" --sitemap URL) [--limit 60]');
 })().catch((e) => { console.error('오류:', e.message); process.exit(1); });
