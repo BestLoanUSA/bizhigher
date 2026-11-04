@@ -192,6 +192,7 @@ const SCHEMA = [
   )`,
 ];
 
+import { slugify } from './_reports.js';
 import { tasksFor } from './_playbook.js';
 
 // 기존 테이블에 나중에 추가된 컬럼 — CREATE TABLE IF NOT EXISTS 는 컬럼을 못 더하므로 PRAGMA 로 확인 후 ALTER
@@ -223,6 +224,17 @@ export async function ensureSchema(db) {
     for (const [name, type] of cols) if (!have.has(name)) await db.prepare(`ALTER TABLE ${table} ADD COLUMN ${name} ${type}`).run();
   }
   schemaReady = true;
+}
+
+/* 고객 페이지 주소 — /c/{업체명 슬러그}-{토큰} (2026-11-04 David 요청: 주소에 업소 이름이 보이게). 토큰만 열쇠이고 슬러그는 장식 — 옛 /c/{토큰} 도 그대로 열린다 */
+export function portalPath(job, token) {
+  const slug = slugify(String((job && job.business) || '').replace(/\s*\(데모\)/, ''));
+  return `/c/${slug ? slug + '-' : ''}${token}`;
+}
+/** 주소 조각에서 토큰만 꺼낸다 — 토큰은 영숫자 24자라 하이픈이 없다 */
+export function tokenFromPath(seg) {
+  const s = String(seg || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 120);
+  return s.split('-').pop();
 }
 
 /* 고객 결과물 페이지 토큰 — 없으면 만든다 */
