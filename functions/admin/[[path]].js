@@ -27,7 +27,7 @@ import { authenticate, login, logoutCookie } from './_auth.js';
 import { notify, notifyTo, sendEmail, esc as escHtml } from '../api/_notify.js';
 import { syncReviews } from '../api/_reviews.js';
 import { wakeRoutine, retryPendingWake, runnerStatus } from '../api/_runner.js';
-import { isClaimed, ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady, ensurePortalToken, sweepAutoApprovals, rolloverRecurring, parseOptions, approveDeliverable, deepPatch, specDiff, patchSiteSpec, siteStats } from '../api/_orders.js';
+import { isClaimed, ensureSchema, JOB_STATUSES, addEvent, seedTasks, createJobForOrder, attachIntake, loadCatalog, jobProgress, nextAction, recentDots, jobPhase, currentPhaseTasks, aiReady, ensurePortalToken, portalPath, sweepAutoApprovals, rolloverRecurring, parseOptions, approveDeliverable, deepPatch, specDiff, patchSiteSpec, siteStats } from '../api/_orders.js';
 import { PLAYBOOK, COMMON_ONBOARDING, WHO, PHASES, tasksFor, summarize, DELIVER_KEYS, APPROVAL_KEYS, outputKind, OUTPUT_LABEL, customerTitle } from '../api/_playbook.js';
 import { appHtml, loginHtml } from './_ui.js';
 
@@ -439,7 +439,7 @@ async function api(env, method, seg, body, url) {
     if (!ds.length) throw bad('전달할 결과물이 없습니다');
     for (const d of ds) d.title = customerTitle(d.task_key, d.title); // 메일에는 고객용 제목(내부 단계 설명 대신)
     const token = await ensurePortalToken(db, j);
-    const portal = `${url.origin}/c/${token}`;
+    const portal = url.origin + portalPath(j, token);
     const biz = (j.business || '').replace(/\s*\(데모\)/, '');
     const needs = ds.filter((d) => d.needs_approval && !d.approved_at);
     const subject = `[BizHigher] ${biz} — 결과물 ${ds.length}건${needs.length ? ' · 확인 부탁드립니다' : ''}`;
@@ -613,7 +613,7 @@ async function api(env, method, seg, body, url) {
       byOwner: ['auto', 'ai', 'david', 'customer', 'blocked'].reduce((a, w) => { a[w] = { done: doneList.filter((t) => t.who === w).length, left: tasks.filter((t) => t.who === w && !CLOSED.has(t.status)).length }; return a; }, {}),
       byPhase: PHASES.map(([k, l]) => ({ key: k, label: l, done: tasks.filter((t) => t.phase === k && CLOSED.has(t.status)).length, total: tasks.filter((t) => t.phase === k).length })).filter((p) => p.total),
     };
-    const portal = `${url.origin}/c/${await ensurePortalToken(db, job)}`;
+    const portal = url.origin + portalPath(job, await ensurePortalToken(db, job));
     const siteRow = await db.prepare(`SELECT id, slug, domain, live, version, updated_at, spec FROM sites WHERE job_id = ?`).bind(job.id).first().catch(() => null);
     if (siteRow) { const sp = parseJson(siteRow.spec, {}); siteRow.tier = sp.tier === 'business' ? 'business' : 'onepage'; siteRow.style = (sp.theme && (sp.theme.style || sp.theme.mood)) || ''; siteRow.forward_to = (sp.contact && sp.contact.forward_to) || ''; delete siteRow.spec; siteRow.leads = ((await db.prepare(`SELECT COUNT(*) AS n FROM site_leads WHERE site_id = ?`).bind(siteRow.id).first().catch(() => null)) || {}).n || 0; }
     return { portal, site: siteRow ? { ...siteRow, preview_url: `https://${env.SITES_PROJECT || 'bizhigher-sites'}.pages.dev/${siteRow.slug}/`, preview_host: `https://${siteRow.slug}.sites.bizhigher.com` } : null, job: { ...job, pct, phase: jobPhase(job, tasks), dueInfo: dueLabel(job.due_date), day: job.created_at ? Math.max(1, Math.floor((Date.now() - new Date(job.created_at.replace(' ', 'T') + 'Z').getTime()) / 864e5) + 1) : 1 }, order, payments, intake, events, deliverables, tasks, lanes, services, milestones, next: nextAction(tasks), summary: { ...summary, bottlenecks: undefined }, history, intakeCandidates, aiPending, stuck, stuckDays, lastMove, brief, progressSummary, who: WHO, phases: PHASES, taskStatuses: TASK_STATUSES, statuses: JOB_STATUSES, outputLabels: OUTPUT_LABEL };
