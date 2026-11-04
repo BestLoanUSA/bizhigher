@@ -14,34 +14,15 @@
 node build.js     # dist/ 폴더에 사이트 생성
 ```
 
-## 최초 배포 (딱 한 번, 약 10분)
+## 배포 — Cloudflare Pages (Git 연결)
 
-### 1. GitHub에 올리기
-1. github.com → **New repository** → 이름 `bizhigher-site` (Private 권장) → Create
-2. 이 폴더의 파일들을 업로드:
-   - 웹에서: repo 페이지 → **uploading an existing file** → 폴더 내용 전체 드래그
-   - 또는 터미널: `git init && git add -A && git commit -m "init" && git branch -M main && git remote add origin <repo주소> && git push -u origin main`
+이 사이트는 **Cloudflare Pages + Pages Functions** 로 돈다(`functions/` 폴더가 곧 API 라우팅). 2026-11-04 에 예전 Worker 방식 설정(`wrangler.toml`·`worker/index.js`)을 지웠다 — 쓰이지 않았고 고쳐도 사이트가 바뀌지 않아 혼란만 줬다.
 
-### 2. Cloudflare Worker 연결 (Git)
-1. Cloudflare 대시보드 → **Workers & Pages** → **Create** → **Import a repository**
-2. `bizhigher-site` repo 선택
-3. 설정 입력:
-   - Project name: `bizhigher-site`
-   - **Build command**: `node build.js`
-   - **Deploy command**: `npx wrangler deploy`
-4. **Deploy** → 1~2분 뒤 `bizhigher.<계정>.workers.dev` 에서 사이트 확인
-
-정적 파일 위치(dist), D1 바인딩(DB), 404 페이지는 전부 `wrangler.toml`이 자동으로 처리합니다.
-
-### 3. D1 바인딩 확인 (진단 폼용)
-`wrangler.toml`에 이미 설정되어 있어 자동 연결됩니다. 폼 제출이 안 되면:
-1. Worker → **Settings** → **Bindings** 에 `DB → bizhigher-db` 가 있는지 확인
-2. 없으면 **Add** → **D1 database** → Variable name `DB` / Database `bizhigher-db` → 재배포
-
-### 4. 커스텀 도메인
-1. Worker → **Settings** → **Domains & Routes** → **Add** → **Custom Domain** → `bizhigher.com`
-2. (도메인이 같은 Cloudflare 계정에 있으면 DNS가 자동 설정됩니다)
-3. `www.bizhigher.com`도 같은 방법으로 추가
+- **배포**: GitHub `main` 에 push → Cloudflare Pages 가 `node build.js` 로 빌드해 `dist/` 를 올린다(1~2분). `npx wrangler deploy` 는 **쓰지 않는다**(별도 Worker 가 생겨 도메인이 충돌한다)
+- **PR 프리뷰**: 브랜치를 push 하면 `https://<브랜치>.bizhigher-site.pages.dev` 에 프리뷰가 뜬다(프로젝트 이름이 옛 이름 `bizhigher-site`)
+- **D1·환경변수·R2 바인딩**: 전부 Cloudflare 대시보드 → Workers & Pages → 이 Pages 프로젝트 → Settings 에 있다(`DB` → `bizhigher-db`, `R2_ASSETS` → `bizhigher-assets`). 파일로 관리하지 않는다
+- **커스텀 도메인**: 같은 프로젝트 → Custom domains 에 `bizhigher.com`·`www.bizhigher.com`
+- **Functions 로컬 테스트**: `npx wrangler pages dev dist --d1 DB=<id> --binding ADMIN_PASSWORD=x …` (CLAUDE.md §14)
 
 ## 이후 콘텐츠 수정 흐름
 

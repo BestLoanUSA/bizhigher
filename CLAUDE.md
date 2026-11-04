@@ -35,22 +35,13 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 
 **PR 프리뷰**: 브랜치를 push할 때마다 Cloudflare Pages가 프리뷰를 배포한다. 주소는 `https://<브랜치이름>.bizhigher-site.pages.dev` (프로젝트 이름이 옛 이름이라 `bizhigher.pages.dev`로는 열리지 않는다). PR의 "Cloudflare Pages" 체크 Details에서도 찾을 수 있다. 프리뷰 환경에는 Production의 D1·환경변수가 묶여 있지 않으므로 진단 폼·`/report/*`는 프리뷰에서 동작하지 않을 수 있다 — 디자인·문구 확인용
 
-### ⚠️ 배포 설정이 두 벌 들어 있다 — 하나는 죽은 코드다
+### 배포 방식 — Pages Functions 하나 (2026-11-04 정리)
 
-| 파일 | 방식 | 상태 |
-|---|---|---|
-| `functions/` | Cloudflare **Pages Functions** | **살아 있음** |
-| `wrangler.toml` + `worker/index.js` | Cloudflare **Worker** | **동작하지 않음** |
+예전에는 `wrangler.toml` + `worker/index.js`(Cloudflare **Worker** 방식) 설정이 함께 들어 있었지만 실제로는 동작하지 않는 죽은 코드였다(2026-09-18 라이브 확인: `functions/report/[id].js` 가 실행됨 = Pages Functions). **2026-11-04 두 파일을 지우고 README 를 Pages 기준으로 고쳤다.**
 
-2026-09-18 라이브 확인: 존재하지 않는 `/report/아무거나`가 `/free-audit/`로 302 리다이렉트됐다. 이는 `functions/report/[id].js`의 `onRequestGet`이 실행된다는 뜻이고, Worker 배포에서는 `functions/`가 라우팅되지 않는다.
-
-따라서:
-
-- **`worker/index.js`를 고쳐도 사이트는 바뀌지 않는다.** 그 안의 `/api/audit`은 리드만 저장하는 축소판이고, 실제로 도는 것은 Places 채점·Claude 해석·이메일 알림까지 하는 `functions/api/audit.js`다
-- `wrangler.toml`의 `[assets]`·`not_found_handling`·D1 바인딩 선언은 읽히지 않는다. 실제 바인딩은 Cloudflare 대시보드에 있다
-- **`npx wrangler deploy`를 실행하지 말 것.** 별도 Worker가 하나 더 생겨 도메인 라우팅이 충돌한다. README의 해당 안내는 낡았다
-
-> 정리 과제: 대시보드에서 프로젝트 종류를 확인한 뒤 `wrangler.toml`과 `worker/index.js`를 삭제하고 README를 고친다.
+- 실제로 도는 API 는 전부 `functions/`(Pages Functions)다. 바인딩(D1 `DB`·R2 `R2_ASSETS`)·환경변수는 Cloudflare 대시보드의 Pages 프로젝트 설정에만 있다
+- **`npx wrangler deploy`를 실행하지 말 것.** 별도 Worker가 하나 더 생겨 도메인 라우팅이 충돌한다
+- 로컬 Functions 테스트는 `wrangler pages dev`(§14). 루트에 `wrangler.toml` 을 다시 만들지 않는다
 
 ### 저장소에 쓰는 방법 — 2026-09-18 갱신
 
@@ -305,9 +296,9 @@ i점 좌표(`oy = top + height × 0.215`, `ox = left + width × 0.56` 등)는 **
 
 Stripe 링크와 표시 가격이 여기 들어 있다. 가격 변경은 되돌리기 어려운 실수다 — §11의 승인 정책을 따른다.
 
-### 10-6. `worker/index.js`와 `wrangler.toml`
+### 10-6. 배포 설정
 
-§2 참고. 죽은 코드이므로 여기를 고쳐서 문제를 해결하려 하지 말 것.
+§2 참고. Worker 방식 설정 파일은 2026-11-04 지웠다 — 다시 만들지 말 것.
 
 ---
 
@@ -434,7 +425,7 @@ cpacedesk·BestLoanUSA 와 같은 구조(`seo/README.md` 가 기준 문서). Dav
 - **로컬 크론(CronCreate 류)으로 정기 작업을 만들지 말 것** — 세션 종료 시 소멸한다. 스케줄 작업은 반드시 claude.ai 루틴으로
 - **스킬(fulfillment 등) 수정은 파일을 고쳐도 무효**다. `propose_skills` 제안 카드를 David가 저장해야 반영된다
 - 클라우드 세션의 egress: **bizhigher.com·api.cloudflare.com 모두 열려 있다**(2026-10-21 확인, 이전 "curl 차단" 메모는 낡았다). 관리자 API를 `BIZHIGHER_ADMIN_PASSWORD`로 직접 호출할 수 있다 — AI 실행 루틴이 이 경로를 쓴다
-- **Functions 로컬 테스트**는 `npx wrangler pages dev dist --d1 DB=<id> --binding ADMIN_PASSWORD=x --binding STRIPE_WEBHOOK_SECRET=x --persist-to <스크래치 경로>`(루트 `wrangler.toml`은 Worker용이라 `--config`로 못 넘긴다). 로컬 에뮬레이터는 브라우저 navigate 요청에 Functions 대신 404.html을 주는 버그가 있다 — 프로덕션은 Functions 우선이므로 curl이나 Playwright `route.fetch`로 `sec-fetch-mode`를 바꿔 확인한다. 생성되는 `.wrangler/`는 커밋하지 말 것
+- **Functions 로컬 테스트**는 `npx wrangler pages dev dist --d1 DB=<id> --binding ADMIN_PASSWORD=x --binding STRIPE_WEBHOOK_SECRET=x --persist-to <스크래치 경로>`(설정 파일 없이 플래그로 바인딩을 넘긴다). 로컬 에뮬레이터는 브라우저 navigate 요청에 Functions 대신 404.html을 주는 버그가 있다 — 프로덕션은 Functions 우선이므로 curl이나 Playwright `route.fetch`로 `sec-fetch-mode`를 바꿔 확인한다. 생성되는 `.wrangler/`는 커밋하지 말 것
 - **Google Places는 진단용 실시간 조회에만 쓴다.** 조회 결과를 저장해 재게시하지 않는다. 약관(ToS §3.2.3, Places 약관 §14.3): 저장은 place_id만 무기한, 좌표는 30일까지. 그래서 리포트는 30일 뒤 정리되고 noindex를 유지한다(2026-10-23). 리포트 열람은 D1만 읽어 Places·Claude 비용이 들지 않는다 — [[marketingkorean]]과의 경계에서 특히 중요(§16)
 
 ---
@@ -536,7 +527,7 @@ cpacedesk·BestLoanUSA 와 같은 구조(`seo/README.md` 가 기준 문서). Dav
 
 ## 19. 미결
 
-1. **배포 설정 정리** — 대시보드 확인 후 `wrangler.toml`·`worker/index.js` 삭제, README 수정 (§2)
+1. ~~배포 설정 정리~~ → 2026-11-04 `wrangler.toml`·`worker/index.js` 삭제, README Pages 기준으로 수정 (§2)
 2. **블로그 루틴 프롬프트의 캘린더 경로 수정** (§9) — 2026-11-02 발행 루틴 프롬프트에 "발행 전 검사" 단락은 넣었다(경로 문구는 그대로)
 3. **BizHigher 자체 GBP 등록** — DBA 취득 대기. 취득 후 주소 숨김 SAB 등록 + 영상 인증 콘텐츠 팩 제작
 4. **파운딩 고객 10곳 영업 실행** (FOUNDING20) — 미착수
@@ -558,6 +549,6 @@ cpacedesk·BestLoanUSA 와 같은 구조(`seo/README.md` 가 기준 문서). Dav
 ## 20. 다음 작업 순서
 
 1. 이 파일을 저장소 루트에 `CLAUDE.md`로 추가
-2. Cloudflare 대시보드에서 프로젝트 종류 확인 → 죽은 배포 설정 정리 (§2)
+2. ~~죽은 배포 설정 정리~~ (2026-11-04 완료)
 3. 블로그 루틴 프롬프트의 캘린더 경로 수정 (§9)
 4. §15의 로컬 스타터 자동화를 승인할지 결정 — 승인되면 "제안 단계" 표기를 걷어내고 §15를 확정 섹션으로 옮긴다
