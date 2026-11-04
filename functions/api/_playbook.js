@@ -46,7 +46,7 @@ export const PLAYBOOK = {
   'google-profile-optimization': {
     name: '구글 프로필 최적화', steps: [
       S('gpo-2', '경쟁사 3곳 갭 분석 — 카테고리·속성·리뷰 속도(90일)·게시물 활동 (Places API)', 'setup', 'auto', 0, { block: '루틴이 places.js로 평점·리뷰 수·최근 리뷰 날짜·카테고리·웹사이트 유무를 뽑는다. 속성 상세·게시물 활동은 API에 없어 수동 보강 10분' }),
-      S('gpo-3', '콘텐츠 팩 — 카테고리 교정안·설명 750자(한/영)·서비스 20개·Q&A 10세트·첫 게시물 4건', 'setup', 'ai', 20, { verify: true }),
+      S('gpo-3', '콘텐츠 팩 — 카테고리 교정안·설명 750자(한/영)·서비스 20개·자주 묻는 질문 10개의 답(설명·서비스·속성에 녹임, 구글 Q&A 는 2025-12 부터 사라지고 Ask Maps 가 프로필·리뷰·웹사이트로 답한다)·첫 게시물 4건', 'setup', 'ai', 20, { verify: true }),
       S('gpo-1', 'GBP 관리자 초대 — 사장님이 hello@bizhigher.com 을 관리자로 추가', 'onboarding', 'customer', 5, { block: '소유자만 초대 가능. 안내문 automation/gbp/docs/owner-invite-ko.md' }),
       S('gpo-4', 'Before 스크린샷 → 프로필에 적용 → After 스크린샷', 'setup', 'david', 30, { block: 'GBP API 승인 전엔 손으로 입력', next: 'GBP API 승인(재신청: BestLoanUSA 재인증 후 david@ 또는 BizHigher 프로필 60일) → 설명·서비스·속성 자동 반영' }),
       S('gpo-5', 'Before/After 리포트 PDF + 4주 후 성과 리포트 리마인더', 'setup', 'ai', 5, { verify: true }),
@@ -149,9 +149,18 @@ export const PLAYBOOK = {
       S('cp-3', '백업·장애 모니터링·속도·보안 업데이트', 'monthly', 'auto', 0, { block: 'Cloudflare Pages 기본 제공. 외부 호스팅은 범위 밖' }),
     ],
   },
+  'gbp-care': {
+    name: '구글 프로필 월간 관리', steps: [
+      S('gc-1', '프로필 변경 감시(주간) — places.js watch: 고객이 확인한 상호·전화·웹사이트·주소·카테고리·영업시간과 지금 구글에 보이는 값 비교. 같으면 바로 완료, 다르면 검증 큐(⚠ 변경 감지)', 'weekly', 'auto', 0, { block: '구글 자동 수정·남의 수정 제안이 프로필을 바꾸는 일이 흔하다. 기준값은 gpo-4 적용 뒤 places.js lookup 결과(고객 자신의 정보)' }),
+      S('gc-2', '이번 달 프로필 관리안 — 올릴 사진 5장(creative.js photos 로 선별·보정, 외관·내부·제품·팀 골고루) · 다음 달 공휴일 특별 영업시간 확인 질문 · 새 서비스·메뉴·속성 · Ask Maps 대비(리뷰·문의에 자주 나온 질문의 답이 프로필·웹사이트에 있는지)', 'monthly', 'ai', 5, { verify: true, block: '고객은 고객 페이지 답변 칸으로 영업시간 질문에 답한다' }),
+      S('gc-3', '경쟁사 스팸 점검 — places.js spam(주인 키워드 1~2개): 상호 키워드 나열·괄호 키워드·홍보 문구·같은 호수 중복. 지난달에 없던 후보만', 'monthly', 'ai', 3, { verify: true, block: '규칙으로 고른 후보일 뿐 — 실제 간판 상호면 스팸이 아니다' }),
+      S('gc-4', 'GBP 반영 — 사진 업로드·특별 영업시간·서비스·속성 + 확인한 스팸은 수정 제안 또는 Business Redressal Complaint Form 신고', 'monthly', 'david', 15, { block: 'GBP API 거절(2026-10-07) → 손으로', next: 'GBP API 승인 → 사진·영업시간·서비스 자동 반영, 신고만 손으로' }),
+    ],
+  },
   'monthly-report': {
     name: '월간 성과 리포트', steps: [
       S('mr-1', '데이터 수집 — 우리 비콘 통계(sites.js stats, 항상) + GA4·GSC(analytics.js both, 서비스 계정이 뷰어로 추가된 경우)', 'monthly', 'auto', 0, { block: '서비스 계정 미추가면 GA4·GSC 칸은 리포트의 담당자 확인 칸으로' }),
+      S('mr-6', '지도 순위 그리드 — places.js grid(주인 키워드 2~3개, 반경 2마일 7×7, 지난달 JSON 을 --prev 로) → 평균 순위·3위 안 지점·전월 대비를 mr-4 리포트 첫 장에. 근사치 문구 필수', 'monthly', 'auto', 0, { block: '지점 검색은 Places IDs Only(구글 기준 무료). 키워드는 seo.keywords → 없으면 ob-3 프로필 키워드' }),
       S('mr-2', '데이터 수집 — GBP 인사이트(조회·전화·길찾기)·리뷰', 'monthly', 'david', 10, { block: 'GBP API 거절 → 화면 캡처', next: 'GBP API' }),
       S('mr-3', '데이터 수집 — 광고 성과(구글·메타)', 'monthly', 'david', 10, { next: 'Google Ads API 토큰 / Meta 앱 심사' }),
       S('mr-4', '리포트 PDF 생성 — 숫자·전월 대비·다음 달 제안', 'monthly', 'ai', 10, { verify: true }),
@@ -198,9 +207,9 @@ export const PLAYBOOK = {
 
 /* ---------- 패키지 → 서비스 구성 ---------- */
 const PKG = {
-  'local-starter': { monthly: ['gbp-posting', 'review-reply', 'ad-creative-pack', 'local-listing-care', 'care-plan', 'monthly-report'] },
-  'local-growth': { monthly: ['gbp-posting', 'review-reply', 'ad-creative-pack', 'local-listing-care', 'care-plan', 'monthly-report', 'seo-aio', 'shortform-video'] },
-  'local-premium': { monthly: ['gbp-posting', 'review-reply', 'ad-creative-pack', 'local-listing-care', 'care-plan', 'monthly-report', 'seo-aio', 'shortform-video', 'ads-management'] },
+  'local-starter': { monthly: ['gbp-posting', 'gbp-care', 'review-reply', 'ad-creative-pack', 'local-listing-care', 'care-plan', 'monthly-report'] },
+  'local-growth': { monthly: ['gbp-posting', 'gbp-care', 'review-reply', 'ad-creative-pack', 'local-listing-care', 'care-plan', 'monthly-report', 'seo-aio', 'shortform-video'] },
+  'local-premium': { monthly: ['gbp-posting', 'gbp-care', 'review-reply', 'ad-creative-pack', 'local-listing-care', 'care-plan', 'monthly-report', 'seo-aio', 'shortform-video', 'ads-management'] },
 };
 // 셋업 선물 (data/services.json setupGifts 와 같은 구성) — six: 6개월 이상, annual: 12개월(선결제·분납)에 추가
 const GIFTS = {
@@ -212,16 +221,16 @@ const GIFTS = {
 /** slug(서비스 또는 패키지-기간) → 적용할 서비스 slug 목록 */
 /* 승인·완료 시 "결과물 · 발송" 목록(고객 전달)에 올라가는 단계 — 나머지는 내부 작업물이라 올리지 않는다 (2026-10-21: 매 단계마다 초안 메일이 가던 문제) */
 // llp-4·web-4(자동 QA)는 내부 점검표라 고객에게 보내지 않는다 — 2026-11-03 데모에서 Lighthouse 점수·템플릿 결함 목록이 고객 페이지에 그대로 갔다. 사이트는 고객 페이지 '내 웹사이트' 카드로 본다
-export const DELIVER_KEYS = new Set(['sv-1', 'ob-5', 'gpo-5', 'qr-2', 'qr-3', 'lls-7', 'ads-5', 'post-2', 'post-7', 'rr-7', 'ac-5', 'cp-2', 'mr-4', 'seo-3', 'seo-4', 'seo-8', 'sv-2', 'am-5', 'llc-2']);
+export const DELIVER_KEYS = new Set(['sv-1', 'ob-5', 'gpo-5', 'qr-2', 'qr-3', 'lls-7', 'ads-5', 'post-2', 'post-7', 'rr-7', 'ac-5', 'cp-2', 'mr-4', 'gc-2', 'seo-3', 'seo-4', 'seo-8', 'sv-2', 'am-5', 'llc-2']);
 
 /* 고객 승인이 필요한 결과물 — 고객 페이지에 [승인]/[수정 요청] 버튼이 붙고, 승인하면 같은 서비스의 다음 고객 차례 단계가 완료된다 */
 /** 결과물 종류 — 관리자 "AI가 했음"에서 완성물(고객 전달·업로드용)과 내부 작업·계획을 나눈다 (2026-10-27 David 요청)
  *  media 이미지·영상·인쇄물 · text 글·본문·답글 · site 사이트·페이지·링크 · report 리포트·전달 묶음 · plan 파일 대신 기획안만 올라온 것(David 가 파일을 만들어야 함) · internal 프로필·분석·설계·설정 */
 export const OUTPUT_KIND = {
   'ac-3': 'media', 'post-4': 'media', 'sv-2': 'media', 'qr-2': 'media', 'qr-3': 'media',
-  'gpo-3': 'text', 'llp-2': 'text', 'seo-4': 'text', 'post-2': 'text', 'rr-1': 'text', 'rr-live': 'text', 'ac-2': 'text', 'lls-3': 'text', 'ob-5': 'text', 'seo-3': 'text', 'sv-1': 'text',
+  'gpo-3': 'text', 'gc-2': 'text', 'llp-2': 'text', 'seo-4': 'text', 'post-2': 'text', 'rr-1': 'text', 'rr-live': 'text', 'ac-2': 'text', 'lls-3': 'text', 'ob-5': 'text', 'seo-3': 'text', 'sv-1': 'text',
   'web-2': 'site', 'web-4': 'site', 'seo-9': 'site', 'llp-3': 'site', 'llp-4': 'site', 'cp-2': 'site', 'seo-5': 'site', 'seo-8': 'site',
-  'gpo-5': 'report', 'lls-7': 'report', 'ads-5': 'report', 'post-7': 'report', 'rr-7': 'report', 'ac-5': 'report', 'mr-4': 'report', 'am-5': 'report', 'llc-2': 'report',
+  'gpo-5': 'report', 'gc-1': 'report', 'gc-3': 'report', 'mr-6': 'report', 'lls-7': 'report', 'ads-5': 'report', 'post-7': 'report', 'rr-7': 'report', 'ac-5': 'report', 'mr-4': 'report', 'am-5': 'report', 'llc-2': 'report',
 };
 export const OUTPUT_LABEL = { media: '이미지·영상', text: '글·본문', site: '사이트·링크', report: '리포트·전달', plan: '파일 대기(기획안)', internal: '내부 작업' };
 const PLAN_RE = /\[David 세션에서|파일 미제작|기획안만|파일\/데이터 작업 필요|이미지 작업 필요|영상 작업 필요/;
@@ -325,6 +334,7 @@ export const CUSTOMER_TITLE = {
   'ac-5': '광고 소재 — 먼저 쓸 세트 고르기',
   'cp-2': '웹사이트 수정 반영',
   'mr-4': '월간 리포트',
+  'gc-2': '이번 달 구글 프로필 관리 — 확인해 주실 것',
   'seo-3': '이번 달 블로그 주제',
   'seo-4': '이번 달 블로그 글',
   'seo-8': '새 지역 페이지',

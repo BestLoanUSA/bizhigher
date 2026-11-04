@@ -699,7 +699,7 @@ const MOCKUPS = {
     <li class="done">설명 750자 · 지역·메뉴 키워드 7개 자연 삽입</li>
     <li class="done">사진 12장 업로드 · 대표 사진 교체</li>
     <li class="done">영업시간 · 공휴일 시간 설정</li>
-    <li class="todo">Q&amp;A 자주 묻는 질문 5개 등록 (사장님 확인 후)</li>
+    <li class="todo">손님이 자주 묻는 질문 10개의 답을 설명·서비스·속성에 반영 (사장님 확인 후)</li>
   </ul>
 </div>` },
   'sample-report': {
