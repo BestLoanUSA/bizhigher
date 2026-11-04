@@ -6,7 +6,7 @@
 |---|---|---|
 | ob-3 고객 프로필 | `competitor-profiling` · `seo-local` | 경쟁사 비교 틀, 로컬 SEO 기준 항목 |
 | gpo-2 경쟁사 갭 분석 | `seo-maps` · `competitor-profiling` | 지도 노출 요인 체크리스트 |
-| gpo-3 프로필 콘텐츠 팩 | `copywriting` · `seo-local` · `seo-maps` | 설명 750자·서비스 20개·Q&A 톤, 카테고리·속성 |
+| gpo-3 프로필 콘텐츠 팩 | `copywriting` · `seo-local` · `seo-maps` | 설명 750자·서비스 20개·자주 묻는 질문의 답(Ask Maps 대비), 카테고리·속성 |
 | gpo-5 Before/After 리포트 | `copy-editing` | 리포트 문장 다듬기 |
 | qr-2 QR 인쇄물 문구 | `copywriting` · `marketing-psychology` | 리뷰 요청 문구(대가 제공 없이) |
 | lls-1 디렉토리 목록 · lls-3 NAP 문서 | `directory-submissions` · `seo-local` | 등록 우선순위·설명문 변형(references 의 directory-list·positioning-variations) |
