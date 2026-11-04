@@ -360,6 +360,11 @@ const EXTRA_CSS = `
 function shell(c, { title, desc, depth = 0, active = '', content, extraSchema = [], canonicalPage }) {
   const { s, style, k, name, phone, addr, maps, toggle, year, ht, tz, pages } = c;
   const canonical = canonicalPage || c.canonical;
+  // 페이지별 제목·설명 덮어쓰기 — spec.seo.pages["/services/"] = { title, description } (seo-9 '검색 데이터로 기존 페이지 개선'이 sites.js patch 로 고친다, 2026-11-04)
+  const pkey = '/' + String(canonical).slice(String(c.canonical).length).replace(/^\/+/, '');
+  const ov = (s.seo && s.seo.pages && (s.seo.pages[pkey] || s.seo.pages[pkey.replace(/\/$/, '')])) || null;
+  if (ov && ov.title) title = String(ov.title);
+  if (ov && ov.description) desc = String(ov.description);
   const fonts = (() => { const f = new Set(); const add = (n, w) => f.add(`family=${n.replace(/ /g, '+')}:wght@${w}`); const hw = { Fraunces: '500;600', 'Playfair Display': '500;600', 'Space Grotesk': '500;700', Nunito: '600;800', 'DM Serif Display': '400' }[k.fontHead] || '600;700'; add(k.fontHead, hw); if (k.fontHeadKo) add(k.fontHeadKo, { 'Noto Serif KR': '600', 'Nanum Myeongjo': '700', 'Gowun Batang': '700' }[k.fontHeadKo] || '700'); if (k.fontBody !== k.fontHead) add(k.fontBody, '400;500;600;700'); return [...f].join('&'); })();
   const openChip = ht ? `<span class="open" id="open-chip"><i></i><span class="t"></span></span>` : '';
   const navLinks = pages.map(([h, ko, en]) => `<a href="${h.startsWith('#') ? (depth ? rel(depth, '') + h : h) : rel(depth, h)}"${h === active ? ' class="on"' : ''}>${L(s, ko, en)}</a>`).join('');
@@ -456,7 +461,7 @@ function onepage(c) {
 function areaFiles(c, files) {
   const { s, name } = c; if (!s.areas.length) return;
   const label = s.lang === 'en' ? 'Areas' : '지역';
-  if (c.business) files['areas/index.html'] = shell(c, { title: `${label} | ${name}`, desc: s.seo.description || s.tagline || '', depth: 1, active: 'areas/', canonicalPage: c.canonical + 'areas/', extraSchema: [crumbs(c, [[name, ''], [label, 'areas/']])], content: [sec.pageHead(c, '찾아오시는 지역', 'Areas we serve'), sec.areasIndex(c, 1), sec.ctab(c, 1)].join('\n') });
+  if (c.business) files['areas/index.html'] = shell(c, { title: `${label} | ${name}`, desc: (s.lang === 'en' ? `Areas served by ${name} — directions and FAQs by city.` : `${name}을(를) 찾는 인근 지역 손님 안내 — 도시별 오는 길과 자주 묻는 질문.`), depth: 1, active: 'areas/', canonicalPage: c.canonical + 'areas/', extraSchema: [crumbs(c, [[name, ''], [label, 'areas/']])], content: [sec.pageHead(c, '찾아오시는 지역', 'Areas we serve'), sec.areasIndex(c, 1), sec.ctab(c, 1)].join('\n') });
   for (const a of s.areas) {
     const city = pick(s, a, 'city').main; const title = (pick(s, a, 'title').main || `${city} ${s.category || ''} | ${name}`).slice(0, 110);
     const desc = (pick(s, a, 'description').main || pick(s, a, 'headline').main || String(pick(s, a, 'intro').main || '').slice(0, 155)).slice(0, 160);
@@ -473,13 +478,26 @@ function business(c) {
   const base = s.seo.title || `${name} — ${s.tagline || s.category || ''}`.replace(/ — $/, '');
   const desc = s.seo.description || s.tagline || '';
   const T = (ko, en) => (s.lang === 'en' ? en : ko) + ' | ' + name;
+  // 하위 페이지 기본 설명은 페이지마다 다르게 — 예전엔 7페이지가 같은 설명을 써서 중복 설명(자동 SEO 점검 막는 위반)이었다(2026-11-04)
+    const svcNames = (s.services || []).map((x) => x.name).filter(Boolean).slice(0, 4).join(', ');
+  const adr = typeof c.addr === 'string' ? c.addr : ''; const where = (adr.split(',').slice(-2, -1)[0] || '').trim(); // 'Garden Grove' 처럼 도시만
+  const P = (ko, en) => (s.lang === 'en' ? en : ko); // 메타 설명은 순수 텍스트(L() 은 한/영 토글 HTML 이라 쓰면 안 된다)
+  const D = {
+    services: P(`${name}${where ? ' (' + where + ')' : ''} 서비스 안내${svcNames ? ' — ' + svcNames : ''}. 가격·진행 방법을 한눈에 보세요.`, `Services at ${name}${where ? ' in ' + where : ''}${svcNames ? ' — ' + svcNames : ''}.`),
+    about: P(`${name} 소개 — ${s.tagline || s.category || ''}${where ? ' · ' + where : ''}. 우리가 일하는 방식과 이용 순서.`, `About ${name}${where ? ' in ' + where : ''} — how we work.`),
+    gallery: P(`${name} 매장·작업 사진${where ? ' — ' + where : ''}. 방문 전에 매장 분위기와 진열, 작업 모습을 사진으로 미리 보세요.`, `Photos of ${name}${where ? ' in ' + where : ''}.`),
+    contact: P(`${name} 오시는 길·영업시간·전화${adr ? ' — ' + adr : ''}. 문의를 남기시면 연락드립니다.`, `Directions, hours and contact for ${name}${adr ? ' — ' + adr : ''}.`),
+    blog: P(`${name} 소식·정보 글 모음 — ${s.category || '서비스'}에 대해 손님이 자주 묻는 것과 방문 전에 알아 두면 좋은 정보.`, `News and guides from ${name}.`),
+    areas: P(`${name}을(를) 찾는 인근 지역 손님 안내 — 도시별 오는 길과 자주 묻는 질문.`, `Areas served by ${name} — directions and FAQs by city.`),
+  };
+  const dsc = (k) => (D[k] || desc).replace(/\s+/g, ' ').trim().slice(0, 160);
   files['index.html'] = shell(c, { title: base, desc, depth: 0, active: '', content: [sec.hero(c, 0), sec.promo(c), sec.services(c, 0, { max: 6, more: true }), sec.highlights(c), sec.reviews(c), sec.galleryStrip(c, 0, true), sec.areasHome(c, 0), sec.ctab(c, 0)].join('\n') });
-  if (s.services.length) files['services/index.html'] = shell(c, { title: T('서비스', 'Services'), desc, depth: 1, active: 'services/', canonicalPage: c.canonical + 'services/', extraSchema: [crumbs(c, [[name, ''], [s.lang === 'en' ? 'Services' : '서비스', 'services/']])], content: [sec.pageHead(c, '서비스', 'Services', s.services_intro ? t(s, s, 'services_intro') : ''), sec.services(c, 1, { full: true }), sec.faq(c), sec.ctab(c, 1)].join('\n') });
-  if (s.about.text || s.highlights.length || s.steps.length) files['about/index.html'] = shell(c, { title: T('소개', 'About'), desc, depth: 1, active: 'about/', canonicalPage: c.canonical + 'about/', extraSchema: [crumbs(c, [[name, ''], [s.lang === 'en' ? 'About' : '소개', 'about/']])], content: [sec.pageHead(c, '소개', 'About'), sec.about(c), sec.highlights(c), sec.steps(c), sec.brands(c), sec.reviews(c), sec.ctab(c, 1)].join('\n') });
-  if (c.gallery.length >= 3) files['gallery/index.html'] = shell(c, { title: T('갤러리', 'Gallery'), desc, depth: 1, active: 'gallery/', canonicalPage: c.canonical + 'gallery/', extraSchema: [crumbs(c, [[name, ''], [s.lang === 'en' ? 'Gallery' : '갤러리', 'gallery/']])], content: [sec.pageHead(c, '갤러리', 'Gallery'), sec.galleryGrid(c), sec.ctab(c, 1)].join('\n') });
-  files['contact/index.html'] = shell(c, { title: T('오시는 길·문의', 'Visit & Contact'), desc, depth: 1, active: 'contact/', canonicalPage: c.canonical + 'contact/', extraSchema: [crumbs(c, [[name, ''], [s.lang === 'en' ? 'Contact' : '오시는 길·문의', 'contact/']])], content: [sec.pageHead(c, '오시는 길 · 문의', 'Visit & Contact'), sec.visit(c, 1), sec.contact(c, 1), sec.faq(c)].join('\n') });
+  if (s.services.length) files['services/index.html'] = shell(c, { title: T('서비스', 'Services'), desc: dsc('services'), depth: 1, active: 'services/', canonicalPage: c.canonical + 'services/', extraSchema: [crumbs(c, [[name, ''], [s.lang === 'en' ? 'Services' : '서비스', 'services/']])], content: [sec.pageHead(c, '서비스', 'Services', s.services_intro ? t(s, s, 'services_intro') : ''), sec.services(c, 1, { full: true }), sec.faq(c), sec.ctab(c, 1)].join('\n') });
+  if (s.about.text || s.highlights.length || s.steps.length) files['about/index.html'] = shell(c, { title: T('소개', 'About'), desc: dsc('about'), depth: 1, active: 'about/', canonicalPage: c.canonical + 'about/', extraSchema: [crumbs(c, [[name, ''], [s.lang === 'en' ? 'About' : '소개', 'about/']])], content: [sec.pageHead(c, '소개', 'About'), sec.about(c), sec.highlights(c), sec.steps(c), sec.brands(c), sec.reviews(c), sec.ctab(c, 1)].join('\n') });
+  if (c.gallery.length >= 3) files['gallery/index.html'] = shell(c, { title: T('갤러리', 'Gallery'), desc: dsc('gallery'), depth: 1, active: 'gallery/', canonicalPage: c.canonical + 'gallery/', extraSchema: [crumbs(c, [[name, ''], [s.lang === 'en' ? 'Gallery' : '갤러리', 'gallery/']])], content: [sec.pageHead(c, '갤러리', 'Gallery'), sec.galleryGrid(c), sec.ctab(c, 1)].join('\n') });
+  files['contact/index.html'] = shell(c, { title: T('오시는 길·문의', 'Visit & Contact'), desc: dsc('contact'), depth: 1, active: 'contact/', canonicalPage: c.canonical + 'contact/', extraSchema: [crumbs(c, [[name, ''], [s.lang === 'en' ? 'Contact' : '오시는 길·문의', 'contact/']])], content: [sec.pageHead(c, '오시는 길 · 문의', 'Visit & Contact'), sec.visit(c, 1), sec.contact(c, 1), sec.faq(c)].join('\n') });
   if (posts.length) {
-    files['blog/index.html'] = shell(c, { title: T('소식', 'Blog'), desc, depth: 1, active: 'blog/', canonicalPage: c.canonical + 'blog/', extraSchema: [crumbs(c, [[name, ''], [s.lang === 'en' ? 'Blog' : '소식', 'blog/']])], content: [sec.pageHead(c, '소식', 'Blog'), sec.blogList(c, 1), sec.ctab(c, 1)].join('\n') });
+    files['blog/index.html'] = shell(c, { title: T('소식', 'Blog'), desc: dsc('blog'), depth: 1, active: 'blog/', canonicalPage: c.canonical + 'blog/', extraSchema: [crumbs(c, [[name, ''], [s.lang === 'en' ? 'Blog' : '소식', 'blog/']])], content: [sec.pageHead(c, '소식', 'Blog'), sec.blogList(c, 1), sec.ctab(c, 1)].join('\n') });
     for (const p of posts) { const ps = slugify(p.slug); files[`blog/${ps}/index.html`] = shell(c, { title: `${pick(s, p, 'title').main} | ${name}`, desc: p.excerpt || desc, depth: 2, active: 'blog/', canonicalPage: c.canonical + `blog/${ps}/`, extraSchema: [{ '@context': 'https://schema.org', '@type': 'BlogPosting', headline: p.title, datePublished: p.date || undefined, image: p.photo || undefined, author: { '@type': 'Organization', name }, publisher: { '@type': 'Organization', name } }, crumbs(c, [[name, ''], [s.lang === 'en' ? 'Blog' : '소식', 'blog/'], [p.title, `blog/${ps}/`]])], content: [sec.blogPost(c, p), sec.ctab(c, 2)].join('\n') }); }
   }
   areaFiles(c, files);

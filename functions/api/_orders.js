@@ -340,6 +340,27 @@ export async function approveDeliverable(db, d, { source, note, choice }) {
 }
 
 /* 7일 무응답 승인 간주 (약관 §2) — 보낸 지 7일 지난 승인 대기 결과물. 루틴 큐·관제탑을 열 때 돈다. 수정 요청이 걸린 건 건드리지 않는다. 선택지가 있으면 사이트 스타일 기본값으로 */
+/** 반복 단계 다시 열기 — 월간 단계는 끝난 지 28일, 주간 단계는 6일이 지나면 todo 로 되돌린다(진행 중 작업만).
+ *  2026-11-04: 그전엔 월간 단계(캘린더·블로그·리포트·SEO 개선 등)가 한 번 끝나면 다시 열리지 않아 두 번째 달부터 월간 운영이 멈췄다.
+ *  결과물(result_text)은 그대로 두어 루틴이 prev_result_text 로 지난달 것을 보고 이어 쓴다. 결과물 행(deliverables)은 다시 승인될 때 ensureDeliverable 이 새 회차로 되살린다.
+ *  루틴 큐(runner/queue)가 매번 부른다 — 하루 1회 정기 실행만으로도 돈다 */
+export async function rolloverRecurring(db) {
+  const rule = [['monthly', '-28 days'], ['weekly', '-6 days']];
+  const out = {};
+  for (const [phase, ago] of rule) {
+    const rows = (await db.prepare(`SELECT t.id, t.job_id, t.key FROM job_tasks t JOIN jobs j ON j.id = t.job_id WHERE j.status NOT IN ('done','hold') AND t.phase = ? AND t.status = 'done' AND COALESCE(t.done_at, t.decided_at) < datetime('now', ?)`).bind(phase, ago).all()).results || [];
+    if (!rows.length) { out[phase] = 0; continue; }
+    for (let i = 0; i < rows.length; i += 80) {
+      const ids = rows.slice(i, i + 80).map((r) => r.id);
+      await db.prepare(`UPDATE job_tasks SET status = 'todo', claimed_at = NULL, revise_note = NULL, done_at = NULL WHERE id IN (${ids.map(() => '?').join(',')})`).bind(...ids).run();
+    }
+    const byJob = {}; for (const r of rows) (byJob[r.job_id] = byJob[r.job_id] || []).push(r.key);
+    for (const [jid, keys] of Object.entries(byJob)) await addEvent(db, Number(jid), 'system', null, null, `🔁 ${phase === 'monthly' ? '새 달' : '새 주'} — 반복 단계 다시 열림: ${keys.join(' ')}`);
+    out[phase] = rows.length;
+  }
+  return out;
+}
+
 export async function sweepAutoApprovals(db) {
   const rows = (await db.prepare(`SELECT d.* FROM deliverables d JOIN jobs j ON j.id = d.job_id WHERE d.needs_approval = 1 AND d.approved_at IS NULL AND (d.revise_note IS NULL OR d.revise_note = '') AND d.sent_at IS NOT NULL AND d.sent_at <= datetime('now', '-7 days') AND j.status NOT IN ('done','hold') LIMIT 50`).all()).results || [];
   for (const d of rows) await approveDeliverable(db, d, { source: 'auto', note: '7일 무응답 — 승인 간주(약관)' });

@@ -6,6 +6,7 @@
  *   node automation/ai-runner/sites.js build [--out sites-build]              # 관리자 API의 모든 사이트를 렌더 + _worker.js
  *   node automation/ai-runner/sites.js deploy [--dir sites-build]             # wrangler pages deploy (CLOUDFLARE_API_TOKEN·CLOUDFLARE_ACCOUNT_ID 필요)
  *   node automation/ai-runner/sites.js render --spec spec.json --out preview  # 로컬 확인용 (관리자 API 없이)
+ *   node automation/ai-runner/sites.js seocheck (--job 28 | --spec spec.json [--live]) [--json]   # 자동 SEO 점검 — 제목·설명·H1·canonical·스키마·사이트맵·고아·얇은 글·키워드 지도(한 키워드 한 페이지). 막는 위반이 있으면 종료 코드 1 (seo-6·seo-5)
  *   node automation/ai-runner/sites.js domains                                # 모든 사이트의 {slug}.sites.bizhigher.com 등록 상태 확인·보정 (배포 없이)
  *   node automation/ai-runner/sites.js needs-deploy                           # "yes …"/"no …" — 템플릿·라우터·CLI(automation/sites, sites.js)가 마지막 배포 뒤 바뀌었으면 yes (루틴이 매 실행 확인)
  *   node automation/ai-runner/sites.js patch --job 28 --file patch.json [--note "스타일 변경"]   # 저장된 스펙에 부분 패치(깊은 병합, null 은 삭제) → 새 버전. 수정 요청 반영에 쓴다(전체 재작성 금지)
@@ -282,6 +283,17 @@ function diffKeys(a, b, prefix = '') {
     let boardUrl = shots.board; if (upload) { boardUrl = await uploadFile(shots.board, { job, task, label: '사이트 스타일 시안 보드' }); files.push({ name: 'board', url: boardUrl }); }
     fs.writeFileSync(path.join(out, 'options.json'), JSON.stringify(options, null, 2));
     console.log(JSON.stringify({ current, keys, board: boardUrl, options: path.join(out, 'options.json'), files: upload ? files : shots.map((x) => ({ name: `style-${x.key}`, url: x.file })) }, null, 2));
+    return;
+  }
+  if (cmd === 'seocheck') { // 자동 SEO 점검(seo-6·seo-5 발행 전) — 저장된 스펙(--job) 또는 파일(--spec)을 렌더해 규칙 검사. 막는 위반이 있으면 종료 코드 1
+    const { check } = require('./_seocheck.js');
+    let spec, live = false, origin;
+    if (opt('job')) { const cur = await api('sites/' + Number(opt('job'))); if (!cur || !cur.spec) throw new Error('저장된 스펙이 없습니다'); spec = typeof cur.spec === 'string' ? JSON.parse(cur.spec) : cur.spec; spec.slug = cur.slug; live = !!(cur.domain && cur.live); origin = live ? `https://${cur.domain}` : `https://${cur.slug}.sites.bizhigher.com`; }
+    else { spec = JSON.parse(fs.readFileSync(opt('spec'), 'utf8')); live = args.includes('--live'); origin = 'https://example.com'; }
+    const { files } = render(spec, { origin, noindex: !live });
+    const r = check(files, spec, { live });
+    if (args.includes('--json')) console.log(JSON.stringify(r, null, 2)); else console.log(r.markdown);
+    if (r.blocking.length) process.exitCode = 1;
     return;
   }
   if (cmd === 'render') {
