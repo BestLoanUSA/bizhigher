@@ -9,9 +9,10 @@
 
 | 상태 | slug | 카테고리 | 우선 이유 |
 |---|---|---|---|
+| ⬜ | near-me-search-ranking | 구글 노출 | [SEO K-01] 본문 중간(순위가 위치마다 다른 이유 문단)에 /tools/local-rank/ 문맥 링크 1개 — 앵커 "내 가게 지도 순위 직접 확인" |
+| ⬜ | not-showing-on-google | 구글 노출 | [SEO K-01] "내 가게가 지도에 안 보일 때 먼저 확인" 문단에 /tools/local-rank/ 링크 1개 |
 | ⬜ | google-business-profile-hours-update | 구글 노출 | [SEO I-01] 영업시간 변경이 디렉토리에도 퍼져야 한다는 문단에 /service/local-listing-care/ 링크 1개 |
 | ⬜ | negative-review-response-guide | 리뷰·평판 | 고의도 검색, 예문 보강 여지 |
-| ⬜ | near-me-search-ranking | 구글 노출 | 순위 원리, 최신 반영 필요 |
 | ⬜ | google-ads-small-budget-guide | 광고 | 광고 UI·정책 변화가 잦음 |
 | ⬜ | store-photo-guide | 구글 노출 | 초기 글 |
 | ⬜ | yelp-management-guide | 리뷰·평판 | 옐프 정책 최신화 |

@@ -30,7 +30,7 @@ items:
   - id: K-01
     title: /tools/local-rank/ — "구글 지도 순위 체크" 검색어 48~74위에서 1페이지로
     source: 2026-11-02 (latest.md 2026-11-01 — 노출 상위 검색어 "구글순위체크" 9, "구글 지도 순위 체크" 6, "구글지도순위체크" 4, "구글 지도 순위 조회" 1; tools 섹션이 전체 노출 35/64)
-    status: ready
+    status: in-progress
     path: structure
     target: [content/tools/local-rank.md, /tools/local-rank/]
     notes: >
@@ -39,6 +39,7 @@ items:
       "다음맵순위체크"(2) 같은 한국 서비스 검색어는 우리 대상이 아니다 — 첫 문단에 "미국 구글 지도" 를 명시해 걸러낸다.
       /blog/near-me-search-ranking/ 과 /blog/not-showing-on-google/ 본문에서 이 도구로 가는 링크 추가(지금은 하단 추천 블록만).
       성공 지표: 4주 뒤 "구글 지도 순위 체크" 류 평균 순위 30 이하, 클릭 1 이상.
+      2026-11-03 claude/beautiful-meitner-zyudi1: content/tools/local-rank.md 에 "미국 구글 지도" 도입 문단·질문형 ## 3개(격자 뜻·몇 위면 손님이 오나·올리는 법 4가지)·FAQ 5개. 블로그 2편 링크는 글을 직접 쓰지 않는 규칙에 따라 upgrade-queue 맨 위에 넣음.
 
   - id: O-01
     title: 블로그 <title> 태그를 짧게 — 56페이지가 표시 폭 60 초과
