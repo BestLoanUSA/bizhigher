@@ -66,13 +66,14 @@ items:
   - id: K-02
     title: keyword-map 초안 정리 — 서비스·도구·허브·글이 같은 키워드를 쓰는 25곳의 각도 나누기
     source: 2026-11-02 (seo-check 보고서 "두 묶음에 같은 키워드" 25, "owner 제목·H1 에 키워드 없음" 26)
-    status: ready
+    status: in-progress
     path: structure
     target: [seo/keyword-map.yaml]
     notes: >
       keyword-map.yaml 만 고치는 PR. 규칙: 같은 말이라도 서비스 = 구매(…대행, …비용), 도구 = 직접(…만들기, …체크), 블로그 = 정보(…하는 법, …이유)로
       키워드를 다시 적는다. 허브와 스포크가 같은 키워드면 스포크가 주인(허브는 지도 역할). 예: "구글 리뷰 링크 만들기" → tool-review-link 만,
       svc-review-qr-kit 는 "리뷰 QR 키트 제작·테이블텐트". owner 제목에 키워드가 없는 26곳은 키워드를 제목 쪽에 맞추거나(정보 글) 제목을 바꿀 O- 항목으로.
+      2026-11-05 claude/seo-k-02-20261105: 같은 키워드 25→1 (허브는 스포크에 양보·서비스는 '…대행/제작'·도구는 직접 키워드로 분리). 남은 1건과 owner 제목에 키워드 없음 29(허브 '가이드 모음' 키워드 추가분 포함)는 O- 항목 몫.
 
   - id: Q-01
     title: 허브 글 4편이 1,800자 미만(1,579~1,683) — baseline 에서 빼기

@@ -80,17 +80,17 @@ clusters:
     owner: /service/ai-marketing-report/
 
   - id: svc-review-qr-kit
-    keywords: [구글 리뷰 QR 키트, 구글 리뷰 늘리는 방법, 구글 리뷰 QR코드 만들기, 구글 리뷰 링크 만들기, 리뷰 부탁하는 법, 식당 리뷰 QR 테이블텐트, 구글 리뷰 요청 문구, google review QR code]
+    keywords: [구글 리뷰 QR 키트, 구글 리뷰 늘리는 방법, 구글 리뷰 QR코드 만들기, 리뷰 QR 키트 제작, 리뷰 부탁하는 법, 식당 리뷰 QR 테이블텐트, 구글 리뷰 요청 문구, google review QR code]
     intent: transactional
     owner: /service/review-qr-kit/
 
   - id: svc-google-profile-optimization
-    keywords: [구글 비즈니스 프로필 최적화, 구글 비즈니스 프로필 최적화, 구글 비즈니스 프로필 최적화 비용, 구글 지도 상위 노출 방법, 구글 지도 순위 올리기, 구글 프로필 카테고리 설정, 구글 맵 가게 노출 안됨, 구글 프로필 관리 대행]
+    keywords: [구글 비즈니스 프로필 최적화, 구글 비즈니스 프로필 최적화 비용, 구글 지도 상위 노출 방법, 구글 지도 순위 올리기, 구글 프로필 카테고리 설정, 구글 맵 가게 노출 안됨]
     intent: transactional
     owner: /service/google-profile-optimization/
 
   - id: svc-local-listing-setup
-    keywords: [로컬 등록 셋업, 구글 말고 어디에 가게 등록, 미국 가게 디렉토리 등록, 한인 업소록 등록, 애플 지도 가게 등록, Bing Places 등록, 시티에이션 등록 비용, NAP 일관성]
+    keywords: [로컬 등록 셋업, 구글 말고 어디에 가게 등록, 미국 가게 디렉토리 등록, 한인 업소록 등록, 애플 지도 가게 등록, Bing Places 등록, 시티에이션 등록 비용, NAP 통일 대행]
     intent: transactional
     owner: /service/local-listing-setup/
 
@@ -115,7 +115,7 @@ clusters:
     owner: /service/seo-blog-pack/
 
   - id: svc-seo-aio
-    keywords: [SEO/AIO 관리, ChatGPT 가게 추천 받는 법, AI 검색 최적화, AIO 뜻, 구글 검색 상위 노출 방법, SEO 관리 비용, 한인 업소 SEO 대행, Search Console 2페이지 키워드]
+    keywords: [SEO/AIO 관리, ChatGPT 가게 추천 받는 법, AI 검색 최적화 대행, AIO 뜻, 구글 검색 상위 노출 방법, SEO 관리 비용, 한인 업소 SEO 대행, Search Console 2페이지 키워드]
     intent: transactional
     owner: /service/seo-aio/
 
@@ -135,7 +135,7 @@ clusters:
     owner: /service/ads-setup/
 
   - id: svc-ads-management
-    keywords: [광고 운영, 구글 광고 대행 비용, 광고 대행사 수수료, 메타 광고 대행 비용, 페이스북 인스타 광고 대행, 구글 광고 최소 예산, 광고 대행 vs 직접 운영, 한인 광고 대행사]
+    keywords: [광고 운영, 구글 광고 대행 비용, 광고 대행사 수수료, 메타 광고 대행 비용, 페이스북 인스타 광고 대행, 광고 대행 최소 예산, 광고 대행 vs 직접 운영, 한인 광고 대행사]
     intent: transactional
     owner: /service/ads-management/
 
@@ -145,7 +145,7 @@ clusters:
     owner: /service/review-reply/
 
   - id: svc-gbp-posting
-    keywords: [포스팅 관리, 구글 프로필 게시물 효과, 구글 비즈니스 프로필 포스팅, 인스타 관리 대행 비용, SNS 관리 대행 비용, 페이스북 인스타 관리 대행, 가게 인스타 뭐 올려야 하나, google business profile posts]
+    keywords: [포스팅 관리, 구글 프로필 게시물 효과, 구글 프로필 포스팅 대행, 인스타 관리 대행 비용, SNS 관리 대행 비용, 페이스북 인스타 관리 대행, 가게 인스타 뭐 올려야 하나, google business profile posts]
     intent: transactional
     owner: /service/gbp-posting/
 
@@ -247,7 +247,7 @@ clusters:
     support: [/service/ads-setup/]
 
   - id: tool-gbp-post
-    keywords: [구글 프로필 게시물 생성기, 구글 프로필 게시물 예시, 구글 비즈니스 프로필 포스팅, google business post ideas]
+    keywords: [구글 프로필 게시물 생성기, 구글 프로필 게시물 예시, 구글 프로필 게시물 만들기, google business post ideas]
     intent: tool
     owner: /tools/gbp-post/
     support: [/service/gbp-posting/]
@@ -266,42 +266,42 @@ clusters:
 
   # ── 블로그 (허브 먼저, 그다음 글) — related 는 빌드가 CTA 로 붙이는 서비스 ────
   - id: hub-ads-hub
-    keywords: [가게 광고, 구글 광고 시작, 소상공인 광고, 광고 성과, 시즌 광고]
+    keywords: [가게 광고, 구글 광고 시작, 광고 가이드 모음, 광고 성과, 시즌 광고]
     intent: informational
     owner: /blog/ads-hub/
     support: [/blog/ad-performance-metrics-guide/, /blog/google-ads-small-budget-guide/, /blog/google-ads-vs-meta-ads-for-local-business/, /blog/seasonal-marketing-calendar/]
     related: /service/ad-creative-pack/
 
   - id: hub-ai-search-hub
-    keywords: [AI 검색 최적화, ChatGPT 가게 추천, 구글 AI 요약, AIO, 로컬 비즈니스 AI 노출]
+    keywords: [AI 검색 가이드 모음, 로컬 비즈니스 AI 노출]
     intent: informational
     owner: /blog/ai-search-hub/
     support: [/blog/ai-search-optimization-aio/, /blog/google-ai-overviews-local-business/, /blog/local-marketing-2026-review-2027-prep/]
     related: /service/seo-aio/
 
   - id: hub-content-sns-hub
-    keywords: [가게 SNS 홍보, 소상공인 콘텐츠 마케팅, 인스타그램 구글 프로필, 이중 언어 마케팅, 구글 게시물]
+    keywords: [SNS 홍보 가이드 모음, 소상공인 콘텐츠 마케팅, 구글 게시물]
     intent: informational
     owner: /blog/content-sns-hub/
     support: [/blog/bilingual-marketing-korean-local-customers/, /blog/email-sms-marketing-basics/, /blog/google-business-profile-posts/, /blog/instagram-vs-google-business-profile/, /blog/shortform-video-guide/, /blog/small-business-blog-topic-ideas/]
     related: /service/seo-blog-pack/
 
   - id: hub-google-business-profile-hub
-    keywords: [구글 비즈니스 프로필, 구글 지도 등록, 구글 검색 노출, GBP 완전 가이드]
+    keywords: [구글 비즈니스 프로필 가이드 모음, 구글 검색 노출, GBP 완전 가이드]
     intent: informational
     owner: /blog/google-business-profile-hub/
     support: [/blog/google-business-profile-category-guide/, /blog/google-business-profile-guide/, /blog/google-business-profile-hours-update/, /blog/google-business-profile-qa-removed/, /blog/google-business-profile-services-guide/, /blog/korean-business-directory-list/, /blog/near-me-search-ranking/, /blog/not-showing-on-google/, /blog/store-photo-guide/, /blog/trade-area-analysis-google-maps/]
     related: /service/google-profile-optimization/
 
   - id: hub-review-management-hub
-    keywords: [리뷰 관리, 구글 리뷰, 나쁜 리뷰 대응, 옐프 관리, 리뷰 답글]
+    keywords: [리뷰 관리, 구글 리뷰, 리뷰 답글]
     intent: informational
     owner: /blog/review-management-hub/
     support: [/blog/google-review-guide/, /blog/negative-review-response-guide/, /blog/photo-reviews-guide/, /blog/review-qr-code-placement/, /blog/yelp-management-guide/]
     related: /service/review-reply/
 
   - id: hub-website-hub
-    keywords: [가게 웹사이트, 소상공인 홈페이지, 온라인 메뉴판, 웹사이트 전환율, 모바일 웹사이트]
+    keywords: [웹사이트 가이드 모음]
     intent: informational
     owner: /blog/website-hub/
     support: [/blog/do-you-need-a-website/, /blog/landing-page-vs-homepage-for-ads/, /blog/online-menu-guide/, /blog/website-visitors-no-calls/]
@@ -315,7 +315,7 @@ clusters:
     related: /service/ad-creative-pack/
 
   - id: post-ai-search-optimization-aio
-    keywords: [AI 검색 최적화, AIO, ChatGPT 가게 추천, AI 검색 노출, AEO, GEO, 구글 AI 요약, how to get recommended by ChatGPT]
+    keywords: [AI 검색 최적화, AIO, ChatGPT 추천 받는 법, AI 검색 노출, AEO, GEO, how to get recommended by ChatGPT]
     intent: informational
     owner: /blog/ai-search-optimization-aio/
     support: [/blog/ai-search-hub/]
@@ -329,7 +329,7 @@ clusters:
     related: /service/seo-blog-pack/
 
   - id: post-do-you-need-a-website
-    keywords: [가게 웹사이트, 소상공인 웹사이트, 구글 비즈니스 프로필, 웹사이트 제작 비용, 원페이지 홈페이지, 홈페이지 필요한가, 구글 프로필만으로 충분한가, do I need a website for my small business]
+    keywords: [가게 웹사이트, 소상공인 웹사이트, 웹사이트 제작 비용, 원페이지 홈페이지, 홈페이지 필요한가, 구글 프로필만으로 충분한가, do I need a website for my small business]
     intent: informational
     owner: /blog/do-you-need-a-website/
     support: [/blog/website-hub/]
@@ -420,7 +420,7 @@ clusters:
     related: /service/gbp-posting/
 
   - id: post-korean-business-directory-list
-    keywords: [미국 한인 업소록, 비즈니스 디렉토리 등록, 무료 업체 등록, NAP 일관성, 로컬 SEO]
+    keywords: [미국 한인 업소록, 비즈니스 디렉토리 등록, 무료 업체 등록, NAP 일관성, 디렉토리 로컬 SEO]
     intent: informational
     owner: /blog/korean-business-directory-list/
     support: [/blog/google-business-profile-hub/]
@@ -434,14 +434,14 @@ clusters:
     related: /service/local-landing-pack/
 
   - id: post-local-marketing-2026-review-2027-prep
-    keywords: [2026 로컬 마케팅, 2027 마케팅 준비, 한인 가게 마케팅, 구글 프로필 점검, AI 검색 노출]
+    keywords: [2026 로컬 마케팅, 2027 마케팅 준비, 한인 가게 마케팅, 구글 프로필 점검, 2026 AI 검색 변화]
     intent: informational
     owner: /blog/local-marketing-2026-review-2027-prep/
     support: [/blog/ai-search-hub/]
     related: /service/seo-aio/
 
   - id: post-near-me-search-ranking
-    keywords: [near me 검색, 근처 검색 순위, 구글 지도 거리, 로컬 SEO]
+    keywords: [near me 검색, 근처 검색 순위, 구글 지도 거리, 근처 검색 로컬 SEO]
     intent: informational
     owner: /blog/near-me-search-ranking/
     support: [/blog/google-business-profile-hub/]
@@ -469,14 +469,14 @@ clusters:
     related: /service/website/
 
   - id: post-photo-reviews-guide
-    keywords: [포토 리뷰, 구글 사진 리뷰, 리뷰 사진 늘리기, 구글 지도 리뷰, 리뷰 요청 방법]
+    keywords: [포토 리뷰, 구글 사진 리뷰, 리뷰 사진 늘리기, 구글 지도 리뷰, 사진 리뷰 요청 방법]
     intent: informational
     owner: /blog/photo-reviews-guide/
     support: [/blog/review-management-hub/]
     related: /service/review-qr-kit/
 
   - id: post-review-qr-code-placement
-    keywords: [리뷰 QR 코드, 구글 리뷰 QR, QR 코드 위치, 리뷰 요청 방법, 구글 리뷰 링크]
+    keywords: [리뷰 QR 코드, 구글 리뷰 QR, QR 코드 위치, QR 리뷰 요청 위치, 구글 리뷰 링크]
     intent: informational
     owner: /blog/review-qr-code-placement/
     support: [/blog/review-management-hub/]
