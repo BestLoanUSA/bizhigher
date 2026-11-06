@@ -3330,10 +3330,10 @@ function blogPostPage(p, posts) {
     <h1 class="page-title" style="font-size:36px;line-height:1.25;">${p.title}</h1>
     <p class="page-sub">${p.date} · ${p.readMin}분 읽기 · BizHigher</p>
     ${hub ? `<a href="/blog/${hub.slug}/" class="hub-callout">🧭 이 글은 <b>${hub.title}</b> 가이드의 일부입니다 →</a>` : ''}
-    ${p.banner ? `<figure class="post-banner" style="--c:${blogCat(p.category).c};--t:${blogCat(p.category).t}"><picture><source media="(max-width: 640px)" srcset="/blog-img/${p.slug}-overview-m.jpg" width="1080" height="1350"><img src="/blog-img/${p.slug}-overview.jpg" width="1200" height="675" alt="${escAttr(`${p.title} 한눈에 보기 — ${p.summary.join(' ')}`)}" fetchpriority="high" decoding="async"></picture></figure>` : ''}
   </div>
 </header>
 <section class="detail-body" style="padding-top:4px;">
+  ${p.banner ? `<figure class="post-banner post-banner-wide" style="--c:${blogCat(p.category).c};--t:${blogCat(p.category).t}"><picture><source media="(max-width: 640px)" srcset="/blog-img/${p.slug}-overview-m.jpg" width="1080" height="1350"><img src="/blog-img/${p.slug}-overview.jpg" width="1200" height="675" alt="${escAttr(`${p.title} 한눈에 보기 — ${p.summary.join(' ')}`)}" fetchpriority="high" decoding="async"></picture></figure>` : ''}
   <div class="container post-layout">
     ${toc.length > 2 ? `<aside class="toc toc-side" id="toc"><b>목차</b><ol>${toc.map((h) => `<li><a href="#${h.id}" data-h="${h.id}">${h.t}</a></li>`).join('')}</ol></aside>` : '<div></div>'}
     <div class="post-main">
