@@ -11,6 +11,7 @@ on:
       - 'data/surveys/**'
       - 'scripts/og.js'
       - 'scripts/blog-banners.js'
+      - 'scripts/blog-cards.js'
   workflow_dispatch:
     inputs:
       force:

@@ -64,7 +64,7 @@ function loadPosts() {
     return {
       slug: meta.slug || f.replace(/\.md$/, ''), title: meta.title || '', category: meta.category || '가이드', hub: meta.hub === 'true',
       summary: (meta.summary || '').split('|').map((x) => x.trim()).filter(Boolean).slice(0, 3),
-      heads, readMin: Math.max(3, Math.round(body.replace(/[#>*|\-]/g, '').length / 600)),
+      heads, readMin: Math.max(3, Math.round(body.replace(/[#>*|\-]/g, '').length / 600)), body,
     };
   }).filter(Boolean);
 }
@@ -194,14 +194,14 @@ const OVERLAP_CHECK = `(() => {
 })()`;
 
 async function main() {
-  const posts = loadPosts().filter((p) => !ONLY || ONLY.includes(p.slug));
+  const all = loadPosts();
+  const posts = all.filter((p) => !ONLY || ONLY.includes(p.slug));
   const manifest = fs.existsSync(MANIFEST) ? JSON.parse(fs.readFileSync(MANIFEST, 'utf8')) : {};
   const todo = posts.filter((p) => {
     if (p.summary.length < 2) { console.log(`  · ${p.slug} — summary 가 없어 건너뜀`); return false; }
     const files = ['', '-m', '-t'].map((s) => path.join(IMG, `${p.slug}-overview${s}.jpg`));
     return FORCE || ONLY || manifest[p.slug] !== hashOf(p) || files.some((f) => !fs.existsSync(f));
   });
-  if (!todo.length) { console.log('배너: 바뀐 글 없음'); return; }
   let chromium;
   try { ({ chromium } = require('playwright')); } catch { ({ chromium } = require(process.env.PLAYWRIGHT_PATH || '/opt/node-tools/node_modules/playwright')); }
   const { installFonts } = require(path.join(ROOT, 'automation', 'ai-runner', '_fonts.js'));
@@ -228,12 +228,14 @@ async function main() {
     if (bad.length) { warn++; console.log(`  ⚠ ${p.slug} — ${bad.join(' / ')}`); } else console.log(`  ✓ ${p.slug}`);
     manifest[p.slug] = hashOf(p);
   }
+  // 카드 그림·인포그래픽 확대본(scripts/blog-cards.js) — 같은 브라우저로
+  const cards = await require('./blog-cards.js').run({ browser, installFonts, posts: all, IMG, force: FORCE, only: ONLY });
   await browser.close();
   // 지워진 글의 배너는 정리한다
   const live = new Set(loadPosts().map((p) => p.slug));
   for (const s of Object.keys(manifest)) if (!live.has(s)) { delete manifest[s]; for (const x of ['', '-m', '-t']) fs.rmSync(path.join(IMG, `${s}-overview${x}.jpg`), { force: true }); }
   fs.writeFileSync(MANIFEST, JSON.stringify(Object.fromEntries(Object.entries(manifest).sort()), null, 1) + '\n');
-  console.log(`배너 ${todo.length}개${warn ? ` (겹침 경고 ${warn}개 — 위 ⚠ 를 열어 볼 것)` : ''}`);
+  console.log(`배너 ${todo.length}개${warn ? ` (겹침 경고 ${warn}개 — 위 ⚠ 를 열어 볼 것)` : ''} · 카드·확대 ${cards.n}개${cards.warn ? ` (넘침 경고 ${cards.warn}개)` : ''}`);
 }
 
 module.exports = { CATS, DEFAULT_CAT, ICONS };
