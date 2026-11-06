@@ -842,21 +842,20 @@ const SC_SCENES = [
    쪽은 JS 없이도 가로 스크롤로 다 보인다 — JS 는 버튼·목차·쪽 번호만 붙인다 */
 function sampleReportSection() {
   const dir = path.join(__dirname, 'src', 'sample-report');
-  if (!fs.existsSync(path.join(dir, 'pages.json'))) return showcaseSection();
+  if (!fs.existsSync(path.join(dir, 'pages.json'))) return '';
   const pages = JSON.parse(fs.readFileSync(path.join(dir, 'pages.json'), 'utf8'));
   const num = (i) => (i === 0 ? '표지' : String(i).padStart(2, '0'));
+  /* 2026-11-06 v2: 가로 넘김 → 스크롤할 때마다 한 장씩 위로 쌓인다(sticky 카드, JS 없이 동작). 목차는 지금 보는 쪽만 JS 로 표시.
+     폰·낮은 화면은 고정 없이 휴대폰 판형 쪽 이미지를 차례로 */
   return `
 <section class="section sr-sec" id="sample-report">
   <div class="container">
-    <p class="eyebrow">WHAT YOU GET</p>
-    <h2 class="h2">매달 받는 <em>리포트</em>, 그대로 넘겨 보세요</h2>
-    <p class="mk-section-sub">무료 진단과 같은 기준의 점수, 지도 순위, 리뷰·전화 같은 손님 행동, 이번 달 한 일과 다음 달 계획까지 한 번에 받습니다. 아래는 가상의 가게로 만든 예시입니다.</p>
-    <div class="sr-wrap">
-      <ol class="sr-toc" aria-label="리포트 목차">${pages.map((p, i) => `<li><button type="button" data-i="${i}"${i === 0 ? ' aria-current="true"' : ''}><span>${num(i)}</span>${p.title.split(' — ')[0]}</button></li>`).join('')}</ol>
-      <div class="sr-viewer">
-        <div class="sr-track" id="sr-track" tabindex="0" aria-label="샘플 리포트 쪽">${pages.map((p, i) => `<figure class="sr-page" data-i="${i}"><picture>${p.m ? `<source media="(max-width: 640px)" srcset="/sample-report/${p.m}">` : ''}<img src="/sample-report/${p.file}" alt="샘플 리포트 ${num(i)} — ${escAttr(p.title)}" loading="${i < 2 ? 'eager' : 'lazy'}" decoding="async"></picture></figure>`).join('')}</div>
-        <div class="sr-ctl"><button type="button" class="bs-btn" data-dir="-1" aria-label="이전 쪽">←</button><span class="sr-count" id="sr-count">1 / ${pages.length}</span><button type="button" class="bs-btn" data-dir="1" aria-label="다음 쪽">→</button></div>
-      </div>
+    <p class="eyebrow">MONTHLY REPORT</p>
+    <h2 class="h2">매달 받는 <em>리포트</em>, 한 장씩 넘겨 보세요</h2>
+    <p class="mk-section-sub">점수와 지도 순위, 손님이 한 행동, 리뷰, 이번 달 만든 것, 경쟁 가게와 AI 검색, 다음 달 계획까지 — 6쪽에 담아 매달 드립니다. 아래는 가상의 가게로 만든 예시입니다.</p>
+    <div class="srs">
+      <ol class="srs-toc" aria-label="리포트 목차">${pages.map((p, i) => `<li><a href="#srp-${i}" data-i="${i}"${i === 0 ? ' aria-current="true"' : ''}><span>${num(i)}</span>${p.title.split(' — ')[0]}</a></li>`).join('')}</ol>
+      <div class="srs-stack">${pages.map((p, i) => `<figure class="srs-card" id="srp-${i}" style="--i:${i}"><picture>${p.m ? `<source media="(max-width: 991px)" srcset="/sample-report/${p.m}">` : ''}<img src="/sample-report/${p.file}" alt="샘플 월간 리포트 ${num(i)} — ${escAttr(p.title)}" loading="${i < 2 ? 'eager' : 'lazy'}" decoding="async"></picture></figure>`).join('')}</div>
     </div>
     <div class="hero-ctas sr-ctas"><a class="btn btn-primary" href="/free-audit/">우리 가게 진단 점수부터 받기</a><a class="btn btn-ghost" href="/sample-report/" target="_blank" rel="noopener">리포트 전체 보기</a><a class="btn btn-ghost" href="/sample-report/report.pdf" target="_blank" rel="noopener">PDF 받기</a></div>
     <p class="note-text">예시 업체 "순두부 하우스"와 예시 수치로 만들었습니다 · 실제 고객 리포트와 같은 판형이며, 실제 리포트의 숫자는 구글 프로필·사이트·광고 계정에서 읽습니다</p>
@@ -865,26 +864,32 @@ function sampleReportSection() {
 <script>
 (function () {
   try {
-    var t = document.getElementById('sr-track'); if (!t) return;
-    var pages = t.querySelectorAll('.sr-page'), toc = document.querySelectorAll('.sr-toc button'), cnt = document.getElementById('sr-count');
-    function go(i) { i = Math.max(0, Math.min(pages.length - 1, i)); t.scrollTo({ left: pages[i].offsetLeft - t.offsetLeft, behavior: 'smooth' }); }
-    function cur() { var x = t.scrollLeft + t.clientWidth * 0.4, k = 0; pages.forEach(function (p, i) { if (p.offsetLeft - t.offsetLeft <= x) k = i; }); return k; }
-    document.querySelectorAll('.sr-ctl .bs-btn').forEach(function (b) { b.addEventListener('click', function () { go(cur() + parseInt(b.getAttribute('data-dir'), 10)); }); });
-    toc.forEach(function (b) { b.addEventListener('click', function () { go(parseInt(b.getAttribute('data-i'), 10)); }); });
-    var raf = 0;
-    t.addEventListener('scroll', function () { if (raf) return; raf = requestAnimationFrame(function () { raf = 0; var k = cur(); cnt.textContent = (k + 1) + ' / ' + pages.length; toc.forEach(function (b, i) { if (i === k) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current'); }); }); }, { passive: true });
-    t.addEventListener('keydown', function (e) { if (e.key === 'ArrowRight') { e.preventDefault(); go(cur() + 1); } if (e.key === 'ArrowLeft') { e.preventDefault(); go(cur() - 1); } });
+    var cards = Array.prototype.slice.call(document.querySelectorAll('.srs-card')), links = document.querySelectorAll('.srs-toc a');
+    if (!cards.length) return;
+    var raf = 0, cur = -1;
+    function upd() {
+      raf = 0; var k = 0;
+      cards.forEach(function (c, i) { var t = parseFloat(getComputedStyle(c).top) || 0; if (c.getBoundingClientRect().top <= t + 2 || c.getBoundingClientRect().top < window.innerHeight * 0.45) k = i; });
+      if (k === cur) return; cur = k;
+      links.forEach(function (a, i) { if (i === k) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });
+      cards.forEach(function (c, i) { c.classList.toggle('srs-under', i < k); });
+    }
+    window.addEventListener('scroll', function () { if (!raf) raf = requestAnimationFrame(upd); }, { passive: true });
+    window.addEventListener('resize', upd, { passive: true });
+    upd();
   } catch (e) {}
 })();
 </script>`;
 }
 
 function showcaseSection() {
-  const tabs = SC_SCENES.map((s, i) => `
+  // 월간 리포트 장면은 바로 아래 "매달 받는 리포트" 섹션이 맡는다(2026-11-06) — 여기선 4장면
+  const SCN = SC_SCENES.filter((x) => x.key !== 'report');
+  const tabs = SCN.map((s, i) => `
       <button type="button" class="sc-tab${i === 0 ? ' on' : ''}" data-key="${s.key}" role="tab" aria-selected="${i === 0 ? 'true' : 'false'}">
         <span class="sc-tab-n">0${i + 1}</span><span class="sc-tab-t"><b>${s.tab}</b><small>${s.tabSub}</small></span><i class="sc-prog"></i>
       </button>`).join('');
-  const scenes = SC_SCENES.map((s, i) => `
+  const scenes = SCN.map((s, i) => `
       <div class="sc-scene sc-${s.key}${i === 0 ? ' on' : ''}" data-key="${s.key}">
         <div class="sc-stage-in">${s.html}</div>
         <ul class="sc-chips">${s.chips.map((c) => `<li class="sc-chip">${c}</li>`).join('')}</ul>
@@ -1955,6 +1960,8 @@ function homePage(posts) {
   } catch (e) {}
 })();
 </script>
+
+${showcaseSection()}
 
 ${sampleReportSection()}
 
@@ -3199,6 +3206,7 @@ function loadPosts() {
       banner: fs.existsSync(path.join(dir, 'img', `${meta.slug || f.replace(/\.md$/, '')}-overview.jpg`)),
       card: fs.existsSync(path.join(dir, 'img', `${meta.slug || f.replace(/\.md$/, '')}-card.jpg`)),
       cover: fs.existsSync(path.join(dir, 'img', `${meta.slug || f.replace(/\.md$/, '')}-cover.jpg`)),
+      coverAlt: COVER_ALT[meta.slug || f.replace(/\.md$/, '')] || `${meta.title} 대표 사진`,
       infos: [...body.matchAll(/!\[([^\]]*)\]\(\/blog-img\/([^)\s]+)\)/g)].map((x) => ({ alt: x[1], file: x[2] })) };
   }).sort((a, b) => (a.date < b.date ? 1 : -1));
 }
@@ -3208,13 +3216,26 @@ const { CATS: BLOG_CATS, DEFAULT_CAT: BLOG_CAT0, ICONS: BLOG_ICONS } = require('
 const blogCat = (c) => BLOG_CATS[c] || BLOG_CAT0;
 const blogIcon = (k, size = 16) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${BLOG_ICONS[k] || BLOG_ICONS.pin}</svg>`;
 
+const COVER_ALT = (() => { try { return JSON.parse(fs.readFileSync(path.join(__dirname, 'content', 'blog', 'img', 'covers-alt.json'), 'utf8')); } catch { return {}; } })();
+function blogTitleTag(t) {
+  if ((t + ' | BizHigher 블로그').length <= 60) return `${t} | BizHigher 블로그`;
+  if ((t + ' | BizHigher').length <= 60) return `${t} | BizHigher`;
+  return t;
+}
+/* 카드·링크 카드 그림의 alt — 대표 사진은 covers-alt.json 의 장면 설명(구글 이미지 검색용), 표 그림·배너는 글 제목 기반 */
+function cardImg(p) {
+  if (p.cover) return { src: `${p.slug}-cover.jpg`, alt: p.coverAlt };
+  if (p.card) return { src: `${p.slug}-card.jpg`, alt: `${p.title} — 핵심 내용 그림` };
+  if (p.banner) return { src: `${p.slug}-overview-t.jpg`, alt: `${p.title} — 한눈에 보기` };
+  return null;
+}
 function blogCard(p) {
   const cat = blogCat(p.category);
   // 카드 = 대표 사진(scripts/blog-covers.js, 글자 없는 장면) → 없으면 표 그림(blog-cards.js) → 없으면 배너. 아래는 분류 + 제목. 색은 분류 표시에만
-  const img = p.cover ? `${p.slug}-cover.jpg` : p.card ? `${p.slug}-card.jpg` : p.banner ? `${p.slug}-overview-t.jpg` : '';
+  const ci = cardImg(p), img = ci ? ci.src : '';
   return `
 <a href="/blog/${p.slug}/" class="post-card${p.hub ? ' is-hub' : ''}${img ? '' : ' no-media'}" style="--c:${cat.c}">
-  ${img ? `<div class="pc-media"><img class="pc-img" src="/blog-img/${img}" width="800" height="600" alt="" loading="lazy" decoding="async">${p.infos.length ? `<span class="pc-chip">${blogIcon('image', 13)}인포그래픽</span>` : ''}</div>` : ''}
+  ${img ? `<div class="pc-media"><img class="pc-img" src="/blog-img/${img}" width="800" height="600" alt="${escAttr(ci.alt)}" loading="lazy" decoding="async">${p.infos.length ? `<span class="pc-chip">${blogIcon('image', 13)}인포그래픽</span>` : ''}</div>` : ''}
   <div class="pc-body">
     <span class="pc-cat">${blogIcon(cat.icon, 14)}${p.category}${p.hub ? ' 완전 가이드' : ''}</span>
     <h3 class="pc-title">${p.title}</h3>
@@ -3227,8 +3248,8 @@ function blogCard(p) {
    카드 = 그 글의 대표 그림(blogCard 와 같은 순서) + 분류 + 제목(본문 링크 글자 그대로) + 설명 한 줄. 모르는 slug 는 그대로 둔다 */
 function postLinkCard(p, title, desc) {
   const cat = blogCat(p.category);
-  const img = p.cover ? `${p.slug}-cover.jpg` : p.card ? `${p.slug}-card.jpg` : p.banner ? `${p.slug}-overview-t.jpg` : '';
-  return `<a class="post-link${img ? '' : ' no-media'}" href="/blog/${p.slug}/" style="--c:${cat.c};--t:${cat.t}">${img ? `<span class="pl-img"><img src="/blog-img/${img}" width="800" height="600" alt="" loading="lazy" decoding="async"></span>` : ''}<span class="pl-body"><span class="pl-cat">${blogIcon(cat.icon, 13)}${p.category}${p.hub ? ' 완전 가이드' : ''} · ${p.readMin}분</span><b class="pl-title">${title}</b>${desc ? `<span class="pl-desc">${desc}</span>` : ''}</span><span class="pl-go" aria-hidden="true">→</span></a>`;
+  const ci = cardImg(p), img = ci ? ci.src : '';
+  return `<a class="post-link${img ? '' : ' no-media'}" href="/blog/${p.slug}/" style="--c:${cat.c};--t:${cat.t}">${img ? `<span class="pl-img"><img src="/blog-img/${img}" width="800" height="600" alt="${escAttr(ci.alt)}" loading="lazy" decoding="async"></span>` : ''}<span class="pl-body"><span class="pl-cat">${blogIcon(cat.icon, 13)}${p.category}${p.hub ? ' 완전 가이드' : ''} · ${p.readMin}분</span><b class="pl-title">${title}</b>${desc ? `<span class="pl-desc">${desc}</span>` : ''}</span><span class="pl-go" aria-hidden="true">→</span></a>`;
 }
 function linkCards(html, posts, isHub) {
   const bySlug = new Map(posts.map((x) => [x.slug, x]));
@@ -3335,7 +3356,7 @@ function blogPostPage(p, posts) {
     {
       '@context': 'https://schema.org', '@type': 'BlogPosting',
       headline: p.title, description: p.description,
-      image: `${SITE.domain}${ogFor(p.slug) || '/og-image.png'}`,
+      image: [...(p.cover ? [{ '@type': 'ImageObject', url: `${SITE.domain}/blog-img/${p.slug}-cover.jpg`, width: 800, height: 600, caption: p.coverAlt }] : []), `${SITE.domain}${ogFor(p.slug) || '/og-image.png'}`],
       datePublished: p.date, dateModified: p.updated || p.date, inLanguage: 'ko',
       author: ORG_MIN,
       publisher: ORG_MIN,
@@ -3362,7 +3383,8 @@ function blogPostPage(p, posts) {
     ? loadSurveys().concat(loadReports()).sort((a, b) => (a.asOf < b.asOf ? 1 : -1)).slice(0, 2)
     : [];
   return head({
-    title: `${p.title} | BizHigher 블로그`,
+    // 검색 결과 제목은 약 60자에서 잘린다 — 길면 꼬리를 줄이고(| BizHigher), 그래도 길면 글 제목만
+    title: blogTitleTag(p.title),
     description: p.description,
     pathName: `/blog/${p.slug}/`,
     jsonLd,
@@ -3378,11 +3400,11 @@ function blogPostPage(p, posts) {
     <p class="page-sub">${p.date} · ${p.readMin}분 읽기 · BizHigher</p>
     ${hub ? `<a href="/blog/${hub.slug}/" class="hub-callout">🧭 이 글은 <b>${hub.title}</b> 가이드의 일부입니다 →</a>` : ''}
     </div>
-    ${p.cover ? `<figure class="ph-cover"><img src="/blog-img/${p.slug}-cover.jpg" width="800" height="600" alt="" fetchpriority="high" decoding="async"></figure>` : ''}
+    ${p.cover ? `<figure class="ph-cover"><img src="/blog-img/${p.slug}-cover.jpg" width="800" height="600" alt="${escAttr(p.coverAlt)}" fetchpriority="high" decoding="async"></figure>` : ''}
   </div>
 </header>
 <section class="detail-body" style="padding-top:4px;">
-  ${p.banner ? `<figure class="post-banner post-banner-wide" style="--c:${blogCat(p.category).c};--t:${blogCat(p.category).t}"><picture><source media="(max-width: 640px)" srcset="/blog-img/${p.slug}-overview-m.jpg" width="1080" height="1350"><img src="/blog-img/${p.slug}-overview.jpg" width="1200" height="675" alt="${escAttr(`${p.title} 한눈에 보기 — ${p.summary.join(' ')}`)}"${p.cover ? '' : ' fetchpriority="high"'} decoding="async"></picture></figure>` : ''}
+  ${p.banner ? `<figure class="post-banner post-banner-wide" style="--c:${blogCat(p.category).c};--t:${blogCat(p.category).t}"><picture><source media="(max-width: 640px)" srcset="/blog-img/${p.slug}-overview-m.jpg" width="1080" height="1350"><img src="/blog-img/${p.slug}-overview.jpg" width="1200" height="675" alt="${escAttr(`${p.title} 한눈에 보기${p.summary[0] ? ' — ' + p.summary[0] : ''}`)}"${p.cover ? '' : ' fetchpriority="high"'} decoding="async"></picture></figure>` : ''}
   <div class="container post-layout">
     ${toc.length > 2 ? `<aside class="toc toc-side" id="toc"><b>목차</b><ol>${toc.map((h) => `<li><a href="#${h.id}" data-h="${h.id}">${h.t}</a></li>`).join('')}</ol></aside>` : '<div></div>'}
     <div class="post-main">

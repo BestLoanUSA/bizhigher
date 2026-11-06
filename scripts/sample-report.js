@@ -17,6 +17,10 @@ const OUT = path.join(ROOT, 'src', 'sample-report');
   let chromium;
   try { ({ chromium } = require('playwright')); } catch { ({ chromium } = require(process.env.PLAYWRIGHT_PATH || '/opt/node-tools/node_modules/playwright')); }
   const data = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'sample-report.json'), 'utf8'));
+  // 사진은 사이트 주소(/showcase/…)로 적혀 있다 — setContent 페이지는 그 주소를 못 읽으므로 굽는 동안만 data URI 로 바꿔 넣는다
+  const inline = (u) => { const m = /^\/showcase\/(.+)$/.exec(u || ''); if (!m) return u; const f = path.join(ROOT, 'src', 'showcase', m[1]); return fs.existsSync(f) ? `data:image/jpeg;base64,${fs.readFileSync(f).toString('base64')}` : u; };
+  if (data.business) data.business.photo = inline(data.business.photo);
+  for (const sec of data.sections || []) for (const b of [sec, ...(sec.blocks || [])]) if (b.gallery) b.gallery.forEach((g) => { g.src = inline(g.src); });
   fs.rmSync(OUT, { recursive: true, force: true });
   fs.mkdirSync(OUT, { recursive: true });
   const b = await chromium.launch();
