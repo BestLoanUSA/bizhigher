@@ -2246,7 +2246,7 @@ function blogStripSection(posts) {
   var btns = document.querySelectorAll('.blog-strip-ctl .bs-btn');
   btns.forEach(function (b) {
     b.addEventListener('click', function () {
-      var card = strip.querySelector('.prod-card');
+      var card = strip.querySelector('.post-card, .prod-card');
       var step = card ? card.getBoundingClientRect().width + 18 : 320;
       pause(2500);
       strip.scrollBy({ left: step * parseInt(b.getAttribute('data-dir'), 10), behavior: 'smooth' });
