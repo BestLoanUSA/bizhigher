@@ -836,6 +836,49 @@ const SC_SCENES = [
 </div>` },
 ];
 
+/* ---------- 홈: 샘플 리포트 넘겨 보기 (2026-11-06 David 요청 — "이렇게 생긴 것을 받습니다" 자리) ----------
+   data/sample-report.json(가상의 순두부 하우스·예시 수치) → scripts/sample-report.js 가 실제 고객 리포트와 같은 판형(_report.js)으로
+   PDF·쪽 이미지(src/sample-report/)를 굽는다. 여기서는 쪽 이미지를 가로로 넘겨 보여주고, 전체는 /sample-report/ (noindex) 와 PDF.
+   쪽은 JS 없이도 가로 스크롤로 다 보인다 — JS 는 버튼·목차·쪽 번호만 붙인다 */
+function sampleReportSection() {
+  const dir = path.join(__dirname, 'src', 'sample-report');
+  if (!fs.existsSync(path.join(dir, 'pages.json'))) return showcaseSection();
+  const pages = JSON.parse(fs.readFileSync(path.join(dir, 'pages.json'), 'utf8'));
+  const num = (i) => (i === 0 ? '표지' : String(i).padStart(2, '0'));
+  return `
+<section class="section sr-sec" id="sample-report">
+  <div class="container">
+    <p class="eyebrow">WHAT YOU GET</p>
+    <h2 class="h2">매달 받는 <em>리포트</em>, 그대로 넘겨 보세요</h2>
+    <p class="mk-section-sub">무료 진단과 같은 기준의 점수, 지도 순위, 리뷰·전화 같은 손님 행동, 이번 달 한 일과 다음 달 계획까지 한 번에 받습니다. 아래는 가상의 가게로 만든 예시입니다.</p>
+    <div class="sr-wrap">
+      <ol class="sr-toc" aria-label="리포트 목차">${pages.map((p, i) => `<li><button type="button" data-i="${i}"${i === 0 ? ' aria-current="true"' : ''}><span>${num(i)}</span>${p.title.split(' — ')[0]}</button></li>`).join('')}</ol>
+      <div class="sr-viewer">
+        <div class="sr-track" id="sr-track" tabindex="0" aria-label="샘플 리포트 쪽">${pages.map((p, i) => `<figure class="sr-page" data-i="${i}"><picture>${p.m ? `<source media="(max-width: 640px)" srcset="/sample-report/${p.m}">` : ''}<img src="/sample-report/${p.file}" alt="샘플 리포트 ${num(i)} — ${escAttr(p.title)}" loading="${i < 2 ? 'eager' : 'lazy'}" decoding="async"></picture></figure>`).join('')}</div>
+        <div class="sr-ctl"><button type="button" class="bs-btn" data-dir="-1" aria-label="이전 쪽">←</button><span class="sr-count" id="sr-count">1 / ${pages.length}</span><button type="button" class="bs-btn" data-dir="1" aria-label="다음 쪽">→</button></div>
+      </div>
+    </div>
+    <div class="hero-ctas sr-ctas"><a class="btn btn-primary" href="/free-audit/">우리 가게 진단 점수부터 받기</a><a class="btn btn-ghost" href="/sample-report/" target="_blank" rel="noopener">리포트 전체 보기</a><a class="btn btn-ghost" href="/sample-report/report.pdf" target="_blank" rel="noopener">PDF 받기</a></div>
+    <p class="note-text">예시 업체 "순두부 하우스"와 예시 수치로 만들었습니다 · 실제 고객 리포트와 같은 판형이며, 실제 리포트의 숫자는 구글 프로필·사이트·광고 계정에서 읽습니다</p>
+  </div>
+</section>
+<script>
+(function () {
+  try {
+    var t = document.getElementById('sr-track'); if (!t) return;
+    var pages = t.querySelectorAll('.sr-page'), toc = document.querySelectorAll('.sr-toc button'), cnt = document.getElementById('sr-count');
+    function go(i) { i = Math.max(0, Math.min(pages.length - 1, i)); t.scrollTo({ left: pages[i].offsetLeft - t.offsetLeft, behavior: 'smooth' }); }
+    function cur() { var x = t.scrollLeft + t.clientWidth * 0.4, k = 0; pages.forEach(function (p, i) { if (p.offsetLeft - t.offsetLeft <= x) k = i; }); return k; }
+    document.querySelectorAll('.sr-ctl .bs-btn').forEach(function (b) { b.addEventListener('click', function () { go(cur() + parseInt(b.getAttribute('data-dir'), 10)); }); });
+    toc.forEach(function (b) { b.addEventListener('click', function () { go(parseInt(b.getAttribute('data-i'), 10)); }); });
+    var raf = 0;
+    t.addEventListener('scroll', function () { if (raf) return; raf = requestAnimationFrame(function () { raf = 0; var k = cur(); cnt.textContent = (k + 1) + ' / ' + pages.length; toc.forEach(function (b, i) { if (i === k) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current'); }); }); }, { passive: true });
+    t.addEventListener('keydown', function (e) { if (e.key === 'ArrowRight') { e.preventDefault(); go(cur() + 1); } if (e.key === 'ArrowLeft') { e.preventDefault(); go(cur() - 1); } });
+  } catch (e) {}
+})();
+</script>`;
+}
+
 function showcaseSection() {
   const tabs = SC_SCENES.map((s, i) => `
       <button type="button" class="sc-tab${i === 0 ? ' on' : ''}" data-key="${s.key}" role="tab" aria-selected="${i === 0 ? 'true' : 'false'}">
@@ -1894,7 +1937,7 @@ function homePage(posts) {
 })();
 </script>
 
-${showcaseSection()}
+${sampleReportSection()}
 
 <section class="section vs-section">
   <div class="container">
@@ -4542,6 +4585,15 @@ DATA.services.forEach((s) => write(`service/${s.slug}/index.html`, servicePage(s
 DATA.packages.forEach((p) => write(`package/${p.slug}/index.html`, packagePage(p)));
 write('404.html', notFoundPage());
 write('privacy/index.html', legalPage('개인정보처리방침', '/privacy/', PRIVACY_HTML));
+/* 샘플 리포트 — 실제 고객 리포트 판형(_report.js) 그대로, 검색 제외 */
+{
+  const srData = path.join(__dirname, 'data', 'sample-report.json'), srDir = path.join(__dirname, 'src', 'sample-report');
+  if (fs.existsSync(srData)) {
+    const html = require('./automation/ai-runner/_report.js').renderHtml(JSON.parse(fs.readFileSync(srData, 'utf8')), { robots: 'noindex' });
+    write('sample-report/index.html', html);
+    if (fs.existsSync(srDir)) fs.readdirSync(srDir).forEach((f) => fs.copyFileSync(path.join(srDir, f), path.join(DIST, 'sample-report', f)));
+  }
+}
 const IMGDIR = path.join(__dirname, 'content', 'blog', 'img');
 if (fs.existsSync(IMGDIR)) {
   fs.mkdirSync(path.join(DIST, 'blog-img'), { recursive: true });

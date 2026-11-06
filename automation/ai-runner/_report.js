@@ -16,8 +16,13 @@
  *     { "title": "비포 / 애프터", "before": [{ "label": "리뷰 수", "value": "14" }], "after": [{ "label": "리뷰 수", "value": "22" }] },
  *     { "title": "사진", "images": ["https://…/a/x.jpg"] },
  *     { "title": "다음 달 계획", "items": ["…"], "text": "문단(선택)" },
- *     { "title": "David 가 채울 칸", "manual": [{ "label": "GBP 조회수", "value": "" }] }   // 값이 비면 점선 칸으로 보인다
+ *     { "title": "David 가 채울 칸", "manual": [{ "label": "GBP 조회수", "value": "" }] },  // 값이 비면 점선 칸으로 보인다
+ *     // 2026-11-06 추가
+ *     { "title": "진단 점수", "scores": { "items": [{ "label": "구글 노출", "before": 6, "after": 17, "max": 20 }], "beforeLabel": "시작", "afterLabel": "지금" } },  // 무료 진단(_engine.js) 5영역과 같은 기준
+ *     { "title": "지도 순위", "grids": { "keyword": "korean tofu soup", "before": [[…7개]…7줄], "after": [[…]], "beforeLabel": "10월", "afterLabel": "4월", "radius": "반경 2마일" } }, // places.js grid JSON 의 grid 그대로(0=20위 밖)
+ *     { "title": "이번 달 한 일", "tiles": [{ "n": "8", "label": "구글 게시물" }] }
  *   ],
+ *   "sample": true   // 표지 위에 "예시 리포트 · 가상의 업체" 띠(샘플 전용)
  *   "notes": "작은 글씨 주석(출처·측정 기준)", "cta": "다음 달에도 같은 리포트를 드립니다. 궁금한 점은 답장 주세요."
  * }
  */
@@ -45,18 +50,40 @@ function table(t) {
 function section(s, i) {
   let body = '';
   if (s.text) body += `<p>${esc(s.text).replace(/\n/g, '<br>')}</p>`;
+  if (s.tiles && s.tiles.length) body += `<div class="tiles">${s.tiles.map((t) => `<div class="tile"><b>${esc(t.n)}</b><span>${esc(t.label)}</span></div>`).join('')}</div>`;
   if (s.items && s.items.length) body += `<ul>${s.items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
   if (s.table) body += table(s.table);
   if (s.chart) body += chartSvg(s.chart);
   if (s.before || s.after) body += `<div class="ba"><div class="col"><div class="h">Before</div>${(s.before || []).map(kpiCard).join('')}</div><div class="arrow">→</div><div class="col after"><div class="h">After</div>${(s.after || []).map(kpiCard).join('')}</div></div>`;
   if (s.images && s.images.length) body += `<div class="imgs">${s.images.slice(0, 6).map((u) => `<img src="${esc(u)}" alt="">`).join('')}</div>`;
   if (s.manual && s.manual.length) body += `<div class="manual">${s.manual.map((m) => `<div class="mrow"><span class="ml">${esc(m.label)}</span><span class="mv ${m.value ? '' : 'empty'}">${esc(m.value || '')}</span></div>`).join('')}<div class="mnote">비어 있는 칸은 담당자가 확인 후 채웁니다</div></div>`;
+  if (s.scores) body += scoresHtml(s.scores);
+  if (s.grids) body += gridsHtml(s.grids);
   if (s.note) body += `<p class="small">${esc(s.note)}</p>`;
-  return `<section class="sec"><h2><span class="num">${String(i + 1).padStart(2, '0')}</span>${esc(s.title)}</h2>${body}</section>`;
+  return `<section class="sec" id="s${i + 1}"><h2><span class="num">${String(i + 1).padStart(2, '0')}</span>${esc(s.title)}</h2>${body}</section>`;
+}
+
+/* 진단 점수 — 영역마다 시작(옅은 막대)과 지금(진한 막대), 합계는 위에 크게 */
+function scoresHtml(sc) {
+  const items = sc.items || [];
+  const tot = (k) => items.reduce((n, x) => n + (Number(x[k]) || 0), 0), max = items.reduce((n, x) => n + (Number(x.max) || 20), 0) || 100;
+  const hasB = items.some((x) => x.before != null);
+  return `<div class="scores"><div class="stot">${hasB ? `<div><span>${esc(sc.beforeLabel || '시작')}</span><b class="was">${tot('before')}</b></div><i>→</i>` : ''}<div><span>${esc(sc.afterLabel || '지금')}</span><b>${tot('after')}</b><em>/ ${max}</em></div></div>
+${items.map((x) => { const m = Number(x.max) || 20; const a = Math.max(0, Math.min(100, (Number(x.after) / m) * 100)), b = Math.max(0, Math.min(100, (Number(x.before) / m) * 100));
+  return `<div class="srow"><span class="sl">${esc(x.label)}</span><span class="sbar">${hasB ? `<i class="sb" style="width:${b.toFixed(1)}%"></i>` : ''}<i class="sa" style="width:${a.toFixed(1)}%"></i></span><span class="sv">${hasB ? `<s>${esc(x.before)}</s> ` : ''}<b>${esc(x.after)}</b>/${m}</span></div>`; }).join('')}
+${hasB ? `<div class="slegend"><span><i class="sb"></i>${esc(sc.beforeLabel || '시작')}</span><span><i class="sa"></i>${esc(sc.afterLabel || '지금')}</span></div>` : ''}</div>`;
+}
+/* 지도 순위 그리드 — places.js grid 의 7×7(0=20위 밖, -1=조회 실패). 1~3위 진한색 → 20위 밖 회색 */
+function gridsHtml(g) {
+  const cell = (v) => { const c = v < 0 ? 'na' : v === 0 ? 'out' : v <= 3 ? 'r1' : v <= 7 ? 'r2' : v <= 12 ? 'r3' : 'r4'; return `<span class="gc ${c}">${v < 0 ? '·' : v === 0 ? '20+' : v}</span>`; };
+  const stat = (gr) => { const f = gr.flat(); const top3 = f.filter((v) => v > 0 && v <= 3).length; return `3위 안 <b>${top3}</b>/${f.length}지점`; };
+  const one = (gr, label, cls) => gr ? `<div class="gbox ${cls || ''}"><div class="gh"><span>${esc(label)}</span><span>${stat(gr)}</span></div><div class="gg">${gr.map((r, i) => r.map((v, j) => (i === 3 && j === 3 ? cell(v).replace('class="gc', 'class="gc me') : cell(v))).join('')).join('')}</div></div>` : '';
+  return `<div class="grids-k">검색어 <b>"${esc(g.keyword || '')}"</b>${g.radius ? ` · ${esc(g.radius)}` : ''} · 가운데 칸이 가게</div><div class="grids">${one(g.before, g.beforeLabel || '시작', 'was')}${one(g.after, g.afterLabel || '지금')}</div>
+<div class="glegend"><span class="gc r1">1~3</span><span class="gc r2">4~7</span><span class="gc r3">8~12</span><span class="gc r4">13~20</span><span class="gc out">20+</span><em>구글 Places 검색 결과로 계산한 근사치 — 실제 지도 앱은 검색하는 사람에 따라 다를 수 있습니다</em></div>`;
 }
 
 /** report.json → HTML 문자열(자체 완결). fontHead 는 PDF 렌더 때 _fonts.js 가 주는 @font-face 블록(없으면 구글 폰트 링크) */
-function renderHtml(r, { fontHead = '' } = {}) {
+function renderHtml(r, { fontHead = '', robots = '' } = {}) {
   const b = r.business || {}; const color = /^#[0-9a-f]{6}$/i.test(b.color || '') ? b.color : '#0A4DF5';
   const name = b.name_ko && b.name ? `${esc(b.name_ko)} <span class="en">${esc(b.name)}</span>` : esc(b.name || b.name_ko || '');
   const css = `
@@ -86,15 +113,24 @@ table{width:100%;border-collapse:collapse;font-size:14px;margin:6px 0 12px}th{te
 .cta{margin:26px 48px 0;padding:18px 20px;border-radius:14px;background:var(--ink);color:#fff;font-size:15.5px}.cta b{color:#fff}
 .foot{padding:22px 48px 34px;font-size:12.5px;color:var(--ink3);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;border-top:1px solid var(--line);margin-top:26px}
 @media (max-width:600px){.cover,.summary,.kpis,.sec,.foot{padding-left:20px;padding-right:20px}.cover h1{font-size:30px}.cta{margin:20px}.ba{grid-template-columns:1fr}.ba .arrow{transform:rotate(90deg);justify-self:center}.imgs{grid-template-columns:repeat(2,1fr)}}
+.scores{border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:4px 0 12px}.stot{display:flex;align-items:flex-end;gap:16px;margin-bottom:12px}.stot div{display:flex;flex-direction:column}.stot span{font-size:12px;color:var(--ink3);font-weight:700}.stot b{font-size:40px;font-weight:800;line-height:1;letter-spacing:-.03em}.stot b.was{color:var(--ink3)}.stot em{font-style:normal;font-size:14px;color:var(--ink3);margin-left:2px}.stot div:last-child{flex-direction:row;align-items:baseline;flex-wrap:wrap}.stot div:last-child span{width:100%}.stot i{font-style:normal;font-size:24px;color:var(--ink3);padding-bottom:4px}
+.srow{display:grid;grid-template-columns:96px 1fr 76px;gap:12px;align-items:center;padding:7px 0;font-size:14px}.sl{font-weight:600}.sbar{position:relative;height:12px;border-radius:999px;background:#EEF1F6;overflow:hidden}.sbar i{position:absolute;left:0;top:0;bottom:0;border-radius:999px}.sb{background:#C9D2E3}.sa{background:var(--c);height:6px!important;top:3px!important}.sv{text-align:right;color:var(--ink3);font-size:13px}.sv b{color:var(--ink);font-size:15px}.sv s{color:var(--ink3)}
+.slegend{display:flex;gap:14px;font-size:12px;color:var(--ink3);margin-top:8px}.slegend i{display:inline-block;width:18px;height:6px;border-radius:9px;margin-right:6px;vertical-align:middle;position:static}
+.grids-k{font-size:14px;color:var(--ink2);margin:0 0 10px}.grids{display:grid;grid-template-columns:1fr 1fr;gap:16px}.gbox{border:1px solid var(--line);border-radius:14px;padding:12px}.gbox.was{opacity:.85}.gh{display:flex;justify-content:space-between;font-size:13px;color:var(--ink2);margin-bottom:8px;font-weight:600}.gh b{color:var(--ink)}
+.gg{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.gc{display:flex;align-items:center;justify-content:center;aspect-ratio:1;border-radius:7px;font-size:12px;font-weight:700}.gc.r1{background:var(--c);color:#fff}.gc.r2{background:color-mix(in srgb,var(--c) 55%,#fff);color:#fff}.gc.r3{background:color-mix(in srgb,var(--c) 25%,#fff);color:var(--ink)}.gc.r4{background:#EEF1F6;color:var(--ink2)}.gc.out,.gc.na{background:#F6F7FA;color:#B6BFCC;font-size:10px}.gc.me{outline:2.5px solid var(--ink);outline-offset:1px}
+.glegend{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0 12px;font-size:11px}.glegend .gc{width:auto;aspect-ratio:auto;padding:2px 8px}.glegend em{font-style:normal;color:var(--ink3);font-size:11.5px;margin-left:4px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:10px;margin:4px 0 12px}.tile{border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:2px}.tile b{font-size:28px;font-weight:800;letter-spacing:-.02em;line-height:1.1;color:var(--c)}.tile span{font-size:13px;color:var(--ink2)}
+.ribbon{background:var(--ink);color:#fff;font-size:12.5px;text-align:center;padding:7px 12px;letter-spacing:.02em}
+@media (max-width:600px){.grids{grid-template-columns:1fr}.srow{grid-template-columns:78px 1fr 64px;gap:8px}.gc{font-size:10.5px;border-radius:5px}}
 @page{size:letter;margin:0}@media print{html,body{background:#fff}.page{max-width:none}.cover{padding-top:52px}.sec,.kpis{break-inside:avoid}}`;
   const fonts = fontHead || `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap">`;
-  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(r.title || '리포트')} — ${esc(b.name || '')}</title>${fonts}<style>${css}</style></head><body><div class="page">
+  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(r.title || '리포트')} — ${esc(b.name || '')}</title>${robots ? `<meta name="robots" content="${esc(robots)}">` : ''}${fonts}<style>${css}</style></head><body><div class="page">${r.sample ? `<div class="ribbon">예시 리포트 · 가상의 업체와 예시 수치로 만들었습니다 · 실제 고객 리포트와 같은 판형</div>` : ''}
 <header class="cover">${BRAND}<div class="biz">${b.logo ? `<img src="${esc(b.logo)}" alt="">` : ''}<div class="nm">${name}${b.city ? ` <span class="en">· ${esc(b.city)}</span>` : ''}</div></div>
 <h1>${esc(r.title || '리포트')}</h1>${r.subtitle ? `<p class="sub">${esc(r.subtitle)}</p>` : ''}
 <div class="meta">${r.period ? `<span>기간 <b>${esc(r.period)}</b></span>` : ''}${r.date ? `<span>발행 <b>${esc(r.date)}</b></span>` : ''}<span>작성 <b>BizHigher</b></span></div></header>
 ${r.summary && r.summary.length ? `<section class="summary"><h2>한눈에 보기</h2><ul>${r.summary.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>` : ''}
 ${r.kpis && r.kpis.length ? `<div class="kpis">${r.kpis.map(kpiCard).join('')}</div>` : ''}
-${(r.sections || []).map(section).join('')}
+${(r.sections || []).map((s, i) => section(s, i)).join('')}
 ${r.cta ? `<div class="cta">${esc(r.cta)}</div>` : ''}
 <footer class="foot"><span>${esc(r.notes || '수치는 구글·사이트·광고 계정의 공개·계정 데이터를 기준으로 하며, 측정 기준이 바뀌면 리포트에 적습니다.')}</span><span>BizHigher · hello@bizhigher.com · bizhigher.com</span></footer>
 </div></body></html>`;

@@ -257,6 +257,39 @@ img { max-width: 100%; display: block; }
 .badge-hub { background: var(--grad-btn); color: #fff; }
 .prod-card.is-hub { border-color: var(--blue-300); background: linear-gradient(180deg, var(--blue-50) 0%, #fff 65%); }
 
+/* ---------- 홈: 샘플 리포트 넘겨 보기 (2026-11-06) ---------- */
+.sr-sec { background: linear-gradient(180deg, #fff 0%, var(--gray-50) 100%); }
+.sr-wrap { display: grid; grid-template-columns: 250px 1fr; gap: 28px; margin-top: 34px; align-items: start; }
+.sr-toc { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; position: sticky; top: 110px; }
+.sr-toc button { width: 100%; display: flex; gap: 12px; align-items: baseline; text-align: left; background: none; border: 0; border-radius: 10px; padding: 9px 12px; font: inherit; font-size: 15px; font-weight: 600; color: var(--ink-600); cursor: pointer; transition: background .2s ease, color .2s ease; }
+.sr-toc button span { flex: none; width: 30px; font-size: 12px; font-weight: 800; color: var(--ink-400); letter-spacing: .04em; }
+.sr-toc button:hover { background: #fff; color: var(--ink-900); }
+.sr-toc button[aria-current] { background: #fff; color: var(--ink-900); box-shadow: 0 6px 18px -10px rgba(11, 21, 48, .35); }
+.sr-toc button[aria-current] span { color: var(--blue-600); }
+.sr-viewer { position: relative; min-width: 0; }
+.sr-track { display: flex; gap: 22px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 6px 4px 26px; scrollbar-width: thin; scrollbar-color: var(--blue-300) transparent; outline: none; }
+.sr-track:focus-visible { outline: 3px solid var(--blue-300); outline-offset: 2px; border-radius: 12px; }
+.sr-page { flex: 0 0 88%; scroll-snap-align: start; margin: 0; height: 560px; background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; box-shadow: 0 30px 60px -36px rgba(11, 21, 48, .45), 0 2px 0 rgba(11, 21, 48, .03); }
+.sr-page picture { display: contents; }
+.sr-page img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: top center; }
+.sr-ctl { display: flex; align-items: center; gap: 12px; justify-content: flex-end; padding-right: 12%; }
+.sr-count { font-size: 14px; font-weight: 700; color: var(--ink-600); min-width: 56px; text-align: center; font-variant-numeric: tabular-nums; }
+.sr-ctas { justify-content: center; margin-top: 30px; flex-wrap: wrap; }
+@media (max-width: 991px) {
+  .sr-wrap { grid-template-columns: 1fr; gap: 14px; }
+  .sr-toc { position: static; flex-direction: row; overflow-x: auto; gap: 6px; padding-bottom: 4px; scrollbar-width: none; }
+  .sr-toc button { white-space: nowrap; padding: 7px 12px; font-size: 13.5px; background: #fff; border: 1px solid var(--line); }
+  .sr-toc button span { width: auto; }
+  .sr-page { flex-basis: 90%; height: 460px; }
+  .sr-ctl { padding-right: 0; justify-content: center; }
+}
+@media (max-width: 640px) {
+  .sr-page { flex-basis: 86%; height: 470px; position: relative; }
+  .sr-page picture { display: block; height: 100%; }
+  .sr-page img { height: auto; object-fit: initial; }
+  .sr-page::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 48px; background: linear-gradient(180deg, rgba(255,255,255,0), #fff); pointer-events: none; }
+}
+
 /* ---------- 블로그 카드 (2026-11-06 2차) — 그림이 카드의 대부분, 아래는 분류 + 제목만. 색은 분류 표시에만(--c) ---------- */
 .post-card {
   --c: var(--blue-600);
