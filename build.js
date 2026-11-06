@@ -836,6 +836,49 @@ const SC_SCENES = [
 </div>` },
 ];
 
+/* ---------- 홈: 샘플 리포트 넘겨 보기 (2026-11-06 David 요청 — "이렇게 생긴 것을 받습니다" 자리) ----------
+   data/sample-report.json(가상의 순두부 하우스·예시 수치) → scripts/sample-report.js 가 실제 고객 리포트와 같은 판형(_report.js)으로
+   PDF·쪽 이미지(src/sample-report/)를 굽는다. 여기서는 쪽 이미지를 가로로 넘겨 보여주고, 전체는 /sample-report/ (noindex) 와 PDF.
+   쪽은 JS 없이도 가로 스크롤로 다 보인다 — JS 는 버튼·목차·쪽 번호만 붙인다 */
+function sampleReportSection() {
+  const dir = path.join(__dirname, 'src', 'sample-report');
+  if (!fs.existsSync(path.join(dir, 'pages.json'))) return showcaseSection();
+  const pages = JSON.parse(fs.readFileSync(path.join(dir, 'pages.json'), 'utf8'));
+  const num = (i) => (i === 0 ? '표지' : String(i).padStart(2, '0'));
+  return `
+<section class="section sr-sec" id="sample-report">
+  <div class="container">
+    <p class="eyebrow">WHAT YOU GET</p>
+    <h2 class="h2">매달 받는 <em>리포트</em>, 그대로 넘겨 보세요</h2>
+    <p class="mk-section-sub">무료 진단과 같은 기준의 점수, 지도 순위, 리뷰·전화 같은 손님 행동, 이번 달 한 일과 다음 달 계획까지 한 번에 받습니다. 아래는 가상의 가게로 만든 예시입니다.</p>
+    <div class="sr-wrap">
+      <ol class="sr-toc" aria-label="리포트 목차">${pages.map((p, i) => `<li><button type="button" data-i="${i}"${i === 0 ? ' aria-current="true"' : ''}><span>${num(i)}</span>${p.title.split(' — ')[0]}</button></li>`).join('')}</ol>
+      <div class="sr-viewer">
+        <div class="sr-track" id="sr-track" tabindex="0" aria-label="샘플 리포트 쪽">${pages.map((p, i) => `<figure class="sr-page" data-i="${i}"><picture>${p.m ? `<source media="(max-width: 640px)" srcset="/sample-report/${p.m}">` : ''}<img src="/sample-report/${p.file}" alt="샘플 리포트 ${num(i)} — ${escAttr(p.title)}" loading="${i < 2 ? 'eager' : 'lazy'}" decoding="async"></picture></figure>`).join('')}</div>
+        <div class="sr-ctl"><button type="button" class="bs-btn" data-dir="-1" aria-label="이전 쪽">←</button><span class="sr-count" id="sr-count">1 / ${pages.length}</span><button type="button" class="bs-btn" data-dir="1" aria-label="다음 쪽">→</button></div>
+      </div>
+    </div>
+    <div class="hero-ctas sr-ctas"><a class="btn btn-primary" href="/free-audit/">우리 가게 진단 점수부터 받기</a><a class="btn btn-ghost" href="/sample-report/" target="_blank" rel="noopener">리포트 전체 보기</a><a class="btn btn-ghost" href="/sample-report/report.pdf" target="_blank" rel="noopener">PDF 받기</a></div>
+    <p class="note-text">예시 업체 "순두부 하우스"와 예시 수치로 만들었습니다 · 실제 고객 리포트와 같은 판형이며, 실제 리포트의 숫자는 구글 프로필·사이트·광고 계정에서 읽습니다</p>
+  </div>
+</section>
+<script>
+(function () {
+  try {
+    var t = document.getElementById('sr-track'); if (!t) return;
+    var pages = t.querySelectorAll('.sr-page'), toc = document.querySelectorAll('.sr-toc button'), cnt = document.getElementById('sr-count');
+    function go(i) { i = Math.max(0, Math.min(pages.length - 1, i)); t.scrollTo({ left: pages[i].offsetLeft - t.offsetLeft, behavior: 'smooth' }); }
+    function cur() { var x = t.scrollLeft + t.clientWidth * 0.4, k = 0; pages.forEach(function (p, i) { if (p.offsetLeft - t.offsetLeft <= x) k = i; }); return k; }
+    document.querySelectorAll('.sr-ctl .bs-btn').forEach(function (b) { b.addEventListener('click', function () { go(cur() + parseInt(b.getAttribute('data-dir'), 10)); }); });
+    toc.forEach(function (b) { b.addEventListener('click', function () { go(parseInt(b.getAttribute('data-i'), 10)); }); });
+    var raf = 0;
+    t.addEventListener('scroll', function () { if (raf) return; raf = requestAnimationFrame(function () { raf = 0; var k = cur(); cnt.textContent = (k + 1) + ' / ' + pages.length; toc.forEach(function (b, i) { if (i === k) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current'); }); }); }, { passive: true });
+    t.addEventListener('keydown', function (e) { if (e.key === 'ArrowRight') { e.preventDefault(); go(cur() + 1); } if (e.key === 'ArrowLeft') { e.preventDefault(); go(cur() - 1); } });
+  } catch (e) {}
+})();
+</script>`;
+}
+
 function showcaseSection() {
   const tabs = SC_SCENES.map((s, i) => `
       <button type="button" class="sc-tab${i === 0 ? ' on' : ''}" data-key="${s.key}" role="tab" aria-selected="${i === 0 ? 'true' : 'false'}">
@@ -1856,9 +1899,9 @@ function homePage(posts) {
     <p class="eyebrow">HOW IT WORKS</p>
     <h2 class="h2"><em>차원이 다른</em> 광고를 경험하세요</h2>
     <div class="stack-zone">
-      <div class="stack-card has-viz"><div class="stack-txt"><span class="stack-num">01</span><h3 class="stack-title">AI의 초고속 자동화에 20년 전문가의 디테일을 더하다</h3><p class="stack-desc">독자적인 병렬 AI 에이전트가 24시간 쉬지 않고 기획·카피·디자인을 동시다발적으로 처리하고, 마케팅 전문가가 최종 검수하여 압축된 시간 안에 최상의 품질을 완성합니다.</p></div><div class="stack-viz" aria-hidden="true"><svg viewBox="0 0 320 200" role="presentation"><g class="v-lanes"><rect x="6" y="28" width="74" height="32" rx="16"/><rect x="6" y="84" width="74" height="32" rx="16"/><rect x="6" y="140" width="74" height="32" rx="16"/></g><g class="v-lbl"><text x="43" y="49">기획</text><text x="43" y="105">카피</text><text x="43" y="161">디자인</text></g><g class="v-base"><path d="M80 44 C150 44 160 100 222 100"/><path d="M80 100 L222 100"/><path d="M80 156 C150 156 160 100 222 100"/></g><g class="v-flow"><path class="f1" d="M80 44 C150 44 160 100 222 100"/><path class="f2" d="M80 100 L222 100"/><path class="f3" d="M80 156 C150 156 160 100 222 100"/></g><circle class="v-ring" cx="252" cy="100" r="30"/><circle class="v-node" cx="252" cy="100" r="30"/><path class="v-chk" pathLength="100" d="M239 100 l9 10 l17 -20"/><text class="v-cap" x="252" y="152">전문가 검수</text><g class="v-clock"><circle cx="292" cy="26" r="13"/><path class="v-hand" d="M292 26 L292 17"/></g><text class="v-24" x="292" y="54">24h</text></svg></div></div>
-      <div class="stack-card stack-c2 has-viz"><div class="stack-txt"><span class="stack-num">02</span><h3 class="stack-title">미팅도 거품도 Zero, 클릭 몇 번으로 시작하는 반값 마케팅</h3><p class="stack-desc">100% 공개된 투명한 정찰제로 지루한 견적 미팅이나 영업 전화 없이 쇼핑하듯 바로 시작하며, 불필요한 인건비를 완전히 줄여 기존 대행사 대비 절반 이하의 비용을 제공합니다.</p></div><div class="stack-viz" aria-hidden="true"><svg viewBox="0 0 320 200" role="presentation"><g class="v-chip"><rect x="6" y="12" width="112" height="30" rx="15"/><rect x="128" y="12" width="112" height="30" rx="15"/><text x="62" y="32">견적 미팅</text><text x="184" y="32">영업 전화</text></g><path class="v-strike s1" pathLength="100" d="M16 27 L108 27"/><path class="v-strike s2" pathLength="100" d="M138 27 L230 27"/><text class="v-bl" x="6" y="86">일반 대행사</text><rect class="v-bar0" x="6" y="94" width="300" height="24" rx="8"/><text class="v-bl b" x="6" y="148">BizHigher</text><rect class="v-bar1" x="6" y="156" width="136" height="24" rx="8"/><text class="v-half" x="154" y="174">절반 이하</text></svg></div></div>
-      <div class="stack-card stack-c3 has-viz"><div class="stack-txt"><span class="stack-num">03</span><h3 class="stack-title">반짝 줄세우기 대신, 비즈니스를 생존시키는 건강한 뼈대 마케팅</h3><p class="stack-desc">일회성 광고가 아닌 로컬 프로필 최적화, 온라인 활동 신호, QR 연결 등 상위 노출 랭킹을 꾸준히 올려 단골 고객이 지속적으로 찾아오는 필수 기반을 구축합니다.</p></div><div class="stack-viz" aria-hidden="true"><svg viewBox="0 0 320 200" role="presentation"><path class="v-axis" d="M8 182 L312 182"/><path class="v-spike" pathLength="100" d="M10 176 L58 174 L82 44 L104 172 L306 176"/><text class="v-sl" x="82" y="34">반짝 광고</text><path class="v-grow" pathLength="100" d="M10 174 L60 160 L110 140 L160 118 L210 92 L260 66 L302 42"/><g class="v-dots"><circle cx="60" cy="160" r="4"/><circle cx="110" cy="140" r="4"/><circle cx="160" cy="118" r="4"/><circle cx="210" cy="92" r="4"/><circle cx="260" cy="66" r="4"/></g><circle class="v-pin-ring" cx="302" cy="42" r="9"/><circle class="v-pin" cx="302" cy="42" r="7"/><text class="v-gl" x="306" y="22">꾸준한 상위 노출</text></svg></div></div>
+      <div class="stack-card has-viz"><div class="stack-txt"><span class="stack-num">01</span><h3 class="stack-title">AI의 초고속 자동화에 20년 전문가의 디테일을 더하다</h3><p class="stack-desc">독자적인 병렬 AI 에이전트가 24시간 쉬지 않고 기획·카피·디자인을 동시다발적으로 처리하고, 마케팅 전문가가 최종 검수하여 압축된 시간 안에 최상의 품질을 완성합니다.</p></div><div class="stack-viz mk01" aria-hidden="true"><div class="s1-time"><i></i><span class="s1-tc" data-count data-from="0" data-to="192" data-dur="1700" data-delay="250" data-fmt="mmss">03:12</span><em>초안 완성</em></div><div class="s1-win w1"><b class="s1-bar"><i></i><i></i><i></i><span>기획</span></b><div class="s1-doc"><s></s><s></s><s></s><s></s></div></div><div class="s1-win w2"><b class="s1-bar"><i></i><i></i><i></i><span>카피</span></b><p class="s1-copy"><span>오늘 저녁은</span><span>뜨끈한 순두부</span></p></div><div class="s1-win w3"><b class="s1-bar"><i></i><i></i><i></i><span>디자인</span></b><div class="s1-art"><img src="/blog-img/photo-reviews-guide-cover.jpg" alt="" loading="lazy" decoding="async"><u></u></div></div><div class="s1-stamp"><b>✓</b>전문가 검수</div><div class="s1-phone"><div class="s1-notch"></div><div class="s1-post"><div class="s1-ph"><img src="/blog-img/photo-reviews-guide-cover.jpg" alt="" loading="lazy" decoding="async"></div><div class="s1-cap"><b>순두부 하우스</b><s></s><s class="sh"></s></div><span class="s1-like">♥</span></div></div></div></div>
+      <div class="stack-card stack-c2 has-viz"><div class="stack-txt"><span class="stack-num">02</span><h3 class="stack-title">미팅도 거품도 Zero, 클릭 몇 번으로 시작하는 반값 마케팅</h3><p class="stack-desc">100% 공개된 투명한 정찰제로 지루한 견적 미팅이나 영업 전화 없이 쇼핑하듯 바로 시작하며, 불필요한 인건비를 완전히 줄여 기존 대행사 대비 절반 이하의 비용을 제공합니다.</p></div><div class="stack-viz mk02" aria-hidden="true"><div class="s2-cal"><b class="s2-bar"><i></i><i></i><i></i><span>일반 대행사 · 시작까지</span></b><div class="s2-row r1"><em>월</em><span>견적 미팅</span><u></u></div><div class="s2-row r2"><em>수</em><span>제안서 검토</span><u></u></div><div class="s2-row r3"><em>금</em><span>영업 전화</span><u></u></div><div class="s2-row r4"><em>다음 주</em><span>계약서 서명</span><u></u></div><div class="s2-wait">시작까지 2주+</div></div><div class="s2-phone"><div class="s2-notch"></div><div class="s2-scr"><div class="s2-toast"><b>✓</b>오늘 바로 시작합니다</div><div class="s2-plan"><small>정찰제 · 견적 없음</small><b>Local Starter</b><p>월 <strong>$${DATA.packages.find((p) => p.slug === 'local-starter').prices.monthly}</strong></p><s></s><s class="sh"></s><div class="s2-btn"><span class="done">✓ 결제 완료</span><span class="go">시작하기</span><i class="s2-tap"></i></div></div></div></div><div class="s2-bars"><div class="s2-l"><span>일반 대행사</span><div class="s2-trk"><i class="old"></i></div></div><div class="s2-l bh"><span>BizHigher</span><div class="s2-trk"><i class="new"></i><em>절반 이하</em></div></div></div></div></div>
+      <div class="stack-card stack-c3 has-viz"><div class="stack-txt"><span class="stack-num">03</span><h3 class="stack-title">반짝 줄세우기 대신, 비즈니스를 생존시키는 건강한 뼈대 마케팅</h3><p class="stack-desc">일회성 광고가 아닌 로컬 프로필 최적화, 온라인 활동 신호, QR 연결 등 상위 노출 랭킹을 꾸준히 올려 단골 고객이 지속적으로 찾아오는 필수 기반을 구축합니다.</p></div><div class="stack-viz mk03" aria-hidden="true"><div class="s3-list"><b class="s3-bar"><span>지도 검색</span><em>"가든그로브 순두부"</em></b><div class="s3-rows"><div class="s3-ranks"><i>1</i><i>2</i><i>3</i><i>4</i><i>5</i></div><div class="s3-row me" style="--i:0"><span class="s3-pin"></span><b>순두부 하우스</b><em>★ 4.7</em></div><div class="s3-row" style="--i:1"><span class="s3-pin"></span><b>가게 A</b><s></s></div><div class="s3-row" style="--i:2"><span class="s3-pin"></span><b>가게 B</b><s></s></div><div class="s3-row" style="--i:3"><span class="s3-pin"></span><b>가게 C</b><s></s></div><div class="s3-row" style="--i:4"><span class="s3-pin"></span><b>가게 D</b><s></s></div></div></div><div class="s3-ad"><b>⚡</b>반짝 광고</div><div class="s3-stat"><small>시작하고</small><b><span data-count data-from="1" data-to="6" data-dur="2600" data-delay="300">6</span>개월</b><p>리뷰 <span data-count data-from="61" data-to="148" data-dur="2600" data-delay="300">148</span>개</p><div class="s3-spark"><i style="--h:22%"></i><i style="--h:34%"></i><i style="--h:41%"></i><i style="--h:58%"></i><i style="--h:74%"></i><i style="--h:96%"></i></div></div></div></div>
     </div>
   </div>
 </section>
@@ -1887,14 +1930,23 @@ function homePage(posts) {
     window.addEventListener('resize', onScroll, { passive: true });
     update();
     if ('IntersectionObserver' in window) {
-      var vo = new IntersectionObserver(function (es) { es.forEach(function (e) { e.target.classList.toggle('viz-on', e.isIntersecting); }); }, { threshold: 0.3 });
+      // 카드 장면 숫자(시계 00:00→03:12, 개월, 리뷰 수) — 화면에 들어올 때 data-from → data-to. 실패해도 최종 숫자가 그대로 보인다
+      var runCounts = function (card) {
+        card.querySelectorAll('[data-count]').forEach(function (el) {
+          var from = +el.getAttribute('data-from'), to = +el.getAttribute('data-to'), dur = +el.getAttribute('data-dur') || 1500, delay = +el.getAttribute('data-delay') || 0, mmss = el.getAttribute('data-fmt') === 'mmss', t0 = 0;
+          var fmt = function (v) { return mmss ? ('0' + Math.floor(v / 60)).slice(-2) + ':' + ('0' + (v % 60)).slice(-2) : String(v); };
+          el.textContent = fmt(from);
+          (function f(t) { if (!t0) t0 = t; var p = Math.max(0, Math.min(1, (t - t0 - delay) / dur)); el.textContent = fmt(Math.round(from + (to - from) * (1 - Math.pow(1 - p, 2)))); if (p < 1) requestAnimationFrame(f); })(performance.now());
+        });
+      };
+      var vo = new IntersectionObserver(function (es) { es.forEach(function (e) { var was = e.target.classList.contains('viz-on'); e.target.classList.toggle('viz-on', e.isIntersecting); if (e.isIntersecting && !was) runCounts(e.target); }); }, { threshold: 0.3 });
       cards.forEach(function (c) { vo.observe(c); });
     }
   } catch (e) {}
 })();
 </script>
 
-${showcaseSection()}
+${sampleReportSection()}
 
 <section class="section vs-section">
   <div class="container">
@@ -1994,8 +2046,9 @@ ${showcaseSection()}
     var ticking = false;
     function frame() {
       ticking = false;
-      var r = sec.getBoundingClientRect(), total = r.height - window.innerHeight;
-      var p = total > 0 ? Math.max(0, Math.min(1, -r.top / total)) : 1;
+      // 고정(sticky)된 동안의 진행도 — 구간이 화면보다 낮아도 맞도록 고정 위치·높이로 센다(2026-11-06 높이 압축)
+      var r = sec.getBoundingClientRect(), st = sec.firstElementChild, ih = window.innerHeight, top0 = ih * 0.16, total = r.height - st.offsetHeight;
+      var p = total > 0 ? Math.max(0, Math.min(1, (top0 - r.top) / total)) : 1;
       var start = window.innerWidth * 0.55, end = window.innerWidth - tr.scrollWidth - 48;
       tr.style.transform = 'translateX(' + (start + (end - start) * p).toFixed(1) + 'px)';
     }
@@ -3135,6 +3188,7 @@ function loadPosts() {
       // 한눈에 보기 배너(scripts/blog-banners.js 가 굽는다) · 본문 인포그래픽(design/infographic-templates)
       banner: fs.existsSync(path.join(dir, 'img', `${meta.slug || f.replace(/\.md$/, '')}-overview.jpg`)),
       card: fs.existsSync(path.join(dir, 'img', `${meta.slug || f.replace(/\.md$/, '')}-card.jpg`)),
+      cover: fs.existsSync(path.join(dir, 'img', `${meta.slug || f.replace(/\.md$/, '')}-cover.jpg`)),
       infos: [...body.matchAll(/!\[([^\]]*)\]\(\/blog-img\/([^)\s]+)\)/g)].map((x) => ({ alt: x[1], file: x[2] })) };
   }).sort((a, b) => (a.date < b.date ? 1 : -1));
 }
@@ -3146,8 +3200,8 @@ const blogIcon = (k, size = 16) => `<svg width="${size}" height="${size}" viewBo
 
 function blogCard(p) {
   const cat = blogCat(p.category);
-  // 카드 = 그림(그 글의 표·숫자·비교로 만든 카드 그림, scripts/blog-cards.js) + 분류 + 제목. 색은 분류 표시에만
-  const img = p.card ? `${p.slug}-card.jpg` : p.banner ? `${p.slug}-overview-t.jpg` : '';
+  // 카드 = 대표 사진(scripts/blog-covers.js, 글자 없는 장면) → 없으면 표 그림(blog-cards.js) → 없으면 배너. 아래는 분류 + 제목. 색은 분류 표시에만
+  const img = p.cover ? `${p.slug}-cover.jpg` : p.card ? `${p.slug}-card.jpg` : p.banner ? `${p.slug}-overview-t.jpg` : '';
   return `
 <a href="/blog/${p.slug}/" class="post-card${p.hub ? ' is-hub' : ''}${img ? '' : ' no-media'}" style="--c:${cat.c}">
   ${img ? `<div class="pc-media"><img class="pc-img" src="/blog-img/${img}" width="800" height="600" alt="" loading="lazy" decoding="async">${p.infos.length ? `<span class="pc-chip">${blogIcon('image', 13)}인포그래픽</span>` : ''}</div>` : ''}
@@ -3286,10 +3340,10 @@ function blogPostPage(p, posts) {
     <h1 class="page-title" style="font-size:36px;line-height:1.25;">${p.title}</h1>
     <p class="page-sub">${p.date} · ${p.readMin}분 읽기 · BizHigher</p>
     ${hub ? `<a href="/blog/${hub.slug}/" class="hub-callout">🧭 이 글은 <b>${hub.title}</b> 가이드의 일부입니다 →</a>` : ''}
-    ${p.banner ? `<figure class="post-banner" style="--c:${blogCat(p.category).c};--t:${blogCat(p.category).t}"><picture><source media="(max-width: 640px)" srcset="/blog-img/${p.slug}-overview-m.jpg" width="1080" height="1350"><img src="/blog-img/${p.slug}-overview.jpg" width="1200" height="675" alt="${escAttr(`${p.title} 한눈에 보기 — ${p.summary.join(' ')}`)}" fetchpriority="high" decoding="async"></picture></figure>` : ''}
   </div>
 </header>
 <section class="detail-body" style="padding-top:4px;">
+  ${p.banner ? `<figure class="post-banner post-banner-wide" style="--c:${blogCat(p.category).c};--t:${blogCat(p.category).t}"><picture><source media="(max-width: 640px)" srcset="/blog-img/${p.slug}-overview-m.jpg" width="1080" height="1350"><img src="/blog-img/${p.slug}-overview.jpg" width="1200" height="675" alt="${escAttr(`${p.title} 한눈에 보기 — ${p.summary.join(' ')}`)}" fetchpriority="high" decoding="async"></picture></figure>` : ''}
   <div class="container post-layout">
     ${toc.length > 2 ? `<aside class="toc toc-side" id="toc"><b>목차</b><ol>${toc.map((h) => `<li><a href="#${h.id}" data-h="${h.id}">${h.t}</a></li>`).join('')}</ol></aside>` : '<div></div>'}
     <div class="post-main">
@@ -4542,6 +4596,15 @@ DATA.services.forEach((s) => write(`service/${s.slug}/index.html`, servicePage(s
 DATA.packages.forEach((p) => write(`package/${p.slug}/index.html`, packagePage(p)));
 write('404.html', notFoundPage());
 write('privacy/index.html', legalPage('개인정보처리방침', '/privacy/', PRIVACY_HTML));
+/* 샘플 리포트 — 실제 고객 리포트 판형(_report.js) 그대로, 검색 제외 */
+{
+  const srData = path.join(__dirname, 'data', 'sample-report.json'), srDir = path.join(__dirname, 'src', 'sample-report');
+  if (fs.existsSync(srData)) {
+    const html = require('./automation/ai-runner/_report.js').renderHtml(JSON.parse(fs.readFileSync(srData, 'utf8')), { robots: 'noindex' });
+    write('sample-report/index.html', html);
+    if (fs.existsSync(srDir)) fs.readdirSync(srDir).forEach((f) => fs.copyFileSync(path.join(srDir, f), path.join(DIST, 'sample-report', f)));
+  }
+}
 const IMGDIR = path.join(__dirname, 'content', 'blog', 'img');
 if (fs.existsSync(IMGDIR)) {
   fs.mkdirSync(path.join(DIST, 'blog-img'), { recursive: true });
