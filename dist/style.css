@@ -2879,8 +2879,8 @@ img { max-width: 100%; display: block; }
 .big-line-track { position: relative; z-index: 3; font-size: clamp(30px, 6vw, 56px); font-weight: 900; letter-spacing: -0.04em; line-height: 1.08; text-align: center; max-width: 900px; margin: 0 auto; color: var(--ink-900); }
 .big-line-track em { font-style: normal; }
 /* 데스크톱 + JS: 150vh 구간에 고정, 한 줄로 가로 이동 */
-.big-line.big-line-on { height: 72vh; padding: 0; } /* 2026-11-06 높이 압축(120vh → 72vh) */
-.big-line.big-line-on .big-line-sticky { position: sticky; top: 16vh; height: 30vh; display: flex; align-items: center; overflow: clip; }
+.big-line.big-line-on { height: 52vh; min-height: 420px; padding: 0; } /* 2026-11-06 높이 압축(120vh → 52vh) — 고정 띠는 글자 높이만 */
+.big-line.big-line-on .big-line-sticky { position: sticky; top: 30vh; height: 210px; display: flex; align-items: center; overflow: clip; }
 .big-line.big-line-on .big-line-track { font-size: clamp(96px, 10.5vw, 168px); max-width: none; margin: 0; text-align: left; white-space: nowrap; will-change: transform; }
 /* 쇼케이스 — 커버 영상(기본은 포스터), 무대 요소 패럴랙스 */
 .sc-cover { position: relative; overflow: hidden; }

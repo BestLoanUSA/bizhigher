@@ -2047,7 +2047,7 @@ ${sampleReportSection()}
     function frame() {
       ticking = false;
       // 고정(sticky)된 동안의 진행도 — 구간이 화면보다 낮아도 맞도록 고정 위치·높이로 센다(2026-11-06 높이 압축)
-      var r = sec.getBoundingClientRect(), st = sec.firstElementChild, ih = window.innerHeight, top0 = ih * 0.16, total = r.height - st.offsetHeight;
+      var r = sec.getBoundingClientRect(), st = sec.firstElementChild, ih = window.innerHeight, top0 = ih * 0.30, total = r.height - st.offsetHeight;
       var p = total > 0 ? Math.max(0, Math.min(1, (top0 - r.top) / total)) : 1;
       var start = window.innerWidth * 0.55, end = window.innerWidth - tr.scrollWidth - 48;
       tr.style.transform = 'translateX(' + (start + (end - start) * p).toFixed(1) + 'px)';
