@@ -926,6 +926,94 @@ img { max-width: 100%; display: block; }
 @keyframes mkDrop { from { opacity: 0; transform: translateY(-12cqw); } to { opacity: 1; transform: none; } }
 @keyframes mkPop { 0% { opacity: 0; transform: scale(0); } 100% { opacity: 1; transform: scale(1); } }
 @media (prefers-reduced-motion: reduce) { .mk01 * { animation: none !important; } }
+/* 02 카드 — 대행사 달력의 미팅들이 하나씩 지워지고, 폰에서 시작하기 → 결제 완료 → 오늘 시작, 가격 막대가 절반으로 (2026-11-06) */
+.mk02, .mk03 { position: relative; width: 100%; aspect-ratio: 10 / 7; container-type: inline-size; }
+.stack-card.has-viz:has(.mk02), .stack-card.has-viz:has(.mk03) { grid-template-columns: 1fr 1.05fr; }
+@media (max-width: 767px) { .stack-card.has-viz:has(.mk02), .stack-card.has-viz:has(.mk03) { grid-template-columns: 1fr; } }
+.s2-cal { position: absolute; left: 0; top: 2%; width: 56%; height: 60%; background: rgba(255,255,255,.95); border: 1px solid rgba(15,23,42,.1); border-radius: 2.6cqw; box-shadow: 0 2cqw 5cqw -2cqw rgba(10,27,77,.25); overflow: hidden; }
+.s2-bar { display: flex; align-items: center; gap: .9cqw; height: 6cqw; padding: 0 2.2cqw; background: #F4F6FB; border-bottom: 1px solid rgba(10,27,77,.06); }
+.s2-bar i { width: 1.4cqw; height: 1.4cqw; border-radius: 50%; background: #D7DCE6; }
+.s2-bar span { margin-left: 1.2cqw; font-size: 2.6cqw; font-weight: 700; color: var(--ink-600); }
+.s2-row { position: relative; display: flex; align-items: center; gap: 2cqw; margin: 1.4cqw 2.2cqw 0; padding: 1.3cqw 1.8cqw; border-radius: 1.6cqw; background: #F1F3F8; font-size: 2.7cqw; font-weight: 700; color: #9AA3B5; }
+.s2-row em { font-style: normal; width: 7cqw; font-size: 2.2cqw; color: #B4BCCB; }
+.s2-row u { position: absolute; left: 1.6cqw; right: 1.6cqw; top: 50%; height: .5cqw; border-radius: 1cqw; background: #EF4444; transform-origin: left center; text-decoration: none; }
+.s2-wait { position: absolute; left: 2.2cqw; bottom: 1.8cqw; font-size: 2.3cqw; font-weight: 700; color: #EF4444; }
+.s2-phone { position: absolute; right: 0; top: 0; width: 33%; height: 100%; z-index: 3; border-radius: 5.2cqw; background: #0B1530; padding: 1.6cqw; box-shadow: 0 3cqw 7cqw -2.5cqw rgba(10,27,77,.55); }
+.s2-notch { position: absolute; left: 50%; top: 2.2cqw; width: 9cqw; height: 1.8cqw; border-radius: 9px; background: #000; transform: translateX(-50%); z-index: 2; }
+.s2-scr { position: relative; height: 100%; border-radius: 4cqw; background: linear-gradient(180deg, #F4F7FF, #fff); overflow: hidden; padding: 7cqw 2.2cqw 2.2cqw; }
+.s2-toast { position: absolute; left: 1.6cqw; right: 1.6cqw; top: 5.2cqw; z-index: 2; display: flex; align-items: center; gap: 1cqw; padding: 1.4cqw 1.6cqw; border-radius: 2cqw; background: #0B1530; color: #fff; font-size: 2.2cqw; font-weight: 700; box-shadow: 0 1.5cqw 3cqw -1cqw rgba(10,27,77,.5); }
+.s2-toast b { display: inline-flex; align-items: center; justify-content: center; width: 3cqw; height: 3cqw; border-radius: 50%; background: #22C55E; font-size: 1.8cqw; flex: none; }
+.s2-plan { margin-top: 9cqw; display: flex; flex-direction: column; gap: .8cqw; padding: 2.2cqw; border-radius: 2.6cqw; background: #fff; border: 1px solid rgba(10,77,245,.18); }
+.s2-plan small { font-size: 1.9cqw; color: var(--blue-600); font-weight: 700; }
+.s2-plan > b { font-size: 3cqw; font-weight: 800; color: var(--ink-900); white-space: nowrap; }
+.s2-plan p { margin: 0; font-size: 2.3cqw; color: var(--ink-600); } .s2-plan strong { font-size: 3.6cqw; color: var(--ink-900); font-weight: 900; }
+.s2-plan > s { display: block; height: 1cqw; border-radius: 1cqw; background: #E2E7F1; } .s2-plan > s.sh { width: 60%; }
+.s2-btn { position: relative; margin-top: 1.4cqw; height: 5.4cqw; border-radius: 99px; overflow: hidden; }
+.s2-btn span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; border-radius: 99px; font-size: 2.4cqw; font-weight: 800; color: #fff; white-space: nowrap; }
+.s2-btn .done { background: #16A34A; } .s2-btn .go { background: var(--blue-600); opacity: 0; }
+.s2-tap { position: absolute; left: 50%; top: 50%; width: 6cqw; height: 6cqw; margin: -3cqw 0 0 -3cqw; border-radius: 50%; background: rgba(255,255,255,.7); opacity: 0; }
+.s2-bars { position: absolute; left: 0; bottom: 0; width: 62%; display: flex; flex-direction: column; gap: 2cqw; }
+.s2-l span { display: block; font-size: 2.5cqw; font-weight: 700; color: var(--ink-600); margin-bottom: .8cqw; } .s2-l.bh span { color: var(--blue-600); }
+.s2-trk { position: relative; height: 4.2cqw; display: flex; align-items: center; gap: 1.6cqw; }
+.s2-trk i { display: block; height: 100%; border-radius: 1.4cqw; transform-origin: left center; }
+.s2-trk .old { width: 100%; background: rgba(15,23,42,.14); } .s2-trk .new { width: 45%; background: var(--blue-600); }
+.s2-trk em { font-style: normal; font-size: 3cqw; font-weight: 900; color: var(--blue-600); white-space: nowrap; }
+.viz-on .s2-cal { animation: mkIn .5s cubic-bezier(.2,.8,.2,1) both; }
+.viz-on .s2-row { animation: mkIn .4s cubic-bezier(.2,.8,.2,1) both; } .viz-on .s2-row.r1 { animation-delay: .15s; } .viz-on .s2-row.r2 { animation-delay: .3s; } .viz-on .s2-row.r3 { animation-delay: .45s; } .viz-on .s2-row.r4 { animation-delay: .6s; }
+.viz-on .s2-row u { animation: mkGrow .3s ease-out both; } .viz-on .s2-row.r1 u { animation-delay: 1s; } .viz-on .s2-row.r2 u { animation-delay: 1.2s; } .viz-on .s2-row.r3 u { animation-delay: 1.4s; } .viz-on .s2-row.r4 u { animation-delay: 1.6s; }
+.viz-on .s2-wait { animation: mkIn .4s ease 1.8s both; }
+.viz-on .s2-phone { animation: mkSlide .7s cubic-bezier(.2,.8,.2,1) .35s both; }
+.viz-on .s2-tap { animation: s2Tap .6s ease-out 2.05s both; }
+.viz-on .s2-btn .go { animation: s2Hide .25s ease 2.3s both; }
+.viz-on .s2-toast { animation: mkDrop .5s cubic-bezier(.2,.9,.25,1) 2.6s both; }
+.viz-on .s2-trk .old { animation: mkGrow .6s cubic-bezier(.3,.7,.2,1) 2.8s both; }
+.viz-on .s2-trk .new { animation: s2Half .9s cubic-bezier(.6,0,.2,1) 2.9s both; }
+.viz-on .s2-trk em { animation: mkPop .45s cubic-bezier(.2,1.6,.4,1) 3.75s both; }
+@keyframes s2Tap { 0% { opacity: .9; transform: scale(.2); } 100% { opacity: 0; transform: scale(4); } }
+@keyframes s2Hide { from { opacity: 1; } to { opacity: 0; } }
+@keyframes s2Half { 0% { transform: scaleX(2.22); background: rgba(15,23,42,.14); } 40% { transform: scaleX(2.22); } 100% { transform: scaleX(1); background: var(--blue-600); } }
+
+/* 03 카드(파란 바탕) — 지도 검색 목록에서 우리 가게가 5위 → 1위로, 개월·리뷰 수가 오르고, "반짝 광고"는 한 번 번쩍이고 흐려진다 */
+.s3-list { position: absolute; left: 0; top: 3%; width: 60%; height: 94%; background: rgba(255,255,255,.96); border-radius: 2.8cqw; box-shadow: 0 3cqw 7cqw -2cqw rgba(4,12,60,.55); overflow: hidden; }
+.s3-bar { display: flex; align-items: baseline; gap: 1.2cqw; padding: 2cqw 2.6cqw 1.6cqw; border-bottom: 1px solid #EEF1F6; }
+.s3-bar span { font-size: 2.3cqw; font-weight: 800; color: var(--blue-600); } .s3-bar em { font-style: normal; font-size: 2.6cqw; font-weight: 700; color: var(--ink-900); }
+.s3-rows { position: relative; margin: 1.2cqw 2cqw 0 9cqw; }
+.s3-ranks { position: absolute; left: -7cqw; top: 0; display: flex; flex-direction: column; }
+.s3-ranks i { height: 9.6cqw; display: flex; align-items: center; justify-content: center; width: 5cqw; font-style: normal; font-size: 2.8cqw; font-weight: 900; color: #B4BCCB; }
+.s3-ranks i:first-child { color: var(--blue-600); }
+.s3-row { position: absolute; left: 0; right: 0; top: calc(var(--i) * 9.6cqw); height: 8.4cqw; display: flex; align-items: center; gap: 1.6cqw; padding: 0 1.8cqw; border-radius: 1.8cqw; background: #F4F6FA; font-size: 2.6cqw; }
+.s3-row b { font-weight: 700; color: #8A94A6; white-space: nowrap; } .s3-row s { flex: 1; height: 1cqw; border-radius: 1cqw; background: #E3E7EF; }
+.s3-pin { width: 2.6cqw; height: 2.6cqw; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #C9D0DC; flex: none; }
+.s3-row.me { z-index: 2; background: #fff; border: .45cqw solid var(--blue-600); box-shadow: 0 2cqw 4cqw -1.5cqw rgba(10,77,245,.55); }
+.s3-row.me b { color: var(--ink-900); font-weight: 900; } .s3-row.me .s3-pin { background: var(--blue-600); }
+.s3-row.me em { margin-left: auto; font-style: normal; font-weight: 800; color: #F59E0B; font-size: 2.4cqw; white-space: nowrap; }
+.s3-ad { position: absolute; right: 3%; top: 2%; z-index: 3; display: inline-flex; align-items: center; gap: .8cqw; padding: 1cqw 2.2cqw 1cqw 1.4cqw; border-radius: 99px; background: rgba(255,255,255,.18); border: 1px dashed rgba(255,255,255,.55); color: rgba(255,255,255,.75); font-size: 2.4cqw; font-weight: 700; opacity: .55; }
+.s3-ad b { color: #FDE047; }
+.s3-stat { position: absolute; right: 0; top: 14%; width: 36%; padding: 3cqw; border-radius: 2.8cqw; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.28); color: #fff; backdrop-filter: blur(6px); }
+.s3-stat small { font-size: 2.3cqw; opacity: .8; font-weight: 600; }
+.s3-stat > b { display: block; font-size: 7cqw; font-weight: 900; line-height: 1.05; letter-spacing: -.02em; margin: .6cqw 0 1cqw; font-variant-numeric: tabular-nums; }
+.s3-stat p { margin: 0; font-size: 2.7cqw; font-weight: 700; } .s3-stat p span { font-variant-numeric: tabular-nums; }
+.s3-spark { display: flex; align-items: flex-end; gap: .9cqw; height: 13cqw; margin-top: 2.4cqw; }
+.s3-spark i { flex: 1; height: var(--h); border-radius: .8cqw .8cqw .3cqw .3cqw; background: linear-gradient(180deg, #A5F3FC, rgba(255,255,255,.55)); transform-origin: bottom center; }
+.viz-on .s3-list { animation: mkIn .55s cubic-bezier(.2,.8,.2,1) both; }
+.viz-on .s3-row:not(.me) { animation: 2.6s linear .4s both; }
+.viz-on .s3-row[style*="--i:4"] { animation-name: s3D4; } .viz-on .s3-row[style*="--i:3"] { animation-name: s3D3; } .viz-on .s3-row[style*="--i:2"] { animation-name: s3D2; } .viz-on .s3-row[style*="--i:1"] { animation-name: s3D1; }
+.viz-on .s3-row.me { animation: s3Up 2.6s cubic-bezier(.5,0,.2,1) .4s both; }
+.viz-on .s3-row.me em { animation: mkPop .45s cubic-bezier(.2,1.6,.4,1) 3s both; }
+.viz-on .s3-ad { animation: s3Flash 1.8s ease .2s both; }
+.viz-on .s3-stat { animation: mkIn .55s cubic-bezier(.2,.8,.2,1) .25s both; }
+.viz-on .s3-spark i { animation: s3Bar .5s cubic-bezier(.2,.8,.2,1) both; } .viz-on .s3-spark i:nth-child(1) { animation-delay: .5s; } .viz-on .s3-spark i:nth-child(2) { animation-delay: .9s; } .viz-on .s3-spark i:nth-child(3) { animation-delay: 1.3s; } .viz-on .s3-spark i:nth-child(4) { animation-delay: 1.7s; } .viz-on .s3-spark i:nth-child(5) { animation-delay: 2.1s; } .viz-on .s3-spark i:nth-child(6) { animation-delay: 2.5s; }
+/* 우리 가게: 5위 자리(4칸 아래)에서 한 칸씩 올라온다. 다른 가게는 한 칸씩 밀려 내려간다 */
+@keyframes s3Up { 0%, 8% { transform: translateY(38.4cqw); } 30% { transform: translateY(28.8cqw); } 55% { transform: translateY(19.2cqw); } 78% { transform: translateY(9.6cqw); } 100% { transform: none; } }
+/* 다른 가게는 우리 가게가 지나가는 순간에만 한 칸 내려간다(D → C → B → A 순) */
+@keyframes s3D4 { 0%, 18% { transform: translateY(-9.6cqw); } 30%, 100% { transform: none; } }
+@keyframes s3D3 { 0%, 43% { transform: translateY(-9.6cqw); } 55%, 100% { transform: none; } }
+@keyframes s3D2 { 0%, 66% { transform: translateY(-9.6cqw); } 78%, 100% { transform: none; } }
+@keyframes s3D1 { 0%, 88% { transform: translateY(-9.6cqw); } 100% { transform: none; } }
+@keyframes s3Flash { 0% { opacity: 0; transform: scale(.6); } 18% { opacity: 1; transform: scale(1.18); background: rgba(253,224,71,.35); box-shadow: 0 0 6cqw rgba(253,224,71,.8); } 40% { opacity: 1; transform: scale(1); } 100% { opacity: .55; transform: scale(1); box-shadow: none; } }
+@keyframes s3Bar { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@media (prefers-reduced-motion: reduce) { .mk02 *, .mk03 * { animation: none !important; } }
+
 
 .viz-on .v-flow .f1 { animation: vFlow 1.1s linear infinite; }
 .viz-on .v-flow .f2 { animation: vFlow .9s linear infinite; }
