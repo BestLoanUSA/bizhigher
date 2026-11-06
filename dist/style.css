@@ -259,36 +259,7 @@ img { max-width: 100%; display: block; }
 
 /* ---------- 홈: 샘플 리포트 넘겨 보기 (2026-11-06) ---------- */
 .sr-sec { background: linear-gradient(180deg, #fff 0%, var(--gray-50) 100%); }
-.sr-wrap { display: grid; grid-template-columns: 250px 1fr; gap: 28px; margin-top: 34px; align-items: start; }
-.sr-toc { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; position: sticky; top: 110px; }
-.sr-toc button { width: 100%; display: flex; gap: 12px; align-items: baseline; text-align: left; background: none; border: 0; border-radius: 10px; padding: 9px 12px; font: inherit; font-size: 15px; font-weight: 600; color: var(--ink-600); cursor: pointer; transition: background .2s ease, color .2s ease; }
-.sr-toc button span { flex: none; width: 30px; font-size: 12px; font-weight: 800; color: var(--ink-400); letter-spacing: .04em; }
-.sr-toc button:hover { background: #fff; color: var(--ink-900); }
-.sr-toc button[aria-current] { background: #fff; color: var(--ink-900); box-shadow: 0 6px 18px -10px rgba(11, 21, 48, .35); }
-.sr-toc button[aria-current] span { color: var(--blue-600); }
-.sr-viewer { position: relative; min-width: 0; }
-.sr-track { display: flex; gap: 22px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 6px 4px 26px; scrollbar-width: thin; scrollbar-color: var(--blue-300) transparent; outline: none; }
-.sr-track:focus-visible { outline: 3px solid var(--blue-300); outline-offset: 2px; border-radius: 12px; }
-.sr-page { flex: 0 0 88%; scroll-snap-align: start; margin: 0; height: 560px; background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; box-shadow: 0 30px 60px -36px rgba(11, 21, 48, .45), 0 2px 0 rgba(11, 21, 48, .03); }
-.sr-page picture { display: contents; }
-.sr-page img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: top center; }
-.sr-ctl { display: flex; align-items: center; gap: 12px; justify-content: flex-end; padding-right: 12%; }
-.sr-count { font-size: 14px; font-weight: 700; color: var(--ink-600); min-width: 56px; text-align: center; font-variant-numeric: tabular-nums; }
 .sr-ctas { justify-content: center; margin-top: 30px; flex-wrap: wrap; }
-@media (max-width: 991px) {
-  .sr-wrap { grid-template-columns: 1fr; gap: 14px; }
-  .sr-toc { position: static; flex-direction: row; overflow-x: auto; gap: 6px; padding-bottom: 4px; scrollbar-width: none; }
-  .sr-toc button { white-space: nowrap; padding: 7px 12px; font-size: 13.5px; background: #fff; border: 1px solid var(--line); }
-  .sr-toc button span { width: auto; }
-  .sr-page { flex-basis: 90%; height: 460px; }
-  .sr-ctl { padding-right: 0; justify-content: center; }
-}
-@media (max-width: 640px) {
-  .sr-page { flex-basis: 86%; height: 470px; position: relative; }
-  .sr-page picture { display: block; height: 100%; }
-  .sr-page img { height: auto; object-fit: initial; }
-  .sr-page::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 48px; background: linear-gradient(180deg, rgba(255,255,255,0), #fff); pointer-events: none; }
-}
 
 /* ---------- 블로그 카드 (2026-11-06 2차) — 그림이 카드의 대부분, 아래는 분류 + 제목만. 색은 분류 표시에만(--c) ---------- */
 .post-card {
@@ -3141,3 +3112,35 @@ img { max-width: 100%; display: block; }
   .pl-desc { -webkit-line-clamp: 2; font-size: 12.5px; }
 }
 @media (prefers-reduced-motion: reduce) { .post-link, .pl-img img, .pl-go { transition: none; } }
+
+/* ==========================================================
+   v51 — 샘플 리포트: 스크롤하면 한 장씩 위로 쌓이는 카드 (2026-11-06)
+   기본(폰·낮은 화면·JS 없음)은 쪽 이미지를 차례로. 넓고 높은 화면에서만 sticky 로 쌓는다
+   ========================================================== */
+.srs { margin-top: 34px; }
+.srs-toc { display: none; }
+.srs-stack { display: flex; flex-direction: column; gap: 18px; }
+.srs-card { margin: 0; background: #fff; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; box-shadow: 0 24px 50px -32px rgba(11, 21, 48, .45); }
+.srs-card picture, .srs-card img { display: block; width: 100%; height: auto; }
+@media (min-width: 992px) and (min-height: 640px) {
+  .srs { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 34px; align-items: start; }
+  .srs-toc { display: flex; flex-direction: column; gap: 2px; list-style: none; margin: 0; padding: 0; position: sticky; top: 120px; }
+  .srs-toc a { display: flex; gap: 12px; align-items: baseline; padding: 9px 12px; border-radius: 10px; font-size: 15px; font-weight: 600; color: var(--ink-600); transition: background var(--dur) var(--ease), color var(--dur) var(--ease); }
+  .srs-toc a span { flex: none; width: 30px; font-size: 12px; font-weight: 800; color: var(--ink-400); letter-spacing: .04em; }
+  .srs-toc a:hover { background: #fff; color: var(--ink-900); }
+  .srs-toc a[aria-current] { background: #fff; color: var(--ink-900); box-shadow: 0 6px 18px -10px rgba(11, 21, 48, .35); }
+  .srs-toc a[aria-current] span { color: var(--blue-600); }
+  .srs-stack { gap: 0; }
+  .srs-card {
+    position: sticky; top: calc(100px + var(--i) * 10px);
+    height: calc(100vh - 150px); margin-bottom: 30vh;
+    display: flex; align-items: flex-start; justify-content: center; padding: 18px;
+    transition: transform .45s var(--ease), filter .45s var(--ease);
+    transform-origin: center top;
+  }
+  .srs-card:last-child { margin-bottom: 0; }
+  .srs-card picture { width: 100%; height: 100%; display: flex; justify-content: center; }
+  .srs-card img { width: auto; max-width: 100%; height: auto; max-height: 100%; object-fit: contain; }
+  .srs-card.srs-under { transform: scale(.965); filter: brightness(.97); }
+}
+@media (prefers-reduced-motion: reduce) { .srs-card { transition: none; } .srs-card.srs-under { transform: none; } }

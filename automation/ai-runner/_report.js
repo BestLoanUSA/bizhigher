@@ -22,6 +22,19 @@
  *     { "title": "지도 순위", "grids": { "keyword": "korean tofu soup", "before": [[…7개]…7줄], "after": [[…]], "beforeLabel": "10월", "afterLabel": "4월", "radius": "반경 2마일" } }, // places.js grid JSON 의 grid 그대로(0=20위 밖)
  *     { "title": "이번 달 한 일", "tiles": [{ "n": "8", "label": "구글 게시물" }] }
  *   ],
+ *   // 2026-11-06 v2 — 그림 종류를 늘리고 한 쪽에 여러 블록을 묶는다. 섹션에 "blocks": [{ "h": "작은 제목", "span": 1|2, …아래 키 하나 }] (2열 격자, 폰은 1열)
+ *   //   gauge  { "value": 86, "max": 100, "before": 48, "label": "진단 점수" }                      — 링 게이지(시작 → 지금)
+ *   //   radar  { "axes": ["구글 노출",…], "before": [..], "after": [..], "max": 20 }                — 5각 레이더(시작·지금 겹침)
+ *   //   lines  { "labels": ["5월",…], "series": [{ "label": "전화", "values": [..] }] }            — 여러 줄 추이(마지막 값 표시)
+ *   //   funnel [{ "label": "프로필 조회", "value": 2140 }, …]                                       — 깔때기(단계별 비율)
+ *   //   rank   { "items": [{ "label": "우리 가게", "value": 148, "sub": "★4.7", "me": true }], "unit": "리뷰" } — 가로 순위 막대
+ *   //   stars  { "dist": [5점,4점,3점,2점,1점 개수], "avg": 4.7, "total": 148, "replied": "100%", "speed": "평균 9시간" } — 별점 분포
+ *   //   words  [{ "w": "순두부", "n": 41 }]                                                           — 손님이 자주 쓴 말(크기 = 횟수)
+ *   //   checks [{ "label": "ChatGPT", "state": "ok|part|no", "note": "추천 3곳 중 2위" }]             — 통과·부분·미흡 칩
+ *   //   gallery[{ "src": "https://…/a/x.jpg", "cap": "게시물 · 10/12" }]                             — 이번 달 만든 것 사진
+ *   //   timeline[{ "when": "11월 1주", "text": "…" }]                                                — 다음 달 계획
+ *   //   (blocks 안에서도 text·tiles·items·table·chart·scores·grids 를 그대로 쓸 수 있다)
+ *   // business.photo — 표지 오른쪽 가게 사진 · kpis[].trend [숫자…] — 지표 카드 아래 작은 추이선
  *   "sample": true   // 표지 위에 "예시 리포트 · 가상의 업체" 띠(샘플 전용)
  *   "notes": "작은 글씨 주석(출처·측정 기준)", "cta": "다음 달에도 같은 리포트를 드립니다. 궁금한 점은 답장 주세요."
  * }
@@ -36,7 +49,7 @@ const BRAND = `<span class="brand">${LOGO}<b>Biz<i>Higher</i></b></span>`;
 
 function kpiCard(k) {
   const d = k.delta ? `<span class="delta ${/^[-−]/.test(String(k.delta)) ? (k.good === false ? 'down' : 'down') : k.good === false ? 'down' : 'up'}">${esc(k.delta)}</span>` : '';
-  return `<div class="kpi"><div class="l">${esc(k.label)}</div><div class="v">${esc(k.value ?? '–')}${d}</div>${k.note ? `<div class="n">${esc(k.note)}</div>` : ''}</div>`;
+  return `<div class="kpi"><div class="l">${esc(k.label)}</div><div class="v">${esc(k.value ?? '–')}${d}</div>${k.note ? `<div class="n">${esc(k.note)}</div>` : ''}${k.trend ? spark(k.trend) : ''}</div>`;
 }
 function chartSvg(c) {
   const vals = (c.values || []).map(Number); const n = vals.length; if (!n) return '';
@@ -49,6 +62,11 @@ function table(t) {
   return `<table><thead><tr>${(t.head || []).map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${(t.rows || []).map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
 }
 function section(s, i) {
+  let body = blockBody(s);
+  if (s.blocks && s.blocks.length) body += `<div class="blocks">${s.blocks.map((b) => `<div class="blk${Number(b.span) === 2 ? ' wide' : ''}">${b.h ? `<h3>${esc(b.h)}</h3>` : ''}${blockBody(b)}</div>`).join('')}</div>`;
+  return `<section class="sec" id="s${i + 1}"><h2><span class="num">${String(i + 1).padStart(2, '0')}</span>${esc(s.title)}</h2>${body}</section>`;
+}
+function blockBody(s) {
   let body = '';
   if (s.text) body += `<p>${esc(s.text).replace(/\n/g, '<br>')}</p>`;
   if (s.tiles && s.tiles.length) body += `<div class="tiles">${s.tiles.map((t) => `<div class="tile"><b>${esc(t.n)}</b><span>${esc(t.label)}</span></div>`).join('')}</div>`;
@@ -62,8 +80,81 @@ function section(s, i) {
   if (s.steps && s.steps.length) body += `<div class="steps">${s.steps.map((x) => `<div class="step${x.you ? ' you' : ''}"><b>${esc(x.tag || (x.you ? '사장님 차례' : '진행 예정'))}</b><span>${esc(x.text)}</span></div>`).join('')}</div>`;
   if (s.scores) body += scoresHtml(s.scores);
   if (s.grids) body += gridsHtml(s.grids);
+  if (s.gauge) body += gaugeSvg(s.gauge);
+  if (s.radar) body += radarSvg(s.radar);
+  if (s.lines) body += linesSvg(s.lines);
+  if (s.funnel) body += funnelHtml(s.funnel);
+  if (s.rank) body += rankHtml(s.rank);
+  if (s.stars) body += starsHtml(s.stars);
+  if (s.words) body += wordsHtml(s.words);
+  if (s.checks) body += checksHtml(s.checks);
+  if (s.gallery) body += galleryHtml(s.gallery);
+  if (s.timeline) body += timelineHtml(s.timeline);
   if (s.note) body += `<p class="small">${esc(s.note)}</p>`;
-  return `<section class="sec" id="s${i + 1}"><h2><span class="num">${String(i + 1).padStart(2, '0')}</span>${esc(s.title)}</h2>${body}</section>`;
+  return body;
+}
+
+/* ---- v2 그림들 (전부 SVG·HTML, 스크립트 없음 — PDF·고객 페이지 iframe 에서도 그대로) ---- */
+const PAL = ['var(--c)', '#14B8A6', '#F59E0B', '#8B5CF6', '#EF4444'];
+const num = (v) => Number(String(v).replace(/[^0-9.-]/g, '')) || 0;
+function spark(vals) {
+  const v = vals.map(num); if (v.length < 2) return '';
+  const W = 120, H = 30, mn = Math.min(...v), mx = Math.max(...v), r = mx - mn || 1;
+  const pts = v.map((x, i) => [(i / (v.length - 1)) * (W - 4) + 2, H - 3 - ((x - mn) / r) * (H - 8)]);
+  const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+  const last = pts[pts.length - 1];
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" aria-hidden="true"><path d="${d} L${W - 2} ${H} L2 ${H}Z" fill="var(--tint)"/><path d="${d}" fill="none" stroke="var(--c)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="3" fill="var(--c)"/></svg>`;
+}
+function gaugeSvg(g) {
+  const max = num(g.max) || 100, v = Math.max(0, Math.min(max, num(g.value))), b = g.before != null ? Math.max(0, Math.min(max, num(g.before))) : null;
+  const R = 70, C = 2 * Math.PI * R, arc = (x) => `${((x / max) * C * 0.75).toFixed(1)} ${C.toFixed(1)}`;
+  return `<div class="gauge"><svg viewBox="0 0 180 170" role="img" aria-label="${esc(g.label || '점수')} ${esc(g.value)}/${max}"><g transform="rotate(135 90 90)"><circle cx="90" cy="90" r="${R}" fill="none" stroke="#EEF1F6" stroke-width="14" stroke-dasharray="${arc(max)}" stroke-linecap="round"/>${b != null ? `<circle cx="90" cy="90" r="${R}" fill="none" stroke="#C9D2E3" stroke-width="14" stroke-dasharray="${arc(b)}" stroke-linecap="round"/>` : ''}<circle cx="90" cy="90" r="${R}" fill="none" stroke="url(#gg)" stroke-width="14" stroke-dasharray="${arc(v)}" stroke-linecap="round" style="mix-blend-mode:multiply"/></g><defs><linearGradient id="gg" x1="0" x2="1"><stop offset="0" stop-color="#14B8A6"/><stop offset="1" stop-color="var(--c)"/></linearGradient></defs><text x="90" y="92" text-anchor="middle" class="gv">${esc(g.value)}</text><text x="90" y="116" text-anchor="middle" class="gm">/ ${max}</text></svg>${b != null ? `<div class="gfrom"><s>${esc(g.before)}</s> → <b>${esc(g.value)}</b><span class="delta up">+${(num(g.value) - num(g.before)).toFixed(0)}</span></div>` : ''}${g.label ? `<div class="glabel">${esc(g.label)}</div>` : ''}</div>`;
+}
+function radarSvg(r) {
+  const ax = r.axes || [], n = ax.length; if (n < 3) return '';
+  const max = num(r.max) || 20, cx = 150, cy = 118, R = 84;
+  const pt = (i, f) => { const a = -Math.PI / 2 + (i / n) * 2 * Math.PI; return [cx + Math.cos(a) * R * f, cy + Math.sin(a) * R * f]; };
+  const poly = (vals) => vals.map((v, i) => pt(i, Math.max(0, Math.min(1, num(v) / max))).map((x) => x.toFixed(1)).join(',')).join(' ');
+  const rings = [0.25, 0.5, 0.75, 1].map((f) => `<polygon points="${ax.map((_, i) => pt(i, f).map((x) => x.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="#E3E7EE"/>`).join('');
+  const spokes = ax.map((_, i) => { const p = pt(i, 1); return `<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#E3E7EE"/>`; }).join('');
+  const labels = ax.map((l, i) => { const p = pt(i, 1.2); const a = p[0] < cx - 5 ? 'end' : p[0] > cx + 5 ? 'start' : 'middle'; return `<text x="${p[0].toFixed(1)}" y="${(p[1] + 4).toFixed(1)}" text-anchor="${a}" class="rl">${esc(l)} <tspan class="rv">${esc((r.after || [])[i] ?? '')}</tspan></text>`; }).join('');
+  return `<svg class="radar" viewBox="-46 0 392 236" role="img" aria-label="영역별 점수">${rings}${spokes}${r.before ? `<polygon points="${poly(r.before)}" fill="#94A3B833" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="4 3"/>` : ''}<polygon points="${poly(r.after || [])}" fill="color-mix(in srgb,var(--c) 22%,transparent)" stroke="var(--c)" stroke-width="2.5" stroke-linejoin="round"/>${(r.after || []).map((v, i) => { const p = pt(i, Math.min(1, num(v) / max)); return `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.5" fill="var(--c)"/>`; }).join('')}${labels}</svg>${r.before ? `<div class="legend"><span><i style="background:#94A3B8"></i>${esc(r.beforeLabel || '시작')}</span><span><i style="background:var(--c)"></i>${esc(r.afterLabel || '지금')}</span></div>` : ''}`;
+}
+function linesSvg(c) {
+  const ser = c.series || [], labels = c.labels || []; if (!ser.length || labels.length < 2) return '';
+  const W = 640, H = 210, pl = 46, pr = 56, pt = 14, pb = 28, all = ser.flatMap((x) => x.values.map(num)), mx = Math.max(1, ...all) * 1.1;
+  const X = (i) => pl + (i / (labels.length - 1)) * (W - pl - pr), Y = (v) => H - pb - (num(v) / mx) * (H - pb - pt);
+  const grid = [0.25, 0.5, 0.75, 1].map((f) => `<line x1="${pl}" x2="${W - pr}" y1="${(H - pb - f * (H - pb - pt)).toFixed(1)}" y2="${(H - pb - f * (H - pb - pt)).toFixed(1)}" stroke="#EEF1F6"/><text x="${pl - 6}" y="${(H - pb - f * (H - pb - pt) + 4).toFixed(1)}" text-anchor="end" class="cl">${Math.round(mx * f)}</text>`).join('');
+  const lines = ser.map((s, k) => { const col = s.color || PAL[k % PAL.length]; const d = s.values.map((v, i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1)).join(' '); const lv = s.values[s.values.length - 1];
+    return `${k === 0 ? `<path d="${d} L${X(labels.length - 1).toFixed(1)} ${H - pb} L${pl} ${H - pb}Z" fill="color-mix(in srgb,${col} 12%,transparent)"/>` : ''}<path d="${d}" fill="none" stroke="${col}" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>${s.values.map((v, i) => `<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="${i === s.values.length - 1 ? 4.5 : 2.5}" fill="${i === s.values.length - 1 ? col : '#fff'}" stroke="${col}" stroke-width="2"/>`).join('')}<text x="${(X(labels.length - 1) + 9).toFixed(1)}" y="${(Y(lv) + 4).toFixed(1)}" class="lv" fill="${col}">${esc(lv)}</text>`; }).join('');
+  return `<svg class="chart lines" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(ser.map((s) => s.label).join('·'))} 추이">${grid}${labels.map((l, i) => `<text x="${X(i).toFixed(1)}" y="${H - 8}" text-anchor="middle" class="cl">${esc(l)}</text>`).join('')}${lines}</svg><div class="legend">${ser.map((s, k) => `<span><i style="background:${s.color || PAL[k % PAL.length]}"></i>${esc(s.label)}</span>`).join('')}</div>`;
+}
+function funnelHtml(f) {
+  const top = num(f[0] && f[0].value) || 1;
+  return `<div class="funnel">${f.map((x, i) => { const w = 24 + 76 * Math.sqrt(num(x.value) / top); const pct = i ? Math.round((num(x.value) / num(f[i - 1].value)) * 100) : null;
+    return `<div class="fr"><div class="fbar" style="width:${w.toFixed(1)}%;background:color-mix(in srgb,var(--c) ${100 - i * 18}%,#14B8A6)"><b>${esc(Number(num(x.value)).toLocaleString('en-US'))}</b></div><span class="fl">${esc(x.label)}${pct != null ? ` <em>${pct}%</em>` : ''}</span></div>`; }).join('')}</div>`;
+}
+function rankHtml(r) {
+  const items = r.items || [], mx = Math.max(1, ...items.map((x) => num(x.value)));
+  return `<div class="rank">${items.map((x, i) => `<div class="rr${x.me ? ' me' : ''}"><span class="ri">${i + 1}</span><span class="rn">${esc(x.label)}${x.sub ? ` <em>${esc(x.sub)}</em>` : ''}</span><span class="rb"><i style="width:${((num(x.value) / mx) * 100).toFixed(1)}%"></i></span><b>${esc(x.value)}${r.unit ? `<small>${esc(r.unit)}</small>` : ''}</b></div>`).join('')}</div>`;
+}
+function starsHtml(st) {
+  const d = (st.dist || []).map(num), tot = d.reduce((a, b) => a + b, 0) || 1;
+  return `<div class="stars"><div class="savg"><b>${esc(st.avg)}</b><span class="st">${'★'.repeat(Math.round(num(st.avg)))}<i>${'★'.repeat(5 - Math.round(num(st.avg)))}</i></span><small>리뷰 ${esc(st.total)}개</small></div><div class="sdist">${d.map((n, i) => `<div class="sd"><span>${5 - i}★</span><span class="sdb"><i style="width:${((n / tot) * 100).toFixed(1)}%;${i >= 3 ? 'background:#F59E0B' : ''}"></i></span><em>${n}</em></div>`).join('')}</div>${st.replied || st.speed ? `<div class="sfacts">${st.replied ? `<span><b>${esc(st.replied)}</b>답글</span>` : ''}${st.speed ? `<span><b>${esc(st.speed)}</b>답글까지</span>` : ''}${st.newCount ? `<span><b>${esc(st.newCount)}</b>새 리뷰</span>` : ''}</div>` : ''}</div>`;
+}
+function wordsHtml(ws) {
+  const mx = Math.max(1, ...ws.map((x) => num(x.n)));
+  return `<div class="words">${ws.map((x, i) => { const f = num(x.n) / mx; return `<span style="font-size:${(13 + f * 15).toFixed(1)}px;background:color-mix(in srgb,${PAL[i % 4]} ${(8 + f * 14).toFixed(0)}%,#fff);color:color-mix(in srgb,${PAL[i % 4]} 80%,#0F172A)">${esc(x.w)}<em>${esc(x.n)}</em></span>`; }).join('')}</div>`;
+}
+function checksHtml(cs) {
+  const ic = { ok: '✓', part: '△', no: '✕' };
+  return `<div class="checks">${cs.map((c) => `<div class="ck ${esc(c.state || 'no')}"><i>${ic[c.state] || '✕'}</i><span><b>${esc(c.label)}</b>${c.note ? `<em>${esc(c.note)}</em>` : ''}</span></div>`).join('')}</div>`;
+}
+function galleryHtml(g) {
+  return `<div class="gallery">${g.slice(0, 4).map((x) => `<figure><img src="${esc(x.src)}" alt="${esc(x.cap || '')}"><figcaption>${esc(x.cap || '')}</figcaption></figure>`).join('')}</div>`;
+}
+function timelineHtml(t) {
+  return `<ol class="tline">${t.map((x) => `<li><b>${esc(x.when)}</b><span>${esc(x.text)}</span></li>`).join('')}</ol>`;
 }
 
 /* 진단 점수 — 영역마다 시작(옅은 막대)과 지금(진한 막대), 합계는 위에 크게 */
@@ -128,10 +219,26 @@ table{width:100%;border-collapse:collapse;font-size:14px;margin:6px 0 12px}th{te
 .prog{margin:4px 0 14px}.prog .bar{height:12px;border-radius:999px;background:#EEF1F6;overflow:hidden}.prog .bar i{display:block;height:100%;border-radius:999px;background:var(--c)}.prog .lbl{display:flex;justify-content:space-between;font-size:13px;color:var(--ink2);margin-bottom:6px}.prog .lbl b{color:var(--ink);font-size:15px}
 .ribbon{background:var(--ink);color:#fff;font-size:12.5px;text-align:center;padding:7px 12px;letter-spacing:.02em}
 @media (max-width:600px){.grids{grid-template-columns:1fr}.srow{grid-template-columns:78px 1fr 64px;gap:8px}.gc{font-size:10.5px;border-radius:5px}}
+.cover.has-photo{padding-right:calc(48px + 38%)}.cover.has-photo::before{display:none}.cphoto{position:absolute;right:0;top:0;bottom:0;width:38%;height:100%;object-fit:cover;-webkit-mask-image:linear-gradient(90deg,transparent,#000 22%);mask-image:linear-gradient(90deg,transparent,#000 22%)}
+.spark{display:block;width:100%;height:30px;margin-top:8px}
+.blocks{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:4px 0 12px}.blk{border:1px solid var(--line);border-radius:16px;padding:14px 16px;min-width:0;background:#fff}.blk.wide{grid-column:1/-1}.blk h3{font-size:13px;margin:0 0 8px;color:var(--ink2);letter-spacing:.02em;font-weight:700}.blk>*:last-child{margin-bottom:0}
+.gauge{display:flex;flex-direction:column;align-items:center}.gauge svg{width:180px;height:auto}.gauge .gv{font-size:44px;font-weight:800;fill:var(--ink);letter-spacing:-1px}.gauge .gm{font-size:13px;fill:var(--ink3)}.gfrom{font-size:14px;color:var(--ink2);margin-top:-8px}.gfrom s{color:var(--ink3)}.gfrom b{font-size:17px}.glabel{font-size:12px;color:var(--ink3);margin-top:4px}
+.radar{width:100%;max-width:360px;display:block;margin:0 auto}.radar .rl{font-size:11.5px;fill:var(--ink2);font-weight:600}.radar .rv{fill:var(--c);font-weight:800}
+.legend{display:flex;gap:14px;justify-content:center;font-size:12px;color:var(--ink3)}.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.lines .lv{font-size:12.5px;font-weight:800}
+.funnel{display:grid;gap:7px}.fr{display:grid;grid-template-columns:1fr;gap:2px}.fbar{height:30px;border-radius:9px;display:flex;align-items:center;padding:0 12px;color:#fff;font-size:14px;min-width:64px}.fl{font-size:12.5px;color:var(--ink2)}.fl em{font-style:normal;font-weight:800;color:var(--c);margin-left:4px}
+.rank{display:grid;gap:8px}.rr{display:grid;grid-template-columns:20px minmax(0,1.4fr) 1fr auto;gap:10px;align-items:center;font-size:13.5px}.ri{font-weight:800;color:var(--ink3);text-align:center}.rn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rn em{display:block;font-style:normal;color:var(--ink3);font-size:11.5px;font-weight:500;line-height:1.3}.rb{height:9px;border-radius:9px;background:#EEF1F6;overflow:hidden}.rb i{display:block;height:100%;background:#C9D2E3;border-radius:9px}.rr b{font-size:14px;text-align:right}.rr b small{font-size:11px;color:var(--ink3);font-weight:500;margin-left:2px}.rr.me{background:var(--tint);border-radius:10px;padding:5px 6px;margin:0 -6px}.rr.me .rb i{background:var(--c)}.rr.me .rn{font-weight:800}.rr.me .ri{color:var(--c)}
+.stars{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;align-items:center}.savg{display:flex;flex-direction:column;align-items:center}.savg b{font-size:44px;font-weight:800;line-height:1;letter-spacing:-1px}.savg .st{color:#F59E0B;font-size:15px;letter-spacing:1px}.savg .st i{font-style:normal;color:#E3E7EE}.savg small{font-size:12px;color:var(--ink3)}.sdist{display:grid;gap:4px}.sd{display:grid;grid-template-columns:26px 1fr 30px;gap:8px;align-items:center;font-size:12px;color:var(--ink2)}.sdb{height:8px;border-radius:8px;background:#EEF1F6;overflow:hidden}.sdb i{display:block;height:100%;background:var(--c);border-radius:8px}.sd em{font-style:normal;text-align:right}.sfacts{grid-column:1/-1;display:flex;gap:8px;margin-top:8px}.sfacts span{flex:1;background:#F6F8FB;border-radius:10px;padding:8px 10px;font-size:12px;color:var(--ink3);display:flex;flex-direction:column}.sfacts b{font-size:17px;color:var(--ink)}
+.words{display:flex;flex-wrap:wrap;gap:7px;align-items:center}.words span{border-radius:999px;padding:5px 12px;font-weight:700;line-height:1.25}.words em{font-style:normal;font-size:11px;opacity:.6;margin-left:5px;font-weight:600}
+.checks{display:grid;gap:7px}.ck{display:flex;gap:10px;align-items:center;border-radius:11px;padding:8px 10px;background:#F6F8FB}.ck i{flex:none;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:800;font-size:12px;color:#fff}.ck span{display:flex;flex-direction:column;font-size:13.5px;line-height:1.35}.ck em{font-style:normal;font-size:12px;color:var(--ink3)}.ck.ok i{background:#10B981}.ck.part i{background:#F59E0B}.ck.no i{background:#EF4444}
+.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.gallery figure{margin:0;border-radius:13px;overflow:hidden;border:1px solid var(--line);background:#fff}.gallery img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}.gallery figcaption{font-size:12px;color:var(--ink2);padding:7px 10px;font-weight:600}
+.tline{list-style:none;margin:0;padding:0 0 0 14px;border-left:2px solid var(--tint);display:grid;gap:10px}.tline li{position:relative;display:grid;grid-template-columns:76px 1fr;gap:10px;font-size:14px}.tline li::before{content:'';position:absolute;left:-22px;top:6px;width:12px;height:12px;box-sizing:border-box;border-radius:50%;background:#fff;border:3px solid var(--c)}.tline b{color:var(--c);font-size:13px}
+.blk .tiles{grid-template-columns:repeat(auto-fit,minmax(84px,1fr))}.blk .grids{gap:14px;grid-template-columns:repeat(2,minmax(0,290px));justify-content:center}.blk .gbox{padding:8px}.blk .gg{gap:3px}.blk .gc{font-size:10.5px;border-radius:5px}
+@media (max-width:600px){.chart .cl{font-size:21px}.chart .cv,.lines .lv{font-size:23px}.chart .ct{font-size:19px}.gh{flex-direction:column;gap:0;font-size:12px}.blk .grids{grid-template-columns:1fr 1fr;gap:8px}.blk .gc{font-size:9px}.blocks{grid-template-columns:1fr}.cover.has-photo{padding-right:20px;padding-top:200px}.cphoto{left:0;right:0;width:100%;height:180px;bottom:auto;-webkit-mask-image:linear-gradient(180deg,#000 60%,transparent);mask-image:linear-gradient(180deg,#000 60%,transparent)}.stars{grid-template-columns:1fr}.tline li{grid-template-columns:1fr;gap:0}}
 @page{size:letter;margin:0}@media print{html,body{background:#fff}.page{max-width:none}.cover{padding-top:52px}.sec,.kpis{break-inside:avoid}}`;
   const fonts = fontHead || `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap">`;
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(r.title || '리포트')} — ${esc(b.name || '')}</title>${robots ? `<meta name="robots" content="${esc(robots)}">` : ''}${fonts}<style>${css}</style></head><body><div class="page">${r.sample ? `<div class="ribbon">예시 리포트 · 가상의 업체와 예시 수치로 만들었습니다 · 실제 고객 리포트와 같은 판형</div>` : ''}
-<header class="cover">${BRAND}<div class="biz">${b.logo ? `<img src="${esc(b.logo)}" alt="">` : ''}<div class="nm">${name}${b.city ? ` <span class="en">· ${esc(b.city)}</span>` : ''}</div></div>
+<header class="cover${b.photo ? ' has-photo' : ''}">${b.photo ? `<img class="cphoto" src="${esc(b.photo)}" alt="">` : ''}${BRAND}<div class="biz">${b.logo ? `<img src="${esc(b.logo)}" alt="">` : ''}<div class="nm">${name}${b.city ? ` <span class="en">· ${esc(b.city)}</span>` : ''}</div></div>
 <h1>${esc(r.title || '리포트')}</h1>${r.subtitle ? `<p class="sub">${esc(r.subtitle)}</p>` : ''}
 <div class="meta">${r.live ? `<span class="live"><i></i>실시간 · <b>${esc(r.live)}</b> 기준</span>` : ''}${r.period ? `<span>기간 <b>${esc(r.period)}</b></span>` : ''}${r.date ? `<span>발행 <b>${esc(r.date)}</b></span>` : ''}<span>작성 <b>BizHigher</b></span></div></header>
 ${r.summary && r.summary.length ? `<section class="summary"><h2>한눈에 보기</h2><ul>${r.summary.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>` : ''}

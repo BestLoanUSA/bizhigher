@@ -6,42 +6,27 @@
  },
  {
   "file": "p1.jpg",
-  "title": "진단 점수 — 시작과 지금",
+  "title": "노출 — 진단 점수와 지도 순위",
   "m": "m1.jpg"
  },
  {
   "file": "p2.jpg",
-  "title": "지도 순위 — 손님이 검색하는 자리에서",
+  "title": "손님 반응 — 구글 프로필",
   "m": "m2.jpg"
  },
  {
   "file": "p3.jpg",
-  "title": "손님 행동 — 구글 프로필",
+  "title": "리뷰 — 별점과 손님 말",
   "m": "m3.jpg"
  },
  {
   "file": "p4.jpg",
-  "title": "리뷰",
+  "title": "이번 달 한 일",
   "m": "m4.jpg"
  },
  {
   "file": "p5.jpg",
-  "title": "이번 달 한 일",
+  "title": "경쟁 가게 · AI 검색 · 다음 달",
   "m": "m5.jpg"
- },
- {
-  "file": "p6.jpg",
-  "title": "AI 검색 점검",
-  "m": "m6.jpg"
- },
- {
-  "file": "p7.jpg",
-  "title": "경쟁 가게와 비교",
-  "m": "m7.jpg"
- },
- {
-  "file": "p8.jpg",
-  "title": "다음 달 계획",
-  "m": "m8.jpg"
  }
 ]
