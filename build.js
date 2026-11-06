@@ -3178,6 +3178,7 @@ function loadPosts() {
       // 한눈에 보기 배너(scripts/blog-banners.js 가 굽는다) · 본문 인포그래픽(design/infographic-templates)
       banner: fs.existsSync(path.join(dir, 'img', `${meta.slug || f.replace(/\.md$/, '')}-overview.jpg`)),
       card: fs.existsSync(path.join(dir, 'img', `${meta.slug || f.replace(/\.md$/, '')}-card.jpg`)),
+      cover: fs.existsSync(path.join(dir, 'img', `${meta.slug || f.replace(/\.md$/, '')}-cover.jpg`)),
       infos: [...body.matchAll(/!\[([^\]]*)\]\(\/blog-img\/([^)\s]+)\)/g)].map((x) => ({ alt: x[1], file: x[2] })) };
   }).sort((a, b) => (a.date < b.date ? 1 : -1));
 }
@@ -3189,8 +3190,8 @@ const blogIcon = (k, size = 16) => `<svg width="${size}" height="${size}" viewBo
 
 function blogCard(p) {
   const cat = blogCat(p.category);
-  // 카드 = 그림(그 글의 표·숫자·비교로 만든 카드 그림, scripts/blog-cards.js) + 분류 + 제목. 색은 분류 표시에만
-  const img = p.card ? `${p.slug}-card.jpg` : p.banner ? `${p.slug}-overview-t.jpg` : '';
+  // 카드 = 대표 사진(scripts/blog-covers.js, 글자 없는 장면) → 없으면 표 그림(blog-cards.js) → 없으면 배너. 아래는 분류 + 제목. 색은 분류 표시에만
+  const img = p.cover ? `${p.slug}-cover.jpg` : p.card ? `${p.slug}-card.jpg` : p.banner ? `${p.slug}-overview-t.jpg` : '';
   return `
 <a href="/blog/${p.slug}/" class="post-card${p.hub ? ' is-hub' : ''}${img ? '' : ' no-media'}" style="--c:${cat.c}">
   ${img ? `<div class="pc-media"><img class="pc-img" src="/blog-img/${img}" width="800" height="600" alt="" loading="lazy" decoding="async">${p.infos.length ? `<span class="pc-chip">${blogIcon('image', 13)}인포그래픽</span>` : ''}</div>` : ''}
