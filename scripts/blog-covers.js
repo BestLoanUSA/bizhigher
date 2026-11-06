@@ -8,14 +8,14 @@
  *
  * content/blog/img/covers.json 의 영어 장면 설명 → fal.ai flux-pro v1.1(4:3) → content/blog/img/{slug}-cover.jpg (800×600, ffmpeg 로 줄임)
  * 환경변수 FAL_KEY 필요(bizhigher 루틴 환경에 있다). GitHub Actions 에는 키가 없으므로 블로그 발행 루틴이 글과 함께 만들어 커밋한다.
- * 규칙: 글자·로고·실제 앱 화면을 흉내 내지 않는다(모든 장면 끝에 STYLE 이 붙는다). 사람 얼굴은 연출 사진이다.
+ * 규칙: 글자·로고·실제 앱 화면을 흉내 내지 않는다(모든 장면 끝에 STYLE 이 붙는다). 사람·손은 넣지 않는다(손가락·표정이 어색하게 나온다, 2026-11-06) — 공간·사물 정물로.
  */
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
 const IMG = path.join(__dirname, '..', 'content', 'blog', 'img');
-const STYLE = 'editorial lifestyle photograph, natural light, warm tones, shallow depth of field, 35mm film look, realistic, no text, no letters, no words, no logos, no readable signage, no brand names';
+const STYLE = 'editorial still life or interior photograph, no people, no hands, no human figures, natural light, warm tones, shallow depth of field, 35mm film look, realistic, no text, no letters, no words, no logos, no readable signage, no brand names';
 const MODEL = process.env.COVER_MODEL || 'fal-ai/flux-pro/v1.1';
 const args = process.argv.slice(2);
 const FORCE = args.includes('--force');
