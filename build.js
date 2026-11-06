@@ -3222,6 +3222,31 @@ function blogCard(p) {
 </a>`;
 }
 
+/* 본문 안 다른 글 링크 → 링크 카드 (2026-11-06 David: 허브 글의 "→ 글 제목" 링크가 눈에 안 띈다)
+   ① "→ [제목](/blog/slug/)" 한 줄 문단(모든 글) ② 허브 글에서 항목이 전부 "[제목](/blog/slug/): 설명" 인 목록.
+   카드 = 그 글의 대표 그림(blogCard 와 같은 순서) + 분류 + 제목(본문 링크 글자 그대로) + 설명 한 줄. 모르는 slug 는 그대로 둔다 */
+function postLinkCard(p, title, desc) {
+  const cat = blogCat(p.category);
+  const img = p.cover ? `${p.slug}-cover.jpg` : p.card ? `${p.slug}-card.jpg` : p.banner ? `${p.slug}-overview-t.jpg` : '';
+  return `<a class="post-link${img ? '' : ' no-media'}" href="/blog/${p.slug}/" style="--c:${cat.c};--t:${cat.t}">${img ? `<span class="pl-img"><img src="/blog-img/${img}" width="800" height="600" alt="" loading="lazy" decoding="async"></span>` : ''}<span class="pl-body"><span class="pl-cat">${blogIcon(cat.icon, 13)}${p.category}${p.hub ? ' 완전 가이드' : ''} · ${p.readMin}분</span><b class="pl-title">${title}</b>${desc ? `<span class="pl-desc">${desc}</span>` : ''}</span><span class="pl-go" aria-hidden="true">→</span></a>`;
+}
+function linkCards(html, posts, isHub) {
+  const bySlug = new Map(posts.map((x) => [x.slug, x]));
+  let out = html.replace(/<p>→\s*<a href="\/blog\/([^"/]+)\/">([\s\S]*?)<\/a>\s*<\/p>/g, (m, slug, title) => {
+    const p = bySlug.get(slug);
+    return p ? `<div class="post-links">${postLinkCard(p, title, p.description)}</div>` : m;
+  });
+  if (isHub) {
+    out = out.replace(/<ul>([\s\S]*?)<\/ul>/g, (m, inner) => {
+      const items = inner.match(/<li>[\s\S]*?<\/li>/g) || [];
+      const parsed = items.map((li) => li.match(/^<li><a href="\/blog\/([^"/]+)\/">([\s\S]*?)<\/a>:?\s*([\s\S]*?)<\/li>$/));
+      if (!items.length || parsed.some((x) => !x || !bySlug.has(x[1]))) return m;
+      return `<div class="post-links">${parsed.map((x) => postLinkCard(bySlug.get(x[1]), x[2], x[3] || bySlug.get(x[1]).description)).join('')}</div>`;
+    });
+  }
+  return out;
+}
+
 /* 인포그래픽 모아보기 — 본문 인포그래픽의 그림 부분 확대본(-zoom.jpg). 누르면 크게(dialog), JS 가 없으면 그 글로 */
 function infographicGallery(posts) {
   const items = [];
@@ -3362,7 +3387,7 @@ function blogPostPage(p, posts) {
     ${toc.length > 2 ? `<aside class="toc toc-side" id="toc"><b>목차</b><ol>${toc.map((h) => `<li><a href="#${h.id}" data-h="${h.id}">${h.t}</a></li>`).join('')}</ol></aside>` : '<div></div>'}
     <div class="post-main">
     ${p.summary.length ? `<div class="post-summary"><b>핵심 요약</b><ul>${p.summary.map((x) => `<li>${x}</li>`).join('')}</ul></div>` : ''}
-    <article class="post-body">${html}</article>
+    <article class="post-body">${linkCards(html, posts, p.hub)}</article>
     ${relSvc ? svcBanner(relSvc, '이 글의 내용, 저희가 대신 해 드립니다') : `<div class="post-cta">
       <b>우리 가게는 지금 몇 점일까요?</b>
       <p>이 글에서 다룬 항목들을 60초 만에 자동으로 점검해 드립니다. 가입 없이 업체명과 도시만 입력하세요.</p>
