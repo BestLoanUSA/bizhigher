@@ -58,6 +58,7 @@
 - 한/영 가게 소개문 생성기 (무료, 이메일만 입력): https://bizhigher.com/tools/bilingual-intro/ — 한국어로 쓴 가게 소개를 구글 프로필 규격(750자)에 맞는 자연스러운 영어·한국어 소개로 다듬습니다.
 
 ## 블로그 (한인 비즈니스 마케팅 가이드)
+- 챗GPT에 우리 가게가 나오는지 직접 확인하는 법 — 질문 10개 테스트: https://bizhigher.com/blog/chatgpt-local-business-test/
 - 챗GPT·제미나이가 우리 가게를 추천하게 하는 정보 정리법 — 가게 정보 시트 만들기: https://bizhigher.com/blog/ai-business-fact-sheet/
 - 모바일에서 느린 가게 사이트, 고객이 떠나기 전에 고치는 법: https://bizhigher.com/blog/slow-mobile-website-fix/
 - 구글 광고 vs 메타 광고 — 한인 가게는 어디에 먼저 쓸까: https://bizhigher.com/blog/google-ads-vs-meta-ads-for-local-business/
