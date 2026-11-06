@@ -1899,7 +1899,7 @@ function homePage(posts) {
     <p class="eyebrow">HOW IT WORKS</p>
     <h2 class="h2"><em>차원이 다른</em> 광고를 경험하세요</h2>
     <div class="stack-zone">
-      <div class="stack-card has-viz"><div class="stack-txt"><span class="stack-num">01</span><h3 class="stack-title">AI의 초고속 자동화에 20년 전문가의 디테일을 더하다</h3><p class="stack-desc">독자적인 병렬 AI 에이전트가 24시간 쉬지 않고 기획·카피·디자인을 동시다발적으로 처리하고, 마케팅 전문가가 최종 검수하여 압축된 시간 안에 최상의 품질을 완성합니다.</p></div><div class="stack-viz" aria-hidden="true"><svg viewBox="0 0 320 200" role="presentation"><g class="v-lanes"><rect x="6" y="28" width="74" height="32" rx="16"/><rect x="6" y="84" width="74" height="32" rx="16"/><rect x="6" y="140" width="74" height="32" rx="16"/></g><g class="v-lbl"><text x="43" y="49">기획</text><text x="43" y="105">카피</text><text x="43" y="161">디자인</text></g><g class="v-base"><path d="M80 44 C150 44 160 100 222 100"/><path d="M80 100 L222 100"/><path d="M80 156 C150 156 160 100 222 100"/></g><g class="v-flow"><path class="f1" d="M80 44 C150 44 160 100 222 100"/><path class="f2" d="M80 100 L222 100"/><path class="f3" d="M80 156 C150 156 160 100 222 100"/></g><circle class="v-ring" cx="252" cy="100" r="30"/><circle class="v-node" cx="252" cy="100" r="30"/><path class="v-chk" pathLength="100" d="M239 100 l9 10 l17 -20"/><text class="v-cap" x="252" y="152">전문가 검수</text><g class="v-clock"><circle cx="292" cy="26" r="13"/><path class="v-hand" d="M292 26 L292 17"/></g><text class="v-24" x="292" y="54">24h</text></svg></div></div>
+      <div class="stack-card has-viz"><div class="stack-txt"><span class="stack-num">01</span><h3 class="stack-title">AI의 초고속 자동화에 20년 전문가의 디테일을 더하다</h3><p class="stack-desc">독자적인 병렬 AI 에이전트가 24시간 쉬지 않고 기획·카피·디자인을 동시다발적으로 처리하고, 마케팅 전문가가 최종 검수하여 압축된 시간 안에 최상의 품질을 완성합니다.</p></div><div class="stack-viz mk01" aria-hidden="true"><div class="s1-time"><i></i><span class="s1-tc" id="mk01-tc">03:12</span><em>초안 완성</em></div><div class="s1-win w1"><b class="s1-bar"><i></i><i></i><i></i><span>기획</span></b><div class="s1-doc"><s></s><s></s><s></s><s></s></div></div><div class="s1-win w2"><b class="s1-bar"><i></i><i></i><i></i><span>카피</span></b><p class="s1-copy"><span>오늘 저녁은</span><span>뜨끈한 순두부</span></p></div><div class="s1-win w3"><b class="s1-bar"><i></i><i></i><i></i><span>디자인</span></b><div class="s1-art"><img src="/blog-img/photo-reviews-guide-cover.jpg" alt="" loading="lazy" decoding="async"><u></u></div></div><div class="s1-stamp"><b>✓</b>전문가 검수</div><div class="s1-phone"><div class="s1-notch"></div><div class="s1-post"><div class="s1-ph"><img src="/blog-img/photo-reviews-guide-cover.jpg" alt="" loading="lazy" decoding="async"></div><div class="s1-cap"><b>순두부 하우스</b><s></s><s class="sh"></s></div><span class="s1-like">♥</span></div></div></div></div>
       <div class="stack-card stack-c2 has-viz"><div class="stack-txt"><span class="stack-num">02</span><h3 class="stack-title">미팅도 거품도 Zero, 클릭 몇 번으로 시작하는 반값 마케팅</h3><p class="stack-desc">100% 공개된 투명한 정찰제로 지루한 견적 미팅이나 영업 전화 없이 쇼핑하듯 바로 시작하며, 불필요한 인건비를 완전히 줄여 기존 대행사 대비 절반 이하의 비용을 제공합니다.</p></div><div class="stack-viz" aria-hidden="true"><svg viewBox="0 0 320 200" role="presentation"><g class="v-chip"><rect x="6" y="12" width="112" height="30" rx="15"/><rect x="128" y="12" width="112" height="30" rx="15"/><text x="62" y="32">견적 미팅</text><text x="184" y="32">영업 전화</text></g><path class="v-strike s1" pathLength="100" d="M16 27 L108 27"/><path class="v-strike s2" pathLength="100" d="M138 27 L230 27"/><text class="v-bl" x="6" y="86">일반 대행사</text><rect class="v-bar0" x="6" y="94" width="300" height="24" rx="8"/><text class="v-bl b" x="6" y="148">BizHigher</text><rect class="v-bar1" x="6" y="156" width="136" height="24" rx="8"/><text class="v-half" x="154" y="174">절반 이하</text></svg></div></div>
       <div class="stack-card stack-c3 has-viz"><div class="stack-txt"><span class="stack-num">03</span><h3 class="stack-title">반짝 줄세우기 대신, 비즈니스를 생존시키는 건강한 뼈대 마케팅</h3><p class="stack-desc">일회성 광고가 아닌 로컬 프로필 최적화, 온라인 활동 신호, QR 연결 등 상위 노출 랭킹을 꾸준히 올려 단골 고객이 지속적으로 찾아오는 필수 기반을 구축합니다.</p></div><div class="stack-viz" aria-hidden="true"><svg viewBox="0 0 320 200" role="presentation"><path class="v-axis" d="M8 182 L312 182"/><path class="v-spike" pathLength="100" d="M10 176 L58 174 L82 44 L104 172 L306 176"/><text class="v-sl" x="82" y="34">반짝 광고</text><path class="v-grow" pathLength="100" d="M10 174 L60 160 L110 140 L160 118 L210 92 L260 66 L302 42"/><g class="v-dots"><circle cx="60" cy="160" r="4"/><circle cx="110" cy="140" r="4"/><circle cx="160" cy="118" r="4"/><circle cx="210" cy="92" r="4"/><circle cx="260" cy="66" r="4"/></g><circle class="v-pin-ring" cx="302" cy="42" r="9"/><circle class="v-pin" cx="302" cy="42" r="7"/><text class="v-gl" x="306" y="22">꾸준한 상위 노출</text></svg></div></div>
     </div>
@@ -1930,7 +1930,14 @@ function homePage(posts) {
     window.addEventListener('resize', onScroll, { passive: true });
     update();
     if ('IntersectionObserver' in window) {
-      var vo = new IntersectionObserver(function (es) { es.forEach(function (e) { e.target.classList.toggle('viz-on', e.isIntersecting); }); }, { threshold: 0.3 });
+      var tc = document.getElementById('mk01-tc');
+      var runClock = function () { // 01 카드: 시계가 00:00 → 03:12 (초안이 완성되는 시간) — 실패해도 03:12 가 그대로 보인다
+        if (!tc) return; var t0 = 0, dur = 1700, end = 192, delay = 250;
+        tc.textContent = '00:00';
+        function f(t) { if (!t0) t0 = t; var p = Math.max(0, Math.min(1, (t - t0 - delay) / dur)); var v = Math.round(end * (1 - Math.pow(1 - p, 2))); tc.textContent = ('0' + Math.floor(v / 60)).slice(-2) + ':' + ('0' + (v % 60)).slice(-2); if (p < 1) requestAnimationFrame(f); }
+        requestAnimationFrame(f);
+      };
+      var vo = new IntersectionObserver(function (es) { es.forEach(function (e) { var was = e.target.classList.contains('viz-on'); e.target.classList.toggle('viz-on', e.isIntersecting); if (e.isIntersecting && !was && e.target.querySelector('.mk01')) runClock(); }); }, { threshold: 0.3 });
       cards.forEach(function (c) { vo.observe(c); });
     }
   } catch (e) {}
@@ -2037,8 +2044,9 @@ ${sampleReportSection()}
     var ticking = false;
     function frame() {
       ticking = false;
-      var r = sec.getBoundingClientRect(), total = r.height - window.innerHeight;
-      var p = total > 0 ? Math.max(0, Math.min(1, -r.top / total)) : 1;
+      // 고정(sticky)된 동안의 진행도 — 구간이 화면보다 낮아도 맞도록 고정 위치·높이로 센다(2026-11-06 높이 압축)
+      var r = sec.getBoundingClientRect(), st = sec.firstElementChild, ih = window.innerHeight, top0 = ih * 0.16, total = r.height - st.offsetHeight;
+      var p = total > 0 ? Math.max(0, Math.min(1, (top0 - r.top) / total)) : 1;
       var start = window.innerWidth * 0.55, end = window.innerWidth - tr.scrollWidth - 48;
       tr.style.transform = 'translateX(' + (start + (end - start) * p).toFixed(1) + 'px)';
     }
