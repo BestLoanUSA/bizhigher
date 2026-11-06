@@ -3131,18 +3131,38 @@ function loadPosts() {
       date: meta.date, updated: meta.updated || '', category: meta.category || '가이드', keywords: meta.keywords || '',
       related: meta.related || '', hub: meta.hub === 'true', body, faqs,
       // summary: 문장1 | 문장2 | 문장3 — 글 맨 위 "핵심 요약" 박스 + BlogPosting.abstract
-      summary: (meta.summary || '').split('|').map((x) => x.trim()).filter(Boolean), readMin: Math.max(3, Math.round(words / 600)) };
+      summary: (meta.summary || '').split('|').map((x) => x.trim()).filter(Boolean), readMin: Math.max(3, Math.round(words / 600)),
+      // 한눈에 보기 배너(scripts/blog-banners.js 가 굽는다) · 본문 인포그래픽(design/infographic-templates)
+      banner: fs.existsSync(path.join(dir, 'img', `${meta.slug || f.replace(/\.md$/, '')}-overview.jpg`)),
+      infos: [...body.matchAll(/!\[([^\]]*)\]\(\/blog-img\/([^)\s]+)\)/g)].map((x) => ({ alt: x[1], file: x[2] })) };
   }).sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
+/* 카테고리 색·아이콘 — 배너와 카드가 같은 값을 쓴다(원본은 scripts/blog-banners.js) */
+const { CATS: BLOG_CATS, DEFAULT_CAT: BLOG_CAT0, ICONS: BLOG_ICONS } = require('./scripts/blog-banners.js');
+const blogCat = (c) => BLOG_CATS[c] || BLOG_CAT0;
+const blogIcon = (k, size = 16) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${BLOG_ICONS[k] || BLOG_ICONS.pin}</svg>`;
+/* 카드 위 커서를 따라 카테고리색 빛이 움직인다 — 마우스가 있는 기기만, 실패해도 카드는 그대로 보인다 */
+const BLOG_CARD_JS = `<script>(function(){try{if(!window.matchMedia||matchMedia('(hover: none)').matches)return;document.addEventListener('pointermove',function(e){var c=e.target&&e.target.closest&&e.target.closest('.post-card');if(!c)return;var r=c.getBoundingClientRect();c.style.setProperty('--mx',(e.clientX-r.left)+'px');c.style.setProperty('--my',(e.clientY-r.top)+'px');},{passive:true});}catch(e){}})();</script>`;
+
 function blogCard(p) {
+  const cat = blogCat(p.category);
+  const info = p.infos[0];
+  // 한눈에 보기 배너가 기본, 본문 인포그래픽이 있으면 마우스를 올렸을 때 그 그림으로 바뀐다
+  const media = p.banner ? `<div class="pc-media">
+    <img class="pc-img" src="/blog-img/${p.slug}-overview-t.jpg" width="720" height="405" alt="" loading="lazy" decoding="async">
+    ${info ? `<img class="pc-img pc-alt" src="/blog-img/${info.file}" width="1200" height="675" alt="" loading="lazy" decoding="async">` : ''}
+    ${p.infos.length ? `<span class="pc-chip">${blogIcon('image', 13)}인포그래픽 ${p.infos.length}</span>` : ''}
+  </div>` : '';
   return `
-<a href="/blog/${p.slug}/" class="prod-card${p.hub ? ' is-hub' : ''}">
-  <span class="badge${p.hub ? ' badge-hub' : ''}">${p.hub ? '🧭 가이드 · ' : ''}${p.category}</span>
-  <h3 class="h3">${p.title}</h3>
-  <p class="body-sm">${p.description}</p>
-  <div class="price-row"><span class="price-sub">${p.date} · ${p.readMin}분 읽기</span></div>
-  <span class="card-cta">읽어보기 →</span>
+<a href="/blog/${p.slug}/" class="post-card${p.hub ? ' is-hub' : ''}${media ? '' : ' no-media'}" style="--c:${cat.c};--t:${cat.t}">
+  ${media}
+  <div class="pc-body">
+    <span class="pc-cat">${blogIcon(cat.icon, 15)}${p.category}${p.hub ? ' 완전 가이드' : ''}</span>
+    <h3 class="h3">${p.title}</h3>
+    <p class="body-sm">${p.description}</p>
+    <span class="pc-meta">${p.date} · ${p.readMin}분 읽기</span>
+  </div>
 </a>`;
 }
 
@@ -3193,6 +3213,7 @@ function blogIndexPage(posts) {
     <div class="grid3">${rest.map(blogCard).join('')}</div>
   </div>
 </section>
+${BLOG_CARD_JS}
 ` + FOOTER;
 }
 
@@ -3247,10 +3268,11 @@ function blogPostPage(p, posts) {
 <header class="page-head">
   <div class="container-narrow">
     ${crumbsHtml(crumbs)}
-    <span class="badge${p.hub ? ' badge-hub' : ''}">${p.hub ? '🧭 가이드 · ' : ''}${p.category}</span>
+    <span class="badge${p.hub ? ' badge-hub' : ''}"${p.hub ? '' : ` style="background:${blogCat(p.category).t};color:${blogCat(p.category).c}"`}>${p.hub ? '🧭 가이드 · ' : ''}${p.category}</span>
     <h1 class="page-title" style="font-size:36px;line-height:1.25;">${p.title}</h1>
     <p class="page-sub">${p.date} · ${p.readMin}분 읽기 · BizHigher</p>
     ${hub ? `<a href="/blog/${hub.slug}/" class="hub-callout">🧭 이 글은 <b>${hub.title}</b> 가이드의 일부입니다 →</a>` : ''}
+    ${p.banner ? `<figure class="post-banner" style="--c:${blogCat(p.category).c};--t:${blogCat(p.category).t}"><picture><source media="(max-width: 640px)" srcset="/blog-img/${p.slug}-overview-m.jpg" width="1080" height="1350"><img src="/blog-img/${p.slug}-overview.jpg" width="1200" height="675" alt="${escAttr(`${p.title} 한눈에 보기 — ${p.summary.join(' ')}`)}" fetchpriority="high" decoding="async"></picture></figure>` : ''}
   </div>
 </header>
 <section class="detail-body" style="padding-top:4px;">
@@ -3266,7 +3288,7 @@ function blogPostPage(p, posts) {
       ${relSvc ? `<a href="/service/${relSvc.slug}/" class="btn btn-ghost">맡기고 싶다면: ${relSvc.name} (${relSvc.price})</a>` : ''}
     </div>
     ${dataLinks.map((d) => `<a href="/data/${d.slug}/" class="hub-callout" style="margin-top:16px;">📊 실측 데이터: <b>${d.title}</b> →</a>`).join('')}
-    ${others.length ? `<h2 class="h2-left" style="margin-top:48px;">함께 읽으면 좋은 글</h2><div class="grid3">${others.map(blogCard).join('')}</div>` : ''}
+    ${others.length ? `<h2 class="h2-left" style="margin-top:48px;">함께 읽으면 좋은 글</h2><div class="grid3">${others.map(blogCard).join('')}</div>${BLOG_CARD_JS}` : ''}
     </div><!-- /post-main -->
   </div>
 </section>
