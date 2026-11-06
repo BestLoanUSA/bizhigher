@@ -20,14 +20,14 @@ function table(t) {
 }
 function section(s, i) {
   let body = blockBody(s);
-  if (s.blocks && s.blocks.length) body += `<div class="blocks">${s.blocks.map((b) => `<div class="blk${Number(b.span) === 2 ? ' wide' : ''}">${b.h ? `<h3>${esc(b.h)}</h3>` : ''}${blockBody(b)}</div>`).join('')}</div>`;
+  if (s.blocks && s.blocks.length) body += `<div class="blocks${Number(s.cols) === 3 ? ' c3' : ''}">${s.blocks.map((b) => `<div class="blk${Number(b.span) >= 2 ? ' s' + Number(b.span) : ''}">${b.h ? `<h3>${esc(b.h)}</h3>` : ''}${blockBody(b)}</div>`).join('')}</div>`;
   return `<section class="sec" id="s${i + 1}"><h2><span class="num">${String(i + 1).padStart(2, '0')}</span>${esc(s.title)}</h2>${body}</section>`;
 }
 function blockBody(s) {
   let body = '';
   if (s.text) body += `<p>${esc(s.text).replace(/\n/g, '<br>')}</p>`;
   if (s.tiles && s.tiles.length) body += `<div class="tiles">${s.tiles.map((t) => `<div class="tile"><b>${esc(t.n)}</b><span>${esc(t.label)}</span></div>`).join('')}</div>`;
-  if (s.items && s.items.length) body += `<ul>${s.items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
+  if (s.items && s.items.length && !s.gallery) body += `<ul>${s.items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
   if (s.table) body += table(s.table);
   if (s.chart) body += chartSvg(s.chart);
   if (s.before || s.after) body += `<div class="ba"><div class="col"><div class="h">Before</div>${(s.before || []).map(kpiCard).join('')}</div><div class="arrow">→</div><div class="col after"><div class="h">After</div>${(s.after || []).map(kpiCard).join('')}</div></div>`;
@@ -45,7 +45,7 @@ function blockBody(s) {
   if (s.stars) body += starsHtml(s.stars);
   if (s.words) body += wordsHtml(s.words);
   if (s.checks) body += checksHtml(s.checks);
-  if (s.gallery) body += galleryHtml(s.gallery);
+  if (s.gallery) body += galleryHtml(s.gallery) + (s.items && s.items.length ? `<ul class="gitems">${s.items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : '');
   if (s.timeline) body += timelineHtml(s.timeline);
   if (s.note) body += `<p class="small">${esc(s.note)}</p>`;
   return body;
@@ -93,7 +93,7 @@ function funnelHtml(f) {
 }
 function rankHtml(r) {
   const items = r.items || [], mx = Math.max(1, ...items.map((x) => num(x.value)));
-  return `<div class="rank">${items.map((x, i) => `<div class="rr${x.me ? ' me' : ''}"><span class="ri">${i + 1}</span><span class="rn">${esc(x.label)}${x.sub ? ` <em>${esc(x.sub)}</em>` : ''}</span><span class="rb"><i style="width:${((num(x.value) / mx) * 100).toFixed(1)}%"></i></span><b>${esc(x.value)}${r.unit ? `<small>${esc(r.unit)}</small>` : ''}</b></div>`).join('')}</div>`;
+  return `<div class="rank">${items.map((x, i) => `<div class="rr${x.me ? ' me' : ''}"><span class="ri">${i + 1}</span><span class="rm"><span class="rn">${esc(x.label)}${x.sub ? ` <em>${esc(x.sub)}</em>` : ''}</span><span class="rb"><i style="width:${((num(x.value) / mx) * 100).toFixed(1)}%"></i></span></span><b>${esc(x.value)}${r.unit ? `<small>${esc(r.unit)}</small>` : ''}</b></div>`).join('')}</div>`;
 }
 function starsHtml(st) {
   const d = (st.dist || []).map(num), tot = d.reduce((a, b) => a + b, 0) || 1;
@@ -192,6 +192,18 @@ table{width:100%;border-collapse:collapse;font-size:14px;margin:6px 0 12px}th{te
 .tline{list-style:none;margin:0;padding:0 0 0 14px;border-left:2px solid var(--tint);display:grid;gap:10px}.tline li{position:relative;display:grid;grid-template-columns:76px 1fr;gap:10px;font-size:14px}.tline li::before{content:'';position:absolute;left:-22px;top:6px;width:12px;height:12px;box-sizing:border-box;border-radius:50%;background:#fff;border:3px solid var(--c)}.tline b{color:var(--c);font-size:13px}
 .blk .tiles{grid-template-columns:repeat(auto-fit,minmax(84px,1fr))}.blk .grids{gap:14px;grid-template-columns:repeat(2,minmax(0,290px));justify-content:center}.blk .gbox{padding:8px}.blk .gg{gap:3px}.blk .gc{font-size:10.5px;border-radius:5px}
 @media (max-width:600px){.chart .cl{font-size:21px}.chart .cv,.lines .lv{font-size:23px}.chart .ct{font-size:19px}.gh{flex-direction:column;gap:0;font-size:12px}.blk .grids{grid-template-columns:1fr 1fr;gap:8px}.blk .gc{font-size:9px}.blocks{grid-template-columns:1fr}.cover.has-photo{padding-right:20px;padding-top:200px}.cphoto{left:0;right:0;width:100%;height:180px;bottom:auto;-webkit-mask-image:linear-gradient(180deg,#000 60%,transparent);mask-image:linear-gradient(180deg,#000 60%,transparent)}.stars{grid-template-columns:1fr}.tline li{grid-template-columns:1fr;gap:0}}
+/* v3 압축(2026-11-06) */
+.gitems{margin:10px 0 0!important;font-size:14px!important}.blocks.c3 .blk:not(.s2):not(.s3) .tiles{grid-template-columns:1fr 1fr;gap:6px}.blocks.c3 .blk:not(.s2):not(.s3) .tile{flex-direction:row;align-items:baseline;gap:8px;padding:8px 10px}.blocks.c3 .blk:not(.s2):not(.s3) .tile b{font-size:20px}.blocks.c3 .blk:not(.s2):not(.s3) .tile span{font-size:12px;line-height:1.3}
+.cover{padding:30px 48px 24px}.cover .biz{margin-top:22px}.cover h1{font-size:36px;margin:8px 0 4px}.cover .meta{margin-top:14px}.summary{padding:16px 48px}.summary ul{font-size:15.5px}.kpis{padding:18px 48px 4px}.kpi{padding:12px 14px}.kpi .v{font-size:27px}
+.sec{padding:18px 48px 4px}.sec h2{font-size:19px;margin:0 0 10px}.blocks{gap:12px}.blk{padding:12px 14px}.blk h3{margin:0 0 6px}
+.blocks.c3{grid-template-columns:repeat(3,minmax(0,1fr))}.blk.s2{grid-column:span 2}.blk.s3{grid-column:1/-1}.blocks:not(.c3) .blk.s2{grid-column:1/-1}
+.rr{grid-template-columns:18px minmax(0,1fr) auto;gap:10px}.rm{display:flex;flex-direction:column;gap:4px;min-width:0}.rr .rb{height:7px}
+.gauge svg{width:150px}.gauge .gv{font-size:42px}.radar{max-width:300px}
+.blk .grids{grid-template-columns:repeat(2,minmax(0,236px))}.blk .grids-k{margin-bottom:6px}.blk .glegend{margin:8px 0 0}
+.gallery img{aspect-ratio:16/9}.blk .tiles{grid-template-columns:repeat(auto-fit,minmax(78px,1fr));gap:8px}.blk .tile{padding:10px 12px}.blk .tile b{font-size:24px}
+.blocks.c3 .stars{grid-template-columns:1fr}.blocks.c3 .savg{flex-direction:row;gap:10px;align-items:baseline;justify-content:flex-start}.blocks.c3 .sfacts{flex-wrap:wrap}.blocks.c3 .sfacts span{flex:1 1 40%}
+.blocks.c3 .words span{padding:4px 10px}
+@media (max-width:600px){.blocks.c3{grid-template-columns:1fr}.blk.s2,.blk.s3{grid-column:auto}.cover,.summary,.kpis,.sec{padding-left:20px;padding-right:20px}}
 @page{size:letter;margin:0}@media print{html,body{background:#fff}.page{max-width:none}.cover{padding-top:52px}.sec,.kpis{break-inside:avoid}}`;
   const fonts = fontHead || `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap">`;
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(r.title || '리포트')} — ${esc(b.name || '')}</title>${robots ? `<meta name="robots" content="${esc(robots)}">` : ''}${fonts}<style>${css}</style></head><body><div class="page">${r.sample ? `<div class="ribbon">예시 리포트 · 가상의 업체와 예시 수치로 만들었습니다 · 실제 고객 리포트와 같은 판형</div>` : ''}

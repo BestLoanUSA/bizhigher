@@ -840,93 +840,86 @@ const SC_SCENES = [
    data/sample-report.json(가상의 순두부 하우스·예시 수치) → scripts/sample-report.js 가 실제 고객 리포트와 같은 판형(_report.js)으로
    PDF·쪽 이미지(src/sample-report/)를 굽는다. 여기서는 쪽 이미지를 가로로 넘겨 보여주고, 전체는 /sample-report/ (noindex) 와 PDF.
    쪽은 JS 없이도 가로 스크롤로 다 보인다 — JS 는 버튼·목차·쪽 번호만 붙인다 */
-function sampleReportSection() {
-  const dir = path.join(__dirname, 'src', 'sample-report');
-  if (!fs.existsSync(path.join(dir, 'pages.json'))) return '';
-  const pages = JSON.parse(fs.readFileSync(path.join(dir, 'pages.json'), 'utf8'));
-  const num = (i) => (i === 0 ? '표지' : String(i).padStart(2, '0'));
-  /* 2026-11-06 v2: 가로 넘김 → 스크롤할 때마다 한 장씩 위로 쌓인다(sticky 카드, JS 없이 동작). 목차는 지금 보는 쪽만 JS 로 표시.
-     폰·낮은 화면은 고정 없이 휴대폰 판형 쪽 이미지를 차례로 */
-  return `
-<section class="section sr-sec" id="sample-report">
-  <div class="container">
-    <p class="eyebrow">MONTHLY REPORT</p>
-    <h2 class="h2">매달 받는 <em>리포트</em>, 한 장씩 넘겨 보세요</h2>
-    <p class="mk-section-sub">점수와 지도 순위, 손님이 한 행동, 리뷰, 이번 달 만든 것, 경쟁 가게와 AI 검색, 다음 달 계획까지 — 6쪽에 담아 매달 드립니다. 아래는 가상의 가게로 만든 예시입니다.</p>
-    <div class="srs">
-      <ol class="srs-toc" aria-label="리포트 목차">${pages.map((p, i) => `<li><a href="#srp-${i}" data-i="${i}"${i === 0 ? ' aria-current="true"' : ''}><span>${num(i)}</span>${p.title.split(' — ')[0]}</a></li>`).join('')}</ol>
-      <div class="srs-stack">${pages.map((p, i) => `<figure class="srs-card" id="srp-${i}" style="--i:${i}"><picture>${p.m ? `<source media="(max-width: 991px)" srcset="/sample-report/${p.m}">` : ''}<img src="/sample-report/${p.file}" alt="샘플 월간 리포트 ${num(i)} — ${escAttr(p.title)}" loading="${i < 2 ? 'eager' : 'lazy'}" decoding="async"></picture></figure>`).join('')}</div>
-    </div>
-    <div class="hero-ctas sr-ctas"><a class="btn btn-primary" href="/free-audit/">우리 가게 진단 점수부터 받기</a><a class="btn btn-ghost" href="/sample-report/" target="_blank" rel="noopener">리포트 전체 보기</a><a class="btn btn-ghost" href="/sample-report/report.pdf" target="_blank" rel="noopener">PDF 받기</a></div>
-    <p class="note-text">예시 업체 "순두부 하우스"와 예시 수치로 만들었습니다 · 실제 고객 리포트와 같은 판형이며, 실제 리포트의 숫자는 구글 프로필·사이트·광고 계정에서 읽습니다</p>
-  </div>
-</section>
-<script>
-(function () {
-  try {
-    var cards = Array.prototype.slice.call(document.querySelectorAll('.srs-card')), links = document.querySelectorAll('.srs-toc a');
-    if (!cards.length) return;
-    var raf = 0, cur = -1;
-    function upd() {
-      raf = 0; var k = 0;
-      cards.forEach(function (c, i) { var t = parseFloat(getComputedStyle(c).top) || 0; if (c.getBoundingClientRect().top <= t + 2 || c.getBoundingClientRect().top < window.innerHeight * 0.45) k = i; });
-      if (k === cur) return; cur = k;
-      links.forEach(function (a, i) { if (i === k) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });
-      cards.forEach(function (c, i) { c.classList.toggle('srs-under', i < k); });
-    }
-    window.addEventListener('scroll', function () { if (!raf) raf = requestAnimationFrame(upd); }, { passive: true });
-    window.addEventListener('resize', upd, { passive: true });
-    upd();
-  } catch (e) {}
-})();
-</script>`;
+/* 샘플 월간 리포트 쪽 목록(scripts/sample-report.js 가 만든 pages.json) — 쇼케이스 뒤쪽 장면으로 들어간다 */
+function samplePages() {
+  const f = path.join(__dirname, 'src', 'sample-report', 'pages.json');
+  return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : [];
 }
 
 function showcaseSection() {
-  // 월간 리포트 장면은 바로 아래 "매달 받는 리포트" 섹션이 맡는다(2026-11-06) — 여기선 4장면
+  // 2026-11-06 v3: 결과물 4장면 + 월간 리포트 쪽(샘플 리포트 이미지)을 한 섹션에서 스크롤로 넘긴다.
+  // 넓은 화면은 리포트 쪽도 무대 장면으로, 폰은 무대 아래 휴대폰 판형 쪽 이미지 목록으로(작은 무대에선 글자가 안 읽힌다)
   const SCN = SC_SCENES.filter((x) => x.key !== 'report');
+  const PAGES = samplePages();
+  const pnum = (i) => (i === 0 ? '표지' : String(i).padStart(2, '0'));
   const tabs = SCN.map((s, i) => `
       <button type="button" class="sc-tab${i === 0 ? ' on' : ''}" data-key="${s.key}" role="tab" aria-selected="${i === 0 ? 'true' : 'false'}">
         <span class="sc-tab-n">0${i + 1}</span><span class="sc-tab-t"><b>${s.tab}</b><small>${s.tabSub}</small></span><i class="sc-prog"></i>
-      </button>`).join('');
+      </button>`).join('') + (PAGES.length ? `<div class="sc-tab-group" aria-hidden="true">매달 받는 리포트</div>` + PAGES.map((p, i) => `
+      <button type="button" class="sc-tab sc-tab-rep" data-key="rep${i}" role="tab" aria-selected="false">
+        <span class="sc-tab-n">${pnum(i)}</span><span class="sc-tab-t"><b>${p.title.split(' — ')[0]}</b></span><i class="sc-prog"></i>
+      </button>`).join('') : '');
+  const repScenes = PAGES.map((p, i) => `
+      <div class="sc-scene sc-rep" data-key="rep${i}">
+        <div class="sc-stage-in sc-rep-in"><img src="/sample-report/${p.file}" alt="샘플 월간 리포트 ${pnum(i)} — ${escAttr(p.title)}" loading="lazy" decoding="async"></div>
+        <a class="sc-link" href="/sample-report/" target="_blank" rel="noopener">월간 리포트 전체 보기 · PDF →</a>
+      </div>`).join('');
+  const repList = PAGES.length ? `
+    <div class="sc-rep-list">
+      <h3 class="sc-rep-h">매달 받는 리포트 <span>예시 · ${PAGES.length}쪽</span></h3>
+      ${PAGES.map((p, i) => `<figure class="sc-rep-card"><img src="/sample-report/${p.m || p.file}" alt="샘플 월간 리포트 ${pnum(i)} — ${escAttr(p.title)}" loading="lazy" decoding="async"></figure>`).join('')}
+      <div class="hero-ctas" style="justify-content:center;margin-top:18px;"><a class="btn btn-ghost" href="/sample-report/" target="_blank" rel="noopener">리포트 전체 보기</a><a class="btn btn-ghost" href="/sample-report/report.pdf" target="_blank" rel="noopener">PDF 받기</a></div>
+    </div>` : '';
   const scenes = SCN.map((s, i) => `
       <div class="sc-scene sc-${s.key}${i === 0 ? ' on' : ''}" data-key="${s.key}">
         <div class="sc-stage-in">${s.html}</div>
         <ul class="sc-chips">${s.chips.map((c) => `<li class="sc-chip">${c}</li>`).join('')}</ul>
         <a class="sc-link" href="/service/${s.service}/">이 결과물이 포함된 서비스 보기 →</a>
-      </div>`).join('');
+      </div>`).join('') + repScenes;
   return `
 <div class="showcase-pin" id="showcase-pin">
 <section class="section showcase" id="showcase">
   <div class="container">
     <p class="eyebrow">WHAT YOU GET</p>
     <h2 class="h2"><em>이렇게 생긴 것</em>을 받습니다</h2>
-    <p class="mk-section-sub">설명 대신 결과물로 보여드립니다. 전부 사장님 업소의 정보와 사진으로 제작되고, 전문가 검수 후 전달됩니다.</p>
+    <p class="mk-section-sub">설명 대신 결과물로 보여드립니다. 구글 프로필·리뷰·웹사이트·광고 소재, 그리고 매달 받는 리포트까지 — 전부 사장님 업소의 정보와 사진으로 만들고 전문가 검수 후 전달합니다.</p>
     <div class="sc-wrap" id="sc-wrap">
       <div class="sc-tabs" role="tablist" aria-label="결과물 종류">${tabs}</div>
       <div class="sc-stage"><span class="sc-ex">예시 · 가상의 업체</span>${scenes}</div>
     </div>
-    <p class="note-text">위 화면은 가상의 예시 업체 "순두부 하우스"로 구성했습니다 · <a href="/report/sample" style="color:var(--blue-600);font-weight:700;">실제 진단 리포트 샘플 보기 →</a></p>
+    <p class="note-text">위 화면은 가상의 예시 업체 "순두부 하우스"와 예시 수치로 구성했습니다 · <a href="/report/sample" style="color:var(--blue-600);font-weight:700;">무료 진단 리포트 샘플 보기 →</a></p>
   </div>
 </section>
 </div>
+${repList ? `<div class="container sc-rep-wrap">${repList}</div>` : ''}
 <script>
-/* 쇼케이스 — 화면에 고정(sticky)된 채 스크롤로 01→05를 훑고 나서 풀린다(모바일은 화면 높이 560px 이상일 때, 장면당 300px로 빠르게).
+/* 쇼케이스 — 화면에 고정(sticky)된 채 스크롤로 장면을 훑고 나서 풀린다. 장면당 넓은 화면 350px·폰 200px(2026-11-06 — 같은 스크롤에 1.5배 더 넘어간다).
+   넓은 화면은 결과물 4장면 + 월간 리포트 쪽, 폰은 4장면(리포트 쪽은 고정 구간 아래 목록 .sc-rep-wrap).
    시간 T = 시계(보이는 동안 흐름) + 스크롤 거리. 고정 구간에서는 스크롤 위치가 곧 진행도라 위로 올리면 되감긴다.
    화면이 낮은 모바일은 고정 없이 자동 넘김 + 스크롤 빨리감기. 스크롤을 가로채지 않고, JS 실패 시 첫 장면이 그대로 보인다 */
 (function () {
   var wrap = document.getElementById('sc-wrap'), pin = document.getElementById('showcase-pin'); if (!wrap || !pin) return;
-  var tabs = Array.prototype.slice.call(wrap.querySelectorAll('.sc-tab'));
-  var scenes = Array.prototype.slice.call(wrap.querySelectorAll('.sc-scene'));
-  var progs = tabs.map(function (t) { return t.querySelector('.sc-prog'); });
+  var tabsAll = Array.prototype.slice.call(wrap.querySelectorAll('.sc-tab'));
+  var scenesAll = Array.prototype.slice.call(wrap.querySelectorAll('.sc-scene'));
+  var tabs = tabsAll, scenes = scenesAll, progs = [];
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var N = tabs.length, DUR = 6000, TOTAL = N * DUR, FF = 14;
+  var N = tabs.length, DUR = 6000, TOTAL = N * DUR, FF = 21;
   var idx = 0, clock = 0, scrollT = 0, paused = false, visible = false, active = false, lastTs = null, raf = null, lastY = window.scrollY;
   var pinMQ = window.matchMedia('(min-width: 992px)');
   /* 모바일도 화면이 충분히 높으면(560px 이상) 고정해서 빠르게 01→05를 훑는다 — 장면당 스크롤 거리를 짧게 */
   function mobilePin() { return !pinMQ.matches && window.innerHeight >= 560; }
   function pinMode() { return pinMQ.matches || mobilePin(); }
-  function scenePx() { return pinMQ.matches ? 520 : 300; }
+  function scenePx() { return pinMQ.matches ? 350 : 200; }
+  /* 리포트 쪽 장면은 넓은 화면에서만 — 폰은 무대 아래 목록으로 본다 */
+  function pickScenes() {
+    var desk = pinMQ.matches;
+    tabs = tabsAll.filter(function (t) { return desk || !t.classList.contains('sc-tab-rep'); });
+    scenes = scenesAll.filter(function (sc) { return desk || !sc.classList.contains('sc-rep'); });
+    progs = tabs.map(function (t) { return t.querySelector('.sc-prog'); });
+    N = tabs.length; TOTAL = N * DUR;
+    if (idx >= N) idx = 0;
+  }
+  pickScenes();
   var stage = wrap.querySelector('.sc-stage');
   var vids = Array.prototype.slice.call(wrap.querySelectorAll('video.sc-cover-v'));
   function fitScene() {
@@ -945,6 +938,7 @@ function showcaseSection() {
     }
   }
   function applyPin() {
+    pickScenes();
     var desk = pinMQ.matches, mob = mobilePin();
     pin.classList.toggle('pinned', desk);
     pin.classList.toggle('pinned-m', mob);
@@ -1001,7 +995,8 @@ function showcaseSection() {
     }
     if (visible) apply();
   }
-  tabs.forEach(function (tb, k) { tb.addEventListener('click', function () {
+  tabsAll.forEach(function (tb) { tb.addEventListener('click', function () {
+    var k = tabs.indexOf(tb); if (k < 0) return;
     clock = k * DUR - scrollT; apply();
     if (!pinMQ.matches && tb.scrollIntoView) tb.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
   }); });
@@ -1962,8 +1957,6 @@ function homePage(posts) {
 </script>
 
 ${showcaseSection()}
-
-${sampleReportSection()}
 
 <section class="section vs-section">
   <div class="container">

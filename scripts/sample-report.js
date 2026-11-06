@@ -30,32 +30,33 @@ const OUT = path.join(ROOT, 'src', 'sample-report');
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(300);
   await page.pdf({ path: path.join(OUT, 'report.pdf'), format: 'Letter', printBackground: true, preferCSSPageSize: true });
-  // 쪽 0: 띠 + 표지 + 한눈에 보기 + 지표 카드
-  const top = await page.evaluate(() => { const k = document.querySelector('.kpis') || document.querySelector('.summary') || document.querySelector('.cover'); return Math.ceil(k.getBoundingClientRect().bottom + 22); });
-  await page.screenshot({ path: path.join(OUT, 'p0.jpg'), type: 'jpeg', quality: 84, fullPage: true, clip: { x: 0, y: 0, width: 860, height: top } });
-  const pages = [{ file: 'p0.jpg', title: '표지 · 한눈에 보기' }];
-  const secs = await page.$$('section.sec');
-  for (let i = 0; i < secs.length; i++) {
-    const bb = await secs[i].boundingBox();
-    const title = await secs[i].$eval('h2', (h) => h.textContent.replace(/^\d+/, '').trim());
-    const f = `p${i + 1}.jpg`;
-    await page.screenshot({ path: path.join(OUT, f), type: 'jpeg', quality: 84, fullPage: true, clip: { x: 0, y: Math.max(0, bb.y - 6), width: 860, height: Math.ceil(bb.height + 22) } });
-    pages.push({ file: f, title });
+  // 쪽 묶기 — 표지(띠·표지·한눈에·지표)가 0쪽, 섹션마다 한 쪽. 섹션에 "join": true 면 앞 쪽에 붙여 한 장으로(2026-11-06)
+  async function shoot(pg, W, prefix, q) {
+    const top = await pg.evaluate(() => { const k = document.querySelector('.kpis') || document.querySelector('.summary') || document.querySelector('.cover'); return Math.ceil(k.getBoundingClientRect().bottom + 16); });
+    const groups = [{ y: 0, end: top, title: '표지 · 한눈에 보기' }];
+    const secs = await pg.$$('section.sec');
+    for (let i = 0; i < secs.length; i++) {
+      const bb = await secs[i].boundingBox();
+      const title = await secs[i].$eval('h2', (h) => h.textContent.replace(/^\d+/, '').trim());
+      const end = Math.ceil(bb.y + bb.height + 16);
+      if ((data.sections[i] || {}).join) { const g = groups[groups.length - 1]; g.end = end; g.title += ' · ' + title.split(' — ')[0]; }
+      else groups.push({ y: Math.max(0, Math.floor(bb.y - 4)), end, title });
+    }
+    for (let k = 0; k < groups.length; k++) {
+      const g = groups[k];
+      await pg.screenshot({ path: path.join(OUT, `${prefix}${k}.jpg`), type: 'jpeg', quality: q, fullPage: true, clip: { x: 0, y: g.y, width: W, height: g.end - g.y } });
+    }
+    return groups;
   }
+  const groups = await shoot(page, 860, 'p', 84);
+  const pages = groups.map((g, k) => ({ file: `p${k}.jpg`, title: g.title }));
   // 휴대폰용 쪽 이미지(m0~mN) — 리포트의 모바일 판형(390px)으로 따로 찍어야 폰에서 글자가 읽힌다
   const mp = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
   const mhead = await installFonts(mp, ['sans']);
   await mp.setContent(R.renderHtml(data, { fontHead: mhead }), { waitUntil: 'load' });
   await mp.evaluate(() => document.fonts.ready); await mp.waitForTimeout(300);
-  const mtop = await mp.evaluate(() => { const k = document.querySelector('.kpis') || document.querySelector('.cover'); return Math.ceil(k.getBoundingClientRect().bottom + 16); });
-  await mp.screenshot({ path: path.join(OUT, 'm0.jpg'), type: 'jpeg', quality: 82, fullPage: true, clip: { x: 0, y: 0, width: 390, height: mtop } });
-  const msecs = await mp.$$('section.sec');
-  for (let i = 0; i < msecs.length; i++) {
-    const bb = await msecs[i].boundingBox();
-    await mp.screenshot({ path: path.join(OUT, `m${i + 1}.jpg`), type: 'jpeg', quality: 82, fullPage: true, clip: { x: 0, y: Math.max(0, bb.y - 4), width: 390, height: Math.ceil(bb.height + 16) } });
-    pages[i + 1].m = `m${i + 1}.jpg`;
-  }
-  pages[0].m = 'm0.jpg';
+  const mg = await shoot(mp, 390, 'm', 82);
+  mg.forEach((g, k) => { if (pages[k]) pages[k].m = `m${k}.jpg`; });
   await b.close();
   fs.writeFileSync(path.join(OUT, 'pages.json'), JSON.stringify(pages, null, 1) + '\n');
   console.log(`샘플 리포트: PDF + 쪽 ${pages.length}장 → src/sample-report/`);
