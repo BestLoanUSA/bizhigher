@@ -1402,6 +1402,7 @@ function homePage(posts) {
   }) + nav('home') + `
 <header class="hero hero-cine" id="cine-hero">
   <div class="hero-sticky" id="cine-sticky">
+  <div class="cine-sky" aria-hidden="true"></div>
   <div class="cine-stage1" aria-hidden="true">
     <div class="cine-pins" id="cine-pins"></div>
     <div class="cine-origin" id="cine-origin">
@@ -1561,6 +1562,8 @@ function homePage(posts) {
       seedPx = Math.max(16, ir.width * 0.8);
       seed.style.width = seedPx + 'px'; seed.style.height = seedPx + 'px';
       origin.style.left = ox + 'px'; origin.style.top = oy + 'px';
+      /* 낮 하늘의 해(빛) 위치 = i점 */
+      sticky.style.setProperty('--ox', ox + 'px'); sticky.style.setProperty('--oy', oy + 'px');
       var w = sr.width, h = sr.height;
       maxR = Math.max(Math.hypot(ox, oy), Math.hypot(w - ox, oy), Math.hypot(ox, h - oy), Math.hypot(w - ox, h - oy));
       ringBase = rings[0] ? rings[0].offsetWidth : 200;
@@ -1596,6 +1599,13 @@ function homePage(posts) {
       /* 파동 링 4개 — 순차 확장, 퍼질수록 옅어짐 */
       var grow = seg(p, 0.06, 0.56);
       var radius = grow * maxR * 1.08;
+
+      /* 밤 → 낮 (2026-11-06): 파동이 퍼지는 만큼 하늘이 밝아지고, 파동이 다 퍼지면(=메인 카피·진단 카드 전) 환한 낮.
+         --day 는 하늘 레이어 불투명도, --ink 는 글자·칩이 밝은 배경용으로 뒤집히는 정도 */
+      var day = grow * grow * (3 - 2 * grow);
+      var ink = seg(day, 0.38, 0.68); ink = ink * ink * (3 - 2 * ink);
+      hero.style.setProperty('--day', day.toFixed(3));
+      hero.style.setProperty('--ink', ink.toFixed(3));
       rings.forEach(function (rg, i) {
         var rp = clamp(grow * 1.35 - i * 0.17, 0, 1);
         var sc = Math.max(0.02, rp * (2.15 * maxR) / ringBase);

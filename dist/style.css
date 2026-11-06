@@ -2928,3 +2928,91 @@ img { max-width: 100%; display: block; }
    JS 가 없으면 트랙이 생기지 않아 평소 흐름 그대로 */
 .demo-pin-track { position: relative; }
 .hero-demo.demo-pinned { position: sticky; z-index: 2; }
+
+/* ==========================================================
+   v48 — 히어로 밤 → 낮 (2026-11-06 David 요청)
+   i점에서 파동이 퍼지는 만큼 하늘이 밝아져, 메인 카피·진단 카드가 나올 땐 이미 환한 낮.
+   JS 가 --day(하늘 불투명도)·--ink(글자 반전 정도)를 채운다. JS 없음·움직임 줄이기 = 처음부터 낮(최종 상태)
+   ========================================================== */
+.cine-sky { display: none; }
+.hero-cine.cine-on .cine-sky {
+  display: block; position: absolute; inset: 0; pointer-events: none;
+  opacity: var(--day, 0);
+  background:
+    radial-gradient(70vmax 70vmax at var(--ox, 50%) var(--oy, 40%), rgba(255, 252, 240, 0.95) 0%, rgba(255, 246, 222, 0.55) 22%, rgba(255, 246, 222, 0) 55%),
+    linear-gradient(180deg, #8EC0FF 0%, #B9D7FF 28%, #E3EEFF 58%, #FFF7EA 100%);
+}
+/* 낮 하늘의 옅은 그리드 — 밤 그리드와 같은 리듬 */
+.hero-cine.cine-on .cine-sky::before {
+  content: ""; position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(10, 77, 245, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(10, 77, 245, 0.06) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(720px 460px at 50% 40%, #000 30%, transparent 75%);
+  mask-image: radial-gradient(720px 460px at 50% 40%, #000 30%, transparent 75%);
+}
+.hero-cine.cine-on .hero-sticky::before { opacity: calc(1 - var(--day, 0)); }
+.hero-cine.cine-on { background: #fff; } /* 마무리 축소 때 모서리에 보이는 바탕 = 다음 섹션과 같은 흰색 */
+
+/* 스테이지1 글자·칩: 밤엔 밝은 글자, 낮엔 짙은 글자 (--ink 0 → 1) */
+.hero-cine.cine-on .cine-word { color: color-mix(in srgb, #fff, var(--ink-900) calc(var(--ink, 0) * 100%)); text-shadow: 0 10px 60px rgba(3, 8, 30, calc(0.6 * (1 - var(--ink, 0)))); }
+.hero-cine.cine-on .cine-tag, .hero-cine.cine-on .cine-beat-brand small { color: color-mix(in srgb, var(--mist-300), var(--ink-600) calc(var(--ink, 0) * 100%)); }
+.hero-cine.cine-on .cine-hint { color: color-mix(in srgb, var(--mist-400), var(--ink-600) calc(var(--ink, 0) * 100%)); }
+.hero-cine.cine-on .cine-beat {
+  color: color-mix(in srgb, var(--mist-300), var(--ink-600) calc(var(--ink, 0) * 100%));
+  text-shadow: 0 8px 40px rgba(3, 8, 30, calc(0.8 * (1 - var(--ink, 0)))), 0 0 28px rgba(255, 255, 255, calc(0.9 * var(--ink, 0)));
+}
+.hero-cine.cine-on .cine-beat b { color: color-mix(in srgb, #fff, var(--ink-900) calc(var(--ink, 0) * 100%)); }
+.hero-cine.cine-on .cine-chip span {
+  color: color-mix(in srgb, #fff, var(--ink-900) calc(var(--ink, 0) * 100%));
+  background: color-mix(in srgb, rgba(8, 15, 40, 0.75), rgba(255, 255, 255, 0.9) calc(var(--ink, 0) * 100%));
+  border-color: color-mix(in srgb, rgba(125, 162, 255, 0.3), rgba(10, 77, 245, 0.16) calc(var(--ink, 0) * 100%));
+  box-shadow: 0 8px 26px rgba(10, 27, 77, calc(0.5 - 0.36 * var(--ink, 0)));
+}
+.hero-cine.cine-on .cine-pin i { background: color-mix(in srgb, var(--cyan-400), var(--blue-600) calc(var(--ink, 0) * 100%)); }
+
+/* 정적 히어로(JS 없음·움직임 줄이기) = 낮 */
+.hero-cine:not(.cine-on) {
+  color: var(--ink-900);
+  background:
+    radial-gradient(900px 520px at 62% 8%, rgba(255, 252, 240, 0.9), rgba(255, 246, 222, 0) 60%),
+    linear-gradient(180deg, #8EC0FF 0%, #B9D7FF 26%, #E3EEFF 58%, #FFF7EA 100%);
+}
+.hero-cine:not(.cine-on)::before { background-image: linear-gradient(rgba(10, 77, 245, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(10, 77, 245, 0.06) 1px, transparent 1px); }
+.hero-cine:not(.cine-on)::after { opacity: 0.35; }
+
+/* 메인 카피·진단 카드·마퀴 — 언제나 낮 위에 나온다 */
+.hero-cine .hero-copy { color: var(--ink-900); }
+.hero-cine .hero-badge { color: var(--blue-600); background: rgba(255, 255, 255, 0.6); border-color: rgba(10, 77, 245, 0.2); }
+.hero-cine .hero-sub { color: var(--ink-600); }
+.hero-cine .btn-ghost { color: var(--ink-900); border-color: rgba(17, 19, 24, 0.18); background: rgba(255, 255, 255, 0.55); }
+.hero-cine .btn-ghost:hover { border-color: var(--blue-500); }
+.hero-cine .demo-card {
+  background: rgba(255, 255, 255, 0.86); border-color: rgba(10, 77, 245, 0.14);
+  box-shadow: 0 30px 80px rgba(20, 50, 120, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+}
+.hero-cine .demo-top { color: var(--ink-600); }
+.hero-cine .demo-live { color: #0E7490; border-color: rgba(14, 116, 144, 0.35); }
+.hero-cine .demo-name { color: var(--ink-900); }
+.hero-cine .demo-ex { color: var(--ink-600); border-color: rgba(75, 85, 99, 0.3); }
+.hero-cine .demo-ring { background: conic-gradient(#0A4DF5 0%, #22D3EE calc(var(--p) * 1%), rgba(10, 77, 245, 0.1) 0); }
+.hero-cine .demo-ring-in { background: #fff; }
+.hero-cine .demo-ring-in b { color: var(--ink-900); }
+.hero-cine .demo-ring-in small { color: var(--ink-400); }
+.hero-cine .demo-bar { color: var(--ink-600); }
+.hero-cine .demo-bar > b { color: var(--ink-900); }
+.hero-cine .demo-track { background: rgba(10, 77, 245, 0.1); }
+.hero-cine .demo-chip { color: var(--ink-600); background: rgba(10, 77, 245, 0.05); border-color: rgba(10, 77, 245, 0.12); }
+.hero-cine .demo-chip-warn { color: #9A4A00; background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.32); }
+.hero-cine .demo-chip-ok { color: #047857; background: rgba(16, 185, 129, 0.09); border-color: rgba(16, 185, 129, 0.3); }
+.hero-cine .demo-note { color: var(--ink-600); }
+.hero-cine .demo-note a { color: var(--blue-600); }
+.hero-cine .demo-note a:hover { color: var(--blue-700); }
+.hero-cine .demo-scrub { color: #0E7490; }
+.hero-cine .marquee-track { color: var(--ink-600); }
+.hero-cine .chan-label { color: var(--ink-600); }
+.hero-cine .chan { color: var(--ink-600); }
+.hero-cine .chan:hover { color: var(--ink-900); }
+/* 좁은 화면: 스티키 아래로 빠진 데모·마퀴 구간도 낮 하늘의 끝(따뜻한 흰색) → 흰색 */
+.cine-narrow .cine-flow { background: linear-gradient(180deg, #FFF7EA, #fff 70%); }
