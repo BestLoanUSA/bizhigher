@@ -3114,33 +3114,26 @@ img { max-width: 100%; display: block; }
 @media (prefers-reduced-motion: reduce) { .post-link, .pl-img img, .pl-go { transition: none; } }
 
 /* ==========================================================
-   v51 — 샘플 리포트: 스크롤하면 한 장씩 위로 쌓이는 카드 (2026-11-06)
-   기본(폰·낮은 화면·JS 없음)은 쪽 이미지를 차례로. 넓고 높은 화면에서만 sticky 로 쌓는다
+   v52 — "이렇게 생긴 것을 받습니다" 하나로: 결과물 4장면 + 월간 리포트 쪽 (2026-11-06)
+   넓은 화면 = 리포트 쪽도 무대 장면(스크롤로 넘어감), 폰 = 무대 아래 휴대폰 판형 쪽 목록
    ========================================================== */
-.srs { margin-top: 34px; }
-.srs-toc { display: none; }
-.srs-stack { display: flex; flex-direction: column; gap: 18px; }
-.srs-card { margin: 0; background: #fff; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; box-shadow: 0 24px 50px -32px rgba(11, 21, 48, .45); }
-.srs-card picture, .srs-card img { display: block; width: 100%; height: auto; }
-@media (min-width: 992px) and (min-height: 640px) {
-  .srs { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 34px; align-items: start; }
-  .srs-toc { display: flex; flex-direction: column; gap: 2px; list-style: none; margin: 0; padding: 0; position: sticky; top: 120px; }
-  .srs-toc a { display: flex; gap: 12px; align-items: baseline; padding: 9px 12px; border-radius: 10px; font-size: 15px; font-weight: 600; color: var(--ink-600); transition: background var(--dur) var(--ease), color var(--dur) var(--ease); }
-  .srs-toc a span { flex: none; width: 30px; font-size: 12px; font-weight: 800; color: var(--ink-400); letter-spacing: .04em; }
-  .srs-toc a:hover { background: #fff; color: var(--ink-900); }
-  .srs-toc a[aria-current] { background: #fff; color: var(--ink-900); box-shadow: 0 6px 18px -10px rgba(11, 21, 48, .35); }
-  .srs-toc a[aria-current] span { color: var(--blue-600); }
-  .srs-stack { gap: 0; }
-  .srs-card {
-    position: sticky; top: calc(100px + var(--i) * 10px);
-    height: calc(100vh - 150px); margin-bottom: 30vh;
-    display: flex; align-items: flex-start; justify-content: center; padding: 18px;
-    transition: transform .45s var(--ease), filter .45s var(--ease);
-    transform-origin: center top;
-  }
-  .srs-card:last-child { margin-bottom: 0; }
-  .srs-card picture { width: 100%; height: 100%; display: flex; justify-content: center; }
-  .srs-card img { width: auto; max-width: 100%; height: auto; max-height: 100%; object-fit: contain; }
-  .srs-card.srs-under { transform: scale(.965); filter: brightness(.97); }
+.sc-tab-group { margin: 8px 4px 0; font-size: 12px; font-weight: 800; letter-spacing: .08em; color: var(--ink-400); }
+.sc-tab.sc-tab-rep { padding: 9px 16px; border-radius: 12px; }
+.sc-tab.sc-tab-rep .sc-tab-n { font-size: 11px; min-width: 30px; }
+.sc-tab.sc-tab-rep .sc-tab-t b { font-size: 14px; }
+.showcase-pin.pinned .sc-tab.sc-tab-rep { padding: 8px 16px; }
+.showcase-pin.pinned .sc-tabs { gap: 6px; }
+.sc-rep .sc-stage-in.sc-rep-in { padding: 0; -webkit-mask-image: none; mask-image: none; align-items: center; overflow: hidden; }
+.sc-rep-in img { display: block; max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; border-radius: 12px; border: 1px solid var(--line); background: #fff; box-shadow: 0 24px 50px -28px rgba(11, 21, 48, .45); }
+.sc-scene.sc-rep { grid-template-rows: minmax(0, 1fr) auto; padding: 16px 18px 14px; }
+.sc-rep-list { display: none; }
+@media (max-width: 991px) {
+  .sc-tab-group, .sc-tab.sc-tab-rep, .sc-scene.sc-rep { display: none !important; }
+  .sc-rep-list { display: flex; flex-direction: column; gap: 14px; margin-top: 30px; }
+  .sc-rep-h { font-size: 20px; font-weight: 800; letter-spacing: -.02em; margin: 0 0 2px; text-align: center; }
+  .sc-rep-h span { display: block; font-size: 12.5px; font-weight: 700; color: var(--ink-400); margin-top: 4px; letter-spacing: 0; }
+  .sc-rep-card { margin: 0; border-radius: 16px; overflow: hidden; border: 1px solid var(--line); background: #fff; box-shadow: 0 20px 40px -30px rgba(11, 21, 48, .45); }
+  .sc-rep-card img { display: block; width: 100%; height: auto; }
 }
-@media (prefers-reduced-motion: reduce) { .srs-card { transition: none; } .srs-card.srs-under { transform: none; } }
+.sc-rep-wrap { padding-bottom: 40px; }
+@media (min-width: 992px) { .sc-rep-wrap { display: none; } }
