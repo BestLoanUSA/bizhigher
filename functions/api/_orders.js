@@ -109,6 +109,16 @@ const SCHEMA = [
     created_at TEXT DEFAULT (datetime('now'))
   )`,
   `CREATE INDEX IF NOT EXISTS idx_job_tasks_job ON job_tasks(job_id)`,
+  // 월간 리포트 데이터(report.json) — 고객 페이지 /c/… 가 이걸로 실시간 리포트를 그린다(2026-11-06). 달마다 1행
+  `CREATE TABLE IF NOT EXISTS job_reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_id INTEGER,
+    period TEXT,
+    data TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(job_id, period)
+  )`,
   // 고객 웹사이트 스펙 (docs/customer-sites-design-ko.md) — 원본은 이 행, 파일은 루틴이 빌드·배포
   `CREATE TABLE IF NOT EXISTS sites (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

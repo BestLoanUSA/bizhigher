@@ -7,6 +7,7 @@
  *   node automation/ai-runner/runner.js submit --task 123 --file out.md [--url https://…] [--kind text|html|link|images|video] [--options options.json]
  *       --options = 고객이 고르는 선택지 [{key:'B',label:'네이비·골드',image:'https://…/a/….jpg',note:'…',styles:['luxe','mono'],default:true}] — 승인되면 고객 페이지에 카드로 뜨고 고객이 하나를 고른다. 선택값은 다음 AI 단계 note "[고객 선택] B — …"
  *                                              [--checks "포인트1|포인트2|포인트3"] [--self-check "…"] [--done]   # 기본 검증 큐(review), --done 이면 바로 완료(verify=0 단계)
+ *   node automation/ai-runner/runner.js report-data --job 5 --period 2026-10 --file report.json   # 월간 리포트 데이터 → 고객 페이지 /c/… 의 실시간 리포트
  *   node automation/ai-runner/runner.js summary --deliverable 7 --file s.txt      # 결과물의 고객용 요약 저장 (고객 페이지·묶음 메일에 쓰임). 메일은 보내지 않는다
  *   node automation/ai-runner/runner.js draft --job 5 --file body.txt            # (구) 작업 단위 초안을 David 메일에 — 이제 summary 를 쓴다
  *   node automation/ai-runner/runner.js draft --deliverable 7 --file body.txt    # 결과물 1건만
@@ -69,6 +70,12 @@ async function api(path, body) {
     await api(`tasks/${id}/status`, { status: 'done', note: opt('note', '') });
     console.log(`완료: task ${id}`);
     return;
+  }
+  if (cmd === 'report-data') { // 월간 리포트 데이터 → 고객 페이지 실시간 리포트(2026-11-06). report.json 그대로
+    const id = opt('job'), file = opt('file'), period = opt('period');
+    if (!id || !file || !period) throw new Error('--job N --period YYYY-MM --file report.json 이 필요합니다');
+    const r = await api(`jobs/${id}/report-data`, { period, data: JSON.parse(fs.readFileSync(file, 'utf8')) });
+    console.log(`리포트 데이터 저장: job ${id} · ${r.period}`); return;
   }
   if (cmd === 'summary') { // 결과물의 고객용 요약(2~4문장) — 발송은 David 가 관리자에서 묶음으로
     const id = Number(opt('deliverable')); const file = opt('file');

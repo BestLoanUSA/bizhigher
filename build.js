@@ -2047,7 +2047,7 @@ ${sampleReportSection()}
     function frame() {
       ticking = false;
       // 고정(sticky)된 동안의 진행도 — 구간이 화면보다 낮아도 맞도록 고정 위치·높이로 센다(2026-11-06 높이 압축)
-      var r = sec.getBoundingClientRect(), st = sec.firstElementChild, ih = window.innerHeight, top0 = ih * 0.16, total = r.height - st.offsetHeight;
+      var r = sec.getBoundingClientRect(), st = sec.firstElementChild, ih = window.innerHeight, top0 = ih * 0.30, total = r.height - st.offsetHeight;
       var p = total > 0 ? Math.max(0, Math.min(1, (top0 - r.top) / total)) : 1;
       var start = window.innerWidth * 0.55, end = window.innerWidth - tr.scrollWidth - 48;
       tr.style.transform = 'translateX(' + (start + (end - start) * p).toFixed(1) + 'px)';
@@ -4599,6 +4599,17 @@ DATA.services.forEach((s) => write(`service/${s.slug}/index.html`, servicePage(s
 DATA.packages.forEach((p) => write(`package/${p.slug}/index.html`, packagePage(p)));
 write('404.html', notFoundPage());
 write('privacy/index.html', legalPage('개인정보처리방침', '/privacy/', PRIVACY_HTML));
+/* 고객 페이지(/c/…)의 실시간 리포트가 같은 판형을 쓰도록 _report.js 의 순수 렌더 부분을 ESM 으로 복사한다(2026-11-06).
+   Pages 는 빌드 명령 뒤에 functions/ 를 묶으므로 빌드마다 새로 쓰면 된다. 직접 고치지 말고 _report.js 를 고친다 */
+{
+  const src = fs.readFileSync(path.join(__dirname, 'automation', 'ai-runner', '_report.js'), 'utf8');
+  const a = src.indexOf('// @@report-core-start'), b = src.indexOf('// @@report-core-end');
+  if (a > 0 && b > a) {
+    const out = '/* 자동 생성 — automation/ai-runner/_report.js 의 @@report-core 구간(build.js 가 빌드마다 다시 쓴다). 직접 고치지 말 것 */\n' + src.slice(a, b) + '\nexport { renderHtml, LOGO };\n';
+    const f = path.join(__dirname, 'functions', 'api', '_report-view.js');
+    if (!fs.existsSync(f) || fs.readFileSync(f, 'utf8') !== out) fs.writeFileSync(f, out);
+  }
+}
 /* 샘플 리포트 — 실제 고객 리포트 판형(_report.js) 그대로, 검색 제외 */
 {
   const srData = path.join(__dirname, 'data', 'sample-report.json'), srDir = path.join(__dirname, 'src', 'sample-report');

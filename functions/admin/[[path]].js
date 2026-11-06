@@ -429,6 +429,23 @@ async function api(env, method, seg, body, url) {
     const picked = await approveDeliverable(db, d, { source: 'david', note: 'David 가 고객 대신 승인' + (body.choice ? ' — 선택 ' + String(body.choice).slice(0, 20) : ''), choice: body.choice });
     return { ok: true, choice: picked ? picked.key : null, __wake: `David 대신 선택 — ${d.title.slice(0, 60)}` };
   }
+  if (res === 'jobs' && id && sub === 'report-data') {
+    // 월간 리포트 데이터 저장·목록 — 루틴(runner.js report-data)이 mr-4 리포트를 만들 때 같은 report.json 을 올린다. 고객 페이지가 실시간 리포트로 보여 준다
+    const j = await db.prepare(`SELECT id FROM jobs WHERE id = ?`).bind(Number(id)).first();
+    if (!j) return undefined;
+    if (method === 'POST') {
+      const period = String(body.period || '').slice(0, 7);
+      if (!/^\d{4}-\d{2}$/.test(period)) throw bad('period 는 YYYY-MM');
+      if (!body.data || typeof body.data !== 'object') throw bad('data(report.json 객체)가 필요합니다');
+      const text = JSON.stringify(body.data);
+      if (text.length > 300000) throw bad('리포트 데이터가 너무 큽니다(300KB)');
+      await db.prepare(`INSERT INTO job_reports (job_id, period, data) VALUES (?, ?, ?) ON CONFLICT(job_id, period) DO UPDATE SET data = excluded.data, updated_at = datetime('now')`).bind(j.id, period, text).run();
+      await addEvent(db, j.id, 'system', null, null, `📊 ${period} 리포트 데이터 저장 — 고객 페이지 리포트에 반영`);
+      return { ok: true, period };
+    }
+    const rows = (await db.prepare(`SELECT period, updated_at FROM job_reports WHERE job_id = ? ORDER BY period DESC`).bind(j.id).all()).results || [];
+    return { reports: rows };
+  }
   if (res === 'jobs' && id && sub === 'send-packet' && method === 'POST') {
     // David 가 누른다: 전달 안 된 결과물 전부를 한 통으로 고객에게 (고객 페이지 링크 + 요약). 루틴은 호출하지 않는다 (§12 자동 발송 금지)
     const j = await db.prepare(`SELECT * FROM jobs WHERE id = ?`).bind(Number(id)).first();

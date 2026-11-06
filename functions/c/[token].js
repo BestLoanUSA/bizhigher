@@ -8,6 +8,7 @@ import { ensureSchema, addEvent, approveDeliverable, parseOptions, tokenFromPath
 import { wakeRoutine } from '../api/_runner.js';
 import { customerTitle } from '../api/_playbook.js';
 import { notify } from '../api/_notify.js';
+import { liveReportHtml, reportPeriods } from './_live.js';
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const EMBED_RE = /^https:\/\/([a-z0-9-]+\.)*(bizhigher-sites\.pages\.dev|sites\.bizhigher\.com|bizhigher\.com)(\/|$)/i;
@@ -133,7 +134,18 @@ function chosenMedia(chosen, options) {
   return h;
 }
 
-function page(job, ds, { preview, msg, site, siteTask, env }) {
+/* 실시간 리포트 카드 — 페이지 맨 위. 리포트는 실제 판형 그대로 iframe(스크립트 없음)으로, 높이는 부모가 맞춘다. JS 가 없으면 고정 높이 안에서 스크롤 */
+function reportCard(report, { periods, sel, preview, token }) {
+  if (!report) return '';
+  const q = (r) => `?${[preview ? 'preview=1' : '', r ? 'r=' + r : ''].filter(Boolean).join('&')}`.replace(/\?$/, '');
+  const tabs = [`<a href="${q('') || '?'}"${!sel ? ' aria-current="true"' : ''}><i></i>실시간</a>`, ...periods.map((p) => `<a href="${q(p)}"${sel === p ? ' aria-current="true"' : ''}>${Number(p.slice(5))}월 리포트</a>`)].join('');
+  return `<section class="card rep"><div class="rhead"><h2>내 리포트</h2><nav class="rtabs" aria-label="리포트 고르기">${tabs}</nav></div>
+<iframe class="rframe" title="리포트" sandbox="allow-same-origin" srcdoc="${esc(report)}"></iframe>
+<p class="rfoot"><a href="/c/${esc(token)}?view=report${sel ? '&r=' + sel : ''}" target="_blank" rel="noopener">전체 화면으로 보기 · 인쇄 →</a></p></section>
+<script>(function(){try{var f=document.querySelector('.rframe');if(!f)return;function fit(){try{var h=f.contentDocument&&f.contentDocument.documentElement.scrollHeight;if(h>200)f.style.height=h+'px';}catch(e){}}f.addEventListener('load',fit);window.addEventListener('resize',fit);setTimeout(fit,1200);setTimeout(fit,3000);}catch(e){}})();</script>`;
+}
+
+function page(job, ds, { preview, msg, site, siteTask, env, report }) {
   const biz = esc((job.business || '').replace(/\s*\(데모\)/, ''));
   const items = ds.map((d) => {
     const options = parseOptions(d.options);
@@ -162,14 +174,14 @@ pre{white-space:pre-wrap;word-break:break-word;font:14px/1.6 inherit;background:
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:8px 0}.grid img,.grid video{width:100%;border-radius:10px;border:1px solid var(--line);display:block;background:#000}
 .btn{display:inline-block;background:var(--blue);color:#fff;border:0;border-radius:999px;padding:12px 18px;font-weight:700;font-size:15px;cursor:pointer;text-decoration:none;font-family:inherit}.btn.ghost{background:#fff;color:var(--blue);border:1.5px solid var(--blue)}
 .appr{margin-top:12px;background:#EEF2FF;border-radius:12px;padding:12px;font-size:14px;line-height:1.6}.appr .row{margin:10px 0}.appr details{margin-top:6px}.appr summary{cursor:pointer;color:var(--blue);font-weight:700}.appr textarea{width:100%;min-height:90px;border:1.5px solid var(--line);border-radius:10px;padding:10px;font:inherit;margin:8px 0}
-.grid.one{grid-template-columns:minmax(0,320px)}.grid video.pick{width:100%;aspect-ratio:9/16;max-height:560px;background:#000;border-radius:10px}details.more{margin-top:8px}details.more summary{cursor:pointer;color:var(--muted);font-size:14px}.opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:12px 0 4px}.opt{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}.opt img,.opt video{width:100%;border-radius:8px;border:1px solid var(--line);display:block;background:#000}.opt img{background:#fff}.opt video{aspect-ratio:9/16;max-height:360px;object-fit:contain}.opt .rec{display:inline-block;font-size:11px;font-weight:700;color:#0A4DF5;background:#EEF3FF;border-radius:999px;padding:1px 7px;margin-left:4px;vertical-align:middle}.opt .ol{font-size:14px}.opt .on{font-size:12.5px;color:var(--muted);line-height:1.45}.opt .btn{margin-top:auto;padding:10px 12px;font-size:14px;text-align:center}
+.grid.one{grid-template-columns:minmax(0,320px)}.grid video.pick{width:100%;aspect-ratio:9/16;max-height:560px;background:#000;border-radius:10px}details.more{margin-top:8px}details.more summary{cursor:pointer;color:var(--muted);font-size:14px}.rep{padding:0;overflow:hidden}.rhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:16px 18px 12px}.rhead h2{margin:0}.rtabs{display:flex;gap:6px;flex-wrap:wrap}.rtabs a{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:13px;font-weight:700;color:var(--muted);text-decoration:none;background:#fff}.rtabs a[aria-current]{background:#0F172A;border-color:#0F172A;color:#fff}.rtabs a i{width:7px;height:7px;border-radius:50%;background:#10B981}.rframe{display:block;width:100%;height:1100px;border:0;border-top:1px solid var(--line);background:#F3F5F9}.rfoot{margin:0;padding:10px 18px 14px;font-size:13px}.rfoot a{color:var(--blue,#0A4DF5);font-weight:700;text-decoration:none}.opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:12px 0 4px}.opt{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}.opt img,.opt video{width:100%;border-radius:8px;border:1px solid var(--line);display:block;background:#000}.opt img{background:#fff}.opt video{aspect-ratio:9/16;max-height:360px;object-fit:contain}.opt .rec{display:inline-block;font-size:11px;font-weight:700;color:#0A4DF5;background:#EEF3FF;border-radius:999px;padding:1px 7px;margin-left:4px;vertical-align:middle}.opt .ol{font-size:14px}.opt .on{font-size:12.5px;color:var(--muted);line-height:1.45}.opt .btn{margin-top:auto;padding:10px 12px;font-size:14px;text-align:center}
 .ok{margin-top:10px;color:#0B7A3E;font-weight:700}.rev{margin-top:10px;color:#B45309;font-size:14px}.muted{color:var(--muted);font-size:14px}
 .flash{background:#E7F7EE;color:#0B7A3E;border-radius:12px;padding:12px 14px;font-weight:700;margin-bottom:14px}.pv{background:#FEF3C7;color:#92400E;border-radius:12px;padding:10px 14px;font-size:13px;margin-bottom:14px}
 footer{text-align:center;color:var(--muted);font-size:13px;padding:24px 16px}footer a{color:var(--blue)}
 </style></head><body>
 <header><div class="logo">Biz<span>Higher</span></div><h1>${biz} 사장님 결과물</h1><p>${esc(job.service_name || '')} · 이 페이지는 사장님만 보는 주소입니다. 북마크해 두세요.</p></header>
 <main>${msg ? `<div class="flash">${esc(msg)}</div>` : ''}${preview ? '<div class="pv">미리보기 모드 — 점선 상자는 아직 고객에게 전달되지 않은 결과물입니다.</div>' : ''}
-${siteCard(site, siteTask, env)}${items || '<div class="card"><p class="muted">아직 전달된 결과물이 없습니다. 작업이 진행되면 여기에 쌓입니다.</p></div>'}
+${report || ''}${siteCard(site, siteTask, env)}${items || '<div class="card"><p class="muted">아직 전달된 결과물이 없습니다. 작업이 진행되면 여기에 쌓입니다.</p></div>'}
 </main><footer>궁금한 점은 <a href="mailto:hello@bizhigher.com">hello@bizhigher.com</a> · 수정 1회 무료 · <a href="https://bizhigher.com/terms/">이용약관</a></footer></body></html>`;
 }
 
@@ -182,7 +194,12 @@ export async function onRequestGet({ params, env, request }) {
   const preview = u.searchParams.get('preview') === '1';
   const ds = preview ? data.ds : data.ds.filter((d) => d.sent_at);
   const msg = u.searchParams.get('ok') === 'approve' ? '승인해 주셔서 감사합니다. 예정대로 진행하겠습니다.' : u.searchParams.get('ok') === 'choice' ? '골라 주셔서 감사합니다. 그 디자인으로 나머지를 만들어 올려드리겠습니다.' : u.searchParams.get('ok') === 'revise' ? '수정 요청을 받았습니다. 반영해서 다시 올려드리겠습니다.' : u.searchParams.get('ok') === 'site' ? '웹사이트 수정 요청을 받았습니다. 반영되면 같은 주소에서 보실 수 있습니다.' : u.searchParams.get('ok') === 'reply' ? '답변 감사합니다. 확인해서 반영하겠습니다.' : '';
-  return html(page(data.job, ds, { preview, msg, site: data.site, siteTask: data.siteTask, env }));
+  // 실시간 리포트(2026-11-06) — ?r=YYYY-MM 은 저장된 월간 리포트, ?view=report 는 리포트만 전체 화면(인쇄용)
+  const sel = /^\d{4}-\d{2}$/.test(u.searchParams.get('r') || '') ? u.searchParams.get('r') : '';
+  let report = null, periods = [];
+  try { periods = await reportPeriods(env.DB, data.job.id); report = await liveReportHtml(env.DB, data.job, data.site, sel); } catch (e) { report = null; }
+  if (u.searchParams.get('view') === 'report' && report) return html(report);
+  return html(page(data.job, ds, { preview, msg, site: data.site, siteTask: data.siteTask, env, report: reportCard(report, { periods, sel, preview, token: params.token }) }));
 }
 
 export async function onRequestPost({ params, env, request, waitUntil }) {

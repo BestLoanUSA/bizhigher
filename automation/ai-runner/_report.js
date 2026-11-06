@@ -29,6 +29,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+// @@report-core-start — 여기부터 @@report-core-end 까지는 fs·path 없이 도는 순수 함수만(build.js 가 functions/api/_report-view.js 로 복사한다)
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const LOGO = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="34" height="34" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#0A4DF5"/><path d="M15 44 h9 v-9 h9 v-9 h6.5" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M38.5 15.5 h10 v10" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const BRAND = `<span class="brand">${LOGO}<b>Biz<i>Higher</i></b></span>`;
@@ -57,6 +58,8 @@ function section(s, i) {
   if (s.before || s.after) body += `<div class="ba"><div class="col"><div class="h">Before</div>${(s.before || []).map(kpiCard).join('')}</div><div class="arrow">→</div><div class="col after"><div class="h">After</div>${(s.after || []).map(kpiCard).join('')}</div></div>`;
   if (s.images && s.images.length) body += `<div class="imgs">${s.images.slice(0, 6).map((u) => `<img src="${esc(u)}" alt="">`).join('')}</div>`;
   if (s.manual && s.manual.length) body += `<div class="manual">${s.manual.map((m) => `<div class="mrow"><span class="ml">${esc(m.label)}</span><span class="mv ${m.value ? '' : 'empty'}">${esc(m.value || '')}</span></div>`).join('')}<div class="mnote">비어 있는 칸은 담당자가 확인 후 채웁니다</div></div>`;
+  if (s.progress != null) body += `<div class="prog"><div class="lbl"><span>${esc(s.progressLabel || '전체 진행')}</span><b>${esc(s.progress)}%</b></div><div class="bar"><i style="width:${Math.max(0, Math.min(100, Number(s.progress) || 0))}%"></i></div></div>`;
+  if (s.steps && s.steps.length) body += `<div class="steps">${s.steps.map((x) => `<div class="step${x.you ? ' you' : ''}"><b>${esc(x.tag || (x.you ? '사장님 차례' : '진행 예정'))}</b><span>${esc(x.text)}</span></div>`).join('')}</div>`;
   if (s.scores) body += scoresHtml(s.scores);
   if (s.grids) body += gridsHtml(s.grids);
   if (s.note) body += `<p class="small">${esc(s.note)}</p>`;
@@ -99,7 +102,7 @@ function renderHtml(r, { fontHead = '', robots = '' } = {}) {
 .cover .meta{margin-top:22px;display:flex;gap:18px;flex-wrap:wrap;font-size:13.5px;color:var(--ink3)}.cover .meta b{color:var(--ink2);font-weight:600}
 .summary{padding:26px 48px;background:var(--tint);border-bottom:1px solid var(--line)}.summary h2{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--c);margin:0 0 10px}
 .summary ul{margin:0;padding-left:20px;font-size:16.5px}.summary li{margin:4px 0}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;padding:26px 48px 6px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:12px;padding:26px 48px 6px}
 .kpi{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:#fff}.kpi .l{font-size:13px;color:var(--ink3)}.kpi .v{font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1.15;margin-top:2px}
 .kpi .n{font-size:12.5px;color:var(--ink2);margin-top:4px}.delta{font-size:13px;font-weight:700;margin-left:8px;padding:2px 8px;border-radius:999px;vertical-align:middle}.delta.up{background:#ECFDF5;color:#047857}.delta.down{background:#FEF2F2;color:#B91C1C}
 .sec{padding:26px 48px 8px;break-inside:avoid}.sec h2{font-size:21px;margin:0 0 10px;display:flex;align-items:center;gap:12px;letter-spacing:-.01em}.sec h2 .num{font-size:12px;font-weight:800;color:var(--c);background:var(--tint);border-radius:8px;padding:3px 8px;letter-spacing:.06em}
@@ -120,6 +123,9 @@ table{width:100%;border-collapse:collapse;font-size:14px;margin:6px 0 12px}th{te
 .gg{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.gc{display:flex;align-items:center;justify-content:center;aspect-ratio:1;border-radius:7px;font-size:12px;font-weight:700}.gc.r1{background:var(--c);color:#fff}.gc.r2{background:color-mix(in srgb,var(--c) 55%,#fff);color:#fff}.gc.r3{background:color-mix(in srgb,var(--c) 25%,#fff);color:var(--ink)}.gc.r4{background:#EEF1F6;color:var(--ink2)}.gc.out,.gc.na{background:#F6F7FA;color:#B6BFCC;font-size:10px}.gc.me{outline:2.5px solid var(--ink);outline-offset:1px}
 .glegend{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0 12px;font-size:11px}.glegend .gc{width:auto;aspect-ratio:auto;padding:2px 8px}.glegend em{font-style:normal;color:var(--ink3);font-size:11.5px;margin-left:4px}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:10px;margin:4px 0 12px}.tile{border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:2px}.tile b{font-size:28px;font-weight:800;letter-spacing:-.02em;line-height:1.1;color:var(--c)}.tile span{font-size:13px;color:var(--ink2)}
+.cover .meta .live{display:inline-flex;align-items:center;gap:6px;color:#047857;font-weight:600}.cover .meta .live i{width:8px;height:8px;border-radius:50%;background:#10B981;box-shadow:0 0 0 4px rgba(16,185,129,.18)}
+.steps{display:grid;gap:8px;margin:4px 0 12px}.step{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:14.5px}.step b{flex:none;font-size:11.5px;font-weight:800;padding:3px 8px;border-radius:999px;background:var(--tint);color:var(--c)}.step.you{border-color:#F59E0B;background:#FFFBEB}.step.you b{background:#FEF3C7;color:#B45309}
+.prog{margin:4px 0 14px}.prog .bar{height:12px;border-radius:999px;background:#EEF1F6;overflow:hidden}.prog .bar i{display:block;height:100%;border-radius:999px;background:var(--c)}.prog .lbl{display:flex;justify-content:space-between;font-size:13px;color:var(--ink2);margin-bottom:6px}.prog .lbl b{color:var(--ink);font-size:15px}
 .ribbon{background:var(--ink);color:#fff;font-size:12.5px;text-align:center;padding:7px 12px;letter-spacing:.02em}
 @media (max-width:600px){.grids{grid-template-columns:1fr}.srow{grid-template-columns:78px 1fr 64px;gap:8px}.gc{font-size:10.5px;border-radius:5px}}
 @page{size:letter;margin:0}@media print{html,body{background:#fff}.page{max-width:none}.cover{padding-top:52px}.sec,.kpis{break-inside:avoid}}`;
@@ -127,7 +133,7 @@ table{width:100%;border-collapse:collapse;font-size:14px;margin:6px 0 12px}th{te
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(r.title || '리포트')} — ${esc(b.name || '')}</title>${robots ? `<meta name="robots" content="${esc(robots)}">` : ''}${fonts}<style>${css}</style></head><body><div class="page">${r.sample ? `<div class="ribbon">예시 리포트 · 가상의 업체와 예시 수치로 만들었습니다 · 실제 고객 리포트와 같은 판형</div>` : ''}
 <header class="cover">${BRAND}<div class="biz">${b.logo ? `<img src="${esc(b.logo)}" alt="">` : ''}<div class="nm">${name}${b.city ? ` <span class="en">· ${esc(b.city)}</span>` : ''}</div></div>
 <h1>${esc(r.title || '리포트')}</h1>${r.subtitle ? `<p class="sub">${esc(r.subtitle)}</p>` : ''}
-<div class="meta">${r.period ? `<span>기간 <b>${esc(r.period)}</b></span>` : ''}${r.date ? `<span>발행 <b>${esc(r.date)}</b></span>` : ''}<span>작성 <b>BizHigher</b></span></div></header>
+<div class="meta">${r.live ? `<span class="live"><i></i>실시간 · <b>${esc(r.live)}</b> 기준</span>` : ''}${r.period ? `<span>기간 <b>${esc(r.period)}</b></span>` : ''}${r.date ? `<span>발행 <b>${esc(r.date)}</b></span>` : ''}<span>작성 <b>BizHigher</b></span></div></header>
 ${r.summary && r.summary.length ? `<section class="summary"><h2>한눈에 보기</h2><ul>${r.summary.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>` : ''}
 ${r.kpis && r.kpis.length ? `<div class="kpis">${r.kpis.map(kpiCard).join('')}</div>` : ''}
 ${(r.sections || []).map((s, i) => section(s, i)).join('')}
@@ -135,6 +141,8 @@ ${r.cta ? `<div class="cta">${esc(r.cta)}</div>` : ''}
 <footer class="foot"><span>${esc(r.notes || '수치는 구글·사이트·광고 계정의 공개·계정 데이터를 기준으로 하며, 측정 기준이 바뀌면 리포트에 적습니다.')}</span><span>BizHigher · hello@bizhigher.com · bizhigher.com</span></footer>
 </div></body></html>`;
 }
+
+// @@report-core-end
 
 /** HTML·PDF·미리보기 PNG 를 out 폴더에 쓴다 */
 async function renderFiles(r, out, { name = 'report' } = {}) {
