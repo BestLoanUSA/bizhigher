@@ -3016,3 +3016,91 @@ img { max-width: 100%; display: block; }
 .hero-cine .chan:hover { color: var(--ink-900); }
 /* 좁은 화면: 스티키 아래로 빠진 데모·마퀴 구간도 낮 하늘의 끝(따뜻한 흰색) → 흰색 */
 .cine-narrow .cine-flow { background: linear-gradient(180deg, #FFF7EA, #fff 70%); }
+
+/* ==========================================================
+   v49 — 무료 도구 밝은 그리드 + 서비스 배너 (2026-11-06)
+   홈 도구 6개(짙은 남색 패널 제거) · 글 ↔ 도구 서로 연결 · 서비스 배너
+   ========================================================== */
+.home-tools {
+  position: relative;
+  background:
+    radial-gradient(600px 300px at 12% 0%, rgba(10, 77, 245, 0.07), transparent 70%),
+    radial-gradient(520px 300px at 92% 100%, rgba(34, 211, 238, 0.09), transparent 70%),
+    linear-gradient(180deg, #fff 0%, #F5F8FF 100%);
+}
+.tool-grid-light { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.tool-grid-light .tool-card {
+  position: relative; height: 100%; overflow: hidden;
+  background: #fff; border: 1px solid #E3E9F6; border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(10, 27, 77, 0.04), 0 14px 34px -22px rgba(10, 27, 77, 0.28);
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.tool-grid-light .tool-card::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px;
+  background: linear-gradient(90deg, var(--tg), color-mix(in srgb, var(--tg) 40%, #22D3EE));
+  opacity: 0.85;
+}
+.tool-grid-light .tool-card:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--tg) 35%, #fff); box-shadow: 0 22px 44px -22px color-mix(in srgb, var(--tg) 55%, transparent); }
+.tool-grid-light .tool-ico { background: color-mix(in srgb, var(--tg) 10%, #fff); color: var(--tg); }
+.tool-grid-light .card-cta { color: var(--tg); }
+@media (max-width: 900px) { .tool-grid-light { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) {
+  .tool-grid-light { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  /* 홈은 6개라 가로로 넘겨 본다 */
+  .home-tools-grid { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 84%; overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 -20px; padding: 4px 20px 14px; scrollbar-width: none; }
+  .home-tools-grid::-webkit-scrollbar { display: none; }
+  .home-tools-grid > * { scroll-snap-align: center; }
+}
+
+/* 서비스 배너 — 도구·글 페이지 아래 */
+.svc-banner {
+  position: relative; overflow: hidden; isolation: isolate;
+  margin-top: 44px; border-radius: 22px; padding: 30px 32px;
+  display: grid; grid-template-columns: minmax(0, 1fr) 236px; gap: 28px; align-items: center;
+  color: #fff;
+  background:
+    radial-gradient(520px 280px at 100% 0%, rgba(34, 211, 238, 0.38), transparent 62%),
+    linear-gradient(125deg, #0733B0 0%, #0A4DF5 48%, #2F6BFF 100%);
+  box-shadow: 0 26px 60px -24px rgba(10, 77, 245, 0.6);
+}
+.svc-banner::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 34px 34px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 10%, #000 70%); mask-image: linear-gradient(90deg, transparent 10%, #000 70%);
+}
+.sb-eyebrow { display: inline-block; font-size: 12.5px; font-weight: 800; letter-spacing: 0.04em; color: #BDF3FF; }
+.sb-name { display: block; margin: 8px 0 6px; font-size: 25px; font-weight: 900; letter-spacing: -0.02em; line-height: 1.25; }
+.sb-desc { font-size: 15px; line-height: 1.6; color: rgba(255, 255, 255, 0.88); }
+.sb-inc { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.sb-inc li { font-size: 13px; font-weight: 700; line-height: 1.35; padding: 6px 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.22); }
+.sb-inc li::before { content: "✓"; margin-right: 6px; color: #7EF0E0; }
+.sb-side {
+  display: flex; flex-direction: column; align-items: stretch; gap: 6px; text-align: center;
+  padding: 20px 18px; border-radius: 16px;
+  background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.22);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.sb-price { font-size: 36px; font-weight: 900; letter-spacing: -0.03em; line-height: 1; }
+.sb-sub { font-size: 12.5px; color: rgba(255, 255, 255, 0.8); }
+.svc-banner .sb-btn { margin-top: 10px; justify-content: center; background: #fff; color: var(--blue-700); font-weight: 800; border: 0; box-shadow: 0 10px 24px -10px rgba(3, 8, 30, 0.5); white-space: normal; }
+.svc-banner .sb-btn:hover { transform: translateY(-2px); }
+.sb-link { font-size: 13px; font-weight: 700; color: #fff; text-decoration: underline; text-underline-offset: 3px; opacity: 0.9; margin-top: 4px; }
+.sb-link:hover { opacity: 1; }
+@media (max-width: 760px) {
+  .svc-banner { grid-template-columns: minmax(0, 1fr); padding: 24px 20px; gap: 20px; }
+  .sb-name { font-size: 22px; }
+}
+/* 글 본문 열(좁음) 안의 도구 카드 — 측정 그림·Free 표시를 빼고 이름이 한두 줄로 들어가게 */
+.tool-grid-post .tool-free, .tool-grid-post .tool-mviz { display: none; }
+.tool-grid-post .tool-card { padding: 20px; }
+.tool-grid-post .tool-card-top { justify-content: flex-start; }
+.tool-grid-post .tool-ico { width: 44px; height: 44px; border-radius: 12px; }
+.tool-grid-post .tool-ico svg { width: 22px; height: 22px; }
+.tool-grid-post .tool-card-name { font-size: 15px; line-height: 1.35; }
+.tool-grid-post .tool-mstat b { font-size: 26px; }
+/* 데이터 카드 그림자가 가로 스크롤 영역 끝에서 잘려 회색 상자로 보이던 것 — 그림자를 좁히고 아래 여유를 준다 */
+.data-band .dcards { padding-top: 10px; padding-bottom: 40px; margin-bottom: -26px; }
+.data-band .dcard { box-shadow: 0 18px 34px -16px rgba(10, 27, 77, 0.38); }
+/* 섹션 맨 위 서비스 배너는 위 여백 없이 */
+.container > .svc-banner:first-child { margin-top: 0; }

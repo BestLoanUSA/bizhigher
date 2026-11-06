@@ -570,7 +570,7 @@ function dataBandSection() {
     asOf = s.asOf;
   }
   return `
-<section class="section section-gray data-band data-band-quiet">
+<section class="section data-band data-band-quiet">
   <div class="container">
     <p class="eyebrow">OUR OWN DATA</p>
     <h2 class="h2">${headline}</h2>
@@ -2203,13 +2203,13 @@ ${PV_JS}
 
 ${packageMatrixSection({ home: true })}
 
-${dataBandSection()}
-
 ${homeToolsSection()}
 
 ${blogStripSection(posts)}
 
-<section class="section">
+${dataBandSection()}
+
+<section class="section section-gray">
   <div class="container-narrow">
     <h2 class="h2">자주 묻는 질문</h2>
     ${DATA.faqs.map((f, i) => `<details class="faq-item"${i === 0 ? ' open' : ''}><summary class="faq-q">${f.q}</summary><p class="faq-a">${f.a}</p></details>`).join('')}
@@ -2262,7 +2262,7 @@ ${blogStripSection(posts)}
 
 /* ---------- 홈: 인기 무료 도구 ----------
    손님이 가장 먼저 궁금해할 것(지도 순위·리뷰·AI 추천·경쟁 가게) 위주로 고른다. 순서를 바꾸려면 HOME_TOOLS만 고친다 */
-const HOME_TOOLS = ['local-rank', 'review-link', 'ai-check'];
+const HOME_TOOLS = ['local-rank', 'review-link', 'ai-check', 'competitor-reviews', 'ads-budget', 'gbp-post'];
 function homeToolsSection() {
   const picks = HOME_TOOLS.map((slug) => TOOLS.own.find((t) => t.slug === slug)).filter(Boolean);
   if (!picks.length) return '';
@@ -2272,8 +2272,8 @@ function homeToolsSection() {
     <p class="eyebrow">FREE TOOLS</p>
     <h2 class="h2">돈 쓰기 전에, <em>무료로</em> 먼저 확인하세요</h2>
     <p class="home-tools-sub">우리 가게가 지도에서 몇 위인지, AI가 우리 가게를 아는지 — 저희가 고객 가게를 맡을 때 처음 확인하는 것들을 무료 도구로 열어 두었습니다. 가입 없이 이메일만 있으면 됩니다.</p>
-    <div class="tool-dark-panel"><div class="grid3 home-tools-grid">${picks.map(toolCard).join('')}</div></div>
-    <div class="hero-ctas" style="margin-top:26px;justify-content:center;"><a href="/tools/" class="btn btn-ghost">무료 도구 ${TOOLS.own.length}개 전체 보기 →</a></div>
+    <div class="tool-grid-light home-tools-grid">${picks.map(toolCard).join('')}</div>
+    <div class="hero-ctas" style="margin-top:30px;justify-content:center;"><a href="/tools/" class="btn btn-ghost">무료 도구 ${TOOLS.own.length}개 전체 보기 →</a></div>
   </div>
 </section>`;
 }
@@ -3326,6 +3326,7 @@ function blogPostPage(p, posts) {
       mainEntity: p.faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) });
   }
   const relSvc = p.related ? DATA.services.find((s) => s.slug === p.related) : null;
+  const relTools = toolsForPost(p, 3);
   const sameCategory = posts.filter((x) => x.slug !== p.slug && x.category === p.category && !x.hub);
   const idx = posts.findIndex((x) => x.slug === p.slug);
   const rotated = posts.slice(idx + 1).concat(posts.slice(0, idx));
@@ -3362,12 +3363,12 @@ function blogPostPage(p, posts) {
     <div class="post-main">
     ${p.summary.length ? `<div class="post-summary"><b>핵심 요약</b><ul>${p.summary.map((x) => `<li>${x}</li>`).join('')}</ul></div>` : ''}
     <article class="post-body">${html}</article>
-    <div class="post-cta">
+    ${relSvc ? svcBanner(relSvc, '이 글의 내용, 저희가 대신 해 드립니다') : `<div class="post-cta">
       <b>우리 가게는 지금 몇 점일까요?</b>
       <p>이 글에서 다룬 항목들을 60초 만에 자동으로 점검해 드립니다. 가입 없이 업체명과 도시만 입력하세요.</p>
       <a href="/free-audit/" class="btn btn-primary">무료 AI 진단 받기 →</a>
-      ${relSvc ? `<a href="/service/${relSvc.slug}/" class="btn btn-ghost">맡기고 싶다면: ${relSvc.name} (${relSvc.price})</a>` : ''}
-    </div>
+    </div>`}
+    ${relTools.length ? `<h2 class="h2-left" style="margin-top:48px;">이 글과 함께 쓰는 무료 도구</h2><div class="tool-grid-light tool-grid-post">${relTools.map(toolCard).join('')}</div>` : ''}
     ${dataLinks.map((d) => `<a href="/data/${d.slug}/" class="hub-callout" style="margin-top:16px;">📊 실측 데이터: <b>${d.title}</b> →</a>`).join('')}
     ${others.length ? `<h2 class="h2-left" style="margin-top:48px;">함께 읽으면 좋은 글</h2><div class="grid3">${others.map(blogCard).join('')}</div>` : ''}
     </div><!-- /post-main -->
@@ -4325,10 +4326,51 @@ function T_copyBlock(title, text) {
   return `<div class="tool-out"><div class="tool-out-head"><b>${title}</b><span class="btn btn-ghost btn-small" style="pointer-events:none;">복사</span></div><div class="tool-out-body">${escAttr(text).replace(/\n/g, '<br>')}</div></div>`;
 }
 
+/* ---------- 도구 ↔ 블로그 글 ↔ 서비스 연결 (2026-11-06) ----------
+   도구 페이지 아래엔 관련 글, 글 아래엔 관련 도구. 우리 서비스가 맞으면 둘 다 서비스 배너를 크게 붙인다.
+   점수: 글의 related 서비스 = 도구의 service +5 · 글 분류 ↔ 도구 묶음 +3 · 키워드 겹침 단어당 +1(최대 4) */
+const TOOL_GROUP_COLOR = { visibility: '#0A4DF5', reviews: '#D97706', ads: '#7C3AED', content: '#0D9488' };
+const CAT_TOOL_GROUPS = { '구글 노출': ['visibility'], 'AI 검색': ['visibility'], '리뷰·평판': ['reviews'], '광고': ['ads'], '콘텐츠·SNS': ['content'], '웹사이트': ['content', 'visibility'] };
+const LINK_STOP = new Set(['구글', 'google', '가게', '우리', '방법', '확인', '만들기', '예시', '무료', '하는', '사장님', '한인', '정리', '가이드', 'free', 'the', 'for', 'and', 'how', 'to']);
+const linkTokens = (str) => new Set(String(str || '').toLowerCase().split(/[^0-9a-z가-힣]+/).filter((w) => w.length >= 2 && !LINK_STOP.has(w)));
+function toolPostScore(t, p) {
+  let sc = 0;
+  if (p.related && p.related === t.service) sc += 5;
+  if ((CAT_TOOL_GROUPS[p.category] || []).includes(t.group)) sc += 3;
+  const a = linkTokens(t.keywords + ' ' + t.name), b = linkTokens(`${p.title} ${p.keywords || ''}`);
+  let k = 0; a.forEach((w) => { if (b.has(w)) k++; });
+  return sc + Math.min(4, k);
+}
+function toolsForPost(p, n = 3) {
+  return TOOLS.own.map((t, i) => ({ t, sc: toolPostScore(t, p), i })).filter((x) => x.sc >= 3).sort((a, b) => b.sc - a.sc || a.i - b.i).slice(0, n).map((x) => x.t);
+}
+function postsForTool(t, posts, n = 3) {
+  return (posts || []).map((p, i) => ({ p, sc: toolPostScore(t, p) + (p.hub ? 0 : 0.5), i })).filter((x) => x.sc >= 3).sort((a, b) => b.sc - a.sc || a.i - b.i).slice(0, n).map((x) => x.p);
+}
+/* 서비스 배너 — 도구·글 페이지 아래 "맡기고 싶다면". 가격·포함 항목은 services.json 그대로 */
+function svcBanner(svc, lead) {
+  if (!svc) return '';
+  const inc = (svc.includes || []).slice(0, 3);
+  return `<aside class="svc-banner" aria-label="관련 서비스">
+  <div class="sb-copy">
+    <span class="sb-eyebrow">${lead}</span>
+    <b class="sb-name">${svc.name}</b>
+    <p class="sb-desc">${svc.shortDescription}</p>
+    ${inc.length ? `<ul class="sb-inc">${inc.map((x) => `<li>${x}</li>`).join('')}</ul>` : ''}
+  </div>
+  <div class="sb-side">
+    <span class="sb-price">${svc.price}</span>
+    ${svc.priceSub ? `<span class="sb-sub">${svc.priceSub}</span>` : ''}
+    <a class="btn sb-btn" href="/service/${svc.slug}/">${svc.name} 자세히 보기 →</a>
+    <a class="sb-link" href="/free-audit/">먼저 무료 AI 진단 받기</a>
+  </div>
+</aside>`;
+}
+
 function toolCard(t) {
   const s = t.stat || {};
   return `
-<a href="/tools/${t.slug}/" class="prod-card tool-card">
+<a href="/tools/${t.slug}/" class="prod-card tool-card" style="--tg:${TOOL_GROUP_COLOR[t.group] || '#0A4DF5'}">
   <span class="tool-card-top">${toolIcon(t.slug)}<span class="tool-card-name">${t.name}</span><span class="tool-free">Free</span></span>
   <div class="tool-card-row">
     <div class="tool-card-main">
@@ -4472,6 +4514,7 @@ function toolPage(t) {
   const i = TOOLS.own.findIndex((x) => x.slug === t.slug);
   const rotated = others.slice(i).concat(others.slice(0, i));
   const pick = [...rotated.filter((x) => x.group === t.group), ...rotated.filter((x) => x.group !== t.group)].slice(0, 3);
+  const relPosts = postsForTool(t, POSTS, 3);
   const extraScripts = ['review-link', 'utm-builder'].includes(t.slug)
     ? `<script src="/assets/tools/qrcode.min.js?v=${toolAssetVer('qrcode.min.js')}"></script>`
     : '';
@@ -4511,14 +4554,10 @@ ${guide && guide.faqs.length ? `
 </section>` : ''}
 <section class="section">
   <div class="container">
-    ${svc ? `<div class="post-cta" style="margin-bottom:40px;">
-      <b>매번 직접 하기 번거롭다면</b>
-      <p>${svc.name}(${svc.price}) — ${svc.shortDescription}</p>
-      <a href="/service/${svc.slug}/" class="btn btn-primary">${svc.name} 자세히 보기 →</a>
-      <a href="/free-audit/" class="btn btn-ghost">무료 AI 진단 받기</a>
-    </div>` : ''}
-    <h2 class="h2-left">${group && pick.some((x) => x.group === t.group) ? `${group.name} — 함께 쓰면 좋은 도구` : '다른 무료 도구'}</h2>
-    <div class="tool-dark-panel"><div class="grid3">${pick.map(toolCard).join('')}</div></div>
+    ${svc ? svcBanner(svc, '매번 직접 하기 번거롭다면 — 저희가 맡아 드립니다') : ''}
+    ${relPosts.length ? `<h2 class="h2-left" style="margin-top:48px;">이 도구와 함께 읽으면 좋은 글</h2><div class="grid3">${relPosts.map(blogCard).join('')}</div>` : ''}
+    <h2 class="h2-left" style="margin-top:48px;">${group && pick.some((x) => x.group === t.group) ? `${group.name} — 함께 쓰면 좋은 도구` : '다른 무료 도구'}</h2>
+    <div class="tool-grid-light">${pick.map(toolCard).join('')}</div>
     <p class="body-sm" style="margin-top:16px;"><a href="/tools/">무료 도구 전체 보기 →</a></p>
   </div>
 </section>
