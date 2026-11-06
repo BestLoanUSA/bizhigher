@@ -257,6 +257,57 @@ img { max-width: 100%; display: block; }
 .badge-hub { background: var(--grad-btn); color: #fff; }
 .prod-card.is-hub { border-color: var(--blue-300); background: linear-gradient(180deg, var(--blue-50) 0%, #fff 65%); }
 
+/* ---------- 블로그 카드 (2026-11-06 2차) — 그림이 카드의 대부분, 아래는 분류 + 제목만. 색은 분류 표시에만(--c) ---------- */
+.post-card {
+  --c: var(--blue-600);
+  position: relative; display: flex; flex-direction: column;
+  background: #fff; border: 1px solid var(--line); border-radius: 18px; overflow: hidden;
+  transition: transform .25s cubic-bezier(.2,.7,.2,1), box-shadow .25s ease, border-color .25s ease;
+}
+.post-card:hover, .post-card:focus-visible { transform: translateY(-4px); border-color: #C9CFDD; box-shadow: 0 22px 44px -26px rgba(11, 21, 48, .38); }
+.post-card:focus-visible { outline: 3px solid var(--c); outline-offset: 3px; }
+.pc-media { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: #FBFAF7; border-bottom: 1px solid var(--line); }
+.pc-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s cubic-bezier(.2,.7,.2,1); }
+.post-card:hover .pc-img, .post-card:focus-visible .pc-img { transform: scale(1.03); }
+.pc-chip {
+  position: absolute; right: 10px; top: 10px; display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px 3px 7px; border-radius: 999px; font-size: 11.5px; font-weight: 700; color: var(--ink-600);
+  background: rgba(255, 255, 255, .94); box-shadow: 0 1px 6px rgba(11, 21, 48, .12);
+}
+.pc-body { display: flex; flex-direction: column; gap: 6px; padding: 14px 18px 18px; }
+.post-card.no-media .pc-body { padding-top: 22px; min-height: 140px; }
+.pc-cat { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--c); }
+.pc-title { font-size: 16.5px; line-height: 1.45; font-weight: 700; color: var(--ink-900); margin: 0; letter-spacing: -0.01em; }
+/* 인포그래픽 모아보기 */
+.ig-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.ig-tile { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; transition: transform .25s ease, box-shadow .25s ease; }
+.ig-tile:hover, .ig-tile:focus-visible { transform: translateY(-3px); box-shadow: 0 22px 44px -26px rgba(11, 21, 48, .38); }
+.ig-tile:focus-visible { outline: 3px solid var(--c); outline-offset: 3px; }
+.ig-img { display: flex; align-items: center; justify-content: center; aspect-ratio: 16 / 9; background: #FBFAF7; padding: 12px; border-bottom: 1px solid var(--line); }
+.ig-img img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
+.ig-cap { display: flex; flex-direction: column; gap: 4px; padding: 12px 16px 14px; }
+.ig-cap b { font-size: 15px; line-height: 1.45; color: var(--ink-900); }
+.ig-more { margin-top: 18px; }
+.ig-more summary { cursor: pointer; font-weight: 700; color: var(--blue-600); font-size: 15px; padding: 6px 0; }
+.ig-more[open] summary { margin-bottom: 16px; }
+.ig-view { border: 0; padding: 0; border-radius: 16px; max-width: min(1200px, 96vw); width: 100%; background: #fff; }
+.ig-view::backdrop { background: rgba(8, 17, 48, .72); }
+.ig-view img { display: block; width: 100%; height: auto; }
+.ig-bar { display: flex; gap: 10px; justify-content: flex-end; padding: 12px 14px; flex-wrap: wrap; }
+@media (max-width: 767px) { .ig-grid { grid-template-columns: 1fr; } }
+/* 글 상단 한눈에 보기 배너 — 휴대폰은 세로판(picture) */
+.post-banner {
+  margin: 26px 0 4px; border-radius: 18px; overflow: hidden; background: var(--t);
+  border: 1px solid var(--line); box-shadow: 0 28px 60px -36px rgba(11, 21, 48, .45);
+}
+.post-banner img { display: block; width: 100%; height: auto; }
+@media (prefers-reduced-motion: reduce) {
+  .post-card, .pc-img, .ig-tile { transition: none; }
+  .ig-tile:hover, .ig-tile:focus-visible { transform: none; }
+  .post-card:hover, .post-card:focus-visible { transform: none; }
+  .post-card:hover .pc-img, .post-card:focus-visible .pc-img { transform: none; }
+}
+
 .price-row { display: flex; align-items: baseline; gap: 8px; margin-top: auto; padding-top: 16px; }
 .price { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; white-space: nowrap; }
 .price-sub { font-size: 13px; color: var(--ink-400); font-weight: 500; }
@@ -1987,14 +2038,15 @@ img { max-width: 100%; display: block; }
 .blog-strip-wrap { position: relative; }
 .blog-strip-wrap::after { content: ""; position: absolute; top: 0; bottom: 0; right: 0; width: 48px; pointer-events: none; background: linear-gradient(270deg, var(--gray-50), rgba(246, 248, 252, 0)); }
 .blog-strip { display: flex; gap: 18px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding: 8px max(24px, calc((100vw - 1120px) / 2 + 24px)) 22px; scroll-padding-left: max(24px, calc((100vw - 1120px) / 2 + 24px)); scrollbar-width: thin; scrollbar-color: var(--blue-300) transparent; }
-.blog-strip .prod-card { flex: 0 0 320px; scroll-snap-align: start; }
+.blog-strip .prod-card, .blog-strip .post-card { flex: 0 0 300px; scroll-snap-align: start; }
+.blog-strip .post-card .pc-title { font-size: 15.5px; }
 .blog-strip .blog-more { flex-basis: 240px; }
 .blog-strip.bs-auto { scroll-snap-type: none; }
 @media (max-width: 767px) {
   .blog-strip-sec { padding-bottom: 48px; }
   .blog-strip-head { flex-direction: column; align-items: flex-start; gap: 14px; margin-bottom: 16px; }
   .blog-strip { padding: 6px 20px 18px; gap: 14px; scroll-padding-left: 20px; }
-  .blog-strip .prod-card { flex-basis: 282px; }
+  .blog-strip .prod-card, .blog-strip .post-card { flex-basis: 268px; }
   .blog-strip-wrap::after { width: 20px; }
 }
 

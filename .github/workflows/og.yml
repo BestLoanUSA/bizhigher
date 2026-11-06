@@ -10,6 +10,8 @@ on:
       - 'data/reports/**'
       - 'data/surveys/**'
       - 'scripts/og.js'
+      - 'scripts/blog-banners.js'
+      - 'scripts/blog-cards.js'
   workflow_dispatch:
     inputs:
       force:
@@ -24,7 +26,7 @@ concurrency:
 jobs:
   og:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     permissions:
       contents: write
     steps:
@@ -53,6 +55,15 @@ jobs:
             rm "$f"   # PNG만 저장소에 남긴다
           done
 
+      # 블로그 "한눈에 보기" 배너 — 새 글·바뀐 글만(content/blog/img/overview.json 해시). 글꼴은 _fonts.js 가 내려받는다
+      - name: 블로그 배너 렌더러 설치
+        run: |
+          npm i --no-save --no-package-lock playwright@1.63.0
+          npx playwright install --with-deps chromium
+
+      - name: 블로그 배너 굽기
+        run: node scripts/blog-banners.js ${{ inputs.force && '--force' || '' }}
+
       - name: 사이트 다시 빌드
         run: node build.js
 
@@ -60,10 +71,10 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/og dist
+          git add src/og dist content/blog/img
           if git diff --cached --quiet; then
             echo "바뀐 게 없다."
           else
-            git commit -m "OG 이미지 생성 및 사이트 재빌드"
+            git commit -m "OG 이미지·블로그 배너 생성 및 사이트 재빌드"
             git push
           fi

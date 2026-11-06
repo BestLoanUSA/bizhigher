@@ -2246,7 +2246,7 @@ function blogStripSection(posts) {
   var btns = document.querySelectorAll('.blog-strip-ctl .bs-btn');
   btns.forEach(function (b) {
     b.addEventListener('click', function () {
-      var card = strip.querySelector('.prod-card');
+      var card = strip.querySelector('.post-card, .prod-card');
       var step = card ? card.getBoundingClientRect().width + 18 : 320;
       pause(2500);
       strip.scrollBy({ left: step * parseInt(b.getAttribute('data-dir'), 10), behavior: 'smooth' });
@@ -3131,19 +3131,53 @@ function loadPosts() {
       date: meta.date, updated: meta.updated || '', category: meta.category || '가이드', keywords: meta.keywords || '',
       related: meta.related || '', hub: meta.hub === 'true', body, faqs,
       // summary: 문장1 | 문장2 | 문장3 — 글 맨 위 "핵심 요약" 박스 + BlogPosting.abstract
-      summary: (meta.summary || '').split('|').map((x) => x.trim()).filter(Boolean), readMin: Math.max(3, Math.round(words / 600)) };
+      summary: (meta.summary || '').split('|').map((x) => x.trim()).filter(Boolean), readMin: Math.max(3, Math.round(words / 600)),
+      // 한눈에 보기 배너(scripts/blog-banners.js 가 굽는다) · 본문 인포그래픽(design/infographic-templates)
+      banner: fs.existsSync(path.join(dir, 'img', `${meta.slug || f.replace(/\.md$/, '')}-overview.jpg`)),
+      card: fs.existsSync(path.join(dir, 'img', `${meta.slug || f.replace(/\.md$/, '')}-card.jpg`)),
+      infos: [...body.matchAll(/!\[([^\]]*)\]\(\/blog-img\/([^)\s]+)\)/g)].map((x) => ({ alt: x[1], file: x[2] })) };
   }).sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
+/* 카테고리 색·아이콘 — 배너와 카드가 같은 값을 쓴다(원본은 scripts/blog-banners.js) */
+const { CATS: BLOG_CATS, DEFAULT_CAT: BLOG_CAT0, ICONS: BLOG_ICONS } = require('./scripts/blog-banners.js');
+const blogCat = (c) => BLOG_CATS[c] || BLOG_CAT0;
+const blogIcon = (k, size = 16) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${BLOG_ICONS[k] || BLOG_ICONS.pin}</svg>`;
+
 function blogCard(p) {
+  const cat = blogCat(p.category);
+  // 카드 = 그림(그 글의 표·숫자·비교로 만든 카드 그림, scripts/blog-cards.js) + 분류 + 제목. 색은 분류 표시에만
+  const img = p.card ? `${p.slug}-card.jpg` : p.banner ? `${p.slug}-overview-t.jpg` : '';
   return `
-<a href="/blog/${p.slug}/" class="prod-card${p.hub ? ' is-hub' : ''}">
-  <span class="badge${p.hub ? ' badge-hub' : ''}">${p.hub ? '🧭 가이드 · ' : ''}${p.category}</span>
-  <h3 class="h3">${p.title}</h3>
-  <p class="body-sm">${p.description}</p>
-  <div class="price-row"><span class="price-sub">${p.date} · ${p.readMin}분 읽기</span></div>
-  <span class="card-cta">읽어보기 →</span>
+<a href="/blog/${p.slug}/" class="post-card${p.hub ? ' is-hub' : ''}${img ? '' : ' no-media'}" style="--c:${cat.c}">
+  ${img ? `<div class="pc-media"><img class="pc-img" src="/blog-img/${img}" width="800" height="600" alt="" loading="lazy" decoding="async">${p.infos.length ? `<span class="pc-chip">${blogIcon('image', 13)}인포그래픽</span>` : ''}</div>` : ''}
+  <div class="pc-body">
+    <span class="pc-cat">${blogIcon(cat.icon, 14)}${p.category}${p.hub ? ' 완전 가이드' : ''}</span>
+    <h3 class="pc-title">${p.title}</h3>
+  </div>
 </a>`;
+}
+
+/* 인포그래픽 모아보기 — 본문 인포그래픽의 그림 부분 확대본(-zoom.jpg). 누르면 크게(dialog), JS 가 없으면 그 글로 */
+function infographicGallery(posts) {
+  const items = [];
+  for (const p of posts) for (const i of p.infos) {
+    const zoom = i.file.replace(/\.png$/, '-zoom.jpg');
+    const has = fs.existsSync(path.join(__dirname, 'content', 'blog', 'img', zoom));
+    items.push({ p, i, src: has ? zoom : i.file });
+  }
+  if (!items.length) return '';
+  const tile = (x) => `<a class="ig-tile" href="/blog/${x.p.slug}/" data-full="/blog-img/${x.i.file}" data-title="${escAttr(x.p.title)}" style="--c:${blogCat(x.p.category).c}">
+      <span class="ig-img"><img src="/blog-img/${x.src}" alt="${escAttr(x.i.alt)}" loading="lazy" decoding="async"></span>
+      <span class="ig-cap"><span class="pc-cat">${blogIcon(blogCat(x.p.category).icon, 13)}${x.p.category}</span><b>${x.i.alt}</b></span></a>`;
+  const first = items.slice(0, 6), rest = items.slice(6);
+  return `<h2 class="h2-left">인포그래픽 모아보기</h2>
+    <p class="body-sm" style="margin:-8px 0 24px;">글 속 도표만 모았습니다. 누르면 크게 볼 수 있습니다.</p>
+    <div class="ig-grid">${first.map(tile).join('')}</div>
+    ${rest.length ? `<details class="ig-more"><summary>나머지 ${rest.length}개 보기</summary><div class="ig-grid">${rest.map(tile).join('')}</div></details>` : ''}
+    <dialog class="ig-view" id="ig-view"><img alt=""><div class="ig-bar"><a class="btn btn-primary" href="#">이 글 읽기</a><button type="button" class="btn btn-ghost" data-close>닫기</button></div></dialog>
+    <script>(function(){try{var d=document.getElementById('ig-view');if(!d||!d.showModal)return;var im=d.querySelector('img'),a=d.querySelector('a');document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('.ig-tile');if(t){e.preventDefault();im.src=t.getAttribute('data-full');im.alt=t.querySelector('img').alt;a.href=t.getAttribute('href');d.showModal();return;}if(e.target===d||(e.target.closest&&e.target.closest('[data-close]')))d.close();});}catch(e){}})();</script>
+    <div style="height:56px"></div>`;
 }
 
 function blogIndexPage(posts) {
@@ -3189,6 +3223,7 @@ function blogIndexPage(posts) {
     ${hubs.length ? `<h2 class="h2-left" style="margin-top:0;">🧭 핵심 가이드</h2>
     <p class="body-sm" style="margin:-8px 0 24px;">주제별 글을 한 번에 정리한 완전 가이드입니다.</p>
     <div class="grid3" style="margin-bottom:56px;">${hubs.map(blogCard).join('')}</div>
+    ${infographicGallery(posts)}
     <h2 class="h2-left">전체 글</h2>` : ''}
     <div class="grid3">${rest.map(blogCard).join('')}</div>
   </div>
@@ -3247,10 +3282,11 @@ function blogPostPage(p, posts) {
 <header class="page-head">
   <div class="container-narrow">
     ${crumbsHtml(crumbs)}
-    <span class="badge${p.hub ? ' badge-hub' : ''}">${p.hub ? '🧭 가이드 · ' : ''}${p.category}</span>
+    <span class="badge${p.hub ? ' badge-hub' : ''}"${p.hub ? '' : ` style="background:${blogCat(p.category).t};color:${blogCat(p.category).c}"`}>${p.hub ? '🧭 가이드 · ' : ''}${p.category}</span>
     <h1 class="page-title" style="font-size:36px;line-height:1.25;">${p.title}</h1>
     <p class="page-sub">${p.date} · ${p.readMin}분 읽기 · BizHigher</p>
     ${hub ? `<a href="/blog/${hub.slug}/" class="hub-callout">🧭 이 글은 <b>${hub.title}</b> 가이드의 일부입니다 →</a>` : ''}
+    ${p.banner ? `<figure class="post-banner" style="--c:${blogCat(p.category).c};--t:${blogCat(p.category).t}"><picture><source media="(max-width: 640px)" srcset="/blog-img/${p.slug}-overview-m.jpg" width="1080" height="1350"><img src="/blog-img/${p.slug}-overview.jpg" width="1200" height="675" alt="${escAttr(`${p.title} 한눈에 보기 — ${p.summary.join(' ')}`)}" fetchpriority="high" decoding="async"></picture></figure>` : ''}
   </div>
 </header>
 <section class="detail-body" style="padding-top:4px;">

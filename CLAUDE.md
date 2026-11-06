@@ -68,6 +68,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | 히어로 데모 업체 4곳 | `build.js` 안의 `BIZ` 배열 |
 | 블로그 글 | `content/blog/*.md` |
 | 블로그 주제 큐 | `content/blog-calendar.md` |
+| 블로그 "한눈에 보기" 배너·카드 그림(2026-11-06) | 생성 `scripts/blog-banners.js`(제목·summary 3문장·`##` 제목 → `content/blog/img/{slug}-overview.jpg` 1200×675 · `-m` 휴대폰 세로판 1080×1350 · `-t` 카드 썸네일, 해시 `overview.json` 으로 바뀐 글만) — main push 때 `og.yml` 이 자동으로 굽고 커밋. 카테고리 색·아이콘 `CATS`(카드와 공유). **카드 그림** `scripts/blog-cards.js`(`{slug}-card.jpg` 800×600 — 그 글의 표·번호 섹션·"A vs B"·허브 하위 글로 판형 6종 num·vs·table·list·check·hub, 해시 `cards.json`) · **인포그래픽 확대본** `{이름}-zoom.jpg`(본문 PNG 의 제목·바닥글을 잘라낸 그림 부분) → 블로그 목록 "인포그래픽 모아보기"(누르면 dialog 로 원본) · 카드 `build.js blogCard`(그림 + 분류 + 제목만, 색은 분류 표시에만) · 글 상단 `post-banner`(`<picture>`, 폰은 세로판) · CSS `.post-card`·`.post-banner`. 디자인을 바꾸면 `VERSION` 을 올린다 |
 | 서비스 페이지 검색용 가이드·추가 FAQ | `content/services/{slug}.md` — 질문형 `##` 섹션 + `## 자주 묻는 질문`. 가격은 여기 쓰지 않는다(`services.json`이 원본) |
 | 무료 도구 `/tools/` | 목록·외부 도구 `data/tools.json` · 화면 `src/tools/{slug}.html` · 동작 `src/tools/{slug}.js`(+`common.js`) · 서버 `functions/api/tools/[tool].js`(공용 `_shared.js`) · 설명·FAQ `content/tools/{slug}.md` (§5-1) |
 | 결제 후 질문지 첨부(사진·로고·PDF) | 화면 `build.js`의 `/thanks/` 폼(`file-box`) · 서버 `functions/api/upload.js`(R2 `R2_ASSETS` 필수, 파일당 10MB, IP·일 30개) · 공개 URL `/a/{id}.{ext}`(`functions/a/[id].js`, SVG·PDF는 CSP sandbox). URL은 질문지 `notes` 끝 "── 첨부 파일 ──" 블록에 들어가 관리자·루틴(`job.intake.notes`)이 본다 |
