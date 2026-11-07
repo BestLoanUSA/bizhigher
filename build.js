@@ -744,6 +744,8 @@ function gallerySectionFor(s) {
 const SC_IMG = {
   galbi: '/showcase/galbi-sundubu.jpg', seafood: '/showcase/seafood-sundubu.jpg',
   bibimbap: '/showcase/dolsot-bibimbap.jpg', interior: '/showcase/interior.jpg',
+  // 2026-11-07 David 선택 — 웹사이트 배경(점심 실내 + 순두부) · 점심 세트 광고 배경(쟁반 세트, 왼쪽 여백에 글자)
+  lunchInterior: '/showcase/lunch-interior.jpg', lunchSet: '/showcase/lunch-set.jpg',
 };
 const SC_SCENES = [
   {
@@ -798,7 +800,7 @@ const SC_SCENES = [
 <div class="sc-browser">
   <div class="sc-bbar"><i></i><i></i><i></i><span>sundubuhouse.com</span></div>
   <div class="sc-site">
-    <div class="sc-shero" style="background-image:url('${SC_IMG.interior}')"><div><small>GARDEN GROVE · SINCE 2014</small><b>순두부 하우스</b><p>매일 끓이는 사골 육수, 매일 바뀌는 반찬</p><span class="sc-sbtn">📞 (714) 000-0000</span><span class="sc-sbtn sc-sbtn-g">🧭 길찾기</span></div></div>
+    <div class="sc-shero" style="background-image:url('${SC_IMG.lunchInterior}')"><div><small>GARDEN GROVE · SINCE 2014</small><b>순두부 하우스</b><p>매일 끓이는 사골 육수, 매일 바뀌는 반찬</p><span class="sc-sbtn">📞 (714) 000-0000</span><span class="sc-sbtn sc-sbtn-g">🧭 길찾기</span></div></div>
     <div class="sc-smenu">
       <div><i style="background-image:url('${SC_IMG.galbi}')"></i><b>갈비 순두부</b><span>$16.95</span></div>
       <div><i style="background-image:url('${SC_IMG.seafood}')"></i><b>해물 순두부</b><span>$14.95</span></div>
@@ -811,7 +813,7 @@ const SC_SCENES = [
     key: 'ads', tab: '광고 소재 · 숏폼', tabSub: '매달 10장 · 영상 4편', service: 'ad-creative-pack',
     chips: ['인스타·페북·구글 규격 동시 납품', '세로형 15~30초 · 한/영 자막', '월초 기획안 승인 후 제작'],
     html: `
-<div class="sc-ad" style="background-image:url('${SC_IMG.galbi}')">
+<div class="sc-ad" style="background-image:url('${SC_IMG.lunchSet}');background-position:72% center">
   <div class="sc-adtxt"><small>LUNCH SPECIAL · 평일 11–3시</small><b>점심 순두부 세트<br>$12.95</b><span>순두부 하우스 · 가든그로브</span></div>
 </div>
 <div class="sc-video" style="background-image:url('${SC_IMG.seafood}')">
@@ -876,9 +878,9 @@ function showcaseSection() {
   const gcell = (v) => `<i class="${v <= 0 ? 'o' : v <= 3 ? 'a' : v <= 7 ? 'b' : v <= 12 ? 'c' : 'd'}"></i>`;
   const R = PAGES.map((p, i) => `<img class="fxp-cover" src="${repSrc(p)}" alt="" loading="lazy" decoding="async">`);
   const T = {
-    web: ['웹사이트', `<div class="fxp-web"><div class="fxp-bro"><i></i><i></i><i></i><span>sundubuhouse.com</span></div><div class="fxp-hero" style="background-image:url('${SC_IMG.interior}')"><b>순두부 하우스</b><span>가든그로브 정통 순두부 · 매일 11시~9시</span><em>📞 전화하기</em></div><div class="fxp-th"><img src="${SC_IMG.galbi}" alt="" loading="lazy"><img src="${SC_IMG.seafood}" alt="" loading="lazy"><img src="${SC_IMG.bibimbap}" alt="" loading="lazy"></div></div>`],
+    web: ['웹사이트', `<div class="fxp-web"><div class="fxp-bro"><i></i><i></i><i></i><span>sundubuhouse.com</span></div><div class="fxp-hero" style="background-image:url('${SC_IMG.lunchInterior}')"><b>순두부 하우스</b><span>가든그로브 정통 순두부 · 매일 11시~9시</span><em>📞 전화하기</em></div><div class="fxp-th"><img src="${SC_IMG.galbi}" alt="" loading="lazy"><img src="${SC_IMG.seafood}" alt="" loading="lazy"><img src="${SC_IMG.bibimbap}" alt="" loading="lazy"></div></div>`],
     prof: ['구글 프로필', `<div class="fxp-prof"><div class="fxp-ph" style="background-image:url('${SC_IMG.interior}')"></div><b>순두부 하우스</b><span class="fxp-star">4.7 ★★★★★ <s>(148)</s></span><span class="fxp-open">영업 중 · 오후 9시 종료</span><div class="fxp-btns"><i>전화</i><i>길찾기</i><i>웹사이트</i></div><div class="fxp-th"><img src="${SC_IMG.galbi}" alt="" loading="lazy"><img src="${SC_IMG.seafood}" alt="" loading="lazy"><img src="${SC_IMG.bibimbap}" alt="" loading="lazy"></div><div class="fxp-post"><img src="${SC_IMG.galbi}" alt="" loading="lazy"><span><b>가을 신메뉴 · 갈비 순두부</b>2일 전 게시물</span></div></div>`],
-    ads: ['광고 소재 · 숏폼', `<div class="fxp-ad" style="background-image:url('${SC_IMG.seafood}')"><span class="fxp-adk">LUNCH SPECIAL</span><b>점심 순두부 세트</b><em>$12.95</em><i class="fxp-play">▶ 숏폼 15초</i></div>`],
+    ads: ['광고 소재 · 숏폼', `<div class="fxp-ad" style="background-image:url('${SC_IMG.lunchSet}');background-position:75% center"><span class="fxp-adk">LUNCH SPECIAL</span><b>점심 순두부 세트</b><em>$12.95</em><i class="fxp-play">▶ 숏폼 15초</i></div>`],
     rev: ['리뷰 답글 27건 · 평균 19시간', `<div class="fxp-rev"><div><span class="fxp-av">J</span><p><b>Jenny K. <s>★★★★★</s></b>순두부가 진짜 부드럽고 반찬이 매일 바뀌어요.<em>사장님 답글 · Jenny님, 반찬 칭찬 감사합니다! 주차는 건물 뒤편을 이용해 주세요.</em></p></div><div><span class="fxp-av m">M</span><p><b>Michael P. <s>★★★★☆</s></b>Seafood sundubu was excellent. Wait was ~15 min.<em>Owner reply · Thank you, Michael! Calling ahead helps on weekends.</em></p></div></div>`],
     rep0: ['10월 월간 리포트', R[0] || ''],
     rep1: ['리포트 · 노출', R[1] || ''],
