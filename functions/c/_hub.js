@@ -7,7 +7,7 @@
  * 아래 "더 받기"(moreHtml)는 고객 대시보드에도 붙는다: 무료 도구 하루 10회 · 새 가이드(NEW) · 카카오톡 채널 · 새 글 소식 받기
  * 데이터: hub = dist/data/hub.json(build.js — 블로그·도구·플랜·서비스, 가격은 services.json 그대로)
  */
-import { BASE_CSS, DASH_CSS, SSO_ICON } from './_dash.js';
+import { BASE_CSS, DASH_CSS, SSO_ICON, LOGO_HTML, acctMenu } from './_dash.js';
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const enc = encodeURIComponent;
@@ -20,6 +20,7 @@ const AREA_RECS = {
   completeness: ['google-profile-optimization'],
   competitive: ['seo-blog-pack'],
 };
+export { HUB_CSS };
 export const CATEGORIES = ['식당', '카페·베이커리', '뷰티·미용', '안경점', '치과·병원', '한의원', '학원·교육', '부동산', '융자·보험', '기타'];
 export const GOALS = ['새 손님 늘리기', '구글 지도 위로 올리기', '리뷰 늘리기', '광고 시작하기', '웹사이트 만들기'];
 const PREP = [
@@ -39,11 +40,11 @@ function steps(cur, done) {
   return `<ol class="hb-steps">${names.map((n, i) => `<li class="${done[i] ? 'ok' : ''}${cur === i ? ' cur' : ''}"><i>${done[i] ? '✓' : i + 1}</i><span>${n}</span></li>`).join('')}</ol>`;
 }
 
-function profileForm(profile, account, open) {
+export function profileForm(profile, account, open, back = '') {
   const p = profile || {};
   const sel = (name, list, v) => `<select name="${name}"><option value="">선택</option>${list.map((x) => `<option${x === v ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select>`;
   const needEmail = !(account && account.e);
-  return `<form method="post" class="hb-form" id="profile-form"><input type="hidden" name="action" value="profile">
+  return `<form method="post" class="hb-form" id="profile-form"><input type="hidden" name="action" value="profile">${back ? `<input type="hidden" name="back" value="${esc(back)}">` : ''}
 <div class="hb-grid2"><label>가게 이름 <b>필수</b><input name="business" required maxlength="120" value="${esc(p.business)}" placeholder="예: 하나 안경원"></label>
 <label>도시 <b>필수</b><input name="city" required maxlength="120" value="${esc(p.city)}" placeholder="예: Garden Grove, CA"></label>
 <label>업종${sel('category', CATEGORIES, p.category)}</label>
@@ -112,7 +113,7 @@ export function hubHtml({ account, profile, reports = [], hub = {}, blogSeen = '
   const rec = recommend(report, hub);
   const pkgHi = rec.pkgFirst || !report ? 'local-growth' : '';
   const biz = esc((profile && profile.business) || '');
-  const acct = `<div class="ob-acct"><span class="av av-${esc((account && account.p) || '')}">${esc(String((account && (account.n || account.e)) || '?').trim().charAt(0).toUpperCase())}</span><span class="an">${name}</span>${demo ? '<a href="/login/">로그인 화면</a>' : '<a href="/auth/logout">로그아웃</a>'}</div>`;
+  const acct = acctMenu(account, { demo });
 
   const s1 = `<section class="card hb-step${cur === 0 ? ' now' : ''}" id="s1"><div class="hb-sh"><i>${has1 ? '✓' : '1'}</i><div><h2>가게 정보</h2><p>${has1 ? `${biz} · ${esc(profile.city)}${profile.category ? ' · ' + esc(profile.category) : ''}` : '1분이면 됩니다. 무료 진단과 추천, 결제 뒤 질문지에 그대로 씁니다.'}</p></div></div>
 ${has1 ? `<details${cur === 0 ? ' open' : ''}><summary>고치기</summary>${profileForm(profile, account, false)}</details>` : profileForm(profile, account, true)}</section>`;
@@ -133,7 +134,7 @@ ${rec.pkgFirst ? plansHtml(hub, pkgHi) + recList : recList + plansHtml(hub, pkgH
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>${BASE_CSS}${DASH_CSS}${HUB_CSS}</style></head><body>
-<header class="ob-top"><div class="ob-in"><a class="logo" href="/">Biz<span>Higher</span></a><span class="ob-biz">${biz || '비즈니스'}</span>${acct}</div></header>
+<header class="ob-top"><div class="ob-in">${LOGO_HTML}<span class="ob-biz">${biz || '비즈니스'}</span>${acct}</div></header>
 <section class="ob-hello"><div class="ob-in"><p class="ob-eye">BizHigher 비즈니스${demo ? ' · 데모' : ''}</p><h1>${name}님, 반갑습니다</h1><p class="ob-sub">${cur === 0 ? '세 단계면 우리 가게에 맞는 다음 할 일이 나옵니다.' : cur === 1 ? '이제 60초 무료 진단만 받으면 됩니다.' : '진단이 끝났습니다. 다음 할 일을 골라 보세요.'}</p>${steps(cur, done)}</div></section>
 ${demo ? '<div class="ob-demo"><div class="ob-in"><b>데모 화면</b><span>아직 고객이 아닌 사장님이 로그인하면 보는 화면입니다. 저장 버튼은 처리되지 않습니다.</span><a href="/my/demo">고객 화면 데모 →</a></div></div>' : ''}
 <div class="ob-main">${msg ? `<div class="flash">${esc(msg)}</div>` : ''}${s1}${s2}${s3}${s4}
