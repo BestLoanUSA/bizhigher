@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사장님 로그인 | BizHigher</title>
+<meta name="description" content="구글이나 카카오 계정으로 클릭 한 번에 들어와 결정할 것·새 소식·월간 리포트·받은 결과물을 한 화면에서 보세요.">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://bizhigher.com/login/">
+<meta property="og:title" content="사장님 로그인 | BizHigher">
+<meta property="og:description" content="구글이나 카카오 계정으로 클릭 한 번에 들어와 결정할 것·새 소식·월간 리포트·받은 결과물을 한 화면에서 보세요.">
+<meta property="og:url" content="https://bizhigher.com/login/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="BizHigher">
+<meta property="og:image" content="https://bizhigher.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://bizhigher.com/og-image.png">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="/style.css?v=0d8e6eba">
+
+
+<script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "yiy7q338pe");
+</script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-6D7XST08PS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-6D7XST08PS');
+
+  /* 리드 이벤트(generate_lead) — seo-data가 GA4에서 "어느 페이지가 문의를 만드는지" 센다.
+     lead_source: free_audit(무료 진단 제출) · free_tool(무료 도구 사용, 이메일 입력 — 세션당 도구마다 1번) · email_consult(상담·신청 메일 링크).
+     결제 링크 클릭은 리드가 아니라 begin_checkout. cb가 있으면 전송 뒤(최대 0.8초) 부른다(페이지 이동 전에 보내기 위해) */
+  /* 유입 출처 — 리드가 어떤 검색·AI·추천에서 왔는지(SEO 루프 M-01). 세션 첫 페이지에서 한 번 정하고 sessionStorage 에 둔다.
+     utm 이 있으면 "utm:source/medium/campaign", 아니면 "ref:호스트", 둘 다 없으면 "direct". 개인정보 없음(호스트·utm 값만, 160자). */
+  window.bhRef = function () {
+    try {
+      var k = 'bh_ref', v = sessionStorage.getItem(k);
+      if (v) return v;
+      var q = new URLSearchParams(location.search), us = q.get('utm_source');
+      if (us) v = 'utm:' + [us, q.get('utm_medium') || '', q.get('utm_campaign') || ''].join('/');
+      else { var h = ''; try { h = document.referrer ? new URL(document.referrer).hostname.replace(/^www./, '') : ''; } catch (e) {} v = h && h !== location.hostname ? 'ref:' + h : 'direct'; }
+      v = v.slice(0, 160); sessionStorage.setItem(k, v); return v;
+    } catch (e) { return ''; }
+  };
+  window.bhRef();
+  window.mkLead = function (src, extra, cb) {
+    var done = false, fin = function () { if (!done) { done = true; if (cb) cb(); } };
+    try { gtag('event', 'generate_lead', Object.assign({ lead_source: src, page_path: location.pathname }, extra || {}, cb ? { event_callback: fin } : {})); } catch (e) {}
+    if (cb) setTimeout(fin, 800);
+  };
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[href]'); if (!a) return;
+    var h = a.getAttribute('href') || '';
+    if (h.indexOf('mailto:') === 0) window.mkLead('email_consult', { link_text: (a.textContent || '').trim().slice(0, 60) });
+    else if (h.indexOf('https://buy.stripe.com/') === 0) { try { gtag('event', 'begin_checkout', { link_text: (a.textContent || '').trim().slice(0, 60), page_path: location.pathname }); } catch (e2) {} }
+  }, true);
+</script>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="logo"><svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#0A4DF5"/><path d="M15 44 h9 v-9 h9 v-9 h6.5" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M38.5 15.5 h10 v10" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Biz<span class="logo-accent">Higher</span></span></a>
+    <div class="nav-links">
+      <a class="nav-link" href="/services/">서비스</a>
+      <a class="nav-link" href="/pricing/">가격</a>
+      <a class="nav-link" href="/blog/">블로그</a>
+      <a class="nav-link" href="/data/">데이터</a>
+      <a class="nav-link" href="/tools/">무료 도구</a>
+      <a class="nav-link" href="/free-audit/">무료 진단</a>
+    </div>
+    <div class="nav-cta"><a class="nav-login" href="/login/">로그인</a><a class="btn btn-primary btn-small" href="/free-audit/">무료 진단 받기</a></div>
+    <button class="nav-toggle" aria-label="메뉴 열기" onclick="document.getElementById('mm').classList.toggle('open');this.closest('.nav').classList.toggle('menu-open')">☰</button>
+  </div>
+  <div class="mobile-menu" id="mm">
+    <a href="/services/">서비스</a>
+    <a href="/pricing/">가격</a>
+    <a href="/blog/">블로그</a>
+    <a href="/data/">데이터</a>
+    <a href="/tools/">무료 도구</a>
+    <a href="/free-audit/">무료 진단</a>
+    <a href="/login/">사장님 로그인</a>
+    <a class="btn btn-primary btn-block" href="/free-audit/" style="border-bottom:none;color:#fff;">무료 진단 받기</a>
+  </div>
+</nav>
+<section class="lg-wrap">
+  <div class="container lg-grid">
+    <div class="lg-card">
+      <p class="eyebrow">사장님 전용</p>
+      <h1 class="lg-h1">사장님 로그인</h1>
+      <p class="lg-sub">결정할 것, 새 소식, 월간 리포트, 받은 결과물을 한 화면에서 봅니다. 비밀번호는 없습니다.</p>
+      <div class="lg-msg" id="lg-msg" role="status" hidden></div>
+      <a class="lg-btn lg-g" href="/auth/google"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg><span>Google 계정으로 계속하기</span></a>
+      <a class="lg-btn lg-k" href="/auth/kakao"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#191919" d="M12 3.2c-5.3 0-9.6 3.4-9.6 7.6 0 2.7 1.8 5.1 4.5 6.4l-1.1 4.1c-.1.4.3.6.6.4l4.8-3.2c.3 0 .5.1.8.1 5.3 0 9.6-3.4 9.6-7.7S17.3 3.2 12 3.2z"/></svg><span>카카오로 계속하기</span></a>
+      <ul class="lg-help">
+        <li><b>처음이세요?</b> 결제·질문지에 쓰신 이메일의 구글 계정이면 바로 열립니다.</li>
+        <li><b>카카오나 다른 계정이면</b> 받으신 메일의 고객 페이지 링크를 열고 위쪽 [연결] 버튼을 한 번 눌러 주세요. 다음부터는 여기서 바로 열립니다.</li>
+      </ul>
+      <div class="lg-or"><span>아직 고객이 아니라면</span></div>
+      <a class="lg-demo" href="/my/demo">데모 사장님 화면 둘러보기 <i>→</i></a>
+      <p class="lg-fine">로그인하면 계정 이름·이메일만 받습니다. 비밀번호·연락처·친구 목록은 받지 않습니다. <a href="/privacy/">개인정보처리방침</a></p>
+    </div>
+    <div class="lg-peek" aria-hidden="true">
+      <div class="lg-peek-top"><span class="lg-dot"></span>순두부 하우스 · 사장님 페이지</div>
+      <div class="lg-peek-hello"><b>순두부 하우스 사장님, 안녕하세요</b><div class="lg-pills"><span class="hot">결정할 것 <b>3</b></span><span>최근 30일 한 일 <b>39</b></span><span>전체 진행 <b>94%</b></span></div></div>
+      <div class="lg-peek-grid">
+        <div class="lg-tile lg-t-dec"><em>결정할 것</em><b>12월 게시물 캘린더</b><span>✓ 이대로 진행 · 수정 요청</span></div>
+        <div class="lg-tile lg-t-ad"><em>광고 소재 고르기</em><div class="lg-thumbs"><i style="background-image:url('/showcase/lunch-set.jpg')"></i><i style="background-image:url('/showcase/seafood-sundubu-n.jpg')"></i><i style="background-image:url('/showcase/lunch-interior.jpg')"></i></div></div>
+        <div class="lg-tile lg-t-news"><em>새 소식</em><span>📍 구글 프로필에 새 게시물</span><span>💬 새 리뷰 답글</span><span>📦 10월 월간 리포트 도착</span></div>
+        <div class="lg-tile lg-t-rep"><em>10월 리포트</em><b>86<small>/100</small></b><span>지도 3위 안 17/49</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+<script>
+(function () {
+  try {
+    var q = new URLSearchParams(location.search), el = document.getElementById('lg-msg');
+    var p = q.get('p') === 'kakao' ? '카카오' : 'Google';
+    var M = { setup: p + ' 로그인은 준비 중입니다. 지금은 받으신 메일의 고객 페이지 링크로 들어와 주세요.', cancel: '로그인을 취소하셨습니다.', state: '로그인 시간이 지났어요. 버튼을 다시 눌러 주세요.', fail: p + ' 계정 확인에 실패했습니다. 잠시 뒤 다시 시도해 주세요.' };
+    var t = q.get('out') ? '로그아웃했습니다.' : M[q.get('err')];
+    if (t && el) { el.textContent = t; el.hidden = false; if (q.get('err')) el.classList.add('err'); }
+  } catch (e) {}
+})();
+</script>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-cols footer-cols-rich">
+      <div class="footer-brand">
+        <span class="logo"><svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#0A4DF5"/><path d="M15 44 h9 v-9 h9 v-9 h6.5" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M38.5 15.5 h10 v10" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Biz<span class="logo-accent">Higher</span></span></span>
+        <p class="footer-desc">미국 한인 비즈니스를 위한 AI 광고회사. 견적 미팅 없는 정찰제로, 대행사 절반 이하의 가격에 더 빠르게.</p>
+        <a href="mailto:hello@bizhigher.com" class="footer-link">hello@bizhigher.com</a>
+        <a href="/free-audit/" class="btn btn-primary footer-cta">무료 AI 진단 받기 <i class="btn-arr" aria-hidden="true">→</i></a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">인기 서비스</span>
+        <a href="/service/google-profile-optimization/" class="footer-link">구글 비즈니스 프로필 최적화</a><a href="/service/review-qr-kit/" class="footer-link">구글 리뷰 QR 키트</a><a href="/service/website/" class="footer-link">웹사이트 제작</a><a href="/service/seo-aio/" class="footer-link">SEO/AIO 관리</a><a href="/service/ads-management/" class="footer-link">광고 운영</a><a href="/service/gbp-posting/" class="footer-link">포스팅 관리</a>
+        <a href="/services/" class="footer-link footer-more">전체 서비스 16개 →</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">플랜·가격</span>
+        <a href="/package/local-starter/" class="footer-link">Local Starter 플랜</a><a href="/package/local-growth/" class="footer-link">Local Growth 플랜</a><a href="/package/local-premium/" class="footer-link">Local Premium 플랜</a>
+        <a href="/pricing/" class="footer-link">가격 한눈에 보기</a>
+        <a href="/free-audit/" class="footer-link">무료 AI 진단</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">무료 도구</span>
+        <a href="/tools/local-rank/" class="footer-link">구글 지도 순위 체크</a><a href="/tools/review-link/" class="footer-link">구글 리뷰 링크·QR 포스터 생성…</a><a href="/tools/ai-check/" class="footer-link">AI 추천 체크</a><a href="/tools/competitor-reviews/" class="footer-link">경쟁 가게 리뷰 비교</a><a href="/tools/ads-budget/" class="footer-link">구글 광고 예산 계산기</a>
+        <a href="/tools/" class="footer-link footer-more">무료 도구 15개 전체 →</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">마케팅 가이드</span>
+        <a href="/blog/ads-hub/" class="footer-link">광고 가이드</a><a href="/blog/ai-search-hub/" class="footer-link">AI 검색 가이드</a><a href="/blog/website-hub/" class="footer-link">웹사이트 가이드</a><a href="/blog/content-sns-hub/" class="footer-link">콘텐츠·SNS 가이드</a><a href="/blog/review-management-hub/" class="footer-link">리뷰·평판 가이드</a><a href="/blog/google-business-profile-hub/" class="footer-link">구글 노출 가이드</a>
+        <a href="/blog/" class="footer-link footer-more">블로그 전체 →</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">BizHigher</span>
+        <a href="/data/" class="footer-link">데이터 리포트</a>
+        <a href="/privacy/" class="footer-link">개인정보처리방침</a>
+        <a href="/terms/" class="footer-link">이용약관</a>
+      </div>
+    </div>
+    <p class="footer-copy">© 2026 BizHigher. All rights reserved. · <a href="/login/">사장님 로그인</a></p>
+  </div>
+</footer>
+<script>
+/* 스크롤 리빌 — IO 지원 시에만 숨겼다가 나타남 (기본은 항상 보임) + 3초 강제 표시 안전장치 */
+(function () {
+  if (!('IntersectionObserver' in window)) return;
+  var els = document.querySelectorAll('.prod-card, .step-card, .tier:not(.pk-card), .stat-box, .faq-item, .price-item');
+  if (!els.length) return;
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+    });
+  }, { threshold: 0, rootMargin: '0px 0px -40px 0px' });
+  els.forEach(function (el, i) {
+    el.classList.add('rv');
+    el.style.transitionDelay = Math.min((i % 6) * 60, 300) + 'ms';
+    io.observe(el);
+  });
+  setTimeout(function () {
+    els.forEach(function (el) { el.classList.add('in'); });
+  }, 3000);
+})();
+
+/* 인터랙션 팩 — 네비 스크롤 상태 · 카운트업 · 카드 3D 틸트 (모두 선택적 강화, 실패해도 콘텐츠 표시에 영향 없음) */
+(function () {
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* 0) 플로팅 네비 — 스크롤 시 글래스 강화 */
+  var nav = document.querySelector('.nav');
+  if (nav) {
+    var navUpd = function () { nav.classList.toggle('scrolled', window.scrollY > 40); };
+    window.addEventListener('scroll', navUpd, { passive: true });
+    navUpd();
+  }
+
+  /* 1) 숫자 카운트업 — 뷰포트 진입 시 1회 */
+  if (!reduced && 'IntersectionObserver' in window) {
+    var stats = document.querySelectorAll('[data-count]');
+    if (stats.length) {
+      var sio = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          sio.unobserve(en.target);
+          var el = en.target;
+          var target = parseInt(el.getAttribute('data-count'), 10) || 0;
+          var pre = el.getAttribute('data-prefix') || '', suf = el.getAttribute('data-suffix') || '';
+          var start = null;
+          function step(ts) {
+            if (!start) start = ts;
+            var p = Math.min((ts - start) / 1200, 1);
+            el.textContent = pre + Math.round(target * (1 - Math.pow(1 - p, 3))).toLocaleString('en-US') + suf;
+            if (p < 1) requestAnimationFrame(step);
+          }
+          requestAnimationFrame(step);
+        });
+      }, { threshold: 0 });
+      stats.forEach(function (el) { sio.observe(el); });
+    }
+  }
+
+  /* 2) 스텝 카드 순차 하이라이트 — 섹션이 보이는 동안 부드럽게 순환 */
+  var steps = document.getElementById('steps');
+  if (steps && !reduced && 'IntersectionObserver' in window) {
+    var cards = steps.querySelectorAll('.step-card');
+    if (cards.length) {
+      var idx = 0, iv = null;
+      function cycle() {
+        cards.forEach(function (c, i) { c.classList.toggle('step-active', i === idx); });
+        idx = (idx + 1) % cards.length;
+      }
+      var stio = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting && !iv) { cycle(); iv = setInterval(cycle, 2200); }
+          else if (!en.isIntersecting && iv) {
+            clearInterval(iv); iv = null;
+            cards.forEach(function (c) { c.classList.remove('step-active'); });
+          }
+        });
+      }, { threshold: 0.3 });
+      stio.observe(steps);
+    }
+  }
+
+  /* 3) 카드 3D 틸트 — 데스크톱(정밀 포인터)에서만 */
+  if (!reduced && window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
+    var tiltEls = document.querySelectorAll('.prod-card, .tier, .step-card');
+    tiltEls.forEach(function (el) {
+      el.addEventListener('mousemove', function (e) {
+        var r = el.getBoundingClientRect();
+        var rx = ((e.clientY - r.top) / r.height - 0.5) * -5;
+        var ry = ((e.clientX - r.left) / r.width - 0.5) * 5;
+        el.style.transform = 'perspective(800px) rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg) translateY(-4px)';
+      });
+      el.addEventListener('mouseleave', function () { el.style.transform = ''; });
+    });
+  }
+})();
+</script>
+</body>
+</html>

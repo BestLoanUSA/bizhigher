@@ -3308,3 +3308,61 @@ img { max-width: 100%; display: block; }
   .demo-card.dm-slam, .demo-card.dm-slam .dm-flash, .demo-card.dm-slam .dm-burst i { animation: none; }
   .demo-card.dm-slam .dm-stamp { animation: none; opacity: 1; transform: translate(-50%, -50%) rotate(-9deg); }
 }
+
+/* ==========================================================
+   v57 — 사장님 로그인 /login/ (2026-11-07). 버튼 → /auth/google·/auth/kakao → /my/ 대시보드
+   ========================================================== */
+.nav-login { font-size: 14px; font-weight: 600; color: var(--mist-300); white-space: nowrap; }
+.nav-login:hover { color: #fff; }
+.footer-copy a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.lg-wrap { padding: 132px 0 80px; background: radial-gradient(900px 480px at 85% 10%, rgba(34,211,238,.14), transparent 60%), radial-gradient(800px 520px at 0% 100%, rgba(10,77,245,.10), transparent 60%), #F5F7FC; }
+.lg-grid { display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: 56px; align-items: center; }
+.lg-card { background: #fff; border: 1px solid var(--line); border-radius: 24px; padding: 34px 30px 28px; box-shadow: 0 30px 60px -40px rgba(10,27,77,.45); }
+.lg-h1 { font-size: 32px; font-weight: 900; letter-spacing: -0.03em; margin: 4px 0 8px; color: var(--ink-900); }
+.lg-sub { font-size: 15.5px; line-height: 1.6; color: var(--ink-600); margin: 0 0 22px; }
+.lg-btn { display: flex; align-items: center; justify-content: center; gap: 10px; height: 52px; border-radius: 12px; font-size: 16px; font-weight: 700; text-decoration: none; margin-bottom: 10px; transition: transform .15s ease, box-shadow .15s ease; }
+.lg-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 22px -14px rgba(10,27,77,.45); }
+.lg-btn svg { width: 20px; height: 20px; flex: none; }
+.lg-g { background: #fff; color: #1F1F1F; border: 1px solid #D0D4DB; }
+.lg-k { background: #FEE500; color: rgba(0,0,0,.85); }
+.lg-msg { border-radius: 12px; padding: 11px 14px; font-size: 14px; font-weight: 600; margin: -6px 0 14px; background: #ECFDF5; color: #047857; }
+.lg-msg.err { background: #FEF3C7; color: #92400E; }
+.lg-help { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 8px; font-size: 13.5px; line-height: 1.55; color: var(--ink-600); }
+.lg-help b { color: var(--ink-900); }
+.lg-or { display: flex; align-items: center; gap: 10px; margin: 22px 0 12px; font-size: 12.5px; color: var(--ink-400); }
+.lg-or::before, .lg-or::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.lg-demo { display: flex; align-items: center; justify-content: center; gap: 8px; height: 48px; border-radius: 12px; background: #0A1B4D; color: #fff; font-weight: 800; font-size: 15px; text-decoration: none; }
+.lg-demo i { font-style: normal; transition: transform .15s ease; }
+.lg-demo:hover i { transform: translateX(3px); }
+.lg-fine { margin: 14px 0 0; font-size: 12px; line-height: 1.55; color: var(--ink-400); }
+.lg-fine a { color: inherit; text-decoration: underline; }
+.lg-peek { background: #0A1B4D; border-radius: 22px; padding: 16px; color: #fff; box-shadow: 0 40px 80px -48px rgba(10,27,77,.8); transform: rotate(1.2deg); }
+.lg-peek-top { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; color: #9DB4EE; margin: 2px 4px 12px; }
+.lg-dot { width: 8px; height: 8px; border-radius: 50%; background: #34D399; box-shadow: 0 0 0 3px rgba(52,211,153,.25); }
+.lg-peek-hello { background: linear-gradient(180deg, #13296B, #1A3A95); border-radius: 14px; padding: 16px; }
+.lg-peek-hello > b { font-size: 19px; font-weight: 900; letter-spacing: -0.02em; }
+.lg-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.lg-pills span { font-size: 12px; color: #C9D6F5; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16); border-radius: 10px; padding: 6px 10px; }
+.lg-pills b { color: #fff; font-size: 15px; margin-left: 3px; }
+.lg-pills .hot { background: #FBBF24; border-color: #FBBF24; color: #3B2A00; }
+.lg-pills .hot b { color: #1F1300; }
+.lg-peek-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 10px; margin-top: 10px; }
+.lg-tile { background: #fff; color: var(--ink-900); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 4px; min-height: 108px; font-size: 13px; }
+.lg-tile em { font-style: normal; font-size: 11.5px; font-weight: 800; color: var(--ink-400); }
+.lg-t-dec { border: 2px solid #FCD34D; }
+.lg-t-dec b { font-size: 15px; }
+.lg-t-dec span { margin-top: auto; font-size: 12px; font-weight: 700; color: var(--blue-600); }
+.lg-thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: auto; }
+.lg-thumbs i { aspect-ratio: 1; border-radius: 8px; background: #E5E7EB center/cover; }
+.lg-t-news span { font-size: 12.5px; color: var(--ink-600); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lg-t-rep b { font-size: 30px; font-weight: 900; line-height: 1; margin-top: auto; }
+.lg-t-rep small { font-size: 13px; color: var(--ink-400); }
+.lg-t-rep span { font-size: 12px; color: #047857; font-weight: 700; }
+@media (max-width: 900px) {
+  .lg-wrap { padding: 104px 0 56px; }
+  .lg-grid { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .lg-card { padding: 26px 20px 22px; border-radius: 20px; }
+  .lg-h1 { font-size: 27px; }
+  .lg-peek { transform: none; }
+}
+@media (max-width: 400px) { .lg-peek-grid { grid-template-columns: 1fr 1fr; } .lg-tile { min-height: 96px; } }

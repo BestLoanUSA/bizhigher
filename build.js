@@ -159,7 +159,7 @@ function nav(active) {
       <a class="${cls('tools')}" href="/tools/">무료 도구</a>
       <a class="${cls('audit')}" href="/free-audit/">무료 진단</a>
     </div>
-    <div class="nav-cta"><a class="btn btn-primary btn-small" href="/free-audit/">무료 진단 받기</a></div>
+    <div class="nav-cta"><a class="nav-login" href="/login/">로그인</a><a class="btn btn-primary btn-small" href="/free-audit/">무료 진단 받기</a></div>
     <button class="nav-toggle" aria-label="메뉴 열기" onclick="document.getElementById('mm').classList.toggle('open');this.closest('.nav').classList.toggle('menu-open')">☰</button>
   </div>
   <div class="mobile-menu" id="mm">
@@ -169,6 +169,7 @@ function nav(active) {
     <a href="/data/">데이터</a>
     <a href="/tools/">무료 도구</a>
     <a href="/free-audit/">무료 진단</a>
+    <a href="/login/">사장님 로그인</a>
     <a class="btn btn-primary btn-block" href="/free-audit/" style="border-bottom:none;color:#fff;">무료 진단 받기</a>
   </div>
 </nav>`;
@@ -262,7 +263,7 @@ const FOOTER_BASE = `
 <footer class="footer">
   <div class="container">
     <!--FOOTER_COLS-->
-    <p class="footer-copy">© ${new Date().getFullYear()} BizHigher. All rights reserved.</p>
+    <p class="footer-copy">© ${new Date().getFullYear()} BizHigher. All rights reserved. · <a href="/login/">사장님 로그인</a></p>
   </div>
 </footer>
 <script>
@@ -2850,6 +2851,58 @@ ${relatedPosts.length ? `
 
 /* ---------- 페이지: 주문 완료 + 인테이크 ---------- */
 
+/* 사장님 로그인 (2026-11-07) — 구글·카카오 버튼 → functions/auth/[[path]].js → /my/ 대시보드. 데모는 /my/demo(D1 없이 functions/c/_demo.js)
+   검색 제외. 오류·로그아웃 안내는 ?err=setup|cancel|state|fail&p=google|kakao · ?out=1 을 스크립트가 읽어 띄운다(없어도 버튼은 동작) */
+function loginPage() {
+  return head({
+    title: '사장님 로그인 | BizHigher',
+    description: '구글이나 카카오 계정으로 클릭 한 번에 들어와 결정할 것·새 소식·월간 리포트·받은 결과물을 한 화면에서 보세요.',
+    pathName: '/login/',
+    noindex: true,
+  }) + nav('') + `
+<section class="lg-wrap">
+  <div class="container lg-grid">
+    <div class="lg-card">
+      <p class="eyebrow">사장님 전용</p>
+      <h1 class="lg-h1">사장님 로그인</h1>
+      <p class="lg-sub">결정할 것, 새 소식, 월간 리포트, 받은 결과물을 한 화면에서 봅니다. 비밀번호는 없습니다.</p>
+      <div class="lg-msg" id="lg-msg" role="status" hidden></div>
+      <a class="lg-btn lg-g" href="/auth/google"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg><span>Google 계정으로 계속하기</span></a>
+      <a class="lg-btn lg-k" href="/auth/kakao"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#191919" d="M12 3.2c-5.3 0-9.6 3.4-9.6 7.6 0 2.7 1.8 5.1 4.5 6.4l-1.1 4.1c-.1.4.3.6.6.4l4.8-3.2c.3 0 .5.1.8.1 5.3 0 9.6-3.4 9.6-7.7S17.3 3.2 12 3.2z"/></svg><span>카카오로 계속하기</span></a>
+      <ul class="lg-help">
+        <li><b>처음이세요?</b> 결제·질문지에 쓰신 이메일의 구글 계정이면 바로 열립니다.</li>
+        <li><b>카카오나 다른 계정이면</b> 받으신 메일의 고객 페이지 링크를 열고 위쪽 [연결] 버튼을 한 번 눌러 주세요. 다음부터는 여기서 바로 열립니다.</li>
+      </ul>
+      <div class="lg-or"><span>아직 고객이 아니라면</span></div>
+      <a class="lg-demo" href="/my/demo">데모 사장님 화면 둘러보기 <i>→</i></a>
+      <p class="lg-fine">로그인하면 계정 이름·이메일만 받습니다. 비밀번호·연락처·친구 목록은 받지 않습니다. <a href="/privacy/">개인정보처리방침</a></p>
+    </div>
+    <div class="lg-peek" aria-hidden="true">
+      <div class="lg-peek-top"><span class="lg-dot"></span>순두부 하우스 · 사장님 페이지</div>
+      <div class="lg-peek-hello"><b>순두부 하우스 사장님, 안녕하세요</b><div class="lg-pills"><span class="hot">결정할 것 <b>3</b></span><span>최근 30일 한 일 <b>39</b></span><span>전체 진행 <b>94%</b></span></div></div>
+      <div class="lg-peek-grid">
+        <div class="lg-tile lg-t-dec"><em>결정할 것</em><b>12월 게시물 캘린더</b><span>✓ 이대로 진행 · 수정 요청</span></div>
+        <div class="lg-tile lg-t-ad"><em>광고 소재 고르기</em><div class="lg-thumbs"><i style="background-image:url('/showcase/lunch-set.jpg')"></i><i style="background-image:url('/showcase/seafood-sundubu-n.jpg')"></i><i style="background-image:url('/showcase/lunch-interior.jpg')"></i></div></div>
+        <div class="lg-tile lg-t-news"><em>새 소식</em><span>📍 구글 프로필에 새 게시물</span><span>💬 새 리뷰 답글</span><span>📦 10월 월간 리포트 도착</span></div>
+        <div class="lg-tile lg-t-rep"><em>10월 리포트</em><b>86<small>/100</small></b><span>지도 3위 안 17/49</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+<script>
+(function () {
+  try {
+    var q = new URLSearchParams(location.search), el = document.getElementById('lg-msg');
+    var p = q.get('p') === 'kakao' ? '카카오' : 'Google';
+    var M = { setup: p + ' 로그인은 준비 중입니다. 지금은 받으신 메일의 고객 페이지 링크로 들어와 주세요.', cancel: '로그인을 취소하셨습니다.', state: '로그인 시간이 지났어요. 버튼을 다시 눌러 주세요.', fail: p + ' 계정 확인에 실패했습니다. 잠시 뒤 다시 시도해 주세요.' };
+    var t = q.get('out') ? '로그아웃했습니다.' : M[q.get('err')];
+    if (t && el) { el.textContent = t; el.hidden = false; if (q.get('err')) el.classList.add('err'); }
+  } catch (e) {}
+})();
+</script>
+` + FOOTER_BASE;
+}
+
 function thanksDonePage() {
   return head({
     title: '질문지를 받았습니다 — 이제 이렇게 진행됩니다 | BizHigher',
@@ -3991,12 +4044,13 @@ const PRIVACY_HTML = `
 <h2 class="h2-left">1. 수집하는 정보</h2>
 <p>• <b>직접 제공 정보</b>: 무료 진단 신청 및 주문 질문지를 통해 업체명, 담당자 성함, 이메일, 전화번호, 웹사이트·소셜 링크 등을 수집합니다.<br>
 • <b>무료 도구 이용 정보</b>: 무료 도구(/tools/) 이용 시 이메일(필수), 전화번호(선택), 입력한 업체명과 이용한 도구 이름을 수집합니다. 도구에 입력한 리뷰·메뉴 사진·소개문 등의 내용과 도구 결과는 결과 생성에만 쓰고 저장하지 않습니다. 하루 이용 횟수 제한을 위해 IP 주소를 일자별로 변환한 값(원본 IP 아님)을 하루 동안 사용합니다.<br>
+• <b>사장님 로그인 정보</b>: 고객이 구글 또는 카카오 계정으로 사장님 페이지(/my/)에 로그인하면 그 계정의 고유 번호, 이름(닉네임), 이메일만 받아 결과물 페이지를 여는 데 씁니다. 비밀번호·연락처·친구 목록은 받지 않고, 구글·카카오의 접근 토큰은 저장하지 않습니다. 로그인 상태는 30일짜리 쿠키 하나로 유지되며 로그아웃하면 지워집니다.<br>
 • <b>결제 정보</b>: 결제는 Stripe가 처리하며, 회사는 카드번호를 저장하지 않습니다.<br>
 • <b>자동 수집 정보</b>: Google Analytics 및 Microsoft Clarity를 통해 방문 기록, 기기·브라우저 정보, 사이트 이용 행태(쿠키 포함)가 수집될 수 있습니다.</p>
 <h2 class="h2-left">2. 이용 목적</h2>
 <p>서비스 제공 및 결과물 제작·전달, 주문·구독 관리, 고객 문의 응대, 서비스 개선과 사이트 분석, 서비스 관련 안내에 사용합니다. 무료 도구·무료 진단 이용 시 남긴 이메일·전화번호로 마케팅 팁과 서비스 소식을 보낼 수 있으며, 이용자는 언제든 수신을 거부할 수 있습니다. 이용자의 동의 없이 제3자에게 개인정보를 판매하지 않습니다.</p>
 <h2 class="h2-left">3. 제3자 서비스</h2>
-<p>회사는 서비스 운영을 위해 다음 처리자를 이용합니다: Stripe(결제), Google Analytics(분석), Microsoft Clarity(분석), Cloudflare(호스팅·보안), Resend(이메일 발송), Anthropic(무료 진단·도구의 AI 처리), Google Maps Platform(장소 정보 조회). 각 서비스는 자체 개인정보처리방침에 따라 정보를 처리합니다.</p>
+<p>회사는 서비스 운영을 위해 다음 처리자를 이용합니다: Stripe(결제), Google Analytics(분석), Microsoft Clarity(분석), Cloudflare(호스팅·보안), Google·Kakao(사장님 로그인), Resend(이메일 발송), Anthropic(무료 진단·도구의 AI 처리), Google Maps Platform(장소 정보 조회). 각 서비스는 자체 개인정보처리방침에 따라 정보를 처리합니다.</p>
 <h2 class="h2-left">4. 보관 및 파기</h2>
 <p>개인정보는 서비스 제공에 필요한 기간 동안 보관하며, 목적 달성 후 관련 법령이 정한 기간을 제외하고 지체 없이 파기합니다. 구독 해지 후에도 법적 의무 이행을 위한 최소한의 거래 기록은 보관될 수 있습니다.</p>
 <h2 class="h2-left">5. 이용자의 권리</h2>
@@ -4152,8 +4206,10 @@ const ROBOTS = `User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /api/
+Disallow: /my/
+Disallow: /auth/
 
-${AI_CRAWLERS.map((ua) => `User-agent: ${ua}\nAllow: /\nDisallow: /admin/\nDisallow: /api/\n`).join('\n')}
+${AI_CRAWLERS.map((ua) => `User-agent: ${ua}\nAllow: /\nDisallow: /admin/\nDisallow: /api/\nDisallow: /my/\nDisallow: /auth/\n`).join('\n')}
 Sitemap: ${SITE.domain}/sitemap.xml`;
 
 /* ---------- 페이지: 무료 도구 /tools/ ----------
@@ -4742,6 +4798,7 @@ write('pricing/index.html', pricingPage());
 write('free-audit/index.html', auditPage());
 write('thanks/index.html', thanksPage());
 write('thanks/done/index.html', thanksDonePage());
+write('login/index.html', loginPage());
 DATA.services.forEach((s) => write(`service/${s.slug}/index.html`, servicePage(s, POSTS)));
 DATA.packages.forEach((p) => write(`package/${p.slug}/index.html`, packagePage(p)));
 write('404.html', notFoundPage());
@@ -4754,6 +4811,15 @@ write('privacy/index.html', legalPage('개인정보처리방침', '/privacy/', P
   if (a > 0 && b > a) {
     const out = '/* 자동 생성 — automation/ai-runner/_report.js 의 @@report-core 구간(build.js 가 빌드마다 다시 쓴다). 직접 고치지 말 것 */\n' + src.slice(a, b) + '\nexport { renderHtml, LOGO };\n';
     const f = path.join(__dirname, 'functions', 'api', '_report-view.js');
+    if (!fs.existsSync(f) || fs.readFileSync(f, 'utf8') !== out) fs.writeFileSync(f, out);
+  }
+}
+/* 데모 사장님 페이지(/my/demo)가 쓰는 월간 리포트 데이터 — data/sample-report.json 을 ESM 으로 복사(2026-11-07). 직접 고치지 말고 JSON 을 고친다 */
+{
+  const srData = path.join(__dirname, 'data', 'sample-report.json');
+  if (fs.existsSync(srData)) {
+    const out = '/* 자동 생성 — data/sample-report.json (build.js 가 빌드마다 다시 쓴다). 직접 고치지 말 것 */\nexport default ' + JSON.stringify(JSON.parse(fs.readFileSync(srData, 'utf8'))) + ';\n';
+    const f = path.join(__dirname, 'functions', 'c', '_demo-report.js');
     if (!fs.existsSync(f) || fs.readFileSync(f, 'utf8') !== out) fs.writeFileSync(f, out);
   }
 }

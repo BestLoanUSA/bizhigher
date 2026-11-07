@@ -37,7 +37,7 @@ export async function buildLive(db, job, site) {
   for (const t of doneRecent) { if (t.who === 'customer') continue; const k = t.service_name || t.service; bySvc.set(k, (bySvc.get(k) || 0) + 1); }
   // 다음 할 일은 고객에게 의미 있는 것만: 사장님 차례 + 사장님이 받게 될 결과물(DELIVER_KEYS). 내부 단계(결제 기록·등록 작업 등)는 빼고
   const open = tasks.filter((t) => !CLOSED.has(t.status) && t.status !== 'review' && t.phase !== 'daily' && t.phase !== 'weekly' && t.service !== 'common');
-  const yours = open.filter((t) => t.who === 'customer');
+  const yours = open.filter((t) => t.who === 'customer' && t.key !== 'cp-1'); // cp-1(콘텐츠 수정 월 2회)은 원할 때만 쓰는 권리라 할 일이 아니다
   const coming = open.filter((t) => t.who !== 'customer' && DELIVER_KEYS.has(t.key));
   const next = [...yours.slice(0, 2), ...coming.slice(0, 4 - Math.min(2, yours.length))];
   const waiting = await db.prepare(`SELECT COUNT(*) n FROM deliverables WHERE job_id = ? AND sent_at IS NOT NULL AND needs_approval = 1 AND approved_at IS NULL`).bind(job.id).first().catch(() => null);

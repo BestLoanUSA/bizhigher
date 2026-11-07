@@ -87,7 +87,9 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | 광고 표준 트리거 12개(플랫폼 내장 자동 규칙) | `docs/ad-rules-ko.md` — 안전장치·낭비 차단·소재 교체·예산 이동·시간대·주말·프로모 종료·티어 상한·평판 연동. ads-2 설계안이 고객 숫자로 환산한 표를 붙이고 ads-3·ads-4 구축 때 심는다(2026-11-02, 스마틀리 분석 https://claude.ai/artifact/TYMA52t35CWb8Q3RBxSeK5) |
 | 광고 소재 사전 점검(세트 점수·기본 선택) | `automation/ai-runner/creative.js precheck` — 글자 픽셀 비율(20% 이하)·흰 글자 대비(4.5:1)·9:16 안전 영역(compose 가 글자를 아래 320px 위로)·노출·선명도. `--options` 면 1위를 기본 선택으로. 시선 추적 예측은 하지 않는다 |
 | 업종별 광고 학습 메모(우리식 Synapse) | D1 `ad_learnings` · 관리자 `GET/POST/DELETE /admin/api/learnings` · `runner.js learnings --industry` / `learn --industry … --kind keyword|negative|hook|audience|cpa|budget|creative|rule|note`. 업종·도시 수준 집계만, 고객명·이메일·전화·링크 금지(서버가 형식 거절). ads-2·ac-1 전에 읽고 am-5·ads-5 뒤에 한 줄 쓴다 |
-| 고객 결과물 페이지 `/c/{token}` | `functions/c/[token].js` — 묶음 메일·승인 흐름은 §12-3 |
+| 고객 결과물 페이지 `/c/{token}` | `functions/c/[token].js`(읽기 `load`·버튼 `handleAction`·화면 `dashboardHtml`) — 묶음 메일·승인 흐름은 §12-3 |
+| 사장님 로그인·사장님 페이지(2026-11-07) | 로그인 화면 `build.js loginPage()` → `/login/`(noindex, 네비 '로그인'·푸터 링크) · 구글·카카오 OAuth `functions/auth/[[path]].js`(`/auth/google`·`/auth/kakao`·`…/callback`·`/auth/logout`, `?link={token}` 이면 그 작업을 계정에 연결) · 세션·연결 `functions/api/_owner.js`(서명 쿠키 `bh_owner` 30일, D1 `owner_logins`·`owner_links` 자동 생성, 확인된 이메일 = `jobs.customer_email` 이면 자동) · 대시보드 `functions/my/[[path]].js`(`/my/`, 작업 여럿이면 `?job=`) · **화면은 `/c/{token}` 과 공용** `functions/c/_dash.js renderDashboard`(인사·숫자 → 한눈에 포털 → 결정할 것(승인·선택 대기 + 답이 필요한 안내 `ASK` + 사장님 차례 `HOWTO`, 지난 결정) \| 새 소식(`FEED` — 끝낸 일을 쉬운 말로) → 리포트 → 받은 결과물). 메일 링크 화면에는 [Google로 연결]·[카카오로 연결] 띠. 설정 `docs/owner-login-setup-ko.md` |
+| 데모 사장님(2026-11-07) | `/my/demo` · `/c/sundubu-house-{DEMO_TOKEN}` — `functions/c/_demo.js`: 가상의 순두부 하우스(Local Growth 6개월, 시작 6개월째). **D1 을 쓰지 않는다** — 고객 페이지 코드가 부르는 쿼리에 고정 데이터로 답하는 가짜 DB(`demoDb`)라 실제와 같은 코드로 그리고, PR 프리뷰에서도 열리고, 루틴·관리자에 섞이지 않는다. 날짜는 '오늘 기준 며칠 전'. 월간 리포트는 `data/sample-report.json` → build.js 가 `functions/c/_demo-report.js` 로 복사(직접 고치지 말 것). 버튼은 처리하지 않고 안내만(`?ok=demo`). 고객 페이지 쿼리를 바꾸면 `demoDb` 의 쿼리 목록도 맞춘다 |
 | 고객 페이지 실시간 리포트(2026-11-06) | 맨 위 "내 리포트" = `functions/c/_live.js buildLive`(열 때마다: 전체 진행률·다음 할 일(사장님 차례 + 받을 결과물 DELIVER_KEYS)·최근 30일 한 일·이번 달 사이트 숫자 site_events) + 마지막 월간 리포트 데이터 D1 `job_reports`(루틴 mr-4 가 `runner.js report-data --job --period --file report.json`, 관리자 API `POST jobs/:id/report-data`). 판형은 실제 리포트와 같다 — `functions/api/_report-view.js` 는 `_report.js` 의 `@@report-core` 구간을 build.js 가 빌드마다 ESM 으로 복사한 것(직접 고치지 말 것). 탭 `?r=YYYY-MM` = 저장된 달, `?view=report` = 리포트만 전체 화면·인쇄. iframe(sandbox, 스크립트 없음)이고 높이는 부모가 맞춘다 |
 | 고객 페이지 마케팅 포털(2026-11-07) | `functions/c/_portal.js portalHtml` — `/c/{token}` 맨 위, 홈의 순두부 하우스 포털과 같은 벤토 격자를 이 고객의 실제 데이터로: 웹사이트(sites.spec hero.photo·tagline·rating) · 전체 진행·최근 30일 끝낸 작업 · 승인 대기(→ `#d{id}` 카드) · 전달된 결과물 이미지·영상(최신 3+1) · 마지막 월간 리포트(job_reports)의 gauge·grids·kpis·stars·checks·timeline · 리포트 열기. 데이터가 없는 타일은 만들지 않고, 타일이 3개 미만이면 포털을 숨긴다. 타일 클래스는 `t-*`(페이지 CSS 와 겹치지 않게), 스크립트 없음 |
 | 새 리뷰 감시·답글 과제 | `functions/api/_reviews.js` (§12-4) — 위험 단어 목록 `RISK`, 쿨다운 20시간 |
@@ -218,6 +220,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | `ad_learnings` | 업종별 광고 학습 메모(업종·도시·채널·종류·메모·값·표본 수) — 자동 생성, 고객 식별 정보 없음 | 관리자 `learnings` API · `runner.js learnings/learn` (2026-11-02) |
 | `sites` | 고객 웹사이트 스펙 JSON(작업당 1행, slug·domain·live·version) — 자동 생성 | `sites.js` · 관리자 `sites` API (§12-5) |
 | `site_events` | 고객 사이트 전환 비콘 일별 집계(사이트·날짜·이벤트·페이지·n) — 자동 생성 | `functions/api/site-event.js` · `siteStats()` (2026-11-01) |
+| `owner_logins` · `owner_links` | 사장님 로그인 계정(제공자·계정 id·이메일·확인 여부·이름) · 로그인 ↔ 작업 연결 — 자동 생성 | `functions/api/_owner.js` · `functions/auth/[[path]].js` (2026-11-07) |
 | `site_versions` · `site_leads` | 스펙 버전 기록(버전·메모·바뀐 키), 고객 사이트 문의 폼 리드 — 자동 생성 | 관리자 `sites/:slug/versions`·`leads` · `functions/api/site-contact.js` (§12-5 2단계) |
 
 `orders` 이하 6개 테이블은 `functions/api/_orders.js`의 `ensureSchema()`가 **없으면 자동 생성**한다(`CREATE TABLE IF NOT EXISTS`). 손으로 SQL을 돌릴 필요 없다. 기존 3개 테이블은 이 코드가 만들지 않았으므로 관리자 API는 `PRAGMA table_info`로 컬럼 유무를 확인하고 쓴다.
@@ -237,6 +240,9 @@ Cloudflare 프로젝트 → Settings → Environment variables (Production).
 | `CUSTOMER_FROM` | 선택 | 고객 묶음 메일 발신 주소(예 `BizHigher <hello@bizhigher.com>`, Resend 도메인 인증 필요). 없으면 `NOTIFY_FROM` |
 | `CLOUDFLARE_API_TOKEN` · `CLOUDFLARE_ACCOUNT_ID` · `SITES_PROJECT` | 선택 | 고객 도메인을 Pages 프로젝트에 자동 추가(§12-5). 없으면 D1 기록만 하고 David가 대시보드에서 추가. 같은 두 변수가 `bizhigher` 루틴 환경에도 있어야 배포가 된다 |
 | `ADMIN_PASSWORD` | 관리자 페이지 필수 | `/admin/`이 503으로 잠긴다 |
+| `GOOGLE_OAUTH_CLIENT_ID` · `GOOGLE_OAUTH_CLIENT_SECRET` | 선택 (사장님 구글 로그인) | `/login/` 의 구글 버튼이 "준비 중" 안내로 돌아온다. 메일 링크(`/c/…`)는 그대로. 리디렉션 URI `https://bizhigher.com/auth/google/callback` (`docs/owner-login-setup-ko.md`) |
+| `KAKAO_REST_API_KEY` · `KAKAO_CLIENT_SECRET` | 선택 (사장님 카카오 로그인) | 카카오 버튼이 "준비 중". 리디렉션 URI `https://bizhigher.com/auth/kakao/callback`. 이메일 동의는 비즈 앱 전환이 필요할 수 있어 없으면 고객 페이지 [카카오로 연결]로 잇는다 |
+| `OWNER_SESSION_SECRET` | 선택 | 사장님 로그인 쿠키 서명 키. 없으면 `ADMIN_PASSWORD` 에서 파생한 별도 키 |
 | `ADMIN_ACCESS_TEAM` · `ADMIN_ACCESS_AUD` | 선택 | Cloudflare Access로 바꿀 때. 둘 다 있으면 Access 토큰 검증 |
 | `STRIPE_WEBHOOK_SECRET` | 주문 기록 필수 | 웹훅이 503, 결제가 관리자 페이지에 안 뜬다 |
 | `STRIPE_SECRET_KEY` | 선택 (Restricted key, Payment Links·Checkout Sessions 읽기) | 상품명 매핑이 안 돼 "미확인"으로 들어온다 |
