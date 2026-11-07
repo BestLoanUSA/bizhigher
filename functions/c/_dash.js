@@ -224,7 +224,7 @@ function feedHtml(ds, tasks) {
  * @param account 로그인 계정 {n 이름, e 이메일, p google|kakao|demo}
  * @param jobs 로그인한 계정의 작업 목록(2개 이상이면 위에 고르는 줄)
  */
-export function renderDashboard({ job, ds, tasks = [], site, siteTask, env, report, portal, msg, preview, mode = 'token', token, account, jobs, jobId }) {
+export function renderDashboard({ job, ds, tasks = [], site, siteTask, env, report, portal, msg, preview, mode = 'token', token, account, jobs, jobId, extra = '' }) {
   const biz = esc(clean(job.business));
   const visible = ds;
   const pending = visible.filter((d) => d.needs_approval && !d.approved_at);
@@ -272,7 +272,7 @@ ${demo}${connect}
 <section class="ob-sec" id="report">${report || '<div class="card"><h2>내 리포트</h2><p class="muted">첫 월간 리포트는 시작 한 달 뒤에 여기에 올라옵니다.</p></div>'}</section>
 <section class="ob-sec" id="files"><div class="ob-h"><h2>받은 결과물</h2>${others.length ? `<span class="cnt">${others.length}</span>` : ''}</div>
 ${siteCard(site, siteTask, env)}${others.map(itemCard).join('') || '<div class="card"><p class="muted">아직 전달된 결과물이 없습니다. 작업이 진행되면 여기에 쌓입니다.</p></div>'}</section>
-</div><footer>궁금한 점은 결과물 아래 답변 칸이나 <a href="mailto:hello@bizhigher.com">hello@bizhigher.com</a> · 수정 1회 무료 · <a href="/terms/">이용약관</a></footer></body></html>`;
+${extra}</div><footer>궁금한 점은 결과물 아래 답변 칸이나 <a href="mailto:hello@bizhigher.com">hello@bizhigher.com</a> · 수정 1회 무료 · <a href="/terms/">이용약관</a></footer></body></html>`;
 }
 
 const BASE_CSS = `:root{--blue:#0A4DF5;--navy:#0A1B4D;--ink:#111318;--muted:#6B7280;--line:#E5E7EB}*{box-sizing:border-box}body{margin:0;font-family:Pretendard,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#F3F4F7;color:var(--ink)}
@@ -320,3 +320,4 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:28px 16px 36p
 .grid video.pick{object-fit:cover}
 @media (max-width:640px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ob-biz{display:none}.an{display:none}.ob-nav{justify-content:flex-start}.ob-stats a{padding:7px 10px}.ob-stats b{font-size:16px}.ob-demo a{margin-left:0}.ob-connect .sso{flex:1 1 140px}}
 `;
+export { BASE_CSS, DASH_CSS };

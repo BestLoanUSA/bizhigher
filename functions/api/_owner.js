@@ -96,3 +96,65 @@ export function providers(env) {
     kakao: v('KAKAO_REST_API_KEY') ? { id: v('KAKAO_REST_API_KEY'), secret: v('KAKAO_CLIENT_SECRET') } : null,
   };
 }
+
+/* ── 로그인했지만 아직 고객이 아닌 사장님(2026-11-07 David: "아직 리포트·서비스·플랜이 없으면 차례대로 실행을 유도") ──
+   owner_profiles: 로그인 1개당 가게 정보 1줄 — 무료 진단·추천·결제 질문지 미리 채우기에 쓴다. 카카오처럼 이메일이 없으면 여기 email 을 받는다 */
+export async function ensureProfileSchema(db) {
+  await ensureOwnerSchema(db);
+  await db.prepare(`CREATE TABLE IF NOT EXISTS owner_profiles (login_id INTEGER PRIMARY KEY, business TEXT, city TEXT, category TEXT, phone TEXT, website TEXT, email TEXT, goal TEXT, news_optin INTEGER DEFAULT 0, blog_seen TEXT, created_at TEXT DEFAULT (datetime('now')), updated_at TEXT)`).run();
+}
+export async function getProfile(db, lid) {
+  await ensureProfileSchema(db);
+  return (await db.prepare(`SELECT * FROM owner_profiles WHERE login_id = ?`).bind(lid).first()) || null;
+}
+const PROFILE_FIELDS = ['business', 'city', 'category', 'phone', 'website', 'email', 'goal'];
+export async function saveProfile(db, lid, input) {
+  await ensureProfileSchema(db);
+  const v = {};
+  for (const k of PROFILE_FIELDS) v[k] = String(input[k] || '').trim().slice(0, k === 'website' ? 300 : 120) || null;
+  if (v.email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.email)) v.email = null;
+  if (v.website && !/^https?:\/\//i.test(v.website)) v.website = 'https://' + v.website;
+  const news = input.news_optin ? 1 : 0;
+  await db.prepare(`INSERT INTO owner_profiles (login_id, business, city, category, phone, website, email, goal, news_optin, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+    ON CONFLICT(login_id) DO UPDATE SET business = excluded.business, city = excluded.city, category = excluded.category, phone = excluded.phone, website = excluded.website, email = COALESCE(excluded.email, owner_profiles.email), goal = excluded.goal, news_optin = excluded.news_optin, updated_at = datetime('now')`)
+    .bind(lid, v.business, v.city, v.category, v.phone, v.website, v.email, v.goal, news).run();
+}
+export async function setNewsOptin(db, lid, on) {
+  await ensureProfileSchema(db);
+  await db.prepare(`INSERT INTO owner_profiles (login_id, news_optin, updated_at) VALUES (?, ?, datetime('now')) ON CONFLICT(login_id) DO UPDATE SET news_optin = excluded.news_optin, updated_at = datetime('now')`).bind(lid, on ? 1 : 0).run();
+}
+/** 마지막으로 본 블로그 날짜 — 새 글 표시(NEW)용. 이전 값을 돌려주고 오늘로 바꾼다 */
+export async function touchBlogSeen(db, lid, latest) {
+  const p = await getProfile(db, lid);
+  const prev = (p && p.blog_seen) || '';
+  if (latest && latest !== prev) await db.prepare(`INSERT INTO owner_profiles (login_id, blog_seen) VALUES (?, ?) ON CONFLICT(login_id) DO UPDATE SET blog_seen = excluded.blog_seen`).bind(lid, latest).run();
+  return prev;
+}
+/** 이 사장님 이메일로 받은 무료 진단 리포트(최신 3개) — audit_leads.email ↔ reports.lead_id.
+    점수와 리포트가 짚은 문제의 추천 서비스(analysis.problems[].serviceSlug)만 꺼낸다 — 구글 데이터는 화면에 다시 쓰지 않는다 */
+export async function reportsForEmail(db, email) {
+  if (!email) return [];
+  try {
+    const rows = (await db.prepare(`SELECT r.id, r.business, r.location, r.created_at, r.report_json FROM reports r JOIN audit_leads l ON l.id = r.lead_id WHERE lower(l.email) = lower(?) ORDER BY r.created_at DESC LIMIT 3`).bind(email).all()).results || [];
+    return rows.map((r) => {
+      let rep = null; try { rep = JSON.parse(r.report_json); } catch {}
+      const sc = rep && rep.scores;
+      const probs = (rep && rep.analysis && rep.analysis.problems) || [];
+      return {
+        id: r.id, business: r.business, location: r.location, created_at: r.created_at,
+        scores: sc ? { total: sc.total || 0, areas: (sc.areas || []).map((a) => ({ key: a.key, label: a.label, score: a.score, max: a.max })) } : null,
+        recs: [...new Set(probs.map((x) => x && x.serviceSlug).filter(Boolean))].slice(0, 3),
+        expired: !!(rep && rep.expired),
+      };
+    });
+  } catch { return []; }
+}
+/** 로그인 사장님의 연락 이메일 — 확인된 로그인 이메일 → 프로필에 적은 이메일 */
+export function ownerEmail(s, profile) {
+  return (s && s.e) || (profile && profile.email) || '';
+}
+/** 로그인 뒤 돌아갈 곳 — 우리 사이트 안의 경로만 */
+export function safeNext(v) {
+  const s = String(v || '');
+  return /^\/(?!\/)[\w\-./?=&%#]*$/.test(s) && s.length < 200 ? s : '';
+}

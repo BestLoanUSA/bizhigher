@@ -36,7 +36,7 @@ export async function load(env, token, origin) {
   return { db, demo, job, site, siteTask, tasks: all, ds: ds.map((d) => ({ ...d, task: byId.get(d.task_id) || null })) };
 }
 
-const MSG = {
+export const MSG = {
   approve: '승인해 주셔서 감사합니다. 예정대로 진행하겠습니다.',
   choice: '골라 주셔서 감사합니다. 그 디자인으로 나머지를 만들어 올려드리겠습니다.',
   revise: '수정 요청을 받았습니다. 반영해서 다시 올려드리겠습니다.',
@@ -44,13 +44,15 @@ const MSG = {
   reply: '답변 감사합니다. 확인해서 반영하겠습니다.',
   linked: '연결됐습니다. 다음부터는 bizhigher.com/login 에서 구글·카카오로 바로 들어오실 수 있습니다.',
   demo: '데모 화면이라 실제로 처리되지는 않았습니다. 실제 사장님 페이지에서는 이 버튼으로 바로 승인·선택·수정 요청이 됩니다.',
+  profile: '가게 정보를 저장했습니다. 이제 60초 무료 진단을 받아 보세요.',
+  news: '새 글 소식 설정을 바꿨습니다.',
 };
 
 /**
  * 대시보드 HTML — /c/{token} 과 /my/ 가 같이 쓴다. ?view=report 면 리포트만(전체 화면·인쇄)
  * @returns {Promise<string>}
  */
-export async function dashboardHtml(env, data, { url, mode = 'token', account, jobs, jobId }) {
+export async function dashboardHtml(env, data, { url, mode = 'token', account, jobs, jobId, extra = '' }) {
   const u = new URL(url);
   const preview = mode === 'token' && u.searchParams.get('preview') === '1';
   const ds = preview ? data.ds : data.ds.filter((d) => d.sent_at);
@@ -63,7 +65,7 @@ export async function dashboardHtml(env, data, { url, mode = 'token', account, j
   // 마케팅 포털(2026-11-07) — 홈의 순두부 하우스 포털과 같은 형태로 이 고객의 실제 결과물·리포트를 한 화면에
   let portal = '';
   try { const base = periods.length ? await storedReport(data.db, data.job.id, periods[0]) : null; portal = await portalHtml(data.db, { job: data.job, ds, site: data.site, base, period: periods[0] || '', token, preview }); } catch (e) { portal = ''; }
-  return renderDashboard({ job: data.job, ds, tasks: data.tasks, site: data.site, siteTask: data.siteTask, env, msg: MSG[u.searchParams.get('ok')] || '', preview, mode, token, account, jobs, jobId,
+  return renderDashboard({ job: data.job, ds, tasks: data.tasks, site: data.site, siteTask: data.siteTask, env, msg: MSG[u.searchParams.get('ok')] || '', preview, mode, token, account, jobs, jobId, extra,
     report: reportCard(report, { periods, sel, preview, token }), portal });
 }
 
