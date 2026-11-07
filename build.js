@@ -847,171 +847,139 @@ function samplePages() {
 }
 
 function showcaseSection() {
-  // 2026-11-06 v3: 결과물 4장면 + 월간 리포트 쪽(샘플 리포트 이미지)을 한 섹션에서 스크롤로 넘긴다.
-  // 넓은 화면은 리포트 쪽도 무대 장면으로, 폰은 무대 아래 휴대폰 판형 쪽 이미지 목록으로(작은 무대에선 글자가 안 읽힌다)
+  /* 2026-11-06 v4 — "이렇게 생긴 것을 받습니다": 결과물 4장면 + 월간 리포트 쪽이 하나씩 크게 날아와 작아지면서 오른쪽 보드에 박히고,
+     마지막엔 보드가 펼쳐져 한 화면에서 전부 본다. 카드는 800×600 고정 캔버스를 transform 으로만 옮긴다(내용 배치가 크기와 무관).
+     JS 없음·움직임 줄이기·낮은 화면 = 같은 카드를 격자로 정적 표시 */
   const SCN = SC_SCENES.filter((x) => x.key !== 'report');
   const PAGES = samplePages();
   const pnum = (i) => (i === 0 ? '표지' : String(i).padStart(2, '0'));
-  const tabs = SCN.map((s, i) => `
-      <button type="button" class="sc-tab${i === 0 ? ' on' : ''}" data-key="${s.key}" role="tab" aria-selected="${i === 0 ? 'true' : 'false'}">
-        <span class="sc-tab-n">0${i + 1}</span><span class="sc-tab-t"><b>${s.tab}</b><small>${s.tabSub}</small></span><i class="sc-prog"></i>
-      </button>`).join('') + (PAGES.length ? `<div class="sc-tab-group" aria-hidden="true">매달 받는 리포트</div>` + PAGES.map((p, i) => `
-      <button type="button" class="sc-tab sc-tab-rep" data-key="rep${i}" role="tab" aria-selected="false">
-        <span class="sc-tab-n">${pnum(i)}</span><span class="sc-tab-t"><b>${p.title.split(' — ')[0]}</b></span><i class="sc-prog"></i>
-      </button>`).join('') : '');
-  const repScenes = PAGES.map((p, i) => `
-      <div class="sc-scene sc-rep" data-key="rep${i}">
-        <div class="sc-stage-in sc-rep-in"><img src="/sample-report/${p.file}" alt="샘플 월간 리포트 ${pnum(i)} — ${escAttr(p.title)}" loading="lazy" decoding="async"></div>
-        <a class="sc-link" href="/sample-report/" target="_blank" rel="noopener">월간 리포트 전체 보기 · PDF →</a>
-      </div>`).join('');
-  const repList = PAGES.length ? `
-    <div class="sc-rep-list">
-      <h3 class="sc-rep-h">매달 받는 리포트 <span>예시 · ${PAGES.length}쪽</span></h3>
-      ${PAGES.map((p, i) => `<figure class="sc-rep-card"><img src="/sample-report/${p.m || p.file}" alt="샘플 월간 리포트 ${pnum(i)} — ${escAttr(p.title)}" loading="lazy" decoding="async"></figure>`).join('')}
-      <div class="hero-ctas" style="justify-content:center;margin-top:18px;"><a class="btn btn-ghost" href="/sample-report/" target="_blank" rel="noopener">리포트 전체 보기</a><a class="btn btn-ghost" href="/sample-report/report.pdf" target="_blank" rel="noopener">PDF 받기</a></div>
-    </div>` : '';
-  const scenes = SCN.map((s, i) => `
-      <div class="sc-scene sc-${s.key}${i === 0 ? ' on' : ''}" data-key="${s.key}">
-        <div class="sc-stage-in">${s.html}</div>
-        <ul class="sc-chips">${s.chips.map((c) => `<li class="sc-chip">${c}</li>`).join('')}</ul>
-        <a class="sc-link" href="/service/${s.service}/">이 결과물이 포함된 서비스 보기 →</a>
-      </div>`).join('') + repScenes;
+  const items = [
+    ...SCN.map((s, i) => ({ n: `0${i + 1}`, t: s.tab, sub: s.tabSub, group: '결과물', body: `<div class="fx-in fx-scene-in">${s.html}</div><ul class="sc-chips fx-chips">${s.chips.map((c) => `<li class="sc-chip">${c}</li>`).join('')}</ul>`, href: `/service/${s.service}/` })),
+    ...PAGES.map((p, i) => ({ n: pnum(i), t: p.title.split(' — ')[0].split(' · ').slice(0, 2).join(' · '), sub: '월간 리포트', group: '리포트', body: `<div class="fx-in fx-page-in"><img src="/sample-report/${p.file}" alt="샘플 월간 리포트 ${pnum(i)} — ${escAttr(p.title)}" loading="lazy" decoding="async"></div>`, href: '/sample-report/' })),
+  ];
+  const cards = items.map((it, k) => `
+      <figure class="fx-card${it.group === '리포트' ? ' fx-is-page' : ''}" data-k="${k}" data-t="${escAttr(it.t)}" data-sub="${escAttr(it.sub)}">
+        <span class="fx-tag"><i>${it.n}</i>${it.group === '리포트' ? '리포트 · ' : ''}${it.t}</span>
+        ${it.body}
+      </figure>`).join('');
   return `
-<div class="showcase-pin" id="showcase-pin">
-<section class="section showcase" id="showcase">
-  <div class="container">
-    <p class="eyebrow">WHAT YOU GET</p>
-    <h2 class="h2"><em>이렇게 생긴 것</em>을 받습니다</h2>
-    <p class="mk-section-sub">설명 대신 결과물로 보여드립니다. 구글 프로필·리뷰·웹사이트·광고 소재, 그리고 매달 받는 리포트까지 — 전부 사장님 업소의 정보와 사진으로 만들고 전문가 검수 후 전달합니다.</p>
-    <div class="sc-wrap" id="sc-wrap">
-      <div class="sc-tabs" role="tablist" aria-label="결과물 종류">${tabs}</div>
-      <div class="sc-stage"><span class="sc-ex">예시 · 가상의 업체</span>${scenes}</div>
+<section class="section fx" id="showcase">
+  <div class="fx-pin" id="fx-pin">
+    <div class="fx-sticky" id="fx-sticky">
+      <div class="container fx-head" id="fx-head">
+        <p class="eyebrow">WHAT YOU GET</p>
+        <h2 class="h2"><em>이렇게 생긴 것</em>을 받습니다</h2>
+        <p class="mk-section-sub fx-sub">구글 프로필·리뷰·웹사이트·광고 소재, 그리고 매달 받는 리포트까지 — 전부 사장님 업소의 정보와 사진으로 만들고 전문가 검수 후 전달합니다.</p>
+      </div>
+      <div class="fx-board" id="fx-board" aria-hidden="true"><div class="fx-board-h"><span class="fx-bt"><b>순두부 하우스</b>가 받은 것</span><span class="fx-bc"><em id="fx-count">0</em> / ${items.length}</span></div></div>
+      <div class="fx-slots" id="fx-slots" aria-hidden="true">${items.map(() => '<i></i>').join('')}</div>
+      <div class="fx-cap" id="fx-cap" aria-hidden="true"><b></b><span></span></div>
+      <div class="fx-cards" id="fx-cards">${cards}</div>
+      <div class="fx-final" id="fx-final">
+        <p class="fx-final-t">결과물 4가지 + 매달 리포트 — <b>한 달에 이만큼</b> 받습니다</p>
+        <div class="hero-ctas"><a class="btn btn-primary" href="/free-audit/">우리 가게 무료 진단 받기</a><a class="btn btn-ghost" href="/sample-report/" target="_blank" rel="noopener">월간 리포트 전체 보기 · PDF</a></div>
+      </div>
     </div>
-    <p class="note-text">위 화면은 가상의 예시 업체 "순두부 하우스"와 예시 수치로 구성했습니다 · <a href="/report/sample" style="color:var(--blue-600);font-weight:700;">무료 진단 리포트 샘플 보기 →</a></p>
   </div>
+  <div class="container"><p class="note-text">위 화면은 가상의 예시 업체 "순두부 하우스"와 예시 수치로 구성했습니다 · <a href="/report/sample" style="color:var(--blue-600);font-weight:700;">무료 진단 리포트 샘플 보기 →</a></p></div>
 </section>
-</div>
-${repList ? `<div class="container sc-rep-wrap">${repList}</div>` : ''}
 <script>
-/* 쇼케이스 — 화면에 고정(sticky)된 채 스크롤로 장면을 훑고 나서 풀린다. 장면당 넓은 화면 350px·폰 200px(2026-11-06 — 같은 스크롤에 1.5배 더 넘어간다).
-   넓은 화면은 결과물 4장면 + 월간 리포트 쪽, 폰은 4장면(리포트 쪽은 고정 구간 아래 목록 .sc-rep-wrap).
-   시간 T = 시계(보이는 동안 흐름) + 스크롤 거리. 고정 구간에서는 스크롤 위치가 곧 진행도라 위로 올리면 되감긴다.
-   화면이 낮은 모바일은 고정 없이 자동 넘김 + 스크롤 빨리감기. 스크롤을 가로채지 않고, JS 실패 시 첫 장면이 그대로 보인다 */
 (function () {
-  var wrap = document.getElementById('sc-wrap'), pin = document.getElementById('showcase-pin'); if (!wrap || !pin) return;
-  var tabsAll = Array.prototype.slice.call(wrap.querySelectorAll('.sc-tab'));
-  var scenesAll = Array.prototype.slice.call(wrap.querySelectorAll('.sc-scene'));
-  var tabs = tabsAll, scenes = scenesAll, progs = [];
-  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var N = tabs.length, DUR = 6000, TOTAL = N * DUR, FF = 21;
-  var idx = 0, clock = 0, scrollT = 0, paused = false, visible = false, active = false, lastTs = null, raf = null, lastY = window.scrollY;
-  var pinMQ = window.matchMedia('(min-width: 992px)');
-  /* 모바일도 화면이 충분히 높으면(560px 이상) 고정해서 빠르게 01→05를 훑는다 — 장면당 스크롤 거리를 짧게 */
-  function mobilePin() { return !pinMQ.matches && window.innerHeight >= 560; }
-  function pinMode() { return pinMQ.matches || mobilePin(); }
-  function scenePx() { return pinMQ.matches ? 350 : 200; }
-  /* 리포트 쪽 장면은 넓은 화면에서만 — 폰은 무대 아래 목록으로 본다 */
-  function pickScenes() {
-    var desk = pinMQ.matches;
-    tabs = tabsAll.filter(function (t) { return desk || !t.classList.contains('sc-tab-rep'); });
-    scenes = scenesAll.filter(function (sc) { return desk || !sc.classList.contains('sc-rep'); });
-    progs = tabs.map(function (t) { return t.querySelector('.sc-prog'); });
-    N = tabs.length; TOTAL = N * DUR;
-    if (idx >= N) idx = 0;
-  }
-  pickScenes();
-  var stage = wrap.querySelector('.sc-stage');
-  var vids = Array.prototype.slice.call(wrap.querySelectorAll('video.sc-cover-v'));
-  function fitScene() {
-    /* 모바일 고정 모드: 장면이 무대보다 크면 zoom으로 줄여 한 화면에 다 보이게 */
-    scenes.forEach(function (sc) { var inr = sc.querySelector('.sc-stage-in'); if (inr) Array.prototype.forEach.call(inr.children, function (c) { c.style.zoom = ''; }); });
-    if (!pin.classList.contains('pinned-m')) return;
-    var sc = scenes[idx], inr = sc && sc.querySelector('.sc-stage-in');
-    if (!inr) return;
-    /* zoom을 바꾸면 줄바꿈이 달라져 높이가 다시 변하므로 두어 번 다시 잰다 */
-    var z = 1;
-    for (var k = 0; k < 3; k++) {
-      var natural = inr.scrollHeight, avail = inr.clientHeight;
-      if (!(natural > avail + 1 && avail > 0)) break;
-      z = Math.max(0.45, z * avail / natural * 0.98);
-      Array.prototype.forEach.call(inr.children, function (c) { c.style.zoom = z; });
+  try {
+    var pin = document.getElementById('fx-pin'), sticky = document.getElementById('fx-sticky'), head = document.getElementById('fx-head');
+    var board = document.getElementById('fx-board'), slotsEl = document.getElementById('fx-slots'), cap = document.getElementById('fx-cap');
+    var fin = document.getElementById('fx-final'), cnt = document.getElementById('fx-count');
+    if (!pin || !sticky) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var cards = Array.prototype.slice.call(document.querySelectorAll('.fx-card'));
+    var marks = Array.prototype.slice.call(slotsEl.children);
+    var N = cards.length, CW = 800, CH = 600;
+    var desk = false, S = 380, F = 620, big = null, slots = [], finals = [], brd = null, brdF = null, ok = false;
+    function seg(v, a, b) { return Math.max(0, Math.min(1, (v - a) / (b - a))); }
+    function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function fit(x, y, w, h) { var s = Math.min(w / CW, h / CH); return { x: x + (w - CW * s) / 2, y: y + (h - CH * s) / 2, s: s }; }
+    function grid(x, y, w, h, cols, rows, gap) {
+      var cw = (w - gap * (cols - 1)) / cols, ch = (h - gap * (rows - 1)) / rows, out = [];
+      for (var k = 0; k < cols * rows; k++) out.push(fit(x + (k % cols) * (cw + gap), y + Math.floor(k / cols) * (ch + gap), cw, ch));
+      return out;
     }
-  }
-  function applyPin() {
-    pickScenes();
-    var desk = pinMQ.matches, mob = mobilePin();
-    pin.classList.toggle('pinned', desk);
-    pin.classList.toggle('pinned-m', mob);
-    if (mob) {
-      var nav = document.querySelector('.nav');
-      var topPx = nav ? Math.round(nav.getBoundingClientRect().bottom + 8) : 76;
-      pin.style.setProperty('--sc-top', topPx + 'px');
-    }
-    pin.style.height = (desk || mob) ? 'calc(100vh + ' + (N * scenePx()) + 'px)' : '';
-    fitScene();
-  }
-  function T() { return Math.max(0, Math.min(TOTAL - 1, clock + scrollT)); }
-  function apply() {
-    var t = T(), i = Math.floor(t / DUR);
-    if (i !== idx) {
-      idx = i;
-      tabs.forEach(function (tb, k) { tb.classList.toggle('on', k === idx); tb.setAttribute('aria-selected', k === idx ? 'true' : 'false'); });
-      scenes.forEach(function (sc, k) { sc.classList.toggle('on', k === idx); });
-      fitScene();
-      /* 모바일: 가로로 넘치는 탭 줄에서 지금 탭을 가운데로 (세로 스크롤은 건드리지 않는다) */
-      var bar = tabs[idx] && tabs[idx].parentNode;
-      if (bar && !pinMQ.matches && bar.scrollWidth > bar.clientWidth) {
-        bar.scrollTo({ left: tabs[idx].offsetLeft - (bar.clientWidth - tabs[idx].offsetWidth) / 2, behavior: reduced ? 'auto' : 'smooth' });
+    function layout() {
+      var vw = window.innerWidth, vh = window.innerHeight;
+      desk = vw >= 992;
+      ok = desk ? vh >= 640 : vh >= 600;
+      pin.classList.toggle('fx-on', ok);
+      if (!ok) { pin.style.height = ''; return; }
+      S = desk ? 380 : 300; F = desk ? 620 : 520;
+      pin.style.height = 'calc(100vh + ' + (N * S + F) + 'px)';
+      var c = head.getBoundingClientRect(), pad = desk ? 24 : 16;
+      var L = c.left + pad, R = c.right - pad, W = R - L;
+      var top = Math.round(head.offsetTop + head.offsetHeight + (desk ? 8 : 4)), bottom = vh - (desk ? 26 : 18);
+      if (desk) {
+        var bw = W * 0.4, bx = R - bw, bh = bottom - top;
+        big = fit(L, top, W - bw - 36, bh - 44);
+        brd = { x: bx, y: top, w: bw, h: bh };
+        slots = grid(bx + 16, top + 50, bw - 32, bh - 66, 2, Math.ceil(N / 2), 10);
+        var fh = bottom - top - 76;
+        brdF = { x: L - 8, y: top - 8, w: W + 16, h: fh + 16 };
+        finals = grid(L + 8, top + 42, W - 16, fh - 50, 4, Math.ceil(N / 4), 14);
+      } else {
+        var bigH = Math.min((W) * 0.75, (bottom - top) * 0.46);
+        big = fit(L, top, W, bigH);
+        var by = top + bigH + 40, rows = Math.ceil(N / 4), sw = (W - 20 - 18) / 4, sh = sw * 0.75;
+        var bh2 = Math.min(bottom - by, 40 + rows * sh + (rows - 1) * 6 + 12);
+        brd = { x: L, y: by, w: W, h: bh2 };
+        slots = grid(L + 10, by + 40, W - 20, bh2 - 52, 4, rows, 6);
+        brdF = { x: L - 4, y: top - 4, w: W + 8, h: bottom - top - 96 };
+        finals = grid(L + 6, top + 36, W - 12, bottom - top - 140, 2, Math.ceil(N / 2), 8);
       }
+      marks.forEach(function (m, k) { var r = slots[k]; m.style.cssText = 'left:' + r.x + 'px;top:' + r.y + 'px;width:' + CW * r.s + 'px;height:' + CH * r.s + 'px'; });
+      frame();
     }
-    progs.forEach(function (p, k) { if (p) p.style.width = k === idx ? ((t - idx * DUR) / DUR * 100) + '%' : '0%'; });
-    /* v46 — 장면 안 진행도(0~1)로 무대 요소가 살짝 어긋나며 떠 있고(패럴랙스), 보이는 장면의 무음 루프만 재생 */
-    if (stage) stage.style.setProperty('--par', ((t - idx * DUR) / DUR).toFixed(3));
-    vids.forEach(function (v) {
-      var on = visible && !reduced && v.closest('.sc-scene') === scenes[idx];
-      if (on && v.paused) { v.play().catch(function () {}); } else if (!on && !v.paused) v.pause();
-    });
-  }
-  function tick(ts) {
-    raf = null;
-    var running = visible && !paused && (!pinMode() || active);
-    if (lastTs !== null && running) clock += Math.min(ts - lastTs, 100);
-    lastTs = ts;
-    apply();
-    if (visible && !reduced) raf = requestAnimationFrame(tick);
-  }
-  function start() { if (raf === null && !reduced) { lastTs = null; raf = requestAnimationFrame(tick); } }
-  function onScroll() {
-    var y = window.scrollY, d = y - lastY; lastY = y;
-    if (pinMode()) {
-      var top = pin.getBoundingClientRect().top;
-      var span = N * scenePx();
-      var dist = Math.max(0, Math.min(span, -top));
-      active = top <= 0 && dist < span;
-      if (top > 0) clock = 0; /* 고정 구간 위로 올라가면 처음부터 */
-      scrollT = dist / span * TOTAL;
-    } else if (visible && d > 0 && !reduced) {
-      scrollT = Math.min(TOTAL - 1, scrollT + Math.min(d * FF, DUR));
+    var vids = cards.map(function (cd) { return cd.querySelector('video'); });
+    var raf = 0;
+    function frame() {
+      raf = 0; if (!ok) return;
+      var d = -pin.getBoundingClientRect().top;
+      var q = ease(seg(d, N * S, N * S + F * 0.8));
+      var done = 0, capK = -1, capA = 0;
+      cards.forEach(function (cd, k) {
+        var t = (d - k * S) / S, r, op = 1, sh;
+        if (t < 0) { op = 0; r = { x: big.x, y: big.y + 40, s: big.s * 1.04 }; }
+        else if (t < 1) {
+          var e = ease(seg(t, 0, 0.2)), f = ease(seg(t, 0.55, 1));
+          op = e;
+          var b0 = { x: big.x, y: big.y + 40 * (1 - e), s: big.s * (1.04 - 0.04 * e) };
+          r = { x: lerp(b0.x, slots[k].x, f), y: lerp(b0.y, slots[k].y, f), s: lerp(b0.s, slots[k].s, f) };
+          if (e > 0 && f < 1) { capK = k; capA = e * (1 - seg(t, 0.5, 0.65)); }
+          if (vids[k]) { if (t < 0.6 && vids[k].paused) vids[k].play().catch(function () {}); }
+        } else {
+          done++;
+          r = { x: lerp(slots[k].x, finals[k].x, q), y: lerp(slots[k].y, finals[k].y, q), s: lerp(slots[k].s, finals[k].s, q) };
+        }
+        if (vids[k] && (t < 0 || t >= 0.6) && !vids[k].paused) vids[k].pause();
+        cd.style.opacity = op.toFixed(3);
+        cd.style.transform = 'translate(' + r.x.toFixed(1) + 'px,' + r.y.toFixed(1) + 'px) scale(' + r.s.toFixed(4) + ')';
+        cd.style.zIndex = t >= 0 && t < 1 ? 30 : 10 + k;
+        cd.classList.toggle('fx-flying', t >= 0 && t < 1);
+      });
+      var B = { x: lerp(brd.x, brdF.x, q), y: lerp(brd.y, brdF.y, q), w: lerp(brd.w, brdF.w, q), h: lerp(brd.h, brdF.h, q) };
+      board.style.cssText = 'left:' + B.x + 'px;top:' + B.y + 'px;width:' + B.w + 'px;height:' + B.h + 'px';
+      slotsEl.style.opacity = String(1 - q);
+      cnt.textContent = String(done);
+      if (capK >= 0) { cap.firstChild.textContent = cards[capK].getAttribute('data-t'); cap.lastChild.textContent = cards[capK].getAttribute('data-sub'); }
+      cap.style.opacity = String(capK >= 0 ? capA : 0);
+      cap.style.left = big.x + 'px'; cap.style.top = (big.y + CH * big.s + 10) + 'px'; cap.style.width = CW * big.s + 'px';
+      fin.style.opacity = String(seg(q, 0.6, 1));
+      fin.style.pointerEvents = q > 0.8 ? 'auto' : 'none';
+      pin.classList.toggle('fx-final-on', q > 0.98);
     }
-    if (visible) apply();
-  }
-  tabsAll.forEach(function (tb) { tb.addEventListener('click', function () {
-    var k = tabs.indexOf(tb); if (k < 0) return;
-    clock = k * DUR - scrollT; apply();
-    if (!pinMQ.matches && tb.scrollIntoView) tb.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
-  }); });
-  wrap.addEventListener('mouseenter', function () { paused = true; });
-  wrap.addEventListener('mouseleave', function () { paused = false; });
-  window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', applyPin);
-  if (pinMQ.addEventListener) pinMQ.addEventListener('change', applyPin);
-  applyPin(); onScroll();
-  if ('IntersectionObserver' in window) {
-    var io = new IntersectionObserver(function (en) {
-      en.forEach(function (e) { visible = e.isIntersecting; if (visible) start(); else vids.forEach(function (v) { if (!v.paused) v.pause(); }); });
-    }, { threshold: 0.1 });
-    io.observe(wrap);
-  } else { visible = true; start(); }
+    function onScroll() { if (!raf) raf = requestAnimationFrame(frame); }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', layout, { passive: true });
+    layout();
+    window.addEventListener('load', layout);
+  } catch (e) { var p = document.getElementById('fx-pin'); if (p) { p.classList.remove('fx-on'); p.style.height = ''; } }
 })();
 </script>`;
 }
