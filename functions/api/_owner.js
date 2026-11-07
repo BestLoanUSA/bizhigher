@@ -93,7 +93,7 @@ export function providers(env) {
   const v = (k) => String(env[k] || '').trim();
   return {
     google: v('GOOGLE_OAUTH_CLIENT_ID') && v('GOOGLE_OAUTH_CLIENT_SECRET') ? { id: v('GOOGLE_OAUTH_CLIENT_ID'), secret: v('GOOGLE_OAUTH_CLIENT_SECRET') } : null,
-    kakao: v('KAKAO_REST_API_KEY') ? { id: v('KAKAO_REST_API_KEY'), secret: v('KAKAO_CLIENT_SECRET') } : null,
+    kakao: v('KAKAO_REST_API_KEY') ? { id: v('KAKAO_REST_API_KEY'), secret: v('KAKAO_CLIENT_SECRET'), jsKey: v('KAKAO_JS_KEY'), jsSecret: v('KAKAO_JS_CLIENT_SECRET') } : null,
   };
 }
 

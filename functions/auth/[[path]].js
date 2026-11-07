@@ -39,9 +39,13 @@ async function identity(p, cfg, code, redirect) {
     return { subject: String(c.sub), email: c.email || '', verified: c.email_verified === true || c.email_verified === 'true', name: c.name || c.given_name || '' };
   }
   if (p === 'kakao') {
-    const r = await fetch('https://kauth.kakao.com/oauth/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' }, body: form({ grant_type: 'authorization_code', client_id: cfg.id, client_secret: cfg.secret, redirect_uri: redirect, code }) });
-    const j = await r.json().catch(() => ({}));
-    if (!j.access_token) throw new Error('token-' + String(j.error_code || j.error || r.status).slice(0, 30));
+    // 간편로그인(SDK)으로 받은 코드는 JavaScript 키로 발급된다. 카카오의 키별 설정(2025~)에서는 REST 키로 바꾸면 거절될 수 있어
+    // REST 키로 먼저 해 보고 안 되면 JavaScript 키(+ 그 키의 시크릿 KAKAO_JS_CLIENT_SECRET)로 한 번 더 (2026-11-07)
+    const tryToken = async (id, secret) => { const r = await fetch('https://kauth.kakao.com/oauth/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' }, body: form({ grant_type: 'authorization_code', client_id: id, client_secret: secret, redirect_uri: redirect, code }) }); const j = await r.json().catch(() => ({})); return { j, code: String(j.error_code || j.error || r.status).slice(0, 20) }; };
+    let t = await tryToken(cfg.id, cfg.secret);
+    if (!t.j.access_token && cfg.jsKey) { const t2 = await tryToken(cfg.jsKey, cfg.jsSecret); if (t2.j.access_token) t = t2; else t.code += '_js-' + t2.code; }
+    const j = t.j;
+    if (!j.access_token) throw new Error('token-' + t.code);
     const me = await fetch('https://kapi.kakao.com/v2/user/me', { headers: { Authorization: `Bearer ${j.access_token}` } }).then((x) => x.json()).catch(() => null);
     if (!me || !me.id) throw new Error('me');
     const a = me.kakao_account || {};
@@ -76,9 +80,11 @@ export async function onRequestGet({ request, env, params }) {
 
   if (!step) {
     const link = tokenFromPath(url.searchParams.get('link') || '');
-    const state = randomState();
-    const signed = await sign(env, { s: state, p, link: link.length >= 16 ? link : '', next: safeNext(url.searchParams.get('next')), exp: Date.now() + 10 * 60000 });
+    // state = 서명한 값 자체(2026-11-07). 카카오톡 앱이 로그인 뒤 처음과 다른 브라우저로 돌아오면 상태 쿠키가 없어 "시간이 지났어요"로 튕겼다 —
+    // 이제 쿠키가 없어도 state 의 서명·만료로 확인하고, 쿠키가 있으면 같은 시작인지(nonce)까지 맞춘다
+    const signed = await sign(env, { s: randomState(), p, link: link.length >= 16 ? link : '', next: safeNext(url.searchParams.get('next')), exp: Date.now() + 10 * 60000 });
     if (!signed) return back(request, `/login/?err=setup&p=${p}`);
+    const state = signed;
     // 카카오 간편로그인(2026-11-07): JavaScript 키가 있으면 SDK 가 휴대폰의 카카오톡 앱을 바로 열어 아이디 입력 없이 동의만 받는다.
     // 인가 코드는 같으므로 콜백·토큰 교환(REST 키)은 그대로. 앱이 없거나 PC 면 SDK 가 웹 로그인으로 넘기고, SDK 자체가 안 뜨면 기존 웹 로그인으로
     const jsKey = String(env.KAKAO_JS_KEY || '').trim();
@@ -87,10 +93,12 @@ export async function onRequestGet({ request, env, params }) {
   }
   if (step !== 'callback') return back(request, '/login/');
 
-  const st = await verify(env, readCookie(request, STATE_COOKIE));
+  const st = await verify(env, url.searchParams.get('state') || '');
+  const ck = await verify(env, readCookie(request, STATE_COOKIE));
   const clear = cookie(STATE_COOKIE, '', 0);
-  if (url.searchParams.get('error')) return back(request, `/login/?err=cancel&p=${p}`, [clear]);
-  if (!st || st.p !== p || st.s !== url.searchParams.get('state')) return back(request, `/login/?err=state&p=${p}`, [clear]);
+  if (url.searchParams.get('error')) return back(request, `/login/?err=cancel&p=${p}&why=${encodeURIComponent(String(url.searchParams.get('error')).slice(0, 30))}`, [clear]);
+  if (!st || st.p !== p) return back(request, `/login/?err=state&p=${p}&why=${st ? 'provider' : 'expired'}`, [clear]);
+  if (ck && ck.s !== st.s) return back(request, `/login/?err=state&p=${p}&why=mismatch`, [clear]);
   // 실패 원인 코드(why)를 로그인 화면에 작게 보여 준다 — 사장님이 캡처를 보내면 바로 원인을 안다
   let who = null, why = '';
   try { who = await identity(p, cfg, url.searchParams.get('code') || '', redirect); } catch (e) { why = String((e && e.message) || 'x').replace(/[^\w-]/g, '').slice(0, 40); }
