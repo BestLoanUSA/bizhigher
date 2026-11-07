@@ -11,6 +11,7 @@ import { load, dashboardHtml, handleAction, html, MSG } from '../c/[token].js';
 import { DEMO_PATH, DEMO_ACCOUNT } from '../c/_demo.js';
 import { ensurePortalToken } from '../api/_orders.js';
 import { hubHtml, moreHtml } from '../c/_hub.js';
+import { accountHtml } from '../c/_account.js';
 
 const go = (request, path) => Response.redirect(new URL(path, request.url).toString(), 303);
 const ANCHOR = { approve: '#decide', choice: '#decide', revise: '#decide', reply: '#decide', site: '#site', demo: '#decide', linked: '' };
@@ -46,6 +47,15 @@ export async function onRequestGet({ request, env, params }) {
   const parts = [].concat(params.path || []);
   const u = new URL(request.url);
   const hub = await hubData(env, request);
+  if (parts[0] === 'demo' && parts[1] === 'account') {
+    return html(accountHtml({ account: DEMO_ACCOUNT, login: { created_at: new Date(Date.now() - 184 * 86400000).toISOString() }, profile: { ...DEMO_START.profile, business: '순두부 하우스', city: 'Garden Grove, CA', category: '식당' }, jobs: [{ id: 0, business: '순두부 하우스', service_name: 'Local Growth · 6개월 플랜' }], kakaoChannel: channel(env), ok: u.searchParams.get('ok') || '', demo: true }));
+  }
+  if (parts[0] === 'account') {
+    const s = await session(request, env).catch(() => null);
+    if (!s || !env.DB) return go(request, '/login/?next=' + encodeURIComponent('/my/account'));
+    const [profile, jobs, login] = await Promise.all([getProfile(env.DB, s.lid).catch(() => null), jobsForLogin(env.DB, s.lid).catch(() => []), env.DB.prepare('SELECT created_at FROM owner_logins WHERE id = ?').bind(s.lid).first().catch(() => null)]);
+    return html(accountHtml({ account: s, login, profile, jobs, kakaoChannel: channel(env), ok: u.searchParams.get('ok') || '' }));
+  }
   if (parts[0] === 'demo' && parts[1] === 'start') {
     return html(hubHtml({ account: DEMO_ACCOUNT, ...DEMO_START, hub, kakaoChannel: channel(env), msg: MSG[u.searchParams.get('ok')] || '', demo: true }));
   }
@@ -71,7 +81,7 @@ export async function onRequestGet({ request, env, params }) {
 
 export async function onRequestPost({ request, env, params, waitUntil }) {
   const parts = [].concat(params.path || []);
-  if (parts[0] === 'demo') return go(request, parts[1] === 'start' ? '/my/demo/start?ok=demo' : '/my/demo?ok=demo#decide');
+  if (parts[0] === 'demo') return go(request, parts[1] === 'start' ? '/my/demo/start?ok=demo' : parts[1] === 'account' ? '/my/demo/account?ok=demo' : '/my/demo?ok=demo#decide');
   const s = await session(request, env).catch(() => null);
   if (!s || !env.DB) return go(request, '/login/');
   const form = await request.formData().catch(() => null);
@@ -81,10 +91,11 @@ export async function onRequestPost({ request, env, params, waitUntil }) {
     const o = {}; for (const k of ['business', 'city', 'category', 'phone', 'website', 'email', 'goal', 'news_optin']) o[k] = form.get(k) || '';
     if (!String(o.business).trim() || !String(o.city).trim()) return go(request, '/my/#s1');
     await saveProfile(env.DB, s.lid, o);
-    return go(request, '/my/?ok=profile#s2');
+    return go(request, form.get('back') === 'account' ? '/my/account?ok=profile#biz' : '/my/?ok=profile#s2');
   }
   if (action === 'news') {
     await setNewsOptin(env.DB, s.lid, String(form.get('on')) === '1');
+    if (form.get('back') === 'account') return go(request, '/my/account?ok=news#news');
     const job = new URL(request.url).searchParams.get('job');
     return go(request, `/my/?${job ? 'job=' + encodeURIComponent(job) + '&' : ''}ok=news#more`);
   }
