@@ -3310,7 +3310,7 @@ img { max-width: 100%; display: block; }
 }
 
 /* ==========================================================
-   v57 — 사장님 로그인 /login/ (2026-11-07). 버튼 → /auth/google·/auth/kakao → /my/ 대시보드
+   v57 — 비즈니스 로그인 /login/ (2026-11-07). 버튼 → /auth/google·/auth/kakao → /my/ 대시보드
    ========================================================== */
 .nav-login { font-size: 14px; font-weight: 600; color: var(--mist-300); white-space: nowrap; }
 .nav-login:hover { color: #fff; }

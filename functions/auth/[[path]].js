@@ -1,5 +1,5 @@
 /**
- * 사장님 로그인 — 구글·카카오 OAuth (2026-11-07)
+ * 비즈니스 로그인 — 구글·카카오 OAuth (2026-11-07)
  *   GET /auth/google[?link={고객 페이지 토큰}]   → 구글 계정 고르기
  *   GET /auth/google/callback                    → 계정 확인 → 세션 쿠키 → /my/
  *   GET /auth/kakao[?link=…] · /auth/kakao/callback  (같은 흐름)
@@ -79,7 +79,7 @@ export async function onRequestGet({ request, env, params }) {
   if (st.link) {
     const job = await env.DB.prepare(`SELECT id FROM jobs WHERE portal_token = ?`).bind(st.link).first().catch(() => null);
     if (job && (await linkJob(env.DB, login.id, job.id, 'link'))) {
-      await addEvent(env.DB, job.id, 'customer', null, null, `🔑 사장님 로그인 연결 — ${p === 'google' ? 'Google' : '카카오'}${who.email ? ` (${who.email})` : ''}`).catch(() => {});
+      await addEvent(env.DB, job.id, 'customer', null, null, `🔑 비즈니스 로그인 연결 — ${p === 'google' ? 'Google' : '카카오'}${who.email ? ` (${who.email})` : ''}`).catch(() => {});
       ok = '?ok=linked';
     }
   }
