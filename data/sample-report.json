@@ -10,7 +10,7 @@
   "name_ko": "순두부 하우스",
   "city": "Garden Grove, CA",
   "color": "#0A4DF5",
-  "photo": "/showcase/interior.jpg"
+  "photo": "/showcase/lunch-interior.jpg"
  },
  "summary": [
   "가게 반경 2마일 49지점 중 17곳에서 \"korean tofu soup\" 검색 3위 안에 듭니다 (시작할 때 0곳).",
@@ -85,15 +85,15 @@
      "span": 2,
      "gallery": [
       {
-       "src": "/showcase/galbi-sundubu.jpg",
+       "src": "/showcase/galbi-sundubu-n.jpg",
        "cap": "구글 게시물 · 할로윈 주간 메뉴"
       },
       {
-       "src": "/showcase/seafood-sundubu.jpg",
-       "cap": "광고 소재 · 해물 순두부"
+       "src": "/showcase/lunch-set.jpg",
+       "cap": "광고 소재 · 점심 순두부 세트"
       },
       {
-       "src": "/showcase/dolsot-bibimbap.jpg",
+       "src": "/showcase/dolsot-bibimbap-n.jpg",
        "cap": "숏폼 영상 · 돌솥비빔밥 15초"
       }
      ],
