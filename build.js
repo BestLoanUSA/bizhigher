@@ -169,7 +169,7 @@ function nav(active) {
     <a href="/data/">데이터</a>
     <a href="/tools/">무료 도구</a>
     <a href="/free-audit/">무료 진단</a>
-    <a href="/login/">사장님 로그인</a>
+    <a href="/login/">비즈니스 로그인</a>
     <a class="btn btn-primary btn-block" href="/free-audit/" style="border-bottom:none;color:#fff;">무료 진단 받기</a>
   </div>
 </nav>`;
@@ -263,7 +263,7 @@ const FOOTER_BASE = `
 <footer class="footer">
   <div class="container">
     <!--FOOTER_COLS-->
-    <p class="footer-copy">© ${new Date().getFullYear()} BizHigher. All rights reserved. · <a href="/login/">사장님 로그인</a></p>
+    <p class="footer-copy">© ${new Date().getFullYear()} BizHigher. All rights reserved. · <a href="/login/">비즈니스 로그인</a></p>
   </div>
 </footer>
 <script>
@@ -2851,11 +2851,11 @@ ${relatedPosts.length ? `
 
 /* ---------- 페이지: 주문 완료 + 인테이크 ---------- */
 
-/* 사장님 로그인 (2026-11-07) — 구글·카카오 버튼 → functions/auth/[[path]].js → /my/ 대시보드. 데모는 /my/demo(D1 없이 functions/c/_demo.js)
+/* 비즈니스 로그인 (2026-11-07) — 구글·카카오 버튼 → functions/auth/[[path]].js → /my/ 대시보드. 데모는 /my/demo(D1 없이 functions/c/_demo.js)
    검색 제외. 오류·로그아웃 안내는 ?err=setup|cancel|state|fail&p=google|kakao · ?out=1 을 스크립트가 읽어 띄운다(없어도 버튼은 동작) */
 function loginPage() {
   return head({
-    title: '사장님 로그인 | BizHigher',
+    title: 'BizHigher 비즈니스 로그인',
     description: '구글이나 카카오 계정으로 클릭 한 번에 들어와 결정할 것·새 소식·월간 리포트·받은 결과물을 한 화면에서 보세요.',
     pathName: '/login/',
     noindex: true,
@@ -2863,8 +2863,8 @@ function loginPage() {
 <section class="lg-wrap">
   <div class="container lg-grid">
     <div class="lg-card">
-      <p class="eyebrow">사장님 전용</p>
-      <h1 class="lg-h1">사장님 로그인</h1>
+      <p class="eyebrow">BizHigher 고객 전용</p>
+      <h1 class="lg-h1">비즈니스 로그인</h1>
       <p class="lg-sub">결정할 것, 새 소식, 월간 리포트, 받은 결과물을 한 화면에서 봅니다. 비밀번호는 없습니다.</p>
       <div class="lg-msg" id="lg-msg" role="status" hidden></div>
       <a class="lg-btn lg-g" href="/auth/google"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg><span>Google 계정으로 계속하기</span></a>
@@ -4044,13 +4044,13 @@ const PRIVACY_HTML = `
 <h2 class="h2-left">1. 수집하는 정보</h2>
 <p>• <b>직접 제공 정보</b>: 무료 진단 신청 및 주문 질문지를 통해 업체명, 담당자 성함, 이메일, 전화번호, 웹사이트·소셜 링크 등을 수집합니다.<br>
 • <b>무료 도구 이용 정보</b>: 무료 도구(/tools/) 이용 시 이메일(필수), 전화번호(선택), 입력한 업체명과 이용한 도구 이름을 수집합니다. 도구에 입력한 리뷰·메뉴 사진·소개문 등의 내용과 도구 결과는 결과 생성에만 쓰고 저장하지 않습니다. 하루 이용 횟수 제한을 위해 IP 주소를 일자별로 변환한 값(원본 IP 아님)을 하루 동안 사용합니다.<br>
-• <b>사장님 로그인 정보</b>: 고객이 구글 또는 카카오 계정으로 사장님 페이지(/my/)에 로그인하면 그 계정의 고유 번호, 이름(닉네임), 이메일만 받아 결과물 페이지를 여는 데 씁니다. 비밀번호·연락처·친구 목록은 받지 않고, 구글·카카오의 접근 토큰은 저장하지 않습니다. 로그인 상태는 30일짜리 쿠키 하나로 유지되며 로그아웃하면 지워집니다.<br>
+• <b>비즈니스 로그인 정보</b>: 고객이 구글 또는 카카오 계정으로 비즈니스 로그인(/login/)을 하면 그 계정의 고유 번호, 이름(닉네임), 이메일만 받아 결과물 페이지를 여는 데 씁니다. 비밀번호·연락처·친구 목록은 받지 않고, 구글·카카오의 접근 토큰은 저장하지 않습니다. 로그인 상태는 30일짜리 쿠키 하나로 유지되며 로그아웃하면 지워집니다.<br>
 • <b>결제 정보</b>: 결제는 Stripe가 처리하며, 회사는 카드번호를 저장하지 않습니다.<br>
 • <b>자동 수집 정보</b>: Google Analytics 및 Microsoft Clarity를 통해 방문 기록, 기기·브라우저 정보, 사이트 이용 행태(쿠키 포함)가 수집될 수 있습니다.</p>
 <h2 class="h2-left">2. 이용 목적</h2>
 <p>서비스 제공 및 결과물 제작·전달, 주문·구독 관리, 고객 문의 응대, 서비스 개선과 사이트 분석, 서비스 관련 안내에 사용합니다. 무료 도구·무료 진단 이용 시 남긴 이메일·전화번호로 마케팅 팁과 서비스 소식을 보낼 수 있으며, 이용자는 언제든 수신을 거부할 수 있습니다. 이용자의 동의 없이 제3자에게 개인정보를 판매하지 않습니다.</p>
 <h2 class="h2-left">3. 제3자 서비스</h2>
-<p>회사는 서비스 운영을 위해 다음 처리자를 이용합니다: Stripe(결제), Google Analytics(분석), Microsoft Clarity(분석), Cloudflare(호스팅·보안), Google·Kakao(사장님 로그인), Resend(이메일 발송), Anthropic(무료 진단·도구의 AI 처리), Google Maps Platform(장소 정보 조회). 각 서비스는 자체 개인정보처리방침에 따라 정보를 처리합니다.</p>
+<p>회사는 서비스 운영을 위해 다음 처리자를 이용합니다: Stripe(결제), Google Analytics(분석), Microsoft Clarity(분석), Cloudflare(호스팅·보안), Google·Kakao(비즈니스 로그인), Resend(이메일 발송), Anthropic(무료 진단·도구의 AI 처리), Google Maps Platform(장소 정보 조회). 각 서비스는 자체 개인정보처리방침에 따라 정보를 처리합니다.</p>
 <h2 class="h2-left">4. 보관 및 파기</h2>
 <p>개인정보는 서비스 제공에 필요한 기간 동안 보관하며, 목적 달성 후 관련 법령이 정한 기간을 제외하고 지체 없이 파기합니다. 구독 해지 후에도 법적 의무 이행을 위한 최소한의 거래 기록은 보관될 수 있습니다.</p>
 <h2 class="h2-left">5. 이용자의 권리</h2>
