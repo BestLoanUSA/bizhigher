@@ -8,7 +8,8 @@ import { ensureSchema, addEvent, approveDeliverable, parseOptions, tokenFromPath
 import { wakeRoutine } from '../api/_runner.js';
 import { customerTitle } from '../api/_playbook.js';
 import { notify } from '../api/_notify.js';
-import { liveReportHtml, reportPeriods } from './_live.js';
+import { liveReportHtml, reportPeriods, storedReport } from './_live.js';
+import { portalHtml, PORTAL_CSS } from './_portal.js';
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const EMBED_RE = /^https:\/\/([a-z0-9-]+\.)*(bizhigher-sites\.pages\.dev|sites\.bizhigher\.com|bizhigher\.com)(\/|$)/i;
@@ -145,7 +146,7 @@ function reportCard(report, { periods, sel, preview, token }) {
 <script>(function(){try{var f=document.querySelector('.rframe');if(!f)return;function fit(){try{var h=f.contentDocument&&f.contentDocument.documentElement.scrollHeight;if(h>200)f.style.height=h+'px';}catch(e){}}f.addEventListener('load',fit);window.addEventListener('resize',fit);setTimeout(fit,1200);setTimeout(fit,3000);}catch(e){}})();</script>`;
 }
 
-function page(job, ds, { preview, msg, site, siteTask, env, report }) {
+function page(job, ds, { preview, msg, site, siteTask, env, report, portal }) {
   const biz = esc((job.business || '').replace(/\s*\(데모\)/, ''));
   const items = ds.map((d) => {
     const options = parseOptions(d.options);
@@ -160,7 +161,7 @@ function page(job, ds, { preview, msg, site, siteTask, env, report }) {
     // 승인 버튼이 없는 결과물(킥오프 안내 등)에도 답할 길을 둔다 — 킥오프의 '확인 부탁드려요' 질문에 메일 말고는 답할 곳이 없었다(2026-11-04)
     const isKick = d.task && d.task.key === 'ob-5';
     const reply = !d.needs_approval ? `<details class="reply"${isKick && !d.customer_reply ? ' open' : ''}><summary>${isKick ? '확인 질문에 답하기' : '답변·질문 남기기'}</summary>${d.customer_reply ? `<div class="ok">💬 보내 주신 답변: ${esc(d.customer_reply).replace(/\n/g, '<br>')}</div>` : ''}<form method="post"><input type="hidden" name="id" value="${d.id}"><input type="hidden" name="action" value="reply"><textarea name="note" required placeholder="${isKick ? '예: 월·목은 4시에 닫습니다. 카테고리는 안경점으로 바꿔 주세요. 브랜드 이름은 올려도 됩니다.' : '궁금한 점이나 덧붙일 내용을 적어 주세요'}"></textarea><button class="btn ghost" type="submit">보내기</button></form></details>` : '';
-    return `<section class="card${d.sent_at ? '' : ' draft'}"><div class="meta">${d.sent_at ? esc(d.sent_at.slice(0, 10)) : '전달 전 (미리보기)'}</div><h2>${esc(customerTitle(d.task && d.task.key, d.title))}</h2>${d.summary ? `<p class="sum">${esc(d.summary)}</p>` : ''}${body(d)}${approval}${reply}</section>`;
+    return `<section class="card${d.sent_at ? '' : ' draft'}" id="d${d.id}"><div class="meta">${d.sent_at ? esc(d.sent_at.slice(0, 10)) : '전달 전 (미리보기)'}</div><h2>${esc(customerTitle(d.task && d.task.key, d.title))}</h2>${d.summary ? `<p class="sum">${esc(d.summary)}</p>` : ''}${body(d)}${approval}${reply}</section>`;
   }).join('');
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>${biz} — BizHigher 결과물</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
@@ -178,9 +179,10 @@ pre{white-space:pre-wrap;word-break:break-word;font:14px/1.6 inherit;background:
 .ok{margin-top:10px;color:#0B7A3E;font-weight:700}.rev{margin-top:10px;color:#B45309;font-size:14px}.muted{color:var(--muted);font-size:14px}
 .flash{background:#E7F7EE;color:#0B7A3E;border-radius:12px;padding:12px 14px;font-weight:700;margin-bottom:14px}.pv{background:#FEF3C7;color:#92400E;border-radius:12px;padding:10px 14px;font-size:13px;margin-bottom:14px}
 footer{text-align:center;color:var(--muted);font-size:13px;padding:24px 16px}footer a{color:var(--blue)}
+${PORTAL_CSS}
 </style></head><body>
 <header><div class="logo">Biz<span>Higher</span></div><h1>${biz} 사장님 결과물</h1><p>${esc(job.service_name || '')} · 이 페이지는 사장님만 보는 주소입니다. 북마크해 두세요.</p></header>
-<main>${msg ? `<div class="flash">${esc(msg)}</div>` : ''}${preview ? '<div class="pv">미리보기 모드 — 점선 상자는 아직 고객에게 전달되지 않은 결과물입니다.</div>' : ''}
+${portal || ''}<main>${msg ? `<div class="flash">${esc(msg)}</div>` : ''}${preview ? '<div class="pv">미리보기 모드 — 점선 상자는 아직 고객에게 전달되지 않은 결과물입니다.</div>' : ''}
 ${report || ''}${siteCard(site, siteTask, env)}${items || '<div class="card"><p class="muted">아직 전달된 결과물이 없습니다. 작업이 진행되면 여기에 쌓입니다.</p></div>'}
 </main><footer>궁금한 점은 <a href="mailto:hello@bizhigher.com">hello@bizhigher.com</a> · 수정 1회 무료 · <a href="https://bizhigher.com/terms/">이용약관</a></footer></body></html>`;
 }
@@ -199,7 +201,10 @@ export async function onRequestGet({ params, env, request }) {
   let report = null, periods = [];
   try { periods = await reportPeriods(env.DB, data.job.id); report = await liveReportHtml(env.DB, data.job, data.site, sel); } catch (e) { report = null; }
   if (u.searchParams.get('view') === 'report' && report) return html(report);
-  return html(page(data.job, ds, { preview, msg, site: data.site, siteTask: data.siteTask, env, report: reportCard(report, { periods, sel, preview, token: params.token }) }));
+  // 마케팅 포털(2026-11-07) — 홈의 순두부 하우스 포털과 같은 형태로 이 고객의 실제 결과물·리포트를 한 화면에
+  let portal = '';
+  try { const base = periods.length ? await storedReport(env.DB, data.job.id, periods[0]) : null; portal = await portalHtml(env.DB, { job: data.job, ds, site: data.site, base, period: periods[0] || '', token: params.token, preview }); } catch (e) { portal = ''; }
+  return html(page(data.job, ds, { preview, msg, site: data.site, siteTask: data.siteTask, env, report: reportCard(report, { periods, sel, preview, token: params.token }), portal }));
 }
 
 export async function onRequestPost({ params, env, request, waitUntil }) {
