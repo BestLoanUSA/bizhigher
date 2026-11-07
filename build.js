@@ -847,21 +847,54 @@ function samplePages() {
 }
 
 function showcaseSection() {
-  /* 2026-11-06 v4 — "이렇게 생긴 것을 받습니다": 결과물 4장면 + 월간 리포트 쪽이 하나씩 크게 날아와 작아지면서 오른쪽 보드에 박히고,
-     마지막엔 보드가 펼쳐져 한 화면에서 전부 본다. 카드는 800×600 고정 캔버스를 transform 으로만 옮긴다(내용 배치가 크기와 무관).
-     JS 없음·움직임 줄이기·낮은 화면 = 같은 카드를 격자로 정적 표시 */
+  /* 2026-11-07 v5 — "이렇게 생긴 것을 받습니다" = 순두부 하우스 마케팅 포털.
+     큰 카드 8장(결과물 4 + 월간 리포트 4)이 하나씩 날아와 포털의 제 칸에 박히며 작은 타일로 바뀌고, 사이사이 다른 결과물 타일 8개가 튀어나와
+     포털을 채운다. 다 차면 포털이 화면 전체로 펼쳐진다(높이도 화면 비율에 맞춰 늘어나 빈 공간이 없다).
+     카드 = 800×600 캔버스, 포털 = 1200px(폰 380px) 캔버스 — 둘 다 transform 으로만 움직인다.
+     JS 없음·움직임 줄이기·낮은 화면 = 포털만 정적으로(타일 16개, 폰 12개) */
   const SCN = SC_SCENES.filter((x) => x.key !== 'report');
   const PAGES = samplePages();
   const pnum = (i) => (i === 0 ? '표지' : String(i).padStart(2, '0'));
-  const items = [
-    ...SCN.map((s, i) => ({ n: `0${i + 1}`, t: s.tab, sub: s.tabSub, group: '결과물', body: `<div class="fx-in fx-scene-in">${s.html}</div><ul class="sc-chips fx-chips">${s.chips.map((c) => `<li class="sc-chip">${c}</li>`).join('')}</ul>`, href: `/service/${s.service}/` })),
-    ...PAGES.map((p, i) => ({ n: pnum(i), t: p.title.split(' — ')[0].split(' · ').slice(0, 2).join(' · '), sub: '월간 리포트', group: '리포트', body: `<div class="fx-in fx-page-in"><img src="/sample-report/${p.file}" alt="샘플 월간 리포트 ${pnum(i)} — ${escAttr(p.title)}" loading="lazy" decoding="async"></div>`, href: '/sample-report/' })),
-  ];
-  const cards = items.map((it, k) => `
-      <figure class="fx-card${it.group === '리포트' ? ' fx-is-page' : ''}" data-k="${k}" data-t="${escAttr(it.t)}" data-sub="${escAttr(it.sub)}">
-        <span class="fx-tag"><i>${it.n}</i>${it.group === '리포트' ? '리포트 · ' : ''}${it.t}</span>
+  const ver = (f) => { try { return crypto.createHash('md5').update(fs.readFileSync(path.join(__dirname, 'src', 'sample-report', f))).digest('hex').slice(0, 8); } catch { return '1'; } };
+  const repSrc = (p) => `/sample-report/${p.file}?v=${ver(p.file)}`;
+  // 날아오는 큰 카드(8) → 포털 칸(area)
+  const flying = [
+    ...SCN.map((s) => ({ area: { profile: 'prof', reviews: 'rev', website: 'web', ads: 'ads' }[s.key], n: '', t: s.tab, sub: s.tabSub, page: false, body: `<div class="fx-in fx-scene-in">${s.html}</div><ul class="sc-chips fx-chips">${s.chips.map((c) => `<li class="sc-chip">${c}</li>`).join('')}</ul>` })),
+    ...PAGES.slice(0, 4).map((p, i) => ({ area: `rep${i}`, t: p.title.split(' — ')[0].split(' · ').slice(0, 2).join(' · '), sub: '월간 리포트', page: true, body: `<div class="fx-in fx-page-in"><img src="${repSrc(p)}" alt="샘플 월간 리포트 ${pnum(i)} — ${escAttr(p.title)}" loading="lazy" decoding="async"></div>` })),
+  ].filter((x) => x.area);
+  flying.forEach((x, i) => { x.n = String(i + 1).padStart(2, '0'); });
+  const cards = flying.map((it, k) => `
+      <figure class="fx-card${it.page ? ' fx-is-page' : ''}" data-k="${k}" data-t="${escAttr(it.t)}" data-sub="${escAttr(it.sub)}" aria-hidden="true">
+        <span class="fx-tag"><i>${it.n}</i>${it.page ? '리포트 · ' : ''}${it.t}</span>
         ${it.body}
       </figure>`).join('');
+  const kOf = (area) => flying.findIndex((x) => x.area === area);
+
+  // 포털 타일
+  let grid = [];
+  try { const d = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'sample-report.json'), 'utf8')); for (const s of d.sections || []) for (const b of s.blocks || []) if (b.grids) grid = b.grids.after; } catch {}
+  const gcell = (v) => `<i class="${v <= 0 ? 'o' : v <= 3 ? 'a' : v <= 7 ? 'b' : v <= 12 ? 'c' : 'd'}"></i>`;
+  const R = PAGES.map((p, i) => `<img class="fxp-cover" src="${repSrc(p)}" alt="" loading="lazy" decoding="async">`);
+  const T = {
+    web: ['웹사이트', `<div class="fxp-web"><div class="fxp-bro"><i></i><i></i><i></i><span>sundubuhouse.com</span></div><div class="fxp-hero" style="background-image:url('${SC_IMG.interior}')"><b>순두부 하우스</b><span>가든그로브 정통 순두부 · 매일 11시~9시</span><em>📞 전화하기</em></div><div class="fxp-th"><img src="${SC_IMG.galbi}" alt="" loading="lazy"><img src="${SC_IMG.seafood}" alt="" loading="lazy"><img src="${SC_IMG.bibimbap}" alt="" loading="lazy"></div></div>`],
+    prof: ['구글 프로필', `<div class="fxp-prof"><div class="fxp-ph" style="background-image:url('${SC_IMG.interior}')"></div><b>순두부 하우스</b><span class="fxp-star">4.7 ★★★★★ <s>(148)</s></span><span class="fxp-open">영업 중 · 오후 9시 종료</span><div class="fxp-btns"><i>전화</i><i>길찾기</i><i>웹사이트</i></div><div class="fxp-th"><img src="${SC_IMG.galbi}" alt="" loading="lazy"><img src="${SC_IMG.seafood}" alt="" loading="lazy"><img src="${SC_IMG.bibimbap}" alt="" loading="lazy"></div><div class="fxp-post"><img src="${SC_IMG.galbi}" alt="" loading="lazy"><span><b>가을 신메뉴 · 갈비 순두부</b>2일 전 게시물</span></div></div>`],
+    ads: ['광고 소재 · 숏폼', `<div class="fxp-ad" style="background-image:url('${SC_IMG.seafood}')"><span class="fxp-adk">LUNCH SPECIAL</span><b>점심 순두부 세트</b><em>$12.95</em><i class="fxp-play">▶ 숏폼 15초</i></div>`],
+    rev: ['리뷰 답글 27건 · 평균 19시간', `<div class="fxp-rev"><div><span class="fxp-av">J</span><p><b>Jenny K. <s>★★★★★</s></b>순두부가 진짜 부드럽고 반찬이 매일 바뀌어요.<em>사장님 답글 · Jenny님, 반찬 칭찬 감사합니다! 주차는 건물 뒤편을 이용해 주세요.</em></p></div><div><span class="fxp-av m">M</span><p><b>Michael P. <s>★★★★☆</s></b>Seafood sundubu was excellent. Wait was ~15 min.<em>Owner reply · Thank you, Michael! Calling ahead helps on weekends.</em></p></div></div>`],
+    rep0: ['10월 월간 리포트', R[0] || ''],
+    rep1: ['리포트 · 노출', R[1] || ''],
+    rep2: ['리포트 · 손님 반응', R[2] || ''],
+    rep3: ['리포트 · 경쟁·AI', R[3] || ''],
+    score: ['진단 점수', `<div class="fxp-score"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="48" fill="none" stroke="#EEF1F6" stroke-width="12"/><circle cx="60" cy="60" r="48" fill="none" stroke="url(#fxg)" stroke-width="12" stroke-linecap="round" stroke-dasharray="${(2 * Math.PI * 48 * 0.86).toFixed(1)} 400" transform="rotate(-90 60 60)"/><defs><linearGradient id="fxg"><stop offset="0" stop-color="#14B8A6"/><stop offset="1" stop-color="#0A4DF5"/></linearGradient></defs><text x="60" y="68" text-anchor="middle">86</text></svg><span><s>48</s> → <b>86</b><em>+38</em></span></div>`],
+    map: ['지도 3위 안 17/49', `<div class="fxp-map">${grid.length ? grid.map((r) => r.map(gcell).join('')).join('') : ''}</div><span class="fxp-kw">"korean tofu soup" · 반경 2마일</span>`],
+    kpi: ['이번 달 손님 행동', `<div class="fxp-kpi"><div><b>112</b><span>전화</span><em>+20%</em></div><div><b>171</b><span>길찾기</span><em>+16%</em></div><div><b>83</b><span>웹사이트</span><em>+19%</em></div></div>`],
+    blog: ['블로그 글 2편', `<div class="fxp-blog"><img src="/blog-img/ai-search-optimization-aio-cover.jpg" alt="" loading="lazy"><b>가든그로브 순두부, 처음 오신 분께 추천하는 3가지</b><span>10/14 발행 · 검색 유입 +38</span><b>비 오는 날 생각나는 해물 순두부 이야기</b><span>10/28 발행</span></div>`],
+    list: ['로컬 등록처 30곳', `<div class="fxp-list">${['Google', 'Apple 지도', 'Bing', 'Yelp', 'Facebook', 'Nextdoor', '카카오맵', 'TripAdvisor'].map((x) => `<i>✓ ${x}</i>`).join('')}<i class="more">+22곳</i></div>`],
+    ai: ['AI 검색에 나오나요', `<div class="fxp-ai"><span class="ok">✓ ChatGPT <em>2번째 추천</em></span><span class="ok">✓ Perplexity</span><span class="part">△ Gemini <em>영어 질문</em></span></div>`],
+    cal: ['11월 게시 캘린더', `<div class="fxp-cal">${['일', '월', '화', '수', '목', '금', '토'].map((d) => `<b>${d}</b>`).join('')}${Array.from({ length: 30 }, (_, i) => `<i class="${[2, 5, 9, 12, 16, 19, 23, 26].includes(i + 1) ? 'p' : ''}${i + 1 === 27 ? ' h' : ''}">${i + 1}</i>`).join('')}</div>`],
+    appr: ['고객 페이지', `<div class="fxp-appr"><span>승인 대기 1건</span><b>11월 게시물 캘린더 · 8건</b><div><i class="y">이대로 진행</i><i>수정 요청</i></div><em>7일 무응답이면 자동 승인</em></div>`],
+  };
+  const order = ['web', 'prof', 'ads', 'rep0', 'score', 'map', 'rev', 'kpi', 'blog', 'list', 'rep1', 'cal', 'ai', 'appr', 'rep2', 'rep3'];
+  const tiles = order.filter((a) => T[a]).map((a) => { const k = kOf(a); return `<div class="fxp-t fxp-a-${a}${k >= 0 ? ' tgt' : ''}" style="grid-area:${a}"${k >= 0 ? ` data-k="${k}"` : ''}><span class="fxp-l">${T[a][0]}</span><div class="fxp-c">${T[a][1]}</div></div>`; }).join('');
   return `
 <section class="section fx" id="showcase">
   <div class="fx-pin" id="fx-pin">
@@ -869,14 +902,17 @@ function showcaseSection() {
       <div class="container fx-head" id="fx-head">
         <p class="eyebrow">WHAT YOU GET</p>
         <h2 class="h2"><em>이렇게 생긴 것</em>을 받습니다</h2>
-        <p class="mk-section-sub fx-sub">구글 프로필·리뷰·웹사이트·광고 소재, 그리고 매달 받는 리포트까지 — 전부 사장님 업소의 정보와 사진으로 만들고 전문가 검수 후 전달합니다.</p>
+        <p class="mk-section-sub fx-sub">구글 프로필·리뷰·웹사이트·광고 소재, 블로그와 등록처, 그리고 매달 받는 리포트까지 — 한 달 동안 사장님 가게에 쌓이는 것들을 한 화면에 모았습니다.</p>
       </div>
-      <div class="fx-board" id="fx-board" aria-hidden="true"><div class="fx-board-h"><span class="fx-bt"><b>순두부 하우스</b>가 받은 것</span><span class="fx-bc"><em id="fx-count">0</em> / ${items.length}</span></div></div>
-      <div class="fx-slots" id="fx-slots" aria-hidden="true">${items.map(() => '<i></i>').join('')}</div>
+      <div class="container fx-pwrap"><div class="fx-portal" id="fx-portal">
+        <div class="fxp-bar"><span class="fxp-logo">B</span><b>순두부 하우스</b><span class="fxp-sub">마케팅 포털 · 2026년 10월</span><span class="fxp-count"><em id="fx-count">16</em> / <span id="fx-total">16</span></span></div>
+        <div class="fxp-grid" id="fxp-grid">${tiles}</div>
+      </div></div>
+      <div class="fx-dim" id="fx-dim" aria-hidden="true"></div>
       <div class="fx-cap" id="fx-cap" aria-hidden="true"><b></b><span></span></div>
       <div class="fx-cards" id="fx-cards">${cards}</div>
       <div class="fx-final" id="fx-final">
-        <p class="fx-final-t">결과물 4가지 + 매달 리포트 — <b>한 달에 이만큼</b> 받습니다</p>
+        <p class="fx-final-t">한 달 동안 <b>이만큼 쌓입니다</b> — 결과물 · 리포트 · 고객 페이지까지</p>
         <div class="hero-ctas"><a class="btn btn-primary" href="/free-audit/">우리 가게 무료 진단 받기</a><a class="btn btn-ghost" href="/sample-report/" target="_blank" rel="noopener">월간 리포트 전체 보기 · PDF</a></div>
       </div>
     </div>
@@ -886,93 +922,84 @@ function showcaseSection() {
 <script>
 (function () {
   try {
-    var pin = document.getElementById('fx-pin'), sticky = document.getElementById('fx-sticky'), head = document.getElementById('fx-head');
-    var board = document.getElementById('fx-board'), slotsEl = document.getElementById('fx-slots'), cap = document.getElementById('fx-cap');
-    var fin = document.getElementById('fx-final'), cnt = document.getElementById('fx-count');
-    if (!pin || !sticky) return;
+    var pin = document.getElementById('fx-pin'), head = document.getElementById('fx-head'), portal = document.getElementById('fx-portal'), grid = document.getElementById('fxp-grid');
+    var dim = document.getElementById('fx-dim'), cap = document.getElementById('fx-cap'), fin = document.getElementById('fx-final'), cnt = document.getElementById('fx-count'), tot = document.getElementById('fx-total');
+    if (!pin || !portal) return;
+    var tilesAll = Array.prototype.slice.call(grid.querySelectorAll('.fxp-t'));
+    tot.textContent = String(tilesAll.filter(function (t) { return t.offsetParent !== null; }).length);
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     var cards = Array.prototype.slice.call(document.querySelectorAll('.fx-card'));
-    var marks = Array.prototype.slice.call(slotsEl.children);
-    var N = cards.length, CW = 800, CH = 600;
-    var desk = false, S = 380, F = 620, big = null, slots = [], finals = [], brd = null, brdF = null, ok = false;
+    var N = cards.length, CW = 800, CH = 600, A = [];
+    var tgt = cards.map(function (c) { return grid.querySelector('.fxp-t[data-k="' + c.getAttribute('data-k') + '"]'); });
+    var extras = [], cells = [], ok = false, desk = false, S = 380, F = 620, big, pS, pF, PW = 1200;
     function seg(v, a, b) { return Math.max(0, Math.min(1, (v - a) / (b - a))); }
     function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
     function lerp(a, b, t) { return a + (b - a) * t; }
-    function fit(x, y, w, h) { var s = Math.min(w / CW, h / CH); return { x: x + (w - CW * s) / 2, y: y + (h - CH * s) / 2, s: s }; }
-    function grid(x, y, w, h, cols, rows, gap) {
-      var cw = (w - gap * (cols - 1)) / cols, ch = (h - gap * (rows - 1)) / rows, out = [];
-      for (var k = 0; k < cols * rows; k++) out.push(fit(x + (k % cols) * (cw + gap), y + Math.floor(k / cols) * (ch + gap), cw, ch));
-      return out;
-    }
+    function fitR(x, y, w, h, cw, ch, top) { var s = Math.min(w / cw, h / ch); return { x: x + (w - cw * s) / 2, y: top ? y : y + (h - ch * s) / 2, s: s }; }
     function layout() {
       var vw = window.innerWidth, vh = window.innerHeight;
-      desk = vw >= 992;
-      ok = desk ? vh >= 640 : vh >= 600;
+      desk = vw >= 992; ok = desk ? vh >= 640 : vh >= 600;
       pin.classList.toggle('fx-on', ok);
-      if (!ok) { pin.style.height = ''; return; }
-      S = desk ? 380 : 300; F = desk ? 620 : 520;
+      if (!ok) { pin.style.height = ''; portal.style.cssText = ''; return; }
+      // 폰은 포털 칸이 적다 — 칸이 숨은 카드는 날아오지 않는다
+      A = []; cards.forEach(function (c, k) { if (tgt[k] && tgt[k].offsetParent !== null) A.push(k); });
+      N = A.length;
+      S = desk ? 380 : 300; F = desk ? 380 : 320;
       pin.style.height = 'calc(100vh + ' + (N * S + F) + 'px)';
-      var c = head.getBoundingClientRect(), pad = desk ? 24 : 16;
-      var L = c.left + pad, R = c.right - pad, W = R - L;
-      var top = Math.round(head.offsetTop + head.offsetHeight + (desk ? 8 : 4)), bottom = vh - (desk ? 26 : 18);
-      if (desk) {
-        var bw = W * 0.4, bx = R - bw, bh = bottom - top;
-        big = fit(L, top, W - bw - 36, bh - 44);
-        brd = { x: bx, y: top, w: bw, h: bh };
-        slots = grid(bx + 16, top + 50, bw - 32, bh - 66, 2, Math.ceil(N / 2), 10);
-        var fh = bottom - top - 76;
-        brdF = { x: L - 8, y: top - 8, w: W + 16, h: fh + 16 };
-        finals = grid(L + 8, top + 42, W - 16, fh - 50, 4, Math.ceil(N / 4), 14);
-      } else {
-        var bigH = Math.min((W) * 0.75, (bottom - top) * 0.46);
-        big = fit(L, top, W, bigH);
-        var by = top + bigH + 40, rows = Math.ceil(N / 4), sw = (W - 20 - 18) / 4, sh = sw * 0.75;
-        var bh2 = Math.min(bottom - by, 40 + rows * sh + (rows - 1) * 6 + 12);
-        brd = { x: L, y: by, w: W, h: bh2 };
-        slots = grid(L + 10, by + 40, W - 20, bh2 - 52, 4, rows, 6);
-        brdF = { x: L - 4, y: top - 4, w: W + 8, h: bottom - top - 96 };
-        finals = grid(L + 6, top + 36, W - 12, bottom - top - 140, 2, Math.ceil(N / 2), 8);
-      }
-      marks.forEach(function (m, k) { var r = slots[k]; m.style.cssText = 'left:' + r.x + 'px;top:' + r.y + 'px;width:' + CW * r.s + 'px;height:' + CH * r.s + 'px'; });
+      var c = head.getBoundingClientRect(), pad = desk ? 24 : 16, L = c.left + pad, W = c.width - pad * 2;
+      var top = Math.round(head.offsetTop + head.offsetHeight + (desk ? 8 : 4)), bottom = vh - (desk ? 22 : 16);
+      var fy = top, fh = bottom - top - (desk ? 92 : 112);
+      PW = desk ? 1200 : 380;
+      var PH = Math.round(Math.max(desk ? 560 : 620, Math.min(desk ? 900 : 1100, PW * fh / W)));
+      portal.style.width = PW + 'px'; portal.style.height = PH + 'px';
+      pF = fitR(L, fy, W, fh, PW, PH, false);
+      // 포털은 처음부터 제자리(전체 크기)에서 비어 있다가 차오른다. 큰 카드는 그 위 가운데에 떠서 보였다가 제 칸으로 줄어든다
+      pS = pF;
+      if (desk) big = fitR(L + W * 0.13, fy + 6, W * 0.74, fh - 50, CW, CH, false);
+      else big = fitR(L, fy + 10, W, Math.min(W * 0.75, fh - 60), CW, CH, false);
+      cells = tgt.map(function (t) { return t ? { x: grid.offsetLeft + t.offsetLeft, y: grid.offsetTop + t.offsetTop, w: t.offsetWidth, h: t.offsetHeight } : null; });
+      extras = tilesAll.filter(function (t) { return !t.classList.contains('tgt') && t.offsetParent !== null; });
+      tot.textContent = String(extras.length + N);
       frame();
     }
     var vids = cards.map(function (cd) { return cd.querySelector('video'); });
     var raf = 0;
     function frame() {
       raf = 0; if (!ok) return;
-      var d = -pin.getBoundingClientRect().top;
-      var q = ease(seg(d, N * S, N * S + F * 0.8));
-      var done = 0, capK = -1, capA = 0;
+      var d = -pin.getBoundingClientRect().top, TL = N * S;
+      var q = ease(seg(d, TL, TL + F * 0.8));
+      var P = { x: lerp(pS.x, pF.x, q), y: lerp(pS.y, pF.y, q), s: lerp(pS.s, pF.s, q) };
+      portal.style.transform = 'translate(' + P.x.toFixed(1) + 'px,' + P.y.toFixed(1) + 'px) scale(' + P.s.toFixed(4) + ')';
+      var on = 0, capK = -1, capA = 0, dimA = 0;
       cards.forEach(function (cd, k) {
-        var t = (d - k * S) / S, r, op = 1, sh;
-        if (t < 0) { op = 0; r = { x: big.x, y: big.y + 40, s: big.s * 1.04 }; }
-        else if (t < 1) {
+        var j = A.indexOf(k);
+        if (j < 0) { cd.style.opacity = '0'; cd.style.visibility = 'hidden'; return; }
+        var t = (d - j * S) / S, cl = cells[k], op = 0, r = { x: big.x, y: big.y + 40, s: big.s * 1.04 };
+        if (t >= 0 && t < 1 && cl) {
           var e = ease(seg(t, 0, 0.2)), f = ease(seg(t, 0.55, 1));
-          op = e;
+          var dst = fitR(P.x + cl.x * P.s, P.y + cl.y * P.s, cl.w * P.s, cl.h * P.s, CW, CH, false);
           var b0 = { x: big.x, y: big.y + 40 * (1 - e), s: big.s * (1.04 - 0.04 * e) };
-          r = { x: lerp(b0.x, slots[k].x, f), y: lerp(b0.y, slots[k].y, f), s: lerp(b0.s, slots[k].s, f) };
+          r = { x: lerp(b0.x, dst.x, f), y: lerp(b0.y, dst.y, f), s: lerp(b0.s, dst.s, f) };
+          op = e * (1 - seg(t, 0.86, 1));
+          dimA = Math.max(dimA, e * (1 - f));
           if (e > 0 && f < 1) { capK = k; capA = e * (1 - seg(t, 0.5, 0.65)); }
-          if (vids[k]) { if (t < 0.6 && vids[k].paused) vids[k].play().catch(function () {}); }
-        } else {
-          done++;
-          r = { x: lerp(slots[k].x, finals[k].x, q), y: lerp(slots[k].y, finals[k].y, q), s: lerp(slots[k].s, finals[k].s, q) };
+          if (vids[k] && t < 0.6 && vids[k].paused) vids[k].play().catch(function () {});
         }
         if (vids[k] && (t < 0 || t >= 0.6) && !vids[k].paused) vids[k].pause();
+        var landed = t >= 0.9;
+        if (tgt[k]) { tgt[k].classList.toggle('on', landed); if (landed) on++; }
         cd.style.opacity = op.toFixed(3);
+        cd.style.visibility = op > 0 ? 'visible' : 'hidden';
         cd.style.transform = 'translate(' + r.x.toFixed(1) + 'px,' + r.y.toFixed(1) + 'px) scale(' + r.s.toFixed(4) + ')';
-        cd.style.zIndex = t >= 0 && t < 1 ? 30 : 10 + k;
-        cd.classList.toggle('fx-flying', t >= 0 && t < 1);
       });
-      var B = { x: lerp(brd.x, brdF.x, q), y: lerp(brd.y, brdF.y, q), w: lerp(brd.w, brdF.w, q), h: lerp(brd.h, brdF.h, q) };
-      board.style.cssText = 'left:' + B.x + 'px;top:' + B.y + 'px;width:' + B.w + 'px;height:' + B.h + 'px';
-      slotsEl.style.opacity = String(1 - q);
-      cnt.textContent = String(done);
+      extras.forEach(function (t, j) { var o = d >= TL * (j + 0.6) / extras.length; t.classList.toggle('on', o); if (o) on++; });
+      cnt.textContent = String(on);
       if (capK >= 0) { cap.firstChild.textContent = cards[capK].getAttribute('data-t'); cap.lastChild.textContent = cards[capK].getAttribute('data-sub'); }
       cap.style.opacity = String(capK >= 0 ? capA : 0);
+      dim.style.opacity = dimA.toFixed(3);
       cap.style.left = big.x + 'px'; cap.style.top = (big.y + CH * big.s + 10) + 'px'; cap.style.width = CW * big.s + 'px';
       fin.style.opacity = String(seg(q, 0.6, 1));
       fin.style.pointerEvents = q > 0.8 ? 'auto' : 'none';
-      pin.classList.toggle('fx-final-on', q > 0.98);
     }
     function onScroll() { if (!raf) raf = requestAnimationFrame(frame); }
     window.addEventListener('scroll', onScroll, { passive: true });
