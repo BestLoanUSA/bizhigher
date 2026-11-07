@@ -9,7 +9,6 @@
 
 | 상태 | slug | 카테고리 | 우선 이유 |
 |---|---|---|---|
-| ⬜ | not-showing-on-google | 구글 노출 | [SEO K-01] "내 가게가 지도에 안 보일 때 먼저 확인" 문단에 /tools/local-rank/ 링크 1개 |
 | ⬜ | google-business-profile-hours-update | 구글 노출 | [SEO I-01] 영업시간 변경이 디렉토리에도 퍼져야 한다는 문단에 /service/local-listing-care/ 링크 1개 |
 | ⬜ | negative-review-response-guide | 리뷰·평판 | 고의도 검색, 예문 보강 여지 |
 | ⬜ | google-ads-small-budget-guide | 광고 | 광고 UI·정책 변화가 잦음 |
@@ -42,3 +41,4 @@
 | ✅ 2026-10-31 | do-you-need-a-website | 첫 문단 직접 답, 판단 흐름도 이미지, 5신호 표·업종별 예시·계약 전 확인 표(도메인 명의), 구글 공식 로컬 순위 3요소 반영, 구글 프로필 무료 웹사이트 2024년 종료 명시, 근거 없던 가격·제작기간·유지관리 금액(판매 문구) 삭제, 내부 링크 7개, FAQ 5개 |
 | ✅ 2026-11-03 | korean-business-directory-list | 첫 문단 직접 답, 구글 공식 인지도(prominence) 설명 반영, 디렉토리별 무료·유료·주의 표(BBB 인증 유료·Nextdoor·Yelp·Apple 인증), 한인 업소록은 확인 안 된 한국일보·중앙일보·라코텔 단정 삭제하고 확인 질문 3개로 대체, 피라미드 이미지, 내부 링크 6개·로컬 등록 관리 링크 1개(I-01), FAQ 5개 |
 | ✅ 2026-11-05 | near-me-search-ranking | 첫 문단 직접 답, 구글 공식 3요소 표·세 요소 이미지, 위치 미공유 시 구글이 아는 정보로 거리 계산(공식 문구)으로 정정, 확인 안 된 Wi-Fi·기지국 추정·지역명 리뷰 효과·서비스 지역 효과 주장과 업종별 거리 가중치 단정 삭제, 서비스 지역 공식 기준(20개·2시간), 순위 직접 비교 방법·하지 말 것, /tools/local-rank/ 링크(K-01), 내부 링크 8개, FAQ 6개 |
+| ✅ 2026-11-07 | not-showing-on-google | [SEO K-01] 2분 진단 문단과 7번 거리 항목에 /tools/local-rank/ 링크 2개(근사치 한계 명시) |
