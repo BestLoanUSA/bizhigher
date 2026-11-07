@@ -67,6 +67,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | 페이지 구조·문구 | `build.js` |
 | 히어로 데모 업체 4곳 | `build.js` 안의 `BIZ` 배열 |
 | 히어로 데모 마지막 장면(2026-11-07) | `build.js` `demoFold(f)` — 플랜 칩이 카드로 접힐 때 "MISSION CLEAR · 180일 완료" 도장이 쿵 박히고(번쩍임·흔들림·색종이 `.dm-flash`·`.dm-stamp`·`.dm-burst`) → "12개월 플랜으로 연장하기" 버튼 탭 → "연장 완료 · 다음 180일 시작". 넓은 화면은 히어로 마지막 0.4vh 구간(`window.__bhDemoFold`, 높이 466vh), 폰은 핀 구간 0.74~1, 시간 재생은 7.3~10.5초. CSS v55. 무료 진단 폼 업체명 예시는 순두부와 겹치지 않게 "하나 안경원" |
+| 홈 VS 대행사 시간 경주 막대(2026-11-07) | `build.js` 비교 섹션 스크립트 — 스크롤에 묶임(`.vs-scrub`): 막대 윗변이 화면 55% → 15% 로 올라오는 동안 0→100%로 차고, 표시 지점은 막대가 실제 화면 위치에 닿을 때 켜진다(`.on`, 폰은 CSS 가 칸 위치를 바꾸므로 실측). 되돌리면 줄어든다. 비교표 줄 등장·타이핑은 그대로 IntersectionObserver. 움직임 줄이기면 완성 상태. CSS v56 |
 | 블로그 글 | `content/blog/*.md` |
 | 블로그 주제 큐 | `content/blog-calendar.md` |
 | 블로그 카드 대표 사진(2026-11-06) | 장면 `content/blog/img/covers.json`(slug → 영어 장면) → `node scripts/blog-covers.js [--only slug]`(fal.ai flux-pro v1.1, 4:3 → 800×600 `{slug}-cover.jpg`, 장당 약 $0.04, FAL_KEY) — 카드 그림 1순위(없으면 표 그림 `-card.jpg`). Actions 에는 FAL_KEY 가 없어 **발행 루틴이 글과 함께** 만든다(캘린더 이미지 규칙). 글자·로고·앱 화면 금지 |

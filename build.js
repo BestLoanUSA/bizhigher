@@ -2032,7 +2032,37 @@ ${showcaseSection()}
 (function () {
   try {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return;
-    ['vs-race', 'vs-table'].forEach(function (id) {
+    /* 시간 경주 막대 — 스크롤에 묶는다. 막대가 화면 가운데(55%)에서 출발해 위쪽(15%)에 닿으면 끝까지 찬다.
+       되돌려 올리면 다시 줄어든다. 위치로 계산하므로 이미 지나간 자리에서 열면 완성된 상태 */
+    var race = document.getElementById('vs-race');
+    if (race) {
+      var fills = race.querySelectorAll('.vr-fill');
+      var marks = Array.prototype.slice.call(race.querySelectorAll('.vr-ms, .vr-step, .vr-end')).map(function (m) { return { el: m, x: 100 }; });
+      /* 실제 화면 위치(%)로 — 폰은 CSS 가 칸 위치를 바꾼다. 끝 표시(.vr-end)는 100 */
+      var measure = function () { marks.forEach(function (m) {
+        if (m.el.classList.contains('vr-end')) return;
+        var tw = m.el.parentNode.offsetWidth; if (tw) m.x = m.el.offsetLeft / tw * 100;
+      }); };
+      measure();
+      var raf = 0, lastP = -1;
+      var upd = function () {
+        raf = 0;
+        var vh = window.innerHeight, top = race.getBoundingClientRect().top;
+        var p = (vh * 0.55 - top) / (vh * 0.40);
+        p = p < 0 ? 0 : p > 1 ? 1 : p;
+        if (Math.abs(p - lastP) < 0.002) return; lastP = p;
+        var w = (p * 100).toFixed(2) + '%';
+        for (var i = 0; i < fills.length; i++) fills[i].style.width = w;
+        marks.forEach(function (m) { m.el.classList.toggle('on', p * 100 >= m.x - 1); });
+        race.classList.toggle('vs-done', p >= 1);
+      };
+      race.classList.add('vs-scrub');
+      upd();
+      var req = function () { if (!raf) raf = requestAnimationFrame(upd); };
+      window.addEventListener('scroll', req, { passive: true });
+      window.addEventListener('resize', function () { measure(); lastP = -1; req(); });
+    }
+    ['vs-table'].forEach(function (id) {
       var el = document.getElementById(id);
       if (!el) return;
       var r = el.getBoundingClientRect();
