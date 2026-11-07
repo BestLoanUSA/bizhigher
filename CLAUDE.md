@@ -244,6 +244,7 @@ Cloudflare 프로젝트 → Settings → Environment variables (Production).
 | `GOOGLE_OAUTH_CLIENT_ID` · `GOOGLE_OAUTH_CLIENT_SECRET` | 선택 (사장님 구글 로그인) | `/login/` 의 구글 버튼이 "준비 중" 안내로 돌아온다. 메일 링크(`/c/…`)는 그대로. 리디렉션 URI `https://bizhigher.com/auth/google/callback` (`docs/owner-login-setup-ko.md`) |
 | `KAKAO_REST_API_KEY` · `KAKAO_CLIENT_SECRET` | 선택 (사장님 카카오 로그인) | 카카오 버튼이 "준비 중". 리디렉션 URI `https://bizhigher.com/auth/kakao/callback`. 이메일 동의는 비즈 앱 전환이 필요할 수 있어 없으면 고객 페이지 [카카오로 연결]로 잇는다 |
 | `KAKAO_JS_KEY` | 선택 (카카오 간편로그인) | 휴대폰에서도 카카오 웹 로그인 화면(아이디 칸)이 먼저 뜬다. 있으면 카카오톡 앱이 바로 열린다. 콘솔에 JavaScript SDK 도메인 등록 필요 |
+| `KAKAO_JS_CLIENT_SECRET` | 선택 | 카카오 JavaScript 키에 클라이언트 시크릿을 켰을 때만. 간편로그인 코드를 REST 키로 못 바꾸면 JavaScript 키로 다시 바꿀 때 쓴다 |
 | `KAKAO_CHANNEL_URL` | 선택 | 로그인 회원 페이지의 카카오톡 채널 추가·1:1 채팅 버튼이 안 보인다(이메일만) |
 | `OWNER_SESSION_SECRET` | 선택 | 비즈니스 로그인 쿠키 서명 키. 없으면 `ADMIN_PASSWORD` 에서 파생한 별도 키 |
 | `ADMIN_ACCESS_TEAM` · `ADMIN_ACCESS_AUD` | 선택 | Cloudflare Access로 바꿀 때. 둘 다 있으면 Access 토큰 검증 |
