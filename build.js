@@ -2216,6 +2216,11 @@ ${showcaseSection()}
 })();
 </script>
 
+
+${homeToolsSection()}
+
+${blogStripSection(posts)}
+
 <section class="section">
   <div class="container">
     <p class="eyebrow">SERVICES</p>
@@ -2261,10 +2266,6 @@ ${showcaseSection()}
 ${PV_JS}
 
 ${packageMatrixSection({ home: true })}
-
-${homeToolsSection()}
-
-${blogStripSection(posts)}
 
 ${dataBandSection()}
 
@@ -2329,7 +2330,7 @@ function homeToolsSection() {
 <section class="section home-tools">
   <div class="container">
     <p class="eyebrow">FREE TOOLS</p>
-    <h2 class="h2">돈 쓰기 전에, <em>무료로</em> 먼저 확인하세요</h2>
+    <h2 class="h2"><em>무료</em> 광고 도구</h2>
     <p class="home-tools-sub">우리 가게가 지도에서 몇 위인지, AI가 우리 가게를 아는지 — 저희가 고객 가게를 맡을 때 처음 확인하는 것들을 무료 도구로 열어 두었습니다. 가입 없이 이메일만 있으면 됩니다.</p>
     <div class="tool-grid-light home-tools-grid">${picks.map(toolCard).join('')}</div>
     <div class="hero-ctas" style="margin-top:30px;justify-content:center;"><a href="/tools/" class="btn btn-ghost">무료 도구 ${TOOLS.own.length}개 전체 보기 →</a></div>
