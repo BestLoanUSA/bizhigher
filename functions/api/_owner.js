@@ -89,8 +89,10 @@ export async function linkJob(db, lid, jobId, via) {
 
 /** 제공자 설정 — 키가 없으면 그 버튼은 "준비 중"으로 */
 export function providers(env) {
+  // 대시보드에 붙여 넣을 때 끝에 줄바꿈·공백이 딸려 들어온다(2026-11-07 카카오 키 끝 \n 으로 client_id=…%0A) — 항상 다듬어 쓴다
+  const v = (k) => String(env[k] || '').trim();
   return {
-    google: env.GOOGLE_OAUTH_CLIENT_ID && env.GOOGLE_OAUTH_CLIENT_SECRET ? { id: env.GOOGLE_OAUTH_CLIENT_ID, secret: env.GOOGLE_OAUTH_CLIENT_SECRET } : null,
-    kakao: env.KAKAO_REST_API_KEY ? { id: env.KAKAO_REST_API_KEY, secret: env.KAKAO_CLIENT_SECRET || '' } : null,
+    google: v('GOOGLE_OAUTH_CLIENT_ID') && v('GOOGLE_OAUTH_CLIENT_SECRET') ? { id: v('GOOGLE_OAUTH_CLIENT_ID'), secret: v('GOOGLE_OAUTH_CLIENT_SECRET') } : null,
+    kakao: v('KAKAO_REST_API_KEY') ? { id: v('KAKAO_REST_API_KEY'), secret: v('KAKAO_CLIENT_SECRET') } : null,
   };
 }

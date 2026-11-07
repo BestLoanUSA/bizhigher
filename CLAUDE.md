@@ -119,7 +119,7 @@ Cloudflare는 repo를 ID로 추적하므로 **대시보드에 옛 이름(`bizhig
 | 무료 진단 페이지 설명·FAQ | `content/pages/free-audit.md` — 채점 기준 표는 `functions/api/_engine.js`의 `computeScores`와 일치시킨다 |
 | 홈 "OUR OWN DATA" 제목·문구·숫자 | 최신 데이터 리포트 JSON의 `homeBand`(`headline`·`sub`·`stats`·`note`). 없으면 1호 설문으로 폴백 |
 | 홈 인기 무료 도구 | `build.js`의 `HOME_TOOLS`(6개, 밝은 그리드 `.tool-grid-light` — 묶음별 색 `TOOL_GROUP_COLOR`, 폰은 가로 넘김) |
-| 도구 ↔ 블로그 글 ↔ 서비스 연결(2026-11-06) | `build.js` `toolPostScore`(글 related = 도구 service +5 · 글 분류 ↔ 도구 묶음 `CAT_TOOL_GROUPS` +3 · 키워드 겹침 최대 +4, 3점 이상만) → 글 아래 "이 글과 함께 쓰는 무료 도구"(`toolsForPost`), 도구 아래 "이 도구와 함께 읽으면 좋은 글"(`postsForTool`). 서비스가 맞으면 둘 다 `svcBanner`(이름·가격·포함 3개·버튼, 가격은 services.json 그대로). 홈 섹션 순서는 … 무료 도구 → 블로그 → OUR OWN DATA → FAQ |
+| 도구 ↔ 블로그 글 ↔ 서비스 연결(2026-11-06) | `build.js` `toolPostScore`(글 related = 도구 service +5 · 글 분류 ↔ 도구 묶음 `CAT_TOOL_GROUPS` +3 · 키워드 겹침 최대 +4, 3점 이상만) → 글 아래 "이 글과 함께 쓰는 무료 도구"(`toolsForPost`), 도구 아래 "이 도구와 함께 읽으면 좋은 글"(`postsForTool`). 서비스가 맞으면 둘 다 `svcBanner`(이름·가격·포함 3개·버튼, 가격은 services.json 그대로). 홈 섹션 순서는 … 무료 도구(제목 "무료 광고 도구") → 블로그 → 서비스 → 플랜 → OUR OWN DATA → FAQ (2026-11-07) |
 | 푸터 항목 | `build.js`의 `FOOT_SERVICES`·`FOOT_TOOLS`(마케팅 가이드 열은 블로그 허브에서 자동) — `footerColsHtml()` |
 | 옛 주소 301 리디렉트·응답 헤더 | `build.js`의 `REDIRECTS`(→ `dist/_redirects`)·`HEADERS`(→ `dist/_headers`). 상품 슬러그를 바꾸거나 없애면 `REDIRECTS`에 한 줄 추가. `robots.txt`는 `/admin/`·`/api/` 차단 |
 
