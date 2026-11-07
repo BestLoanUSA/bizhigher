@@ -217,7 +217,7 @@ const FOOTER_AUDIT = `
         <p class="fa-note">📄 <a href="/report/sample">리포트가 어떻게 생겼는지 먼저 보기 →</a></p>
       </div>
       <form class="audit-form fa-form" id="fa-form">
-        <input type="text" name="business" placeholder="업체명 (예: 청기와 순두부)" class="input" required>
+        <input type="text" name="business" placeholder="업체명 (예: 하나 안경원)" class="input" required>
         <input type="text" name="location" placeholder="${AUDIT_PLACEHOLDER_LOCATION}" class="input" required>
         <input type="email" name="email" placeholder="이메일" class="input" required>
         <button type="submit" class="btn btn-primary btn-block">무료 진단 시작 →</button>
@@ -617,7 +617,7 @@ const MOCKUPS = {
     title: '구글 프로필 게시물', sub: '매주 1~2건 · 이미지 + 한/영 캡션', for: ['gbp-posting', 'google-profile-optimization'],
     html: `<div class="mk mk-gbp">
   <div class="mk-row"><span class="mk-avatar">순</span><div class="mk-who"><b>순두부 하우스</b><small>구글 비즈니스 프로필 · 2일 전</small></div></div>
-  <div class="mk-gbp-img" style="background-image:url('/showcase/galbi-sundubu.jpg')"><span>가을 신메뉴<br>갈비 순두부</span></div>
+  <div class="mk-gbp-img" style="background-image:url('/showcase/galbi-sundubu-n.jpg')"><span>가을 신메뉴<br>갈비 순두부</span></div>
   <p class="mk-gbp-cap">찬바람 불 때 딱 — 갈비를 넣고 끓인 갈비 순두부가 나왔습니다. 매일 11시~9시, 가든그로브 Brookhurst St.</p>
   <span class="mk-pill">자세히 알아보기</span>
 </div>` },
@@ -639,7 +639,7 @@ const MOCKUPS = {
   website: {
     title: '원페이지 웹사이트', sub: '모바일 우선 · 전화·길찾기·메뉴 · 호스팅비 $0', for: ['website', 'care-plan'],
     html: `<div class="mk mk-phone">
-  <div class="mk-web-hero" style="background-image:url('/showcase/interior.jpg')"><b>순두부 하우스</b><small>가든그로브 · 한식</small></div>
+  <div class="mk-web-hero" style="background-image:url('/showcase/lunch-interior.jpg')"><b>순두부 하우스</b><small>가든그로브 · 한식</small></div>
   <div class="mk-web-btns"><span>📞 전화</span><span>🗺 길찾기</span><span>📋 메뉴</span></div>
   <div class="mk-web-hours"><b>영업시간</b> 매일 11:00 – 21:00</div>
   <div class="mk-web-menu"><div><span>갈비 순두부</span><span>$16.95</span></div><div><span>해물 순두부</span><span>$14.95</span></div><div><span>돌솥비빔밥</span><span>$15.95</span></div></div>
@@ -659,7 +659,7 @@ const MOCKUPS = {
   ad: {
     title: '광고 소재', sub: '1080×1080 · 인스타·페북·구글 · 매달 10장', for: ['ad-creative-pack', 'ads-setup', 'ads-management'],
     html: `<div class="mk mk-ad">
-  <div class="mk-ad-sq" style="background-image:url('/showcase/galbi-sundubu.jpg')"><span class="mk-ad-k">LUNCH SPECIAL</span><b>점심 순두부 세트<br>$12.95</b><small>평일 11시–3시 · 가든그로브</small><span class="mk-ad-logo">순두부 하우스</span></div>
+  <div class="mk-ad-sq" style="background-image:url('/showcase/lunch-set.jpg')"><span class="mk-ad-k">LUNCH SPECIAL</span><b>점심 순두부 세트<br>$12.95</b><small>평일 11시–3시 · 가든그로브</small><span class="mk-ad-logo">순두부 하우스</span></div>
 </div>` },
   listings: {
     title: '로컬 등록 현황표', sub: '30곳 등록 · 인증 진행 상황 공유', for: ['local-listing-setup', 'local-listing-care'],
@@ -687,7 +687,7 @@ const MOCKUPS = {
   video: {
     title: '숏폼 영상', sub: '세로형 15~30초 · 릴스·틱톡·쇼츠 · 자막 포함', for: ['shortform-video'],
     html: `<div class="mk mk-video">
-  <div class="mk-vframe" style="background-image:url('/showcase/seafood-sundubu.jpg')"><span class="mk-vplay">▶</span><div class="mk-vcap"><b>갈비 순두부 끓는 15초</b><small>순두부 하우스 · 한/영 자막</small></div></div>
+  <div class="mk-vframe" style="background-image:url('/showcase/seafood-sundubu-n.jpg')"><span class="mk-vplay">▶</span><div class="mk-vcap"><b>갈비 순두부 끓는 15초</b><small>순두부 하우스 · 한/영 자막</small></div></div>
 </div>` },
   profile: {
     title: '프로필 최적화 체크리스트', sub: '카테고리·설명·사진·영업시간 A부터 Z까지', for: ['google-profile-optimization'],
@@ -742,8 +742,8 @@ function gallerySectionFor(s) {
    큰 무대 하나 + 탭 5개. 각 탭은 실물 크기 장면 하나(폰·브라우저 프레임 + 실제 사진)와 "한 일" 칩 3개.
    사진은 src/showcase/ (가상 업체 "순두부 하우스"용 생성 이미지). 자동 넘김 6초, 호버·터치 시 정지. */
 const SC_IMG = {
-  galbi: '/showcase/galbi-sundubu.jpg', seafood: '/showcase/seafood-sundubu.jpg',
-  bibimbap: '/showcase/dolsot-bibimbap.jpg', interior: '/showcase/interior.jpg',
+  galbi: '/showcase/galbi-sundubu-n.jpg', seafood: '/showcase/seafood-sundubu-n.jpg',
+  bibimbap: '/showcase/dolsot-bibimbap-n.jpg', interior: '/showcase/interior.jpg',
   // 2026-11-07 David 선택 — 웹사이트 배경(점심 실내 + 순두부) · 점심 세트 광고 배경(쟁반 세트, 왼쪽 여백에 글자)
   lunchInterior: '/showcase/lunch-interior.jpg', lunchSet: '/showcase/lunch-set.jpg',
 };
@@ -1447,7 +1447,10 @@ function homePage(posts) {
           <div class="demo-chip">🔎 경쟁사 대비 리뷰 32개 부족</div>
           <div class="demo-chip">📸 프로필 사진 6개월째 업데이트 없음</div>
         </div>
-        <div class="demo-plan" id="dm-plan"><span id="dm-plan-txt">🚀 180일 실행 플랜 시작</span></div>
+        <div class="demo-plan" id="dm-plan"><span id="dm-plan-txt">🚀 180일 실행 플랜 시작</span><i class="dm-tap" aria-hidden="true"></i></div>
+        <div class="dm-flash" aria-hidden="true"></div>
+        <div class="dm-stamp" aria-hidden="true"><small>MISSION CLEAR</small><b>180일 완료</b></div>
+        <div class="dm-burst" aria-hidden="true">${Array.from({ length: 16 }, (_, i) => `<i style="--a:${i * 22.5}deg;--c:${['#0A4DF5', '#22D3EE', '#F59E0B', '#10B981', '#EF4444', '#8B5CF6'][i % 6]}"></i>`).join('')}</div>
       </div>
       <p class="demo-note"><span class="demo-scrub" id="dm-scrub" hidden>↓ 스크롤하면 180일이 흐릅니다</span>가상의 예시 업체로 구성한 시연 화면입니다 · <a href="/report/sample">실제 리포트 샘플 보기 →</a></p>
     </div>
@@ -1581,7 +1584,7 @@ function homePage(posts) {
       /* 데스크톱(v45): 트랙 450vh = 기존 연출 240vh + 데모 스크럽 112vh(214→326vh) + 마무리 축소 24vh. 좁은 화면은 기존 그대로 */
       var base = narrow ? total : Math.min(total, vh * 2.4);
       var p = base > 0 ? clamp(scrolled / base, 0, 1) : 1;
-      var demoP = narrow ? 0 : seg(scrolled, vh * 2.14, total - vh * 0.24);
+      var demoP = narrow ? 0 : seg(scrolled, vh * 2.14, total - vh * 0.40);
       if (window.__bhDemoScrub && !narrow) window.__bhDemoScrub(demoP);
 
       /* 워드마크: i점만 남기고 일찍 퇴장 */
@@ -1658,7 +1661,9 @@ function homePage(posts) {
       s2.style.pointerEvents = e2 > 0.5 ? 'auto' : 'none';
 
       /* 마무리 축소 — 데스크톱은 트랙 맨 끝 24vh, 좁은 화면은 기존 비율 */
-      var e3 = narrow ? seg(p, 0.92, 1) : seg(scrolled, total - vh * 0.24, total);
+      var e3 = narrow ? seg(p, 0.92, 1) : seg(scrolled, total - vh * 0.40, total);
+      /* 접히는 순간 데모 카드에 '미션 클리어' 도장 → 12개월 연장 클릭(2026-11-07) */
+      if (window.__bhDemoFold && !narrow) window.__bhDemoFold(e3);
       sticky.style.transform = 'scale(' + (1 - 0.05 * e3) + ')';
       sticky.style.borderRadius = (36 * e3) + 'px';
     }
@@ -1695,6 +1700,24 @@ function homePage(posts) {
   var chips = Array.prototype.slice.call(document.querySelectorAll('.demo-chip'));
   var planBtn = document.getElementById('dm-plan');
   var planTxt = document.getElementById('dm-plan-txt');
+  var cardEl = document.getElementById('demo-card');
+  /* 2026-11-07 — 180일 완료 순간: 도장이 쿵 박히고(카드 흔들림·번쩍·폭죽) → 버튼이 "12개월로 연장"으로 바뀌어 눌리며 끝난다.
+     f(0~1): 0.04 넘으면 도장(.dm-slam, CSS 애니메이션은 한 번만 재생), 0.5 연장 버튼, 0.62 누름, 0.74 연장 완료. 되감으면 되돌아간다 */
+  var foldStage = -1;
+  function demoFold(f) {
+    if (!cardEl || !planBtn) return;
+    var st = f < 0.04 ? 0 : f < 0.5 ? 1 : f < 0.62 ? 2 : f < 0.74 ? 3 : 4;
+    if (st === foldStage) return; foldStage = st;
+    cardEl.classList.toggle('dm-slam', st >= 1 && st < 2);
+    cardEl.classList.toggle('dm-cleared', st >= 1);
+    planBtn.classList.toggle('renew', st >= 2);
+    planBtn.classList.toggle('renew-press', st === 3);
+    planBtn.classList.toggle('renew-done', st >= 4);
+    if (st >= 4) planTxt.textContent = '✓ 12개월 연장 완료 · 다음 180일 시작';
+    else if (st >= 2) planTxt.textContent = '🔁 12개월 플랜으로 연장하기';
+    else if (st >= 1) planTxt.textContent = '✓ 180일 실행 플랜 완료';
+  }
+  window.__bhDemoFold = function (f) { demoFold(f); };
   // 비포/애프터 스토리 — 형편없는 진단 → 플랜 시작 버튼 클릭 → 180일 뒤 극적 반전
   var BIZ = [
     // 업체명은 전부 가상 — 카드 라벨 "시연 예시"와 이름 옆 .demo-ex 태그가 가상임을 알린다
@@ -1748,7 +1771,9 @@ function homePage(posts) {
     if (ring) ring.style.setProperty('--p', b.s1);
     setBars(b.b1, true);
     setChips(b.win, true, true);
-    if (planBtn) { planBtn.classList.add('show', 'done'); planTxt.textContent = '✓ 180일 실행 플랜 완료'; }
+    if (planBtn) { planBtn.classList.add('show', 'done'); }
+    if (cardEl) cardEl.classList.add('dm-cleared');
+    if (planBtn) { planBtn.classList.add('renew', 'renew-done'); planTxt.textContent = '✓ 12개월 연장 완료 · 다음 180일 시작'; }
   }
   if (reduced) { setFinal(); return; }
   /* v45 — 데스크톱 시네마틱 히어로에서는 시간이 아니라 스크롤이 180일을 흐르게 한다(되감기 가능).
@@ -1788,7 +1813,7 @@ function homePage(posts) {
         planBtn.classList.toggle('press', d >= 0.47 && d < 0.5);
         planBtn.classList.toggle('running', d >= 0.5 && d < 0.82);
         planBtn.classList.toggle('done', d >= 0.82);
-        planTxt.textContent = d < 0.5 ? '🚀 180일 실행 플랜 시작' : (d < 0.82 ? '플랜 진행 중 · DAY ' + Math.max(1, Math.round(180 * sseg(d, 0.5, 0.82))) : '✓ 180일 실행 플랜 완료');
+        if (foldStage <= 0) planTxt.textContent = d < 0.5 ? '🚀 180일 실행 플랜 시작' : (d < 0.82 ? '플랜 진행 중 · DAY ' + Math.max(1, Math.round(180 * sseg(d, 0.5, 0.82))) : '✓ DAY 180 — 결과 확인 중');
       }
       if (hint) hint.style.opacity = String(1 - sseg(d, 0.45, 0.6));
     };
@@ -1796,7 +1821,7 @@ function homePage(posts) {
       /* 모바일 고정 스크럽: 카드가 내비 바로 아래(상단)에 닿으면 고정되고, 그 뒤 PIN_VH 만큼 더 스크롤하는 동안 180일이 빠르게 흐른 뒤 풀린다.
          다가오는 동안(화면 85% → 상단)은 "비포"(이름 타이핑·낮은 점수·문제 칩, d 0→PRE)만 보여 빈 카드로 도착하지 않게 한다.
          카드가 화면에 다 안 들어가는 낮은 화면이면 고정하지 않고 위치 기반으로만 진행한다 */
-      var PRE = 0.32, PIN_VH = 0.75, dmTick = false;
+      var PRE = 0.32, PIN_VH = 1.1, dmTick = false;
       var demoBox = demoCard.parentNode;
       if (hint) demoBox.insertBefore(hint, demoCard);
       var pinTrack = document.createElement('div');
@@ -1819,7 +1844,9 @@ function homePage(posts) {
         var vh = window.innerHeight, t = pinTrack.getBoundingClientRect().top;
         var pre = sseg(vh * 0.85 - t, 0, vh * 0.85 - pinTop);
         var run = pinned ? sseg(pinTop - t, 0, pinDist) : sseg(pinTop - t, 0, vh * 0.5);
-        window.__bhDemoScrub(run > 0 ? PRE + (1 - PRE) * run : PRE * pre);
+        var r2 = Math.min(1, run / 0.72);
+        window.__bhDemoScrub(run > 0 ? PRE + (1 - PRE) * r2 : PRE * pre);
+        demoFold(sseg(run, 0.74, 1));
       };
       var dmOn = function () { if (!dmTick) { dmTick = true; requestAnimationFrame(dmFrame); } };
       window.addEventListener('scroll', dmOn, { passive: true });
@@ -1842,6 +1869,7 @@ function homePage(posts) {
     chips.forEach(function (c) { c.classList.remove('show'); });
     if (planBtn) {
       planBtn.classList.remove('show', 'press', 'done', 'running');
+      foldStage = -1; demoFold(0); foldStage = -1;
       planTxt.textContent = '🚀 180일 실행 플랜 시작';
     }
   }
@@ -1890,8 +1918,11 @@ function homePage(posts) {
     t(function () { chips[1].textContent = b.win[1]; chips[1].classList.add('demo-chip-ok'); chips[1].classList.remove('demo-chip-warn', 'swap'); }, 6950);
     t(function () {
       if (planBtn) { planBtn.classList.remove('running'); planBtn.classList.add('done'); }
-      planTxt.textContent = '✓ 180일 실행 플랜 완료';
+      foldStage = -1; demoFold(0.1);
     }, 7300);
+    t(function () { demoFold(0.55); }, 9300);
+    t(function () { demoFold(0.65); }, 10100);
+    t(function () { demoFold(0.8); }, 10500);
     // ── 홀드 후 다음 비즈니스 ──
     t(run, 13000);
   }
@@ -2526,7 +2557,7 @@ function auditPage() {
     <h1 class="h1">내 가게 마케팅,<br>몇 점일까요?</h1>
     <p class="hero-sub">구글에서 우리 가게가 어떻게 보이는지 AI가 분석해 드립니다. 60초 안에 이 화면에서 바로 리포트가 열립니다.</p>
     <form class="audit-form" id="audit-form">
-      <input type="text" name="business" placeholder="업체명 (예: 청기와 순두부)" class="input" required>
+      <input type="text" name="business" placeholder="업체명 (예: 하나 안경원)" class="input" required>
       <input type="text" name="location" placeholder="${AUDIT_PLACEHOLDER_LOCATION}" class="input" required>
       <input type="email" name="email" placeholder="이메일" class="input" required>
       <button type="submit" class="btn btn-primary btn-block">무료 진단 시작 →</button>
