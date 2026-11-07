@@ -87,8 +87,10 @@ export async function onRequestGet({ request, env, params }) {
     const state = signed;
     // 카카오 간편로그인(2026-11-07): JavaScript 키가 있으면 SDK 가 휴대폰의 카카오톡 앱을 바로 열어 아이디 입력 없이 동의만 받는다.
     // 인가 코드는 같으므로 콜백·토큰 교환(REST 키)은 그대로. 앱이 없거나 PC 면 SDK 가 웹 로그인으로 넘기고, SDK 자체가 안 뜨면 기존 웹 로그인으로
+    // 2026-11-07 휴대폰 시험: SDK(throughTalk) 경로에서 카카오 동의 화면의 [동의하고 계속하기]를 눌러도 그 화면에 머물렀다(콜백에 도달하지 못함).
+    // 기본은 카카오 웹 로그인(REST) — 그 화면의 [카카오톡으로 로그인] 한 번이면 아이디 입력 없이 된다. SDK 경로는 KAKAO_TALK_LOGIN=1 일 때만
     const jsKey = String(env.KAKAO_JS_KEY || '').trim();
-    if (p === 'kakao' && jsKey) return talkPage(jsKey, redirect, state, AUTH.kakao(cfg, redirect, state), cookie(STATE_COOKIE, signed, 600));
+    if (p === 'kakao' && jsKey && String(env.KAKAO_TALK_LOGIN || '').trim() === '1') return talkPage(jsKey, redirect, state, AUTH.kakao(cfg, redirect, state), cookie(STATE_COOKIE, signed, 600));
     return back(request, AUTH[p](cfg, redirect, state), [cookie(STATE_COOKIE, signed, 600)]);
   }
   if (step !== 'callback') return back(request, '/login/');
