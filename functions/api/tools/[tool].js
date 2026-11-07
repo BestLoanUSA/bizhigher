@@ -4,6 +4,7 @@
  * 모든 도구는 이메일(필수)·전화(선택)를 받아 tool_leads에 남긴다 — 무료 도구의 대가. 입력 내용·결과는 저장하지 않는다.
  * 광고 예산 계산기는 계산은 브라우저에서 하고, 여기서는 리드 기록과 횟수만 처리한다.
  */
+import { session, getProfile } from '../_owner.js';
 import { json, originAllowed, takeQuota, QUOTA_MSG, claude, jsonOf, textOf, placesSearch, placeDetails, clip, POLICY, saveLead, validEmail } from './_shared.js';
 import { notify, esc } from '../_notify.js';
 
@@ -49,22 +50,25 @@ export async function onRequestPost(context) {
     return json({ ok: false, error: '입력값을 확인해 주세요.' }, 400);
   }
 
-  const email = clip(input && input.email, 200).toLowerCase();
-  const phone = clip(input && input.phone, 40);
-  if (!validEmail(email)) return json({ ok: false, error: '이메일을 정확히 입력해 주세요.' }, 400);
+  // 로그인한 사장님은 이메일 칸이 없다 — 로그인 이메일(없으면 가게 정보에 적은 이메일)을 쓰고 하루 한도가 커진다
+  const member = await session(request, env).catch(() => null);
+  const profile = member && env.DB ? await getProfile(env.DB, member.lid).catch(() => null) : null;
+  const email = (member ? (member.e || (profile && profile.email) || '') : clip(input && input.email, 200)).toLowerCase();
+  const phone = member ? (profile && profile.phone) || '' : clip(input && input.phone, 40);
+  if (!member && !validEmail(email)) return json({ ok: false, error: '이메일을 정확히 입력해 주세요.' }, 400);
 
   // 입력 검증 실패는 횟수를 차감하지 않는다 — 각 도구가 외부 API를 부르기 직전에 charge()를 호출한다.
   // charge(key)의 key를 바꾸면 같은 도구 안에서도 다른 한도로 센다(예: 로컬 순위의 가게 찾기 단계)
   let q = null;
   const charge = async (key) => {
     const qk = key || tool;
-    const r = await takeQuota(env, request, qk, email);
+    const r = await takeQuota(env, request, qk, email, member);
     if (!r.ok) throw Object.assign(new Error('quota'), { quota: r.reason });
     if (qk !== tool) return; // 보조 단계는 리드·남은 횟수에 반영하지 않는다
     q = r;
     const business = clip(input.business || input.bizName || input.query, 120);
     const source = clip(input.ref, 160).replace(/[^\w.:/\-+ ]/g, '');
-    const first = await saveLead(env, { email, phone, tool, business, source });
+    const first = validEmail(email) ? await saveLead(env, { email, phone, tool, business, source: member ? `login:${member.p}` : source }) : false;
     if (first) {
       context.waitUntil(notify(env, `🧰 무료 도구 새 이용자 — ${TOOL_NAMES[tool] || tool}`, [
         ['도구', esc(TOOL_NAMES[tool] || tool)],
@@ -78,7 +82,7 @@ export async function onRequestPost(context) {
   try {
     const result = await handler(input || {}, env, charge);
     if (result && result.error) return json({ ok: false, error: result.error }, 400);
-    return json({ ok: true, left: q ? q.left : null, ...result });
+    return json({ ok: true, left: q ? q.left : null, member: !!(q && q.member), ...result });
   } catch (e) {
     if (e && e.quota) return json({ ok: false, error: QUOTA_MSG[e.quota] || QUOTA_MSG.busy }, 429);
     const msg = String((e && e.message) || e);

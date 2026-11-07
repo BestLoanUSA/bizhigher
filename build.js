@@ -2866,7 +2866,13 @@ function loginPage() {
     <div class="lg-card">
       <p class="eyebrow">BizHigher 고객 전용</p>
       <h1 class="lg-h1">비즈니스 로그인</h1>
-      <p class="lg-sub">결정할 것, 새 소식, 월간 리포트, 받은 결과물을 한 화면에서 봅니다. 비밀번호는 없습니다.</p>
+      <p class="lg-sub">비밀번호 없이 구글·카카오로 바로 들어옵니다. 휴대폰이면 카카오톡이 열려 한 번만 누르면 됩니다.</p>
+      <ul class="lg-gets">
+        <li><b>무료 도구 하루 10회</b><span>로그인하지 않으면 하루 2회 · 이메일 입력도 생략</span></li>
+        <li><b>내 무료 진단 리포트·추천</b><span>점수와 우리 가게에 맞는 다음 할 일을 한곳에</span></li>
+        <li><b>새 마케팅 가이드</b><span>주 3편 새 글을 로그인 화면에서 먼저</span></li>
+        <li><b>고객이면 결과물·리포트·결정할 것</b><span>진행 상황을 실시간으로</span></li>
+      </ul>
       <div class="lg-msg" id="lg-msg" role="status" hidden></div>
       <a class="lg-btn lg-g" href="/auth/google"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg><span>Google 계정으로 계속하기</span></a>
       <a class="lg-btn lg-k" href="/auth/kakao"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#191919" d="M12 3.2c-5.3 0-9.6 3.4-9.6 7.6 0 2.7 1.8 5.1 4.5 6.4l-1.1 4.1c-.1.4.3.6.6.4l4.8-3.2c.3 0 .5.1.8.1 5.3 0 9.6-3.4 9.6-7.7S17.3 3.2 12 3.2z"/></svg><span>카카오로 계속하기</span></a>
@@ -2897,7 +2903,11 @@ function loginPage() {
     var p = q.get('p') === 'kakao' ? '카카오' : 'Google';
     var M = { setup: p + ' 로그인은 준비 중입니다. 지금은 받으신 메일의 고객 페이지 링크로 들어와 주세요.', cancel: '로그인을 취소하셨습니다.', state: '로그인 시간이 지났어요. 버튼을 다시 눌러 주세요.', fail: p + ' 계정 확인에 실패했습니다. 잠시 뒤 다시 시도해 주세요.' };
     var t = q.get('out') ? '로그아웃했습니다.' : M[q.get('err')];
+    if (t && q.get('why')) t += ' (오류 코드: ' + q.get('why').replace(/[^\w-]/g, '').slice(0, 40) + ')';
     if (t && el) { el.textContent = t; el.hidden = false; if (q.get('err')) el.classList.add('err'); }
+    /* 무료 도구 등에서 넘어왔으면 로그인 뒤 그 페이지로 돌아간다 */
+    var nx = q.get('next');
+    if (nx && /^\/(?!\/)/.test(nx)) document.querySelectorAll('.lg-btn').forEach(function (a) { a.href = a.getAttribute('href') + '?next=' + encodeURIComponent(nx); });
   } catch (e) {}
 })();
 </script>
@@ -4045,7 +4055,7 @@ const PRIVACY_HTML = `
 <h2 class="h2-left">1. 수집하는 정보</h2>
 <p>• <b>직접 제공 정보</b>: 무료 진단 신청 및 주문 질문지를 통해 업체명, 담당자 성함, 이메일, 전화번호, 웹사이트·소셜 링크 등을 수집합니다.<br>
 • <b>무료 도구 이용 정보</b>: 무료 도구(/tools/) 이용 시 이메일(필수), 전화번호(선택), 입력한 업체명과 이용한 도구 이름을 수집합니다. 도구에 입력한 리뷰·메뉴 사진·소개문 등의 내용과 도구 결과는 결과 생성에만 쓰고 저장하지 않습니다. 하루 이용 횟수 제한을 위해 IP 주소를 일자별로 변환한 값(원본 IP 아님)을 하루 동안 사용합니다.<br>
-• <b>비즈니스 로그인 정보</b>: 고객이 구글 또는 카카오 계정으로 비즈니스 로그인(/login/)을 하면 그 계정의 고유 번호, 이름(닉네임), 이메일만 받아 결과물 페이지를 여는 데 씁니다. 비밀번호·연락처·친구 목록은 받지 않고, 구글·카카오의 접근 토큰은 저장하지 않습니다. 로그인 상태는 30일짜리 쿠키 하나로 유지되며 로그아웃하면 지워집니다.<br>
+• <b>비즈니스 로그인 정보</b>: 고객이 구글 또는 카카오 계정으로 비즈니스 로그인(/login/)을 하면 그 계정의 고유 번호, 이름(닉네임), 이메일만 받아 결과물 페이지를 여는 데 씁니다. 비밀번호·연락처·친구 목록은 받지 않고, 구글·카카오의 접근 토큰은 저장하지 않습니다. 로그인 상태는 30일짜리 쿠키 하나로 유지되며 로그아웃하면 지워집니다. 로그인 후 직접 입력하신 가게 정보(가게 이름·도시·업종·연락처·웹사이트·목표)와 새 글 소식 신청 여부를 저장해 무료 진단·추천·주문 질문지에 씁니다.<br>
 • <b>결제 정보</b>: 결제는 Stripe가 처리하며, 회사는 카드번호를 저장하지 않습니다.<br>
 • <b>자동 수집 정보</b>: Google Analytics 및 Microsoft Clarity를 통해 방문 기록, 기기·브라우저 정보, 사이트 이용 행태(쿠키 포함)가 수집될 수 있습니다.</p>
 <h2 class="h2-left">2. 이용 목적</h2>
@@ -4800,6 +4810,14 @@ write('free-audit/index.html', auditPage());
 write('thanks/index.html', thanksPage());
 write('thanks/done/index.html', thanksDonePage());
 write('login/index.html', loginPage());
+/* 사장님 시작 허브(/my/)가 읽는 데이터 — 새 블로그·추천 도구·플랜·서비스. 가격은 services.json 그대로(손으로 적지 않는다) */
+{
+  const hp = loadPosts().slice(0, 8).map((p) => { const ci = cardImg(p); return { slug: p.slug, title: p.title, category: p.category, date: p.date, img: ci ? '/blog-img/' + ci.src : '', alt: ci ? ci.alt : p.title }; });
+  const ht = HOME_TOOLS.map((slug) => TOOLS.own.find((t) => t.slug === slug)).filter(Boolean).map((t) => ({ slug: t.slug, name: t.name, desc: t.short || t.desc || t.description || '' }));
+  const hk = (DATA.packages || []).map((k) => ({ slug: k.slug, name: k.name, tagline: k.tagline, popular: !!k.popular, prices: k.prices, includes: (k.includes || []).slice(0, 4) }));
+  const hs = DATA.services.map((x) => ({ slug: x.slug, name: x.name, price: x.price, priceSub: x.priceSub || '', short: x.shortDescription || '', delivery: x.delivery || null }));
+  write('data/hub.json', JSON.stringify({ v: 1, posts: hp, tools: ht, toolsTotal: TOOLS.own.length, packages: hk, services: hs, email: SITE.email || 'hello@bizhigher.com' }));
+}
 DATA.services.forEach((s) => write(`service/${s.slug}/index.html`, servicePage(s, POSTS)));
 DATA.packages.forEach((p) => write(`package/${p.slug}/index.html`, packagePage(p)));
 write('404.html', notFoundPage());

@@ -34,6 +34,10 @@ export const LIMITS = {
   'competitor-find': { perUser: 6, global: 300 },
 };
 
+/* 로그인한 사장님(2026-11-07 David: "도구 사용을 로그인으로 자연스럽게") — 로그인 계정당 하루 이만큼. 로그인하지 않으면 perUser(2) 그대로.
+   보조 한도(local-rank-find 등)는 기존 값을 쓴다 */
+export const MEMBER_PER_USER = 10;
+
 export function json(obj, status) {
   return new Response(JSON.stringify(obj), {
     status: status || 200,
@@ -79,7 +83,7 @@ async function ensureTables(env) {
  * 해시는 일자별 솔트라 하루가 지나면 같은 IP·이메일도 다른 값이 된다 — 원본은 남지 않는다.
  * D1이 없거나 실패하면 비용 상한을 지킬 수 없으므로 막는다.
  */
-export async function takeQuota(env, request, tool, email) {
+export async function takeQuota(env, request, tool, email, member) {
   const off = String(env.TOOLS_OFF || '').split(',').map((x) => x.trim()).filter(Boolean);
   if (off.includes(tool)) return { ok: false, reason: 'off' };
   const lim = LIMITS[tool];
@@ -90,18 +94,21 @@ export async function takeQuota(env, request, tool, email) {
   const day = new Date().toISOString().slice(0, 10);
   const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
   const whoIp = 'i:' + (await sha256(`${day}|${ip}|bizhigher-tools`));
-  const whoEm = 'e:' + (await sha256(`${day}|${String(email || '').toLowerCase()}|bizhigher-tools`));
+  // 로그인했으면 이메일 대신 로그인 계정으로 센다(카카오처럼 이메일이 없어도 된다). IP 줄은 전체 한도용으로 그대로 쌓는다
+  const isMember = !!(member && member.lid) && lim.perUser <= 2;
+  const whoEm = isMember ? 'm:' + (await sha256(`${day}|${member.lid}|bizhigher-tools`)) : 'e:' + (await sha256(`${day}|${String(email || '').toLowerCase()}|bizhigher-tools`));
+  const perUser = isMember ? MEMBER_PER_USER : lim.perUser;
   try {
     await ensureTables(env);
     const row = await env.DB.prepare(
       "SELECT COALESCE(SUM(CASE WHEN who = ? THEN n ELSE 0 END), 0) AS ip, COALESCE(SUM(CASE WHEN who = ? THEN n ELSE 0 END), 0) AS em, COALESCE(SUM(CASE WHEN who LIKE 'i:%' THEN n ELSE 0 END), 0) AS total FROM tool_usage WHERE day = ? AND tool = ?"
     ).bind(whoIp, whoEm, day, tool).first();
-    const used = Math.max((row && row.ip) || 0, (row && row.em) || 0);
-    if (used >= lim.perUser) return { ok: false, reason: 'user' };
+    const used = isMember ? (row && row.em) || 0 : Math.max((row && row.ip) || 0, (row && row.em) || 0);
+    if (used >= perUser) return { ok: false, reason: isMember ? 'member' : 'user' };
     if (row && row.total >= globalMax) return { ok: false, reason: 'global' };
     const up = 'INSERT INTO tool_usage (day, who, tool, n) VALUES (?, ?, ?, 1) ON CONFLICT(day, who, tool) DO UPDATE SET n = n + 1';
     await env.DB.batch([env.DB.prepare(up).bind(day, whoIp, tool), env.DB.prepare(up).bind(day, whoEm, tool)]);
-    return { ok: true, left: lim.perUser - used - 1 };
+    return { ok: true, left: perUser - used - 1, member: isMember };
   } catch {
     return { ok: false, reason: 'busy' };
   }
@@ -128,7 +135,8 @@ export function validEmail(s) {
 
 export const QUOTA_MSG = {
   off: '이 도구는 잠시 쉬고 있습니다. 무료 진단을 이용해 주세요.',
-  user: '이 도구는 하루 2회까지 무료입니다. 내일 다시 이용해 주세요.',
+  user: '이 도구는 하루 2회까지 무료입니다. 로그인하면 하루 10회까지 쓸 수 있습니다(구글·카카오, 클릭 한 번).',
+  member: '오늘 이 도구를 10회 모두 쓰셨습니다. 내일 다시 이용해 주세요.',
   global: '오늘 이 도구 이용이 많아 잠시 마감했습니다. 내일 다시 이용해 주세요.',
   busy: '잠시 후 다시 시도해 주세요.',
   unknown: '알 수 없는 도구입니다.',

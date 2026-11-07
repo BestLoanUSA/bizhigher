@@ -30,9 +30,27 @@
     return d;
   }
 
+  /* 로그인한 사장님(2026-11-07) — 이메일 칸 대신 "로그인됨 · 하루 10회", 로그인 안 했으면 로그인 권유 한 줄.
+     /api/me 가 실패해도(오프라인·프리뷰) 이메일 칸이 그대로 남아 도구는 그대로 쓸 수 있다 */
+  var loginUrl = function () { return '/login/?next=' + encodeURIComponent(location.pathname); };
+  function applyMe(me) {
+    T.me = me;
+    document.querySelectorAll('.tool-lead').forEach(function (lb) {
+      if (me && me.loggedIn) {
+        lb.innerHTML = '<div class="tool-member"><span class="tm-ok">✓</span><span><b>' + T.esc(me.name || '사장님') + '</b> 로그인됨 · 도구별 하루 ' + (me.toolsPerDay || 10) + '회 · 이메일 입력 없이</span><a href="/my/">내 페이지 →</a></div>';
+      } else if (!lb.querySelector('.tool-nudge')) {
+        var n = document.createElement('a');
+        n.className = 'tool-nudge'; n.href = loginUrl();
+        n.innerHTML = '<b>로그인하면 하루 ' + ((me && me.memberToolsPerDay) || 10) + '회 · 이메일 입력 없이</b><span>구글·카카오로 클릭 한 번 →</span>';
+        lb.insertBefore(n, lb.firstChild);
+      }
+    });
+  }
+  T.meReady = fetch('/api/me', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }).then(function (me) { applyMe(me); return me; });
+
   /* POST /api/tools/{tool} — 실패하면 사용자에게 보여줄 문장을 담아 throw */
   T.call = function (tool, body) {
-    var c = T.contact();
+    var c = T.me && T.me.loggedIn ? {} : T.contact();
     body = Object.assign({}, body, { email: c.email, phone: c.phone, ref: window.bhRef ? window.bhRef() : '' });
     return fetch('/api/tools/' + tool, {
       method: 'POST',
@@ -51,7 +69,7 @@
   /* 폼 제출 공통 처리: 버튼 잠금 + 진행 문구 + 오류 표시 */
   T.bind = function (form, run) {
     var btn = form.querySelector('button[type=submit]');
-    if (btn && !form.querySelector('.tool-lead')) form.insertBefore(leadBlock(), btn);
+    if (btn && !form.querySelector('.tool-lead')) { form.insertBefore(leadBlock(), btn); if (T.me !== undefined) applyMe(T.me); }
     var msg = form.querySelector('.tool-msg');
     var label = btn ? btn.textContent : '';
     form.addEventListener('submit', function (e) {
@@ -59,7 +77,11 @@
       if (btn) { btn.disabled = true; btn.textContent = btn.getAttribute('data-busy') || '만드는 중…'; }
       if (msg) { msg.textContent = ''; msg.className = 'tool-msg'; }
       Promise.resolve().then(run).catch(function (err) {
-        if (msg) { msg.textContent = err.message || String(err); msg.className = 'tool-msg is-error'; }
+        if (msg) {
+          var m = err.message || String(err);
+          msg.innerHTML = T.esc(m) + (/로그인하면/.test(m) ? ' <a href="' + loginUrl() + '">로그인하기 →</a>' : '');
+          msg.className = 'tool-msg is-error';
+        }
       }).then(function () {
         if (btn) { btn.disabled = false; btn.textContent = label; }
       });
