@@ -710,7 +710,7 @@ img { max-width: 100%; display: block; }
 }
 .cine-beat b { color: #fff; font-weight: 900; }
 .cine-beat-brand { display: flex; flex-direction: column; align-items: center; gap: 16px; }
-.cine-beat-brand .grad { font-size: clamp(64px, 8.5vw, 130px); font-weight: 900; letter-spacing: -0.05em; line-height: 1; }
+.cine-beat-brand .grad { font-size: clamp(64px, 8.5vw, 130px); font-weight: 900; letter-spacing: -0.05em; line-height: 1; padding: 0 .06em .2em; margin-bottom: -.2em; } /* 그라데이션 글자는 상자 안만 칠해져 g 아래가 잘렸다 — 아래 여백을 주고 같은 만큼 당겨 배치는 그대로 */
 .cine-beat-brand small { font-size: clamp(15px, 1.3vw, 19px); font-weight: 700; letter-spacing: 0.14em; color: var(--mist-300); }
 
 /* 도킹 시 네비 로고 반짝 */
@@ -1426,6 +1426,15 @@ img { max-width: 100%; display: block; }
 .vs-go .vs-bh.vs-row i { display: inline-block; animation: vsChk .5s cubic-bezier(.3,1.6,.5,1) both; animation-delay: calc(var(--i) * .12s + .3s); }
 @keyframes vsChk { 0% { transform: scale(0); } 100% { transform: scale(1); } }
 @media (prefers-reduced-motion: reduce) { .vs-row, .vr-fill, .vr-goal, .vr-step, .vr-end { transition: none !important; animation: none !important; } }
+/* v56 — 시간 경주 막대를 스크롤에 묶음(.vs-scrub, 너비는 JS 가 직접). 표시 지점은 막대가 닿을 때 톡 튀어나온다 */
+.vs-scrub .vr-fill { transition: width .08s linear; }
+.vs-scrub .vr-ms { opacity: 0; transition: opacity .15s ease; }
+.vs-scrub .vr-ms.on { opacity: 1; }
+.vs-scrub .vr-ms.on b { animation: vrPop .5s cubic-bezier(.3,1.7,.5,1) both; }
+.vs-scrub .vr-ms.on em { animation: vrLbl .4s ease both .06s; }
+.vs-scrub .vr-step, .vs-scrub .vr-end { opacity: .25; transition: opacity .25s ease; }
+.vs-scrub .vr-step.on, .vs-scrub .vr-end.on { opacity: 1; }
+.vs-scrub .vr-old .vr-step.on { border-color: var(--ink-400); }
 
 /* ==========================================================
    v23 "다크 프리미엄" — 구매 결정 페이지(서비스 상세·패키지 상세·가격) 몰입감 강화
