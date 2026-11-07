@@ -181,6 +181,23 @@ export const SSO_ICON = {
   kakao: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#191919" d="M12 3.2c-5.3 0-9.6 3.4-9.6 7.6 0 2.7 1.8 5.1 4.5 6.4l-1.1 4.1c-.1.4.3.6.6.4l4.8-3.2c.3 0 .5.1.8.1 5.3 0 9.6-3.4 9.6-7.7S17.3 3.2 12 3.2z"/></svg>',
 };
 
+/* 상단 로고 — 사이트 네비와 같은 마크·글자(build.js LOGO_SVG) */
+export const LOGO_HTML = '<a class="logo" href="/" aria-label="BizHigher 홈"><svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#0A4DF5"/><path d="M15 44 h9 v-9 h9 v-9 h6.5" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M38.5 15.5 h10 v10" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Biz<span class="la">Higher</span></span></a>';
+
+/* 계정 메뉴(2026-11-07 David: "로그아웃을 바로 누르지 말고, 설정 같은 것들을 모아 놓고 로그아웃은 찾아서") —
+   아바타를 누르면 내 페이지·계정·설정·가게 정보·알림·도구·가이드·문의. 로그아웃은 계정·설정 페이지 맨 아래에만 둔다 */
+export function acctMenu(account, { demo = false } = {}) {
+  if (!account) return '';
+  const name = esc(account.n || account.e || '사장님');
+  const init = esc(String(account.n || account.e || '?').trim().charAt(0).toUpperCase());
+  const prov = { google: 'Google', kakao: '카카오', demo: '데모' }[account.p] || '';
+  const a = demo ? '/my/demo/account' : '/my/account';
+  return `<details class="ob-acct am"><summary aria-label="계정 메뉴 열기"><span class="av av-${esc(account.p || '')}">${init}</span><span class="an">${name}</span><i class="caret" aria-hidden="true"></i></summary>
+<div class="am-pop" role="menu"><div class="am-head"><span class="av av-${esc(account.p || '')} big">${init}</span><div><b>${name}</b><span>${prov ? `${prov}로 로그인` : ''}${account.e ? ` · ${esc(account.e)}` : ''}</span></div></div>
+<nav><a href="${demo ? '/my/demo' : '/my/'}"><i>🏠</i>내 페이지</a><a href="${a}"><i>⚙️</i>계정·설정</a><a href="${a}#biz"><i>🏪</i>가게 정보</a><a href="${a}#news"><i>🔔</i>알림·소식</a><a href="/tools/"><i>🧰</i>무료 도구 <em>하루 10회</em></a><a href="/blog/"><i>📰</i>마케팅 가이드</a><a href="mailto:hello@bizhigher.com"><i>💬</i>문의하기</a></nav></div></details>
+<script>(function(){try{var d=document.currentScript.previousElementSibling;document.addEventListener('click',function(e){if(d.open&&!d.contains(e.target))d.open=false;});document.addEventListener('keydown',function(e){if(e.key==='Escape')d.open=false;});}catch(e){}})();</script>`;
+}
+
 function itemCard(d) {
   const options = parseOptions(d.options);
   const chosen = options.find((o) => o.key === d.choice);
@@ -240,8 +257,7 @@ export function renderDashboard({ job, ds, tasks = [], site, siteTask, env, repo
   const nowLabel = new Date().toLocaleString('ko-KR', { timeZone: 'America/Los_Angeles', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
   const who = account ? esc(account.n || account.e || '') : '';
-  const acct = account
-    ? `<div class="ob-acct"><span class="av av-${esc(account.p || '')}">${esc(String(account.n || account.e || '?').trim().charAt(0).toUpperCase())}</span><span class="an">${who}</span>${mode === 'demo' ? '<a href="/login/">로그인 화면</a>' : '<a href="/auth/logout">로그아웃</a>'}</div>`
+  const acct = account ? acctMenu(account, { demo: mode === 'demo' })
     : mode === 'token' ? '<div class="ob-acct"><a class="ob-login" href="#connect">🔑 로그인 연결</a></div>' : '';
   const switcher = jobs && jobs.length > 1 ? `<nav class="ob-jobs" aria-label="가게 고르기">${jobs.map((j) => `<a href="/my/?job=${j.id}"${j.id === jobId ? ' aria-current="true"' : ''}>${esc(clean(j.business))}<small>${esc(j.service_name || '')}</small></a>`).join('')}</nav>` : '';
   const connect = mode === 'token' && token ? `<div class="ob-connect" id="connect"><div class="ob-in"><span class="cx"><b>다음부터는 클릭 한 번으로 들어오세요</b><span>구글이나 카카오 계정을 연결해 두면 이 메일 링크를 찾지 않아도 <u>bizhigher.com/login</u> 에서 바로 열립니다.</span></span><a class="sso g" href="/auth/google?link=${esc(token)}">${SSO_ICON.google}Google로 연결</a><a class="sso k" href="/auth/kakao?link=${esc(token)}">${SSO_ICON.kakao}카카오로 연결</a></div></div>` : '';
@@ -260,7 +276,7 @@ ${past.length ? `<details class="card ob-past"><summary>지난 결정 ${past.len
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>${BASE_CSS}${PORTAL_CSS}${DASH_CSS}</style></head><body>
-<header class="ob-top"><div class="ob-in"><a class="logo" href="/">Biz<span>Higher</span></a><span class="ob-biz">${biz}</span>${acct}</div></header>
+<header class="ob-top"><div class="ob-in">${LOGO_HTML}<span class="ob-biz">${biz}</span>${acct}</div></header>
 ${switcher}
 <section class="ob-hello"><div class="ob-in"><p class="ob-eye">사장님 전용 페이지 · ${esc(nowLabel)} 기준</p><h1>${biz} 사장님, 안녕하세요</h1><p class="ob-sub">${esc(job.service_name || '')}</p>
 <div class="ob-stats"><a href="#decide"${nDecide ? ' class="hot"' : ''}>결정할 것 <b>${nDecide}</b></a><a href="#news">최근 30일 한 일 <b>${done30}</b></a><a href="#glance">전체 진행 <b>${pct}%</b></a><a href="#report">다음 월간 리포트 <b>${nextRep}</b></a></div></div></section>
@@ -289,7 +305,10 @@ footer a{color:var(--blue)}
 `;
 const DASH_CSS = `
 .ob-in{max-width:1100px;margin:0 auto;padding:0 16px}
-.ob-top{background:#0A1B4D;color:#fff}.ob-top .ob-in{display:flex;align-items:center;gap:12px;min-height:56px}.ob-top .logo{font-weight:900;font-size:18px;color:#fff;text-decoration:none;letter-spacing:-.02em}.ob-top .logo span{color:#7FA6FF}
+.ob-top{background:#0A1B4D;color:#fff}.ob-top .ob-in{display:flex;align-items:center;gap:12px;min-height:56px}.ob-top .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:21px;color:#fff;text-decoration:none;letter-spacing:-.02em;flex:none}.ob-top .logo svg{flex:none}.ob-top .logo .la{color:#0A4DF5}
+.am{position:relative}.am>summary{list-style:none;display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 6px 4px 4px;border-radius:999px;border:1px solid transparent}.am>summary::-webkit-details-marker{display:none}.am>summary:hover,.am[open]>summary{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16)}.am .caret{width:8px;height:8px;border-right:2px solid #C9D6F5;border-bottom:2px solid #C9D6F5;transform:rotate(45deg) translateY(-2px);margin:0 4px}
+.am-pop{position:absolute;right:0;top:calc(100% + 8px);z-index:60;width:280px;background:#fff;color:#111318;border-radius:16px;box-shadow:0 24px 50px -16px rgba(10,27,77,.45);border:1px solid #E5E7EB;overflow:hidden}.am-head{display:flex;gap:10px;align-items:center;padding:14px;background:#F5F8FF;border-bottom:1px solid #E5E7EB}.am-head b{display:block;font-size:15px}.am-head span{font-size:12px;color:#6B7280;word-break:break-all}.av.big{width:38px;height:38px;font-size:16px;flex:none}
+.am-pop nav{display:flex;flex-direction:column;padding:6px}.am-pop nav a{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;color:#111318!important;text-decoration:none;font-size:14.5px;font-weight:600}.am-pop nav a:hover{background:#F3F4F7}.am-pop nav i{font-style:normal;width:22px;text-align:center}.am-pop nav em{margin-left:auto;font-style:normal;font-size:11px;font-weight:800;color:#047857;background:#ECFDF5;border-radius:999px;padding:2px 7px}
 .ob-biz{font-size:14px;font-weight:700;color:#C9D6F5;padding-left:12px;border-left:1px solid rgba(255,255,255,.18);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .ob-acct{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13px;flex:none}.ob-acct a{color:#C9D6F5;text-decoration:none;font-weight:700}.ob-acct a:hover{color:#fff}
 .av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;background:#2F5BD3;color:#fff}.av-kakao{background:#FEE500;color:#191919}.av-google{background:#fff;color:#1A73E8}.av-demo{background:#F59E0B;color:#1F1300}
