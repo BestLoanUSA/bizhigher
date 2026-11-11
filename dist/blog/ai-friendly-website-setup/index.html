@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI가 읽기 좋은 가게 웹사이트 — 스키마·FAQ·llms.txt 실전 설정 | BizHigher 블로그</title>
+<meta name="description" content="챗GPT·구글 AI가 가게 웹사이트를 제대로 읽도록 본문 글, LocalBusiness 스키마, FAQ, robots.txt, llms.txt를 어떤 순서로 설정할지 점검표와 함께 정리했습니다.">
+
+<link rel="canonical" href="https://bizhigher.com/blog/ai-friendly-website-setup/">
+<meta property="og:title" content="AI가 읽기 좋은 가게 웹사이트 — 스키마·FAQ·llms.txt 실전 설정 | BizHigher 블로그">
+<meta property="og:description" content="챗GPT·구글 AI가 가게 웹사이트를 제대로 읽도록 본문 글, LocalBusiness 스키마, FAQ, robots.txt, llms.txt를 어떤 순서로 설정할지 점검표와 함께 정리했습니다.">
+<meta property="og:url" content="https://bizhigher.com/blog/ai-friendly-website-setup/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="BizHigher">
+<meta property="og:image" content="https://bizhigher.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://bizhigher.com/og-image.png">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="/style.css?v=bb5ae53b">
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"AI가 읽기 좋은 가게 웹사이트 — 스키마·FAQ·llms.txt 실전 설정","description":"챗GPT·구글 AI가 가게 웹사이트를 제대로 읽도록 본문 글, LocalBusiness 스키마, FAQ, robots.txt, llms.txt를 어떤 순서로 설정할지 점검표와 함께 정리했습니다.","image":[{"@type":"ImageObject","url":"https://bizhigher.com/blog-img/ai-friendly-website-setup-cover.jpg","width":800,"height":600,"caption":"문 닫은 한식당 나무 테이블 위 노트북과 작은 화분, 보리차 한 잔과 나무젓가락"},"https://bizhigher.com/og-image.png"],"datePublished":"2026-11-11","dateModified":"2026-11-11","inLanguage":"ko","author":{"@type":"Organization","@id":"https://bizhigher.com/#organization","name":"BizHigher","url":"https://bizhigher.com/","logo":{"@type":"ImageObject","url":"https://bizhigher.com/apple-touch-icon.png","width":180,"height":180}},"publisher":{"@type":"Organization","@id":"https://bizhigher.com/#organization","name":"BizHigher","url":"https://bizhigher.com/","logo":{"@type":"ImageObject","url":"https://bizhigher.com/apple-touch-icon.png","width":180,"height":180}},"articleSection":"AI 검색","abstract":"AI가 읽기 좋은 가게 사이트의 핵심은 특수 코드보다 본문에 사실을 글로 적는 것입니다. 구글은 AI 기능을 위해 별도 스키마나 llms.txt가 필요하지 않다고 안내합니다. 먼저 사이트에 주소·영업시간·서비스가 사진이 아닌 글로 있는지 확인하세요.","isPartOf":{"@type":"Blog","@id":"https://bizhigher.com/blog/#blog"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://bizhigher.com/blog/ai-friendly-website-setup/"},"keywords":"AI 친화 웹사이트, 가게 웹사이트 스키마, LocalBusiness 스키마 설정, FAQ 스키마 2026, llms.txt 가게, robots.txt AI 크롤러, 챗GPT 웹사이트 노출"},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"홈","item":"https://bizhigher.com/"},{"@type":"ListItem","position":2,"name":"블로그","item":"https://bizhigher.com/blog/"},{"@type":"ListItem","position":3,"name":"AI 검색","item":"https://bizhigher.com/blog/ai-search-hub/"},{"@type":"ListItem","position":4,"name":"AI가 읽기 좋은 가게 웹사이트 — 스키마·FAQ·llms.txt 실전 설정","item":"https://bizhigher.com/blog/ai-friendly-website-setup/"}]},{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"스키마를 넣으면 챗GPT나 구글 AI에 나오나요?","acceptedAnswer":{"@type":"Answer","text":"보장되지 않습니다. 구글은 AI 기능에 나오기 위해 특수한 스키마가 필요하지 않다고 안내합니다. 스키마는 가게 정보를 기계가 정확히 읽도록 돕는 보조 장치이고, 본문에 사실이 글로 적혀 있는 것이 먼저입니다."}},{"@type":"Question","name":"FAQ 스키마는 이제 지워야 하나요?","acceptedAnswer":{"@type":"Answer","text":"지울 필요는 없습니다. 구글은 2026년 5월부터 FAQ 리치 결과를 검색에 표시하지 않지만, 올바른 FAQ 마크업은 그대로 두어도 된다고 안내합니다. 새로 만든다면 스키마보다 화면에 보이는 질문과 답 문장에 공을 들이세요."}},{"@type":"Question","name":"llms.txt는 꼭 만들어야 하나요?","acceptedAnswer":{"@type":"Answer","text":"필수가 아닙니다. 주요 AI 회사가 이 파일을 쓴다고 공식 확인한 바가 없고, 구글도 필요 없다고 안내합니다. 사이트를 직접 관리한다면 주요 페이지 목록 정도로 간단히 만들어 두는 것은 괜찮습니다."}},{"@type":"Question","name":"윅스·스퀘어스페이스로 만든 사이트도 설정할 수 있나요?","acceptedAnswer":{"@type":"Answer","text":"대부분 가능합니다. 본문 글과 FAQ는 편집 화면에서 바로 고칠 수 있고, 스키마는 \"사용자 지정 코드\" 또는 \"헤더 코드 삽입\" 메뉴에 붙여 넣는 방식입니다. robots.txt와 llms.txt는 빌더에 따라 수정이 제한될 수 있으니 각 빌더의 도움말을 확인하세요."}},{"@type":"Question","name":"AI 학습용 크롤러를 막으면 AI 검색에서도 빠지나요?","acceptedAnswer":{"@type":"Answer","text":"꼭 그렇지는 않습니다. OpenAI는 학습용 크롤러(GPTBot)와 검색용 크롤러(OAI-SearchBot)를 구분해 안내합니다. 학습용만 막고 검색용은 허용하면 챗GPT 검색 결과에는 나올 수 있습니다. 다른 AI 회사는 방식이 다를 수 있으니 각 회사 안내를 확인하세요."}}]}]</script>
+
+<script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "yiy7q338pe");
+</script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-6D7XST08PS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-6D7XST08PS');
+
+  /* 리드 이벤트(generate_lead) — seo-data가 GA4에서 "어느 페이지가 문의를 만드는지" 센다.
+     lead_source: free_audit(무료 진단 제출) · free_tool(무료 도구 사용, 이메일 입력 — 세션당 도구마다 1번) · email_consult(상담·신청 메일 링크).
+     결제 링크 클릭은 리드가 아니라 begin_checkout. cb가 있으면 전송 뒤(최대 0.8초) 부른다(페이지 이동 전에 보내기 위해) */
+  /* 유입 출처 — 리드가 어떤 검색·AI·추천에서 왔는지(SEO 루프 M-01). 세션 첫 페이지에서 한 번 정하고 sessionStorage 에 둔다.
+     utm 이 있으면 "utm:source/medium/campaign", 아니면 "ref:호스트", 둘 다 없으면 "direct". 개인정보 없음(호스트·utm 값만, 160자). */
+  window.bhRef = function () {
+    try {
+      var k = 'bh_ref', v = sessionStorage.getItem(k);
+      if (v) return v;
+      var q = new URLSearchParams(location.search), us = q.get('utm_source');
+      if (us) v = 'utm:' + [us, q.get('utm_medium') || '', q.get('utm_campaign') || ''].join('/');
+      else { var h = ''; try { h = document.referrer ? new URL(document.referrer).hostname.replace(/^www./, '') : ''; } catch (e) {} v = h && h !== location.hostname ? 'ref:' + h : 'direct'; }
+      v = v.slice(0, 160); sessionStorage.setItem(k, v); return v;
+    } catch (e) { return ''; }
+  };
+  window.bhRef();
+  window.mkLead = function (src, extra, cb) {
+    var done = false, fin = function () { if (!done) { done = true; if (cb) cb(); } };
+    try { gtag('event', 'generate_lead', Object.assign({ lead_source: src, page_path: location.pathname }, extra || {}, cb ? { event_callback: fin } : {})); } catch (e) {}
+    if (cb) setTimeout(fin, 800);
+  };
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[href]'); if (!a) return;
+    var h = a.getAttribute('href') || '';
+    if (h.indexOf('mailto:') === 0) window.mkLead('email_consult', { link_text: (a.textContent || '').trim().slice(0, 60) });
+    else if (h.indexOf('https://buy.stripe.com/') === 0) { try { gtag('event', 'begin_checkout', { link_text: (a.textContent || '').trim().slice(0, 60), page_path: location.pathname }); } catch (e2) {} }
+  }, true);
+</script>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="logo"><svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#0A4DF5"/><path d="M15 44 h9 v-9 h9 v-9 h6.5" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M38.5 15.5 h10 v10" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Biz<span class="logo-accent">Higher</span></span></a>
+    <div class="nav-links">
+      <a class="nav-link" href="/services/">서비스</a>
+      <a class="nav-link" href="/pricing/">가격</a>
+      <a class="nav-link active" href="/blog/">블로그</a>
+      <a class="nav-link" href="/data/">데이터</a>
+      <a class="nav-link" href="/tools/">무료 도구</a>
+      <a class="nav-link" href="/free-audit/">무료 진단</a>
+    </div>
+    <div class="nav-cta"><a class="nav-login" href="/login/">로그인</a><a class="btn btn-primary btn-small" href="/free-audit/">무료 진단 받기</a></div>
+    <button class="nav-toggle" aria-label="메뉴 열기" onclick="document.getElementById('mm').classList.toggle('open');this.closest('.nav').classList.toggle('menu-open')">☰</button>
+  </div>
+  <div class="mobile-menu" id="mm">
+    <a href="/services/">서비스</a>
+    <a href="/pricing/">가격</a>
+    <a href="/blog/">블로그</a>
+    <a href="/data/">데이터</a>
+    <a href="/tools/">무료 도구</a>
+    <a href="/free-audit/">무료 진단</a>
+    <a href="/login/">비즈니스 로그인</a>
+    <a class="btn btn-primary btn-block" href="/free-audit/" style="border-bottom:none;color:#fff;">무료 진단 받기</a>
+  </div>
+</nav>
+<header class="page-head post-head">
+  <div class="post-hero has-cover">
+    <div class="ph-text">
+    <nav class="back-link crumbs" aria-label="현재 위치"><a href="/">홈</a><span class="crumbs-sep" aria-hidden="true">›</span><a href="/blog/">블로그</a><span class="crumbs-sep" aria-hidden="true">›</span><a href="/blog/ai-search-hub/">AI 검색</a><span class="crumbs-sep" aria-hidden="true">›</span><span aria-current="page">AI가 읽기 좋은 가게 웹사이트 — 스키마·FAQ·llms.txt 실전 설정</span></nav>
+    <span class="badge" style="background:#EFE8FD;color:#6D28D9">AI 검색</span>
+    <h1 class="page-title ph-title">AI가 읽기 좋은 가게 웹사이트 — 스키마·FAQ·llms.txt 실전 설정</h1>
+    <p class="page-sub">2026-11-11 · 11분 읽기 · BizHigher</p>
+    <a href="/blog/ai-search-hub/" class="hub-callout">🧭 이 글은 <b>AI 검색 시대 가게 노출 완전 가이드 — ChatGPT·구글 AI 요약에 읽히는 가게 만들기</b> 가이드의 일부입니다 →</a>
+    </div>
+    <figure class="ph-cover"><img src="/blog-img/ai-friendly-website-setup-cover.jpg" width="800" height="600" alt="문 닫은 한식당 나무 테이블 위 노트북과 작은 화분, 보리차 한 잔과 나무젓가락" fetchpriority="high" decoding="async"></figure>
+  </div>
+</header>
+<section class="detail-body" style="padding-top:4px;">
+  
+  <div class="container post-layout">
+    <aside class="toc toc-side" id="toc"><b>목차</b><ol><li><a href="#h1" data-h="h1">AI는 웹사이트에서 무엇을 읽을까</a></li><li><a href="#h2" data-h="h2">1단계: 본문에 사실을 '글'로 적기</a></li><li><a href="#h3" data-h="h3">2단계: 손님 질문을 FAQ로 — 스키마보다 문장이 먼저</a></li><li><a href="#h4" data-h="h4">3단계: LocalBusiness 스키마 넣기</a></li><li><a href="#h5" data-h="h5">4단계: robots.txt — AI 크롤러가 막혀 있지 않은지 확인</a></li><li><a href="#h6" data-h="h6">5단계: llms.txt — 해도 되지만 기대는 낮게</a></li><li><a href="#h7" data-h="h7">흔한 실수와 주의사항</a></li><li><a href="#h8" data-h="h8">오늘 해볼 수 있는 점검표</a></li><li><a href="#h9" data-h="h9">자주 묻는 질문</a></li></ol></aside>
+    <div class="post-main">
+    <div class="post-summary"><b>핵심 요약</b><ul><li>AI가 읽기 좋은 가게 사이트의 핵심은 특수 코드보다 본문에 사실을 글로 적는 것입니다.</li><li>구글은 AI 기능을 위해 별도 스키마나 llms.txt가 필요하지 않다고 안내합니다.</li><li>먼저 사이트에 주소·영업시간·서비스가 사진이 아닌 글로 있는지 확인하세요.</li></ul></div>
+    <article class="post-body"><p><b>AI가 읽기 좋은 가게 웹사이트를 만드는 가장 확실한 방법은, 특수한 코드를 넣는 것보다 손님이 묻는 사실을 본문에 글로 적어 두는 것입니다.</b> 스키마(구조화 데이터)와 robots.txt 설정은 그 글을 더 정확히 읽히게 돕는 보조 장치이고, llms.txt는 선택 사항입니다. 구글은 2026년 공개한 검색 센터 안내에서 AI 기능에 나오기 위해 별도의 특수 마크업이나 AI 전용 파일이 필요하지 않다고 밝히고 있습니다. 이 글은 사장님 가게 사이트에서 무엇을 어떤 순서로 손보면 되는지, 무엇은 안 해도 되는지 정리합니다.</p>
+<h2 id="h1">AI는 웹사이트에서 무엇을 읽을까</h2>
+<p>챗GPT 검색, 구글 AI 요약, 제미나이 같은 도구는 웹사이트를 사람처럼 "구경"하지 않습니다. 페이지의 <b>글자</b>를 가져가 질문과 맞는 문장을 찾습니다. 그래서 웹사이트를 두 층으로 나눠 생각하면 쉽습니다.</p>
+<figure><img src="/blog-img/ai-friendly-website-setup-layers-iceberg.png" alt="손님이 보는 본문 글과 AI가 함께 읽는 코드 속 정보(스키마·제목·robots.txt·llms.txt)를 빙산으로 나눈 그림" loading="lazy"><figcaption>손님이 보는 본문 글과 AI가 함께 읽는 코드 속 정보(스키마·제목·robots.txt·llms.txt)를 빙산으로 나눈 그림</figcaption></figure>
+<div class="tbl-wrap"><table><thead><tr><th>층</th><th>들어 있는 것</th><th>중요도</th></tr></thead><tbody><tr><td>화면에 보이는 글</td><td>가게 소개, 메뉴·서비스 설명, 주소·영업시간, 자주 묻는 질문</td><td>가장 중요. 이것이 없으면 나머지는 의미가 적습니다</td></tr><tr><td>페이지 제목·설명</td><td>브라우저 탭 제목, 검색 결과에 뜨는 설명문</td><td>중요. 페이지마다 다르게</td></tr><tr><td>구조화 데이터(스키마)</td><td>상호·주소·전화·영업시간을 기계가 읽는 형식으로 적은 코드</td><td>권장. 본문 내용과 같아야 합니다</td></tr><tr><td>robots.txt</td><td>어떤 크롤러가 사이트를 읽어도 되는지 정하는 파일</td><td>막혀 있으면 치명적. 확인만 하면 됩니다</td></tr><tr><td>llms.txt</td><td>AI용 사이트 안내문(제안된 형식)</td><td>선택. 효과가 확인되지 않았습니다</td></tr></tbody></table></div>
+<p>이 순서가 곧 작업 순서입니다. 위에서부터 채우고, 아래로 갈수록 "있으면 좋은 것"입니다. AI가 정보를 가져오는 곳 전체(구글 프로필·리뷰·업소록 등)는 별도 글에서 정리했습니다.</p>
+<div class="post-links"><a class="post-link" href="/blog/where-ai-gets-business-info/" style="--c:#6D28D9;--t:#EFE8FD"><span class="pl-img"><img src="/blog-img/where-ai-gets-business-info-cover.jpg" width="800" height="600" alt="식당 카운터 위에 놓인 스마트폰과 명함 더미, 화살표가 그려진 노트" loading="lazy" decoding="async"></span><span class="pl-body"><span class="pl-cat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>AI 검색 · 6분</span><b class="pl-title">AI는 어디서 가게 정보를 가져올까 — 구글·옐프·지도·업소록 출처 정리</b><span class="pl-desc">챗GPT·제미나이 같은 AI가 가게 정보를 읽는 곳을 구글 프로필, 웹사이트, 리뷰 사이트, 지도, 업소록으로 나눠 정리하고 사장님이 점검할 순서를 안내합니다.</span></span><span class="pl-go" aria-hidden="true">→</span></a></div>
+<h2 id="h2">1단계: 본문에 사실을 '글'로 적기</h2>
+<p>한인 가게 사이트에서 가장 흔한 문제는 정보가 <b>사진 안에</b> 들어 있다는 것입니다. 메뉴판 사진, 영업시간이 적힌 포스터 이미지, 전단지를 그대로 올린 페이지는 사람 눈에는 다 보이지만 검색과 AI는 그 안의 글자를 안정적으로 읽는다고 기대하기 어렵습니다. 같은 내용을 반드시 본문 텍스트로도 적어 주세요.</p>
+<p>본문에 꼭 있어야 하는 것:</p>
+<ul><li><b>상호</b> — 간판·구글 프로필과 똑같이, 한글과 영문 병기 (예: 서울순두부 Seoul Tofu House)</li><li><b>주소</b> — 스위트 번호까지, 구글 프로필과 같은 형식</li><li><b>전화번호</b> — 누르면 걸리는 링크로</li><li><b>영업시간</b> — 요일별, 휴무일과 브레이크 타임 포함</li><li><b>서비스·메뉴</b> — 손님이 검색하는 말로. "스페셜 A" 대신 "갈비 순두부 세트"</li><li><b>사용 언어</b> — "한국어·영어 상담 가능"처럼 평서문으로</li><li><b>예약·결제·주차</b> — 확정된 사실만</li></ul>
+<p>문장은 꾸밈말보다 사실 위주로 씁니다. "최고의 맛, 정성 가득"보다 "매일 아침 사골 육수를 직접 끓입니다. 순두부 맵기는 0~4단계에서 고를 수 있습니다."가 AI가 인용하기 쉬운 문장입니다. 이렇게 정리할 정보가 아직 흩어져 있다면 가게 정보 시트부터 만드는 편이 빠릅니다.</p>
+<div class="post-links"><a class="post-link" href="/blog/ai-business-fact-sheet/" style="--c:#6D28D9;--t:#EFE8FD"><span class="pl-img"><img src="/blog-img/ai-business-fact-sheet-cover.jpg" width="800" height="600" alt="클립보드에 정리된 가게 정보 한 장과 휴대폰, 펜, 가게 열쇠, 작은 화분" loading="lazy" decoding="async"></span><span class="pl-body"><span class="pl-cat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>AI 검색 · 5분</span><b class="pl-title">챗GPT·제미나이가 우리 가게를 추천하게 하는 정보 정리법 — 가게 정보 시트 만들기</b><span class="pl-desc">AI가 가게를 잘못 소개하지 않도록, 영업시간·서비스·위치·차별점을 한 장의 '가게 정보 시트'로 정리해 프로필·웹사이트·업소록에 똑같이 옮기는 방법입니다.</span></span><span class="pl-go" aria-hidden="true">→</span></a></div>
+<h2 id="h3">2단계: 손님 질문을 FAQ로 — 스키마보다 문장이 먼저</h2>
+<p>손님은 AI에게 문장으로 묻습니다. "주차 돼요?", "아이랑 가도 돼요?", "한국어로 상담돼요?" 이런 질문을 사이트에 <b>질문 제목 + 첫 문장에서 바로 답</b> 형식으로 적어 두면, AI가 그 문단을 그대로 답에 쓰기 좋습니다.</p>
+<p>좋은 FAQ의 조건:</p>
+<ol><li>질문은 손님 말투 그대로 ("주차는 어디에 하나요?")</li><li>첫 문장에 결론 ("건물 뒤 전용 주차장에 무료로 주차할 수 있습니다.")</li><li>그다음 한두 문장으로 조건이나 예외 ("금요일 저녁에는 자리가 부족할 수 있어 길 건너 공영 주차장을 안내해 드립니다.")</li><li>가격처럼 자주 바뀌는 내용은 바뀔 때 바로 고칠 수 있는 것만</li></ol>
+<p><b>FAQ 스키마에 대한 2026년 변화</b>: 예전에는 FAQ 스키마(FAQPage)를 넣으면 구글 검색 결과에 질문이 펼쳐져 보이는 경우가 있었습니다. 구글은 이 FAQ 리치 결과를 2023년부터 정부·의료 사이트로 줄였고, 2026년 5월부터는 검색 결과에 더 이상 표시하지 않는다고 공식 문서에 적었습니다. 다만 FAQ 마크업 자체를 지울 필요는 없고, 구글은 구조화 데이터를 페이지 이해에 계속 쓸 수 있다고 안내합니다. 정리하면 <b>FAQ는 화면에 보이는 문장으로 쓰는 것이 본체이고, 스키마는 이미 있다면 그대로 두면 되는 부가물</b>입니다.</p>
+<h2 id="h4">3단계: LocalBusiness 스키마 넣기</h2>
+<p>스키마는 페이지 코드 안에 "이 가게의 이름은 무엇이고, 주소는 어디고, 몇 시에 여는지"를 정해진 형식(JSON-LD)으로 적어 두는 것입니다. 구글은 지역 업체에 LocalBusiness 구조화 데이터를 지원하며, 식당이면 <code>Restaurant</code>, 치과면 <code>Dentist</code>처럼 더 구체적인 종류를 고를 수 있습니다.</p>
+<p>넣을 항목은 많지 않습니다.</p>
+<div class="tbl-wrap"><table><thead><tr><th>항목</th><th>스키마 속성</th><th>적는 법</th></tr></thead><tbody><tr><td>상호</td><td><code>name</code></td><td>구글 프로필과 똑같이</td></tr><tr><td>주소</td><td><code>address</code></td><td>거리·도시·주·우편번호를 나눠서</td></tr><tr><td>전화</td><td><code>telephone</code></td><td>+1 국가번호 포함 형식</td></tr><tr><td>영업시간</td><td><code>openingHoursSpecification</code></td><td>요일별, 실제 시간 그대로</td></tr><tr><td>웹사이트·지도</td><td><code>url</code>, <code>hasMap</code></td><td>사이트 주소, 구글 지도 링크</td></tr><tr><td>다른 채널</td><td><code>sameAs</code></td><td>구글 프로필·옐프·인스타그램 주소</td></tr><tr><td>가격대·결제</td><td><code>priceRange</code>, <code>paymentAccepted</code></td><td>확실한 것만</td></tr></tbody></table></div>
+<p>직접 코드를 짜기 어렵다면 무료 스키마 생성기로 만들어 웹사이트 빌더(윅스·스퀘어스페이스·워드프레스 등)의 "헤더 코드 삽입" 칸에 붙여 넣으면 됩니다. 넣은 뒤에는 구글 <a href="https://search.google.com/test/rich-results">리치 결과 테스트</a>나 <a href="https://validator.schema.org/">Schema Markup Validator</a>에 주소를 넣어 오류가 없는지 확인하세요.</p>
+<p>→ <a href="/tools/schema-generator/">무료 도구: 가게 스키마(LocalBusiness) 생성기</a></p>
+<p><b>넣지 말아야 할 것</b>: 자기 사이트에 별점·리뷰 수(<code>aggregateRating</code>)를 스스로 적는 것은 피하세요. 구글은 업체가 자기 자신에 대해 단 리뷰 마크업을 별점 표시 대상으로 보지 않으며, 실제와 다르면 구조화 데이터 정책 위반이 될 수 있습니다. 또 스키마의 영업시간이 본문·구글 프로필과 다르면 오히려 혼란을 키웁니다. 시간이 바뀌면 세 곳을 함께 고치세요.</p>
+<h2 id="h5">4단계: robots.txt — AI 크롤러가 막혀 있지 않은지 확인</h2>
+<p>아무리 글을 잘 써도 크롤러가 사이트에 못 들어오면 소용이 없습니다. 브라우저 주소창에 <code>우리사이트.com/robots.txt</code>를 쳐서 열어 보세요.</p>
+<ul><li><code>Disallow: /</code>가 <code>User-agent: *</code> 아래에 있으면 <b>모든 검색엔진을 막고 있는 상태</b>입니다. 사이트 제작 중에 걸어 둔 설정이 그대로 남은 경우가 많습니다</li><li>챗GPT 검색 결과에 나오려면 OpenAI의 검색용 크롤러 <code>OAI-SearchBot</code>이 막혀 있지 않아야 한다고 OpenAI는 안내합니다. AI 학습용 크롤러(<code>GPTBot</code>)와는 별개라서, 학습은 막고 검색 노출은 허용하는 선택도 가능합니다</li><li>구글 AI 요약은 일반 구글 검색과 같은 색인을 씁니다. <code>Googlebot</code>이 막혀 있지 않으면 됩니다</li><li>Cloudflare 같은 보안 서비스에는 AI 크롤러를 일괄 차단하는 설정이 있습니다. 사이트를 맡긴 업체가 이 설정을 켰는지 한 번 물어보세요</li></ul>
+<p>어떤 크롤러를 허용할지는 사장님의 선택입니다. 다만 "AI 검색에 나오고 싶은데 AI 검색 크롤러는 막혀 있는" 상태는 흔한 실수이니 한 번은 확인할 가치가 있습니다.</p>
+<h2 id="h6">5단계: llms.txt — 해도 되지만 기대는 낮게</h2>
+<p>llms.txt는 사이트 맨 위 주소에 <code>llms.txt</code>라는 텍스트 파일을 두고, AI에게 "우리 사이트의 주요 페이지는 이것들"이라고 마크다운으로 안내하자는 <b>제안된 형식</b>입니다. 2024년에 제안된 뒤 여러 사이트가 도입했지만, 주요 AI 회사가 답변을 만들 때 이 파일을 쓴다고 공식적으로 확인한 바는 없습니다. 구글도 AI 기능에 나오기 위해 llms.txt 같은 파일을 만들 필요가 없다고 안내합니다.</p>
+<p>그래도 만들기가 어렵지 않아서, 사이트를 직접 관리한다면 넣어 두어도 손해는 없습니다. 내용은 단순하게:</p>
+<ul><li>첫 줄: <code># 상호 (영문 상호)</code></li><li>한 줄 소개: <code>&gt; 가든그로브의 한식당. 순두부·갈비, 한국어·영어 응대.</code></li><li>주요 페이지 목록: 메뉴, 오시는 길, 예약, 자주 묻는 질문 — 각각 링크와 한 줄 설명</li></ul>
+<p>중요한 것은 <b>llms.txt에만 있고 본문에는 없는 정보를 만들지 않는 것</b>입니다. 이 파일은 지도이지 본문의 대신이 아닙니다. 웹사이트 업체가 "llms.txt를 넣으면 AI 추천이 보장된다"고 한다면 근거를 물어보세요.</p>
+<h2 id="h7">흔한 실수와 주의사항</h2>
+<div class="tbl-wrap"><table><thead><tr><th>실수</th><th>왜 문제인가</th><th>고치는 법</th></tr></thead><tbody><tr><td>메뉴·영업시간을 사진으로만 올림</td><td>검색과 AI가 글자를 못 읽을 수 있음</td><td>같은 내용을 본문 텍스트로</td></tr><tr><td>스키마 영업시간이 옛날 것</td><td>본문·프로필과 어긋나 혼란</td><td>시간이 바뀌면 세 곳 함께 수정</td></tr><tr><td>자기 사이트에 별점 스키마</td><td>별점 표시 대상 아님, 정책 위반 위험</td><td><code>aggregateRating</code> 빼기</td></tr><tr><td>제작 중 <code>Disallow: /</code>가 남음</td><td>모든 검색에서 사라질 수 있음</td><td>robots.txt 열어 확인</td></tr><tr><td>모든 페이지 제목이 같음</td><td>페이지 구분이 안 됨</td><td>페이지마다 다른 제목·설명</td></tr><tr><td>한국어 페이지만 있음</td><td>영어로 묻는 손님 질문과 안 맞음</td><td>핵심 정보는 한·영 모두</td></tr></tbody></table></div>
+<p><b>솔직한 주의사항</b>: 이 설정을 모두 해도 AI가 우리 가게를 추천한다는 보장은 없습니다. AI가 어떤 가게를 고르는지는 위치, 리뷰, 다른 출처의 정보 등 사이트 밖의 요인이 크게 작용하고, 내부 방식은 공개되지 않습니다. 웹사이트 정리는 "AI가 우리 가게를 언급할 때 틀리지 않게" 만드는 기본기라고 생각하는 것이 현실적입니다. 의료·치과 사이트는 FAQ에 치료 효과를 단정하거나 환자 사례를 암시하는 표현을 넣지 않도록 특히 조심하세요.</p>
+<h2 id="h8">오늘 해볼 수 있는 점검표</h2>
+<ul><li>[ ] 사이트에 상호·주소·전화·영업시간이 <b>텍스트</b>로 있다</li><li>[ ] 메뉴판·가격표가 사진뿐 아니라 글로도 있다</li><li>[ ] 손님이 자주 묻는 질문 5개가 질문+첫 문장 답 형식으로 있다</li><li>[ ] 페이지마다 제목과 설명이 다르다</li><li>[ ] LocalBusiness 스키마가 있고 테스트 도구에서 오류가 없다</li><li>[ ] 스키마·본문·구글 프로필의 영업시간이 같다</li><li>[ ] 자기 사이트에 별점 스키마를 넣지 않았다</li><li>[ ] <code>robots.txt</code>에 <code>Disallow: /</code>가 없고, <code>OAI-SearchBot</code>·<code>Googlebot</code>이 막혀 있지 않다</li><li>[ ] (선택) llms.txt에 주요 페이지 링크가 있고 본문과 내용이 같다</li></ul>
+<p>점검을 마쳤다면 손님이 칠 법한 질문을 AI에 직접 물어 기록해 두세요. 몇 주 뒤 같은 질문으로 다시 확인하면 변화를 비교할 수 있습니다. 무료 <a href="/tools/ai-check/">AI 추천 체크 도구</a>로도 확인할 수 있습니다.</p>
+<h2 id="h9">자주 묻는 질문</h2>
+<h3>스키마를 넣으면 챗GPT나 구글 AI에 나오나요?</h3>
+<p>보장되지 않습니다. 구글은 AI 기능에 나오기 위해 특수한 스키마가 필요하지 않다고 안내합니다. 스키마는 가게 정보를 기계가 정확히 읽도록 돕는 보조 장치이고, 본문에 사실이 글로 적혀 있는 것이 먼저입니다.</p>
+<h3>FAQ 스키마는 이제 지워야 하나요?</h3>
+<p>지울 필요는 없습니다. 구글은 2026년 5월부터 FAQ 리치 결과를 검색에 표시하지 않지만, 올바른 FAQ 마크업은 그대로 두어도 된다고 안내합니다. 새로 만든다면 스키마보다 화면에 보이는 질문과 답 문장에 공을 들이세요.</p>
+<h3>llms.txt는 꼭 만들어야 하나요?</h3>
+<p>필수가 아닙니다. 주요 AI 회사가 이 파일을 쓴다고 공식 확인한 바가 없고, 구글도 필요 없다고 안내합니다. 사이트를 직접 관리한다면 주요 페이지 목록 정도로 간단히 만들어 두는 것은 괜찮습니다.</p>
+<h3>윅스·스퀘어스페이스로 만든 사이트도 설정할 수 있나요?</h3>
+<p>대부분 가능합니다. 본문 글과 FAQ는 편집 화면에서 바로 고칠 수 있고, 스키마는 "사용자 지정 코드" 또는 "헤더 코드 삽입" 메뉴에 붙여 넣는 방식입니다. robots.txt와 llms.txt는 빌더에 따라 수정이 제한될 수 있으니 각 빌더의 도움말을 확인하세요.</p>
+<h3>AI 학습용 크롤러를 막으면 AI 검색에서도 빠지나요?</h3>
+<p>꼭 그렇지는 않습니다. OpenAI는 학습용 크롤러(GPTBot)와 검색용 크롤러(OAI-SearchBot)를 구분해 안내합니다. 학습용만 막고 검색용은 허용하면 챗GPT 검색 결과에는 나올 수 있습니다. 다른 AI 회사는 방식이 다를 수 있으니 각 회사 안내를 확인하세요.</p></article>
+    <aside class="svc-banner" aria-label="관련 서비스">
+  <div class="sb-copy">
+    <span class="sb-eyebrow">이 글의 내용, 저희가 대신 해 드립니다</span>
+    <b class="sb-name">SEO/AIO 관리</b>
+    <p class="sb-desc">구글 검색과 AI 검색(ChatGPT 등) 모두에서 발견되게 만듭니다</p>
+    <ul class="sb-inc"><li>온보딩: 키워드 지도 — 페이지마다 주인 키워드 1개, 겹치는 페이지 정리(한 키워드 한 페이지)</li><li>온보딩: Search Console 분석 — 2페이지에 잠든 키워드 전수 발굴·교정</li><li>매달 검색 데이터로 기존 페이지 개선 — 노출은 있는데 순위·클릭이 아쉬운 페이지 3~5개의 제목·설명·FAQ·본문 보강</li></ul>
+  </div>
+  <div class="sb-side">
+    <span class="sb-price">$249/월</span>
+    <span class="sb-sub">구독 · 언제든 해지</span>
+    <a class="btn sb-btn" href="/service/seo-aio/">SEO/AIO 관리 자세히 보기 <i class="btn-arr" aria-hidden="true">→</i></a>
+    <a class="sb-link" href="/free-audit/">먼저 무료 AI 진단 받기</a>
+  </div>
+</aside>
+    <h2 class="h2-left" style="margin-top:48px;">이 글과 함께 쓰는 무료 도구</h2><div class="tool-grid-light tool-grid-post">
+<a href="/tools/schema-generator/" class="prod-card tool-card" style="--tg:#0A4DF5">
+  <span class="tool-card-top"><span class="tool-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6l-5 6 5 6M16 6l5 6-5 6M13.5 4l-3 16"/></svg></span><span class="tool-card-name">LocalBusiness 스키마 생성기</span><span class="tool-free">Free</span></span>
+  <div class="tool-card-row">
+    <div class="tool-card-main">
+      <div class="tool-mstat"><b>9</b><span>개</span></div>
+      <p class="tool-mstat-sub">채워지는 구조화 데이터 항목 (예시)</p>
+    </div>
+    <div class="tool-mviz tmv-fields"><span class="f-row"><i class="f-dot is-on"></i><i class="f-bar"></i></span><span class="f-row"><i class="f-dot is-on"></i><i class="f-bar"></i></span><span class="f-row"><i class="f-dot"></i><i class="f-bar short"></i></span></div>
+  </div>
+  <span class="card-cta">무료로 쓰기 →</span>
+</a>
+<a href="/tools/ai-check/" class="prod-card tool-card" style="--tg:#0A4DF5">
+  <span class="tool-card-top"><span class="tool-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M18.5 15.5l.8 1.7 1.7.8-1.7.8-.8 1.7-.8-1.7-1.7-.8 1.7-.8z"/></svg></span><span class="tool-card-name">AI 추천 체크</span><span class="tool-free">Free</span></span>
+  <div class="tool-card-row">
+    <div class="tool-card-main">
+      <div class="tool-mstat"><b>2</b><span>/5</span></div>
+      <p class="tool-mstat-sub">AI 검색 노출 질문 (예시)</p>
+    </div>
+    <div class="tool-mviz tmv-dots"><span class="tmv-dot is-on"></span><span class="tmv-dot is-on"></span><span class="tmv-dot"></span><span class="tmv-dot"></span><span class="tmv-dot"></span></div>
+  </div>
+  <span class="card-cta">무료로 쓰기 →</span>
+</a>
+<a href="/tools/local-rank/" class="prod-card tool-card" style="--tg:#0A4DF5">
+  <span class="tool-card-top"><span class="tool-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg></span><span class="tool-card-name">구글 지도 순위 체크</span><span class="tool-free">Free</span></span>
+  <div class="tool-card-row">
+    <div class="tool-card-main">
+      <div class="tool-mstat"><b>24</b><span>%</span></div>
+      <p class="tool-mstat-sub">상위 3위 안 지점 (예시)</p>
+    </div>
+    <div class="tool-mviz tmv-grid"><span class="g-top"></span><span class="g-top"></span><span class="g-mid"></span><span class="g-mid"></span><span class="g-top"></span><span class="g-low"></span><span class="g-low"></span><span class="g-mid"></span><span class="g-out"></span></div>
+  </div>
+  <span class="card-cta">무료로 쓰기 →</span>
+</a></div>
+    <a href="/data/korean-business-digital-basics-2026-q4/" class="hub-callout" style="margin-top:16px;">📊 실측 데이터: <b>한인 업소 디지털 기본기 점검 2026-Q4</b> →</a><a href="/data/korean-business-websites-2026-q3/" class="hub-callout" style="margin-top:16px;">📊 실측 데이터: <b>한인 업소 웹사이트 첫 화면 점검 2026-Q3</b> →</a>
+    <h2 class="h2-left" style="margin-top:48px;">함께 읽으면 좋은 글</h2><div class="grid3">
+<a href="/blog/where-ai-gets-business-info/" class="post-card" style="--c:#6D28D9">
+  <div class="pc-media"><img class="pc-img" src="/blog-img/where-ai-gets-business-info-cover.jpg" width="800" height="600" alt="식당 카운터 위에 놓인 스마트폰과 명함 더미, 화살표가 그려진 노트" loading="lazy" decoding="async"></div>
+  <div class="pc-body">
+    <span class="pc-cat"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>AI 검색</span>
+    <h3 class="pc-title">AI는 어디서 가게 정보를 가져올까 — 구글·옐프·지도·업소록 출처 정리</h3>
+  </div>
+</a>
+<a href="/blog/chatgpt-local-business-test/" class="post-card" style="--c:#6D28D9">
+  <div class="pc-media"><img class="pc-img" src="/blog-img/chatgpt-local-business-test-cover.jpg" width="800" height="600" alt="안경점 카운터 위 노트북과 체크리스트 노트, 뒤쪽 벽면의 안경테 진열" loading="lazy" decoding="async"></div>
+  <div class="pc-body">
+    <span class="pc-cat"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>AI 검색</span>
+    <h3 class="pc-title">챗GPT에 우리 가게가 나오는지 직접 확인하는 법 — 질문 10개 테스트</h3>
+  </div>
+</a>
+<a href="/blog/slow-mobile-website-fix/" class="post-card" style="--c:#0E7490">
+  <div class="pc-media"><img class="pc-img" src="/blog-img/slow-mobile-website-fix-cover.jpg" width="800" height="600" alt="카페 테라스 테이블 위 로딩 표시만 도는 빈 화면의 휴대폰과 빈 커피잔" loading="lazy" decoding="async"><span class="pc-chip"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="2.2"/><circle cx="8.5" cy="9.5" r="1.8"/><path d="M21 16l-5-5-8 8.5"/></svg>인포그래픽</span></div>
+  <div class="pc-body">
+    <span class="pc-cat"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="2.2"/><path d="M3 9h18"/><circle cx="6.2" cy="6.8" r=".6"/><circle cx="8.4" cy="6.8" r=".6"/><path d="M7 13h6M7 16h9"/></svg>웹사이트</span>
+    <h3 class="pc-title">모바일에서 느린 가게 사이트, 고객이 떠나기 전에 고치는 법</h3>
+  </div>
+</a></div>
+    </div><!-- /post-main -->
+  </div>
+</section>
+<script>
+/* 목차 스크롤스파이 — 실패해도 목차·본문 표시엔 영향 없음 */
+(function () {
+  try {
+    if (!('IntersectionObserver' in window)) return;
+    var links = document.querySelectorAll('#toc a[data-h]');
+    if (!links.length) return;
+    var map = {};
+    links.forEach(function (a) { map[a.getAttribute('data-h')] = a; });
+    var current = null;
+    var hs = document.querySelectorAll('.post-body h2[id]');
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          if (current) current.classList.remove('on');
+          current = map[en.target.id];
+          if (current) current.classList.add('on');
+        }
+      });
+    }, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+    hs.forEach(function (h) { io.observe(h); });
+  } catch (e) {}
+})();
+</script>
+
+<section class="mega-cta mega-cta-form" id="footer-audit">
+  <div class="container">
+    <div class="fa-grid">
+      <div class="fa-copy">
+        <p class="eyebrow eyebrow-cyan">무료 · 60초 · 가입 불필요</p>
+        <h2 class="fa-title">내 가게 마케팅,<br><span class="grad">몇 점일까요?</span></h2>
+        <p class="fa-sub">구글에서 우리 가게가 어떻게 보이는지 AI가 분석합니다. 완료되면 이 화면에서 바로 리포트가 열립니다. 스팸은 보내지 않습니다.</p>
+        <p class="fa-note">📄 <a href="/report/sample">리포트가 어떻게 생겼는지 먼저 보기 →</a></p>
+      </div>
+      <form class="audit-form fa-form" id="fa-form">
+        <input type="text" name="business" placeholder="업체명 (예: 하나 안경원)" class="input" required>
+        <input type="text" name="location" placeholder="도시 (예: Los Angeles CA) 또는 구글 프로필 링크" class="input" required>
+        <input type="email" name="email" placeholder="이메일" class="input" required>
+        <button type="submit" class="btn btn-primary btn-block">무료 진단 시작 →</button>
+        <div class="bh-loader audit-loader" aria-live="polite"><div class="bh-word" data-text="BizHigher"><span class="bh-fill">BizHigher</span></div><div class="bh-step"></div></div>
+        <div class="form-msg" id="fa-msg"></div>
+        <p class="fa-form-note">분석에 20~40초 정도 걸립니다 · 완료되면 리포트 화면으로 자동 이동합니다</p>
+      </form>
+    </div>
+  </div>
+</section>
+<script>
+(function () {
+  var form = document.getElementById('fa-form'); if (!form) return;
+  function mkAuditLoader(form) {
+  var box = form.querySelector('.bh-loader');
+  if (!box) return { start: function () {}, done: function () {}, stop: function () {} };
+  var fill = box.querySelector('.bh-fill'), step = box.querySelector('.bh-step'), iv = null, t0 = 0;
+  var STEPS = [[0, '구글에서 우리 가게 찾는 중…'], [18, '주변 경쟁 가게 3곳 찾는 중…'], [40, '웹사이트·리뷰 점검 중…'], [62, '100점 만점으로 채점 중…'], [78, 'AI가 리포트를 쓰는 중…']];
+  function set(p, txt) { fill.style.width = p + '%'; if (txt !== undefined) step.textContent = txt; }
+  return {
+    start: function () {
+      clearInterval(iv); box.classList.add('on', 'busy'); t0 = Date.now(); set(3, STEPS[0][1]);
+      iv = setInterval(function () {
+        var sec = (Date.now() - t0) / 1000, p = 92 * (1 - Math.exp(-sec / 14)), txt = STEPS[0][1];
+        STEPS.forEach(function (x) { if (p >= x[0]) txt = x[1]; });
+        set(Math.max(3, p), txt);
+      }, 400);
+    },
+    done: function (txt) { clearInterval(iv); box.classList.remove('busy'); set(100, txt || '리포트 여는 중…'); },
+    stop: function () { clearInterval(iv); box.classList.remove('on', 'busy'); set(0, ''); }
+  };
+}
+  var ld = mkAuditLoader(form);
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var msg = document.getElementById('fa-msg');
+    var btn = form.querySelector('button');
+    btn.disabled = true; btn.textContent = 'AI가 분석 중입니다…';
+    ld.start();
+    try {
+      var body = Object.fromEntries(new FormData(form).entries()); body.ref = window.bhRef ? window.bhRef() : '';
+      var res = await fetch('/api/audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error('server');
+      var result = await res.json();
+      if (result.reportUrl) { btn.textContent = '리포트 여는 중...'; ld.done(); window.mkLead('free_audit', {}, function () { window.location.href = result.reportUrl; }); return; }
+      ld.stop(); window.mkLead('free_audit', { report: 'no' });
+      msg.className = 'form-msg success';
+      msg.textContent = '접수되었습니다! 영업일 1일 안에 진단 리포트를 이메일로 보내드릴게요.';
+      form.reset(); btn.textContent = '접수 완료 ✓';
+    } catch (err) {
+      ld.stop();
+      msg.className = 'form-msg error';
+      msg.textContent = '일시적인 오류가 발생했습니다. 잠시 후 다시 시도하시거나 hello@bizhigher.com 로 보내주세요.';
+      btn.disabled = false; btn.textContent = '무료 진단 시작 →';
+    }
+  });
+})();
+</script>
+<footer class="footer">
+  <div class="container">
+    <div class="footer-cols footer-cols-rich">
+      <div class="footer-brand">
+        <span class="logo"><svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#0A4DF5"/><path d="M15 44 h9 v-9 h9 v-9 h6.5" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M38.5 15.5 h10 v10" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Biz<span class="logo-accent">Higher</span></span></span>
+        <p class="footer-desc">미국 한인 비즈니스를 위한 AI 광고회사. 견적 미팅 없는 정찰제로, 대행사 절반 이하의 가격에 더 빠르게.</p>
+        <a href="mailto:hello@bizhigher.com" class="footer-link">hello@bizhigher.com</a>
+        <a href="/free-audit/" class="btn btn-primary footer-cta">무료 AI 진단 받기 <i class="btn-arr" aria-hidden="true">→</i></a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">인기 서비스</span>
+        <a href="/service/google-profile-optimization/" class="footer-link">구글 비즈니스 프로필 최적화</a><a href="/service/review-qr-kit/" class="footer-link">구글 리뷰 QR 키트</a><a href="/service/website/" class="footer-link">웹사이트 제작</a><a href="/service/seo-aio/" class="footer-link">SEO/AIO 관리</a><a href="/service/ads-management/" class="footer-link">광고 운영</a><a href="/service/gbp-posting/" class="footer-link">포스팅 관리</a>
+        <a href="/services/" class="footer-link footer-more">전체 서비스 16개 →</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">플랜·가격</span>
+        <a href="/package/local-starter/" class="footer-link">Local Starter 플랜</a><a href="/package/local-growth/" class="footer-link">Local Growth 플랜</a><a href="/package/local-premium/" class="footer-link">Local Premium 플랜</a>
+        <a href="/pricing/" class="footer-link">가격 한눈에 보기</a>
+        <a href="/free-audit/" class="footer-link">무료 AI 진단</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">무료 도구</span>
+        <a href="/tools/local-rank/" class="footer-link">구글 지도 순위 체크</a><a href="/tools/review-link/" class="footer-link">구글 리뷰 링크·QR 포스터 생성…</a><a href="/tools/ai-check/" class="footer-link">AI 추천 체크</a><a href="/tools/competitor-reviews/" class="footer-link">경쟁 가게 리뷰 비교</a><a href="/tools/ads-budget/" class="footer-link">구글 광고 예산 계산기</a>
+        <a href="/tools/" class="footer-link footer-more">무료 도구 15개 전체 →</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">마케팅 가이드</span>
+        <a href="/blog/ads-hub/" class="footer-link">광고 가이드</a><a href="/blog/ai-search-hub/" class="footer-link">AI 검색 가이드</a><a href="/blog/website-hub/" class="footer-link">웹사이트 가이드</a><a href="/blog/content-sns-hub/" class="footer-link">콘텐츠·SNS 가이드</a><a href="/blog/review-management-hub/" class="footer-link">리뷰·평판 가이드</a><a href="/blog/google-business-profile-hub/" class="footer-link">구글 노출 가이드</a>
+        <a href="/blog/" class="footer-link footer-more">블로그 전체 →</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-head">BizHigher</span>
+        <a href="/data/" class="footer-link">데이터 리포트</a>
+        <a href="/privacy/" class="footer-link">개인정보처리방침</a>
+        <a href="/terms/" class="footer-link">이용약관</a>
+      </div>
+    </div>
+    <p class="footer-copy">© 2026 BizHigher. All rights reserved. · <a href="/login/">비즈니스 로그인</a></p>
+  </div>
+</footer>
+<script>
+/* 스크롤 리빌 — IO 지원 시에만 숨겼다가 나타남 (기본은 항상 보임) + 3초 강제 표시 안전장치 */
+(function () {
+  if (!('IntersectionObserver' in window)) return;
+  var els = document.querySelectorAll('.prod-card, .step-card, .tier:not(.pk-card), .stat-box, .faq-item, .price-item');
+  if (!els.length) return;
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+    });
+  }, { threshold: 0, rootMargin: '0px 0px -40px 0px' });
+  els.forEach(function (el, i) {
+    el.classList.add('rv');
+    el.style.transitionDelay = Math.min((i % 6) * 60, 300) + 'ms';
+    io.observe(el);
+  });
+  setTimeout(function () {
+    els.forEach(function (el) { el.classList.add('in'); });
+  }, 3000);
+})();
+
+/* 인터랙션 팩 — 네비 스크롤 상태 · 카운트업 · 카드 3D 틸트 (모두 선택적 강화, 실패해도 콘텐츠 표시에 영향 없음) */
+(function () {
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* 0) 플로팅 네비 — 스크롤 시 글래스 강화 */
+  var nav = document.querySelector('.nav');
+  if (nav) {
+    var navUpd = function () { nav.classList.toggle('scrolled', window.scrollY > 40); };
+    window.addEventListener('scroll', navUpd, { passive: true });
+    navUpd();
+  }
+
+  /* 1) 숫자 카운트업 — 뷰포트 진입 시 1회 */
+  if (!reduced && 'IntersectionObserver' in window) {
+    var stats = document.querySelectorAll('[data-count]');
+    if (stats.length) {
+      var sio = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          sio.unobserve(en.target);
+          var el = en.target;
+          var target = parseInt(el.getAttribute('data-count'), 10) || 0;
+          var pre = el.getAttribute('data-prefix') || '', suf = el.getAttribute('data-suffix') || '';
+          var start = null;
+          function step(ts) {
+            if (!start) start = ts;
+            var p = Math.min((ts - start) / 1200, 1);
+            el.textContent = pre + Math.round(target * (1 - Math.pow(1 - p, 3))).toLocaleString('en-US') + suf;
+            if (p < 1) requestAnimationFrame(step);
+          }
+          requestAnimationFrame(step);
+        });
+      }, { threshold: 0 });
+      stats.forEach(function (el) { sio.observe(el); });
+    }
+  }
+
+  /* 2) 스텝 카드 순차 하이라이트 — 섹션이 보이는 동안 부드럽게 순환 */
+  var steps = document.getElementById('steps');
+  if (steps && !reduced && 'IntersectionObserver' in window) {
+    var cards = steps.querySelectorAll('.step-card');
+    if (cards.length) {
+      var idx = 0, iv = null;
+      function cycle() {
+        cards.forEach(function (c, i) { c.classList.toggle('step-active', i === idx); });
+        idx = (idx + 1) % cards.length;
+      }
+      var stio = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting && !iv) { cycle(); iv = setInterval(cycle, 2200); }
+          else if (!en.isIntersecting && iv) {
+            clearInterval(iv); iv = null;
+            cards.forEach(function (c) { c.classList.remove('step-active'); });
+          }
+        });
+      }, { threshold: 0.3 });
+      stio.observe(steps);
+    }
+  }
+
+  /* 3) 카드 3D 틸트 — 데스크톱(정밀 포인터)에서만 */
+  if (!reduced && window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
+    var tiltEls = document.querySelectorAll('.prod-card, .tier, .step-card');
+    tiltEls.forEach(function (el) {
+      el.addEventListener('mousemove', function (e) {
+        var r = el.getBoundingClientRect();
+        var rx = ((e.clientY - r.top) / r.height - 0.5) * -5;
+        var ry = ((e.clientX - r.left) / r.width - 0.5) * 5;
+        el.style.transform = 'perspective(800px) rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg) translateY(-4px)';
+      });
+      el.addEventListener('mouseleave', function () { el.style.transform = ''; });
+    });
+  }
+})();
+</script>
+</body>
+</html>

@@ -42,6 +42,7 @@
 
 | 상태 | 제목 | slug |
 |---|---|---|
+| ✅ 2026-11-11 | AI가 읽기 좋은 가게 웹사이트 — 스키마·FAQ·llms.txt 실전 설정 | ai-friendly-website-setup |
 | ✅ 2026-11-09 | AI는 어디서 가게 정보를 가져올까 — 구글·옐프·지도·업소록 출처 정리 | where-ai-gets-business-info |
 | ✅ 2026-11-06 | 챗GPT에 우리 가게가 나오는지 직접 확인하는 법 — 질문 10개 테스트 | chatgpt-local-business-test |
 | ✅ 2026-11-04 | 챗GPT·제미나이가 우리 가게를 추천하게 하는 정보 정리법 — 가게 정보 시트 만들기 | ai-business-fact-sheet |
@@ -83,7 +84,6 @@
 
 | 상태 | 제목 | 카테고리 | related |
 |---|---|---|---|
-| ⬜ | AI가 읽기 좋은 가게 웹사이트 — 스키마·FAQ·llms.txt 실전 설정 | AI 검색 | seo-aio |
 | ⬜ | 구글 AI 모드에서 로컬 가게가 추천되는 조건 | AI 검색 | seo-aio |
 | ⬜ | AI 검색 시대에도 리뷰가 중요한 이유 — AI가 인용하는 리뷰의 특징 | AI 검색 | seo-aio |
 | ⬜ | 한국어로 물어도 우리 가게가 나올까 — 한인 가게의 AI 검색 이중 언어 전략 | AI 검색 | seo-aio |
