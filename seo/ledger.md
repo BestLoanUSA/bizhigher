@@ -9,5 +9,5 @@
 | 머지일 | backlog | PR | 바뀐 URL | 변경 | 기준선 | 판정 |
 |---|---|---|---|---|---|---|
 | (머지 후) | 0단계 · M-01 | — | 없음 (llms.txt 에 패키지 URL 3줄 추가, 리드 폼 숨은 필드) | seo/ 디렉터리, `scripts/seo-check.js`, CI 2개, 리드 source 추적, SEO 루틴 2개 | GSC 2026-10-02~10-29 노출 64 · 클릭 0 · 색인 68/84 (seo-data 2026-11-01) | 대상 아님 |
-| (머지 후) | I-01 | — | /service/local-listing-care/ · /tools/nap-check/ · /service/google-profile-optimization/ · /service/review-qr-kit/ | 문맥 링크 3개 + 블로그 링크 큐 2편 | 색인 68/84, unknown 6, discovered 5 (2026-11-01) | 
-| (머지 후) | K-01 | — | /tools/local-rank/ · (큐) /blog/near-me-search-ranking/ · /blog/not-showing-on-google/ | 가이드 깊이 보강 + FAQ 5개 + 블로그 링크 큐 2편 | "구글 지도 순위 체크" 류 평균 순위 48~74, 클릭 0 (2026-11-01) | |
+| 2026-11-02 | I-01 | — | /service/local-listing-care/ · /tools/nap-check/ · /service/google-profile-optimization/ · /service/review-qr-kit/ | 문맥 링크 3개 + 블로그 링크 큐 2편 | 색인 68/84, unknown 6, discovered 5 (2026-11-01) | ❌ 4주 전 판정 이른 중간: 11-08 68/87, unknown 4, discovered 10 — 새 글 증가분 포함, 12-01 재판정 |
+| 2026-11-03 | K-01 | — | /tools/local-rank/ · (큐) /blog/near-me-search-ranking/ · /blog/not-showing-on-google/ | 가이드 깊이 보강 + FAQ 5개 + 블로그 링크 큐 2편 | "구글 지도 순위 체크" 류 평균 순위 48~74, 클릭 0 (2026-11-01) | 중간(1주): 58위·노출 16, 방향 개선. 12-01 판정 |

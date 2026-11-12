@@ -30,7 +30,7 @@ items:
   - id: K-01
     title: /tools/local-rank/ — "구글 지도 순위 체크" 검색어 48~74위에서 1페이지로
     source: 2026-11-02 (latest.md 2026-11-01 — 노출 상위 검색어 "구글순위체크" 9, "구글 지도 순위 체크" 6, "구글지도순위체크" 4, "구글 지도 순위 조회" 1; tools 섹션이 전체 노출 35/64)
-    status: in-progress
+    status: done
     path: structure
     target: [content/tools/local-rank.md, /tools/local-rank/]
     notes: >
@@ -40,6 +40,7 @@ items:
       /blog/near-me-search-ranking/ 과 /blog/not-showing-on-google/ 본문에서 이 도구로 가는 링크 추가(지금은 하단 추천 블록만).
       성공 지표: 4주 뒤 "구글 지도 순위 체크" 류 평균 순위 30 이하, 클릭 1 이상.
       2026-11-03 claude/beautiful-meitner-zyudi1: content/tools/local-rank.md 에 "미국 구글 지도" 도입 문단·질문형 ## 3개(격자 뜻·몇 위면 손님이 오나·올리는 법 4가지)·FAQ 5개. 블로그 2편 링크는 글을 직접 쓰지 않는 규칙에 따라 upgrade-queue 맨 위에 넣음.
+      2026-11-09 머지 확인(11-03). 11-08 "구글 지도 순위 체크" 평균 58위(전 64위권), 클릭 0. 4주 판정은 12-01 이후.
 
   - id: O-01
     title: 블로그 <title> 태그를 짧게 — 56페이지가 표시 폭 60 초과
@@ -56,12 +57,13 @@ items:
   - id: O-02
     title: /pricing/ 제목·설명문에 "마케팅 대행 비용" — 노출은 받는데 82~92위
     source: 2026-11-02 (latest.md — "마케팅 대행사 비용" 2, "업종별 마케팅 패키지 비용" 2, "종합광고대행 비용" 1 이 /pricing/ 으로; seo-check — pricing 묶음 키워드가 제목·H1 에 없음)
-    status: ready
+    status: done
     path: structure
     target: [build.js, /pricing/]
     notes: >
       <title> 과 meta description 만 바꾼다(화면 H1·카피는 §1 원칙대로 베네핏 문구 유지). 예: "한인 마케팅 대행 비용 — 월 $139부터 정찰제 | BizHigher".
       가격 숫자는 services.json 에서 빌드가 넣는 값만. 성공 지표: 4주 뒤 "비용" 검색어 순위 50 이하.
+      2026-11-09 확인: /pricing/ <title> 이 "마케팅 대행 비용, 견적 없이 바로 확인 — 월 $139부터" 로 반영됨. FAQPage 는 K-03 에 남음.
 
   - id: K-02
     title: keyword-map 초안 정리 — 서비스·도구·허브·글이 같은 키워드를 쓰는 25곳의 각도 나누기
@@ -88,11 +90,12 @@ items:
   - id: L-01
     title: /blog/google-business-profile-qa-removed/ 들어오는 링크 2개뿐
     source: 2026-11-02 (seo-check — inbound 3 미만 1페이지)
-    status: ready
+    status: done
     path: upgrade-queue
     target: [/blog/google-business-profile-guide/, /blog/google-business-profile-posts/]
     notes: >
       Q&A 기능 종료 글은 구글 프로필 가이드·게시물 글 본문에서 "Q&A 가 사라진 뒤 질문은 어디로 받나" 문맥으로 링크하면 자연스럽다. 두 글을 upgrade-queue 에 메모와 함께.
+      2026-11-09 seo-check 들어오는 링크 3 미만 0 — 해결.
 
   - id: O-03
     title: /data/korean-business-digital-basics-2026-q4/ 설명문 폭 433 — 155자 규격으로
@@ -139,12 +142,13 @@ items:
   - id: I-03
     title: 크롤링은 됐지만 색인 안 된 블로그 2편 — near-me-search-ranking · korean-business-directory-list
     source: 2026-11-02 (index-latest.md 2026-11-01 — "Crawled - currently not indexed", 마지막 크롤링 10/13·10/18)
-    status: ready
+    status: done
     path: upgrade-queue
     target: [/blog/near-me-search-ranking/, /blog/korean-business-directory-list/]
     notes: >
       구글이 읽고도 색인하지 않았다 = 내용 차별성·내부 링크 부족 의심. 업그레이드 루틴이 각 글에 질문형 소제목·표·출처 있는 수치를 보강하고
       /tools/local-rank/ · /service/local-listing-care/ 로 문맥 링크를 단다(K-01·I-01 과 겹치지 않게 본문만). 성공 지표: 3주 뒤 두 글이 색인됨.
+      2026-11-09 확인: near-me-search-ranking(11-05)·korean-business-directory-list(11-03) 업그레이드 머지. 색인은 3주 뒤(11-23) index-latest 로 판정.
 
   - id: K-03
     title: /pricing/ 에 FAQPage — 비용 질문형 FAQ 4개
@@ -176,3 +180,34 @@ items:
     notes: >
       완료 2026-11-02 — David 가 켰고 seo-pr.yml 이 PR #121 을 열어 확인. (원래 메모) Settings → Actions → General → Workflow permissions → "Allow GitHub Actions to create and approve pull requests" 켜기(1회).
       켜기 전에는 SEO 루틴이 push 한 claude/seo-* 브랜치에 PR 이 자동으로 안 열린다 — 루틴 보고의 compare 링크로 David 가 직접 연다.
+
+  # ── 2026-11-09 전략 루틴 (seo-data 2026-11-08 스냅샷) ───────────────────────
+  - id: K-04
+    title: "/tools/review-reply/ — 6위권 노출 10회, 가이드 4.3KB 로 얇음 (리뷰 답글 생성기)"
+    source: "2026-11-09 (latest.md — /tools/review-reply 노출 10 · 평균 6.3위 · 클릭 0; 페이지 평가 B: 검색 결과에 답글 구조 3단계·악성 리뷰 사과→사실확인→개선 구조·언어별 예시·'사장님 승인 후 게시' 가 흔함)"
+    status: ready
+    path: structure
+    target: [content/tools/review-reply.md, /tools/review-reply/]
+    notes: >
+      content/tools/review-reply.md(4.3KB)에 질문형 ## 추가: 별점별 답글 3단계 구조(감사→내용 언급→재방문 / 사과→사실 확인→개선) 표 ·
+      한/영 이중 언어 답글 예문 · 답글에 쓰면 안 되는 것(보상 약속·개인정보·의료 환자 암시, CLAUDE.md §15) · 별 1~3은 사람이 확인 후 게시. FAQ 4~5개.
+      가격 언급 없음. 성공 지표: 4주 뒤 노출 유지하며 클릭 1 이상.
+
+  - id: I-04
+    title: "새로 '발견만 됨' 으로 밀린 블로그 7편 — 허브·관련 글에서 문맥 링크와 IndexNow"
+    source: "2026-11-09 (index-latest 11-08 — Discovered 10(11-01 은 5), unknown 4: 새 글 ai-business-fact-sheet·chatgpt-local-business-test + yelp-management-guide·service/local-listing-care 2주째 unknown)"
+    status: ready
+    path: structure
+    target: [/blog/ai-business-fact-sheet/, /blog/chatgpt-local-business-test/, /blog/yelp-management-guide/, /service/local-listing-care/, /service/local-listing-setup/, /service/shortform-video/, /tools/review-calc/]
+    notes: >
+      I-01 머지 후에도 service 3 + 블로그 다수가 그대로(2주 넘음 → 우선순위 상향). 점검: 각 URL 의 inbound 개수(seo-check 보고서 또는 dist grep),
+      홈·/services/·/tools/ 같은 강한 페이지에서 직접 링크가 있는지. ai-search-hub 에서 두 새 글로 가는 링크는 이미 있음(11-04/06 커밋) → 부족하면
+      /blog/ai-search-optimization-aio/ 본문 링크는 upgrade-queue 로. 머지 후 David 가 indexnow.yml 수동 실행했는지 확인(D-03). 성공 지표: 2주 뒤 unknown 0.
+
+  - id: D-03
+    title: "indexnow.yml 수동 실행(workflow_dispatch) 했는지 확인"
+    source: "2026-11-09 (I-01 notes — 11-02 부터 David 몫으로 남음; 서비스 3개가 아직 unknown/discovered)"
+    status: needs-david
+    path: david
+    target: [github.com/BestLoanUSA/bizhigher/actions/workflows/indexnow.yml]
+    notes: Actions → indexnow.yml → Run workflow (사이트맵 전체 전송). 이미 했다면 이 항목을 done 으로.
