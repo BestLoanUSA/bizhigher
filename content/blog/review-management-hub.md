@@ -1,5 +1,6 @@
 ---
 title: 리뷰 관리 완전 가이드 — 늘리기부터 나쁜 리뷰 대응까지
+seo_title: 구글 리뷰 관리 완전 가이드: 늘리기부터 대응까지
 slug: review-management-hub
 date: 2026-09-22
 updated: 2026-11-12

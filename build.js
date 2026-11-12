@@ -3314,7 +3314,7 @@ function loadPosts() {
     const words = body.replace(/[#>*|\-]/g, '').length;
     return { slug: meta.slug || f.replace(/\.md$/, ''), title: meta.title, description: meta.description,
       date: meta.date, updated: meta.updated || '', category: meta.category || '가이드', keywords: meta.keywords || '',
-      related: meta.related || '', hub: meta.hub === 'true', body, faqs,
+      related: meta.related || '', hub: meta.hub === 'true', seoTitle: meta.seo_title || '', body, faqs,
       // summary: 문장1 | 문장2 | 문장3 — 글 맨 위 "핵심 요약" 박스 + BlogPosting.abstract
       summary: (meta.summary || '').split('|').map((x) => x.trim()).filter(Boolean), readMin: Math.max(3, Math.round(words / 600)),
       // 한눈에 보기 배너(scripts/blog-banners.js 가 굽는다) · 본문 인포그래픽(design/infographic-templates)
@@ -3499,7 +3499,7 @@ function blogPostPage(p, posts) {
     : [];
   return head({
     // 검색 결과 제목은 약 60자에서 잘린다 — 길면 꼬리를 줄이고(| BizHigher), 그래도 길면 글 제목만
-    title: blogTitleTag(p.title),
+    title: p.seoTitle ? blogTitleTag(p.seoTitle) : blogTitleTag(p.title),
     description: p.description,
     pathName: `/blog/${p.slug}/`,
     jsonLd,

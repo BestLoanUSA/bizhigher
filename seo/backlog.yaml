@@ -44,7 +44,7 @@ items:
   - id: O-01
     title: 블로그 <title> 태그를 짧게 — 56페이지가 표시 폭 60 초과
     source: 2026-11-02 (seo-check 보고서 — 제목 폭 60 초과 56/84, 최대 106; 블로그는 "{제목} | BizHigher 블로그" 라 전부 초과)
-    status: ready
+    status: in-progress
     path: structure
     target: [build.js, content/blog/*.md]
     notes: >
@@ -52,6 +52,7 @@ items:
       (없으면 지금처럼 title). 접미는 " | BizHigher" 로 통일(블로그 를 떼면 폭 -6). 1차로 노출이 있는 글 7편과 허브 6편에
       seo_title(폭 50 이하, 묶음 keywords 의 첫 검색어 포함)을 넣는다 — 나머지는 upgrade-queue 루틴이 글을 손볼 때 채운다(규칙을 blog-calendar 스타일 가이드에 한 줄).
       seo-check 는 그대로 보고만 한다(막지 않음). 성공 지표: 4주 뒤 블로그 섹션 CTR 과 노출.
+      2026-11-10 claude/seo-o-01-20261110: build.js 가 front matter seo_title 을 <title> 에 사용, 허브 6편에 seo_title, 스타일 가이드 한 줄. 노출 있는 일반 글 7편의 seo_title 은 upgrade-queue 루틴이 채운다(남은 일).
 
   - id: O-02
     title: /pricing/ 제목·설명문에 "마케팅 대행 비용" — 노출은 받는데 82~92위
