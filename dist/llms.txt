@@ -58,6 +58,7 @@
 - 한/영 가게 소개문 생성기 (무료, 이메일만 입력): https://bizhigher.com/tools/bilingual-intro/ — 한국어로 쓴 가게 소개를 구글 프로필 규격(750자)에 맞는 자연스러운 영어·한국어 소개로 다듬습니다.
 
 ## 블로그 (한인 비즈니스 마케팅 가이드)
+- 구글 AI 모드에서 로컬 가게가 추천되는 조건: https://bizhigher.com/blog/google-ai-mode-local-business/
 - AI가 읽기 좋은 가게 웹사이트 — 스키마·FAQ·llms.txt 실전 설정: https://bizhigher.com/blog/ai-friendly-website-setup/
 - AI는 어디서 가게 정보를 가져올까 — 구글·옐프·지도·업소록 출처 정리: https://bizhigher.com/blog/where-ai-gets-business-info/
 - 챗GPT에 우리 가게가 나오는지 직접 확인하는 법 — 질문 10개 테스트: https://bizhigher.com/blog/chatgpt-local-business-test/

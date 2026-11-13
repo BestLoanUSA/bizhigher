@@ -363,6 +363,13 @@ clusters:
     support: [/blog/ai-search-hub/]
     related: /service/seo-aio/
 
+  - id: post-google-ai-mode-local-business
+    keywords: [구글 AI 모드, AI Mode, 구글 AI 모드 가게 추천, AI 모드 로컬 검색]
+    intent: informational
+    owner: /blog/google-ai-mode-local-business/
+    support: [/blog/ai-search-hub/]
+    related: /service/seo-aio/
+
   - id: post-google-business-profile-category-guide
     keywords: [구글 프로필 카테고리, 구글 비즈니스 프로필 주 카테고리, 추가 카테고리, GBP 카테고리 변경, 구글 지도 업종 설정]
     intent: informational
