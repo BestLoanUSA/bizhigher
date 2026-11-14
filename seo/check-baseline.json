@@ -1,7 +1,6 @@
 {
   "_about": "scripts/seo-check.js 의 알려진 위반 목록 — 나중에 고칠 것. 새 위반은 검사를 실패시키고, 여기 있는 항목이 더 이상 안 나오면 지우라고 알려 준다. 항목 추가는 PR 에서 David 승인. 통과시키려고 넣지 말고 고친다.",
   "blog": [
-    "content/blog/ads-hub.md 본문 1579자 (1,800 이상)",
     "content/blog/ai-search-hub.md 본문 1630자 (1,800 이상)",
     "content/blog/website-hub.md 본문 1683자 (1,800 이상)"
   ]
