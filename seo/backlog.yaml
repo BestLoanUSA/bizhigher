@@ -30,7 +30,7 @@ items:
   - id: K-01
     title: /tools/local-rank/ — "구글 지도 순위 체크" 검색어 48~74위에서 1페이지로
     source: 2026-11-02 (latest.md 2026-11-01 — 노출 상위 검색어 "구글순위체크" 9, "구글 지도 순위 체크" 6, "구글지도순위체크" 4, "구글 지도 순위 조회" 1; tools 섹션이 전체 노출 35/64)
-    status: in-progress
+    status: done
     path: structure
     target: [content/tools/local-rank.md, /tools/local-rank/]
     notes: >
@@ -40,11 +40,12 @@ items:
       /blog/near-me-search-ranking/ 과 /blog/not-showing-on-google/ 본문에서 이 도구로 가는 링크 추가(지금은 하단 추천 블록만).
       성공 지표: 4주 뒤 "구글 지도 순위 체크" 류 평균 순위 30 이하, 클릭 1 이상.
       2026-11-03 claude/beautiful-meitner-zyudi1: content/tools/local-rank.md 에 "미국 구글 지도" 도입 문단·질문형 ## 3개(격자 뜻·몇 위면 손님이 오나·올리는 법 4가지)·FAQ 5개. 블로그 2편 링크는 글을 직접 쓰지 않는 규칙에 따라 upgrade-queue 맨 위에 넣음.
+      2026-11-09 머지 확인(11-03). 11-08 "구글 지도 순위 체크" 평균 58위(전 64위권), 클릭 0. 4주 판정은 12-01 이후.
 
   - id: O-01
     title: 블로그 <title> 태그를 짧게 — 56페이지가 표시 폭 60 초과
     source: 2026-11-02 (seo-check 보고서 — 제목 폭 60 초과 56/84, 최대 106; 블로그는 "{제목} | BizHigher 블로그" 라 전부 초과)
-    status: ready
+    status: in-progress
     path: structure
     target: [build.js, content/blog/*.md]
     notes: >
@@ -52,57 +53,52 @@ items:
       (없으면 지금처럼 title). 접미는 " | BizHigher" 로 통일(블로그 를 떼면 폭 -6). 1차로 노출이 있는 글 7편과 허브 6편에
       seo_title(폭 50 이하, 묶음 keywords 의 첫 검색어 포함)을 넣는다 — 나머지는 upgrade-queue 루틴이 글을 손볼 때 채운다(규칙을 blog-calendar 스타일 가이드에 한 줄).
       seo-check 는 그대로 보고만 한다(막지 않음). 성공 지표: 4주 뒤 블로그 섹션 CTR 과 노출.
+      2026-11-16: 초안 PR #162(claude/seo-o-01-20261110) 열림·미머지. 제목 폭 60 초과 59 → 63 으로 늘어남(새 글 4편).
 
   - id: O-02
     title: /pricing/ 제목·설명문에 "마케팅 대행 비용" — 노출은 받는데 82~92위
     source: 2026-11-02 (latest.md — "마케팅 대행사 비용" 2, "업종별 마케팅 패키지 비용" 2, "종합광고대행 비용" 1 이 /pricing/ 으로; seo-check — pricing 묶음 키워드가 제목·H1 에 없음)
-    status: ready
+    status: done
     path: structure
     target: [build.js, /pricing/]
     notes: >
       <title> 과 meta description 만 바꾼다(화면 H1·카피는 §1 원칙대로 베네핏 문구 유지). 예: "한인 마케팅 대행 비용 — 월 $139부터 정찰제 | BizHigher".
       가격 숫자는 services.json 에서 빌드가 넣는 값만. 성공 지표: 4주 뒤 "비용" 검색어 순위 50 이하.
+      2026-11-09 확인: /pricing/ <title> 이 "마케팅 대행 비용, 견적 없이 바로 확인 — 월 $139부터" 로 반영됨. FAQPage 는 K-03 에 남음.
 
   - id: K-02
     title: keyword-map 초안 정리 — 서비스·도구·허브·글이 같은 키워드를 쓰는 25곳의 각도 나누기
     source: 2026-11-02 (seo-check 보고서 "두 묶음에 같은 키워드" 25, "owner 제목·H1 에 키워드 없음" 26)
-    status: ready
+    status: in-progress
     path: structure
     target: [seo/keyword-map.yaml]
     notes: >
       keyword-map.yaml 만 고치는 PR. 규칙: 같은 말이라도 서비스 = 구매(…대행, …비용), 도구 = 직접(…만들기, …체크), 블로그 = 정보(…하는 법, …이유)로
       키워드를 다시 적는다. 허브와 스포크가 같은 키워드면 스포크가 주인(허브는 지도 역할). 예: "구글 리뷰 링크 만들기" → tool-review-link 만,
       svc-review-qr-kit 는 "리뷰 QR 키트 제작·테이블텐트". owner 제목에 키워드가 없는 26곳은 키워드를 제목 쪽에 맞추거나(정보 글) 제목을 바꿀 O- 항목으로.
+      2026-11-16: 초안 PR #137(claude/seo-k-02-20261105) 11일째 열림·미머지. 11-15 seo-check 도 중복 25·제목 불일치 26 그대로.
 
   - id: Q-01
     title: 허브 글 4편이 1,800자 미만(1,579~1,683) — baseline 에서 빼기
     source: 2026-11-02 (seo-check blog 규칙 — check-baseline.json 의 4건)
-    status: ready
+    status: done
     path: upgrade-queue
     target: [content/blog/ads-hub.md, content/blog/ai-search-hub.md, content/blog/review-management-hub.md, content/blog/website-hub.md]
     notes: >
       content/blog-upgrade-queue.md 맨 위에 4편을 넣고 메모 "본문 1,800자 이상으로 — 각 스포크 요약을 2문장 + '언제 읽을 글인지' 한 줄로, FAQ 4개".
       2026-11-02: website-hub 는 이미 1,800자를 넘겨 baseline 에서 지울 수 있다(seo-check "고쳐짐"). 나머지 3편 남음.
       업그레이드 루틴이 고치면 다음 seo-check 가 "고쳐짐" 을 알려 주고, 그때 check-baseline.json 에서 지운다(실행 루틴의 다음 PR 에 포함).
+      2026-11-16: seo-check 가 ai-search-hub·website-hub 둘 다 "고쳐짐" — 이 주간 PR 에서 check-baseline.json 의 blog 2건을 지움. 4편 모두 1,800자 이상 → done.
 
   - id: L-01
     title: /blog/google-business-profile-qa-removed/ 들어오는 링크 2개뿐
     source: 2026-11-02 (seo-check — inbound 3 미만 1페이지)
-    status: ready
+    status: done
     path: upgrade-queue
     target: [/blog/google-business-profile-guide/, /blog/google-business-profile-posts/]
     notes: >
       Q&A 기능 종료 글은 구글 프로필 가이드·게시물 글 본문에서 "Q&A 가 사라진 뒤 질문은 어디로 받나" 문맥으로 링크하면 자연스럽다. 두 글을 upgrade-queue 에 메모와 함께.
-
-  - id: O-03
-    title: /data/korean-business-digital-basics-2026-q4/ 설명문 폭 433 — 155자 규격으로
-    source: 2026-11-02 (seo-check — 설명문 폭 80~320 밖 3; privacy·terms 는 법률 문서라 제외)
-    status: ready
-    path: structure
-    target: [data/reports/2026-Q4-digital-basics.json, build.js]
-    notes: >
-      리포트 페이지 description 이 editorial.dek 전체를 쓰는 것으로 보인다 — 첫 문장 또는 별도 `description` 필드로 155자 이내. 숫자는 리포트 값 그대로.
-      이 페이지는 "Crawled - currently not indexed" 상태이기도 하다(I-01 과 같이 보면 좋다).
+      2026-11-09 seo-check 들어오는 링크 3 미만 0 — 해결.
 
   - id: I-02
     title: /data/ 리포트 3편이 "크롤링됨 - 색인 안 됨" — 데이터 페이지 요약·내부 링크
@@ -139,12 +135,28 @@ items:
   - id: I-03
     title: 크롤링은 됐지만 색인 안 된 블로그 2편 — near-me-search-ranking · korean-business-directory-list
     source: 2026-11-02 (index-latest.md 2026-11-01 — "Crawled - currently not indexed", 마지막 크롤링 10/13·10/18)
-    status: ready
+    status: done
     path: upgrade-queue
     target: [/blog/near-me-search-ranking/, /blog/korean-business-directory-list/]
     notes: >
       구글이 읽고도 색인하지 않았다 = 내용 차별성·내부 링크 부족 의심. 업그레이드 루틴이 각 글에 질문형 소제목·표·출처 있는 수치를 보강하고
       /tools/local-rank/ · /service/local-listing-care/ 로 문맥 링크를 단다(K-01·I-01 과 겹치지 않게 본문만). 성공 지표: 3주 뒤 두 글이 색인됨.
+      2026-11-09 확인: near-me-search-ranking(11-05)·korean-business-directory-list(11-03) 업그레이드 머지. 색인은 3주 뒤(11-23) index-latest 로 판정.
+
+  - id: I-04
+    title: "새로 '발견만 됨' 으로 밀린 블로그 7편 — 허브·관련 글에서 문맥 링크와 IndexNow"
+    source: "2026-11-09 (index-latest 11-08 — Discovered 10(11-01 은 5), unknown 4: 새 글 ai-business-fact-sheet·chatgpt-local-business-test + yelp-management-guide·service/local-listing-care 2주째 unknown)"
+    status: ready
+    path: structure
+    target: [/service/local-listing-care/, /service/local-listing-setup/, /service/shortform-video/, /tools/review-calc/, /blog/chatgpt-local-business-test/, /blog/ai-business-fact-sheet/, /blog/yelp-management-guide/, /blog/small-business-blog-topic-ideas/, /blog/google-business-profile-services-guide/]
+    notes: >
+      I-01 머지 후에도 service 3 + 블로그 다수가 그대로(2주 넘음 → 우선순위 상향). 점검: 각 URL 의 inbound 개수(seo-check 보고서 또는 dist grep),
+      홈·/services/·/tools/ 같은 강한 페이지에서 직접 링크가 있는지. ai-search-hub 에서 두 새 글로 가는 링크는 이미 있음(11-04/06 커밋) → 부족하면
+      /blog/ai-search-optimization-aio/ 본문 링크는 upgrade-queue 로. 머지 후 David 가 indexnow.yml 수동 실행했는지 확인(D-03). 성공 지표: 2주 뒤 unknown 0.
+      2026-11-16 (index-latest 11-15): 색인 69/90, Discovered 13(11-08 은 10) · unknown 3. 새 글 4편(ai-friendly-website-setup·google-ai-mode-local-business·
+      where-ai-gets-business-info·slow-mobile-website-fix)도 Discovered 에 합류, chatgpt-local-business-test 는 2주째 unknown,
+      small-business-blog-topic-ideas·google-business-profile-services-guide 가 unknown 으로 되돌아감. 서비스 3개·/tools/review-calc 는 3주째 그대로 → 최우선.
+      seo-check inbound 3 미만은 0 이라 링크 "개수" 는 충분 — 이번 PR 은 홈·/services/·/tools/ 같은 자주 크롤되는 페이지에서 직접 가는 링크가 있는지에 집중.
 
   - id: K-03
     title: /pricing/ 에 FAQPage — 비용 질문형 FAQ 4개
@@ -176,3 +188,91 @@ items:
     notes: >
       완료 2026-11-02 — David 가 켰고 seo-pr.yml 이 PR #121 을 열어 확인. (원래 메모) Settings → Actions → General → Workflow permissions → "Allow GitHub Actions to create and approve pull requests" 켜기(1회).
       켜기 전에는 SEO 루틴이 push 한 claude/seo-* 브랜치에 PR 이 자동으로 안 열린다 — 루틴 보고의 compare 링크로 David 가 직접 연다.
+
+  # ── 2026-11-09 전략 루틴 (seo-data 2026-11-08 스냅샷) ───────────────────────
+  - id: K-04
+    title: "/tools/review-reply/ — 6위권 노출 10회, 가이드 4.3KB 로 얇음 (리뷰 답글 생성기)"
+    source: "2026-11-09 (latest.md — /tools/review-reply 노출 10 · 평균 6.3위 · 클릭 0; 페이지 평가 B: 검색 결과에 답글 구조 3단계·악성 리뷰 사과→사실확인→개선 구조·언어별 예시·'사장님 승인 후 게시' 가 흔함)"
+    status: ready
+    path: structure
+    target: [content/tools/review-reply.md, /tools/review-reply/]
+    notes: >
+      content/tools/review-reply.md(4.3KB)에 질문형 ## 추가: 별점별 답글 3단계 구조(감사→내용 언급→재방문 / 사과→사실 확인→개선) 표 ·
+      한/영 이중 언어 답글 예문 · 답글에 쓰면 안 되는 것(보상 약속·개인정보·의료 환자 암시, CLAUDE.md §15) · 별 1~3은 사람이 확인 후 게시. FAQ 4~5개.
+      가격 언급 없음. 성공 지표: 4주 뒤 노출 유지하며 클릭 1 이상.
+
+  - id: D-03
+    title: "indexnow.yml 수동 실행(workflow_dispatch) 했는지 확인"
+    source: "2026-11-09 (I-01 notes — 11-02 부터 David 몫으로 남음; 서비스 3개가 아직 unknown/discovered)"
+    status: done
+    path: david
+    target: [github.com/BestLoanUSA/bizhigher/actions/workflows/indexnow.yml]
+    notes: >
+      Actions → indexnow.yml → Run workflow (사이트맵 전체 전송). 2026-11-16 확인: 2026-11-02 07:12 UTC workflow_dispatch 실행 성공(#71) → done.
+      단 IndexNow 는 Bing·Yandex 등에 알리는 것이고 구글은 받지 않는다 — 구글 미색인은 D-04(Search Console 색인 요청)로.
+
+  # ── 2026-11-16 전략 루틴 (seo-data 2026-11-15 스냅샷) ───────────────────────
+  - id: D-04
+    title: "Search Console 에서 3주째 미색인 4곳 색인 요청 — 서비스 3개 + /tools/review-calc/"
+    source: "2026-11-16 (index-latest 11-15 — /service/local-listing-care·local-listing-setup·shortform-video·/tools/review-calc 가 11-01 부터 Discovered/unknown; IndexNow(D-03)는 구글에 가지 않음)"
+    status: needs-david
+    path: david
+    target: [search.google.com/search-console → URL 검사]
+    notes: >
+      URL 검사 API 는 읽기만 되고 색인 요청은 사람만 할 수 있다. Search Console(sc-domain:bizhigher.com) → 상단 URL 검사 →
+      https://bizhigher.com/service/local-listing-care/ 등 4개 각각 "색인 생성 요청". 하루 할당량 안이라 4개는 5분.
+      I-04 PR 이 머지된 뒤에 하면 더 좋다. 성공 지표: 2주 뒤 index-latest 에서 4곳 색인.
+
+  - id: D-05
+    title: "열린 claude/seo- 초안 PR 정리 — 3개 이상이면 실행 루틴이 쉰다"
+    source: "2026-11-16 (열린 초안 PR: #137 K-02(11-05) · #161 전략 11-09 · #162 O-01(11-10); 실행 루틴 규칙 '열린 claude/seo- 브랜치 3개 이상이면 쉼')"
+    status: needs-david
+    path: david
+    target: [github.com/BestLoanUSA/bizhigher/pulls]
+    notes: >
+      지난주 이후 실행 루틴이 새 항목(K-03·K-04·I-04)을 못 한 이유. 이 주간 PR 은 #161 내용을 그대로 포함하므로 #161 은 닫고 이것만 머지하면 된다.
+      #137(keyword-map 만)·#162(블로그 seo_title)는 검토 후 머지 또는 닫기. 2개 이하가 되면 다음 화·목 실행부터 ready 항목이 진행된다.
+
+  - id: K-05
+    title: "/tools/ad-copy-check/ — '페이스북 광고 글자수 20자' 18위 노출, 이미지 글자 20% 규칙 설명이 없음"
+    source: "2026-11-16 (latest.json topQueries — '페이스북 광고 글자수 20자' 노출 3 · 평균 18.3위 → /tools/ad-copy-check; 검색 결과 상위는 '이미지 텍스트 20% 규칙'과 그 폐지를 다룸)"
+    status: ready
+    path: structure
+    target: [content/tools/ad-copy-check.md, /tools/ad-copy-check/]
+    notes: >
+      검색하는 사람은 '20자' 와 '이미지 글자 20%' 를 섞어 기억한다. content/tools/ad-copy-check.md 에 질문형 ## 하나 추가:
+      "페이스북 광고 '20% 규칙'은 아직 있나요?" — 예전 규칙(이미지 면적 20% 이하) · 지금은 거절 규칙이 아니라 권장 수준(메타 공식 도움말로 확인한 표현만) ·
+      글자 수 권장(기본 문구 125자·제목 40자 — 이미 표에 있음)과 구분하는 표.
+      FAQ 1개 추가. 출처를 못 열면 날짜를 쓰지 않는다. 성공 지표: 4주 뒤 이 검색어 10위 이내, 클릭 1.
+
+  - id: K-06
+    title: "/blog/google-ai-overviews-local-business/ — 9위 노출, 서치 콘솔 AI 성과 보고서·AI 모드 글 연결 없음"
+    source: "2026-11-16 (latest.json topPages — 9위 1노출; 페이지 평가 B: 상위 결과가 '서치 콘솔 생성형 AI 성과 보고서로 AI 개요 노출 확인'·'질문형 롱테일' 을 다룸, 우리 글 10-09 이후 갱신 없음·## 5개)"
+    status: ready
+    path: upgrade-queue
+    target: [content/blog-upgrade-queue.md, /blog/google-ai-overviews-local-business/]
+    notes: >
+      content/blog-upgrade-queue.md 에서 google-ai-overviews-local-business 행을 맨 위로 올리고 우선 이유에 체크리스트:
+      ① "내 가게가 AI 요약에 나왔는지 확인하는 법" 절(서치 콘솔 성과 보고서 — 구글 공식 도움말로 확인한 메뉴 이름만) ② 새 글 /blog/google-ai-mode-local-business/ ·
+      /blog/where-ai-gets-business-info/ 로 문맥 링크(AI 요약 vs AI 모드 차이 표) ③ 첫 문단 직답 2~3문장 ④ updated 날짜. 성공 지표: 4주 뒤 노출 3 이상.
+
+  - id: K-07
+    title: "/tools/ads-budget/ — 8위 노출, '일일 예산의 2배까지 쓰는 날' 설명이 없음"
+    source: "2026-11-16 (latest.json topPages — /tools/ads-budget 8위 1노출; 페이지 평가 B: 상위 결과가 일일 예산 초과 지출(하루 최대 2배·월 상한 일예산×30.4)과 월 예산÷클릭단가 계산을 다룸, 우리 가이드 4.1KB 에 없음)"
+    status: ready
+    path: structure
+    target: [content/tools/ads-budget.md, /tools/ads-budget/]
+    notes: >
+      content/tools/ads-budget.md 에 질문형 ## "하루 예산보다 많이 나간 날이 있어요 — 정상인가요?" 추가: 하루 최대 2배·한 달 청구 상한(평균 일예산 × 30.4)을
+      구글 광고 고객센터 문서로 확인해 그대로, 표 1개(일예산 $20 → 하루 최대 $40 · 월 상한 $608). FAQ 1개. 가격(우리 서비스) 언급 없음.
+      성공 지표: 4주 뒤 노출 3 이상.
+
+  - id: O-03
+    title: /data/korean-business-digital-basics-2026-q4/ 설명문 폭 433 — 155자 규격으로
+    source: 2026-11-02 (seo-check — 설명문 폭 80~320 밖 3; privacy·terms 는 법률 문서라 제외)
+    status: ready
+    path: structure
+    target: [data/reports/2026-Q4-digital-basics.json, build.js]
+    notes: >
+      리포트 페이지 description 이 editorial.dek 전체를 쓰는 것으로 보인다 — 첫 문장 또는 별도 `description` 필드로 155자 이내. 숫자는 리포트 값 그대로.
+      이 페이지는 "Crawled - currently not indexed" 상태이기도 하다(I-01 과 같이 보면 좋다).

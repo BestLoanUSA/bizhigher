@@ -9,3 +9,21 @@ pages:
   - {url: /tools/review-link/, target: [구글 리뷰 링크 만들기], audited: 2026-11-02, scores: {tech: 2, gap: null, ai: null}, gaps: ["서비스 페이지와 키워드 중복"], backlog: [K-02]}
   - {url: /tools/nap-check/, target: [NAP 일관성], audited: 2026-11-02, scores: {tech: 2, gap: null, ai: null}, gaps: ["색인 상태는 seo-data 필요"], backlog: []}
   - {url: /package/local-starter/, target: [Local Starter 패키지], audited: 2026-11-02, scores: {tech: 2, gap: null, ai: null}, gaps: ["owner 제목·H1 에 묶음 키워드 없음"], backlog: [K-02]}
+  # 2026-11-09 (B 검색 경쟁·C AI 노출 포함)
+  - {url: /tools/review-reply/, target: [구글 리뷰 답글, 리뷰 답글 생성], audited: 2026-11-09, scores: {tech: 2, gap: 1, ai: 1}, gaps: ["가이드 4.3KB — 답글 3단계 구조·이중 언어 예문·금지 표현 표 없음", "FAQPage·Breadcrumb 있음"], backlog: [K-04]}
+  - {url: /tools/ad-copy-check/, target: [광고 문구 글자 수], audited: 2026-11-09, scores: {tech: 2, gap: null, ai: null}, gaps: ["가이드 4.0KB, 노출 1회(18위) — 지금은 보강 불필요"], backlog: []}
+  - {url: /blog/not-showing-on-google/, target: [구글 검색에 안 나오는 이유], audited: 2026-11-09, scores: {tech: 2, gap: 2, ai: 2}, gaps: ["11-07 업그레이드 직후 — 8.4위 5노출, 4주 뒤 재평가"], backlog: []}
+  - {url: /blog/google-business-profile-guide/, target: [구글 지도 등록 방법], audited: 2026-11-09, scores: {tech: 2, gap: 2, ai: 2}, gaps: ["3.5위 2노출 — 이미 업그레이드(10-24)"], backlog: []}
+  - {url: /blog/google-review-guide/, target: [구글 리뷰 늘리는 법], audited: 2026-11-09, scores: {tech: 2, gap: 1, ai: 1}, gaps: ["97위 — 검색 결과는 리뷰 링크·QR 위치·요청 시점 중심이라 해당 절이 제목 아래 상단에 보이지 않음", "경쟁 상위가 대부분 영어 일반 가이드 — 한국어 미국 특화가 차별점"], backlog: []}
+  - {url: /blog/review-management-hub/, target: [리뷰 관리 가이드], audited: 2026-11-09, scores: {tech: 1, gap: null, ai: null}, gaps: ["본문 1672자 — Q-01(baseline)"], backlog: [Q-01]}
+  - {url: /blog/ad-performance-metrics-guide/, target: [광고 성과 읽는 법], audited: 2026-11-09, scores: {tech: 2, gap: null, ai: null}, gaps: ["10위 1노출 — 관찰"], backlog: []}
+  - {url: /, target: [한인 마케팅 대행, 비즈하이어], audited: 2026-11-09, scores: {tech: 1, gap: null, ai: 0}, gaps: ["BreadcrumbList 없음(홈은 정상)", "'한인 가게 구글 지도 노출 도와주는 곳' 검색: 결과·요약에 BizHigher 안 나옴"], backlog: []}
+  # 2026-11-16 (B 검색 경쟁·C AI 노출 포함, seo-data 11-15)
+  - {url: /blog/google-business-profile-hub/, target: [구글 비즈니스 프로필, 구글 지도 등록], audited: 2026-11-16, scores: {tech: 2, gap: 2, ai: 2}, gaps: ["사이트 첫 블로그 클릭(14위) — 11-03 갱신·## 15개·표 7개, 검색 결과(설명 750자 중 앞 250자 노출·카테고리·인증 기간)를 이미 다룸", "<title> 79 폭 — O-01 대상"], backlog: [O-01]}
+  - {url: /blog/negative-review-response-guide/, target: [나쁜 리뷰 대응, 리뷰 답글 예문], audited: 2026-11-16, scores: {tech: 2, gap: 2, ai: 2}, gaps: ["11-12 업그레이드 직후(47위 3노출) — 검색 결과의 사과→사실 확인→개선 3단계·피해야 할 답글 유형을 표로 이미 다룸, 4주 뒤 재평가"], backlog: []}
+  - {url: /tools/ads-budget/, target: [구글 광고 예산 계산기, 구글 광고 최소 예산], audited: 2026-11-16, scores: {tech: 2, gap: 1, ai: 1}, gaps: ["가이드 4.1KB — 일일 예산 2배 초과 지출·월 상한(×30.4) 설명 없음", "svc-ads-management 와 '구글 광고 최소 예산' 중복(K-02)"], backlog: [K-07, K-02]}
+  - {url: /blog/photo-reviews-guide/, target: [포토 리뷰 늘리는 법, 사진 리뷰], audited: 2026-11-16, scores: {tech: 2, gap: 2, ai: 1}, gaps: ["검색 상위는 네이버·쇼핑몰 포토 리뷰 적립금 중심 — 구글 정책상 대가 금지라 우리 각도(정책 지키며 늘리기)가 차별점, 보강 불필요", "updated 없음(9-30)"], backlog: []}
+  - {url: /blog/bilingual-marketing-korean-local-customers/, target: [이중 언어 마케팅, 한인 가게 영어 마케팅], audited: 2026-11-16, scores: {tech: 2, gap: 2, ai: 1}, gaps: ["미국 한인 업소를 직접 다룬 경쟁 자료는 LA 한인 매체 기사 1건뿐 — 경쟁 약함", "대기열 다음 주제 'AI 검색 이중 언어 전략' 과 각도 겹침 주의(AI 검색 쪽으로 나누고 이 글로 링크)"], backlog: []}
+  - {url: /blog/google-ai-overviews-local-business/, target: [구글 AI 요약, AI Overviews 가게], audited: 2026-11-16, scores: {tech: 2, gap: 1, ai: 1}, gaps: ["서치 콘솔 생성형 AI 성과 보고서로 노출 확인하는 법 없음", "새 글 AI 모드·AI 정보 출처 글로 가는 링크 없음, 10-09 이후 갱신 없음"], backlog: [K-06]}
+  - {url: /service/review-reply/, target: [리뷰 답글 대행], audited: 2026-11-16, scores: {tech: 2, gap: 2, ai: 1}, gaps: ["'구글 리뷰 답글 대행 비용' 검색 결과에 답글 대행 가격을 공개한 곳 없음(리뷰 구매 상품만) — 정찰제 $49/월이 차별점", "'미국 한인 가게 리뷰 답글 관리 도와주는 곳' 검색: BizHigher 안 나옴"], backlog: []}
+  - {url: /tools/ad-keywords/, target: [구글 광고 제외 키워드 생성기], audited: 2026-11-16, scores: {tech: 2, gap: 2, ai: 1}, gaps: ["검색 결과에 제외 키워드 전용 무료 생성기 없음 — 경쟁 약함, 57위 1노출이라 관찰", "'미국 한인 식당 구글 광고 대행 저렴한 곳' 검색: BizHigher 안 나옴(크몽 위주)"], backlog: []}
