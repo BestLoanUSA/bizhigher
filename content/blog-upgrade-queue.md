@@ -16,7 +16,7 @@
 | ⬜ | trade-area-analysis-google-maps | 구글 노출 | |
 | ⬜ | instagram-vs-google-business-profile | 콘텐츠·SNS | |
 | ⬜ | website-visitors-no-calls | 웹사이트 | |
-| ⬜ | bilingual-marketing-korean-local-customers | 콘텐츠·SNS | |
+| ⬜ | bilingual-marketing-korean-local-customers | 콘텐츠·SNS | 2026-08 구글 프로필 지침이 상호의 두 언어 반복을 금지 — "간판이 두 언어면 그대로 입력" 문장 수정 필요 (korean-language-ai-search 참고) |
 | ⬜ | shortform-video-guide | 콘텐츠·SNS | |
 | ⬜ | seasonal-marketing-calendar | 광고 | 연말·연초 시기 맞춰 날짜 갱신 |
 | ⬜ | google-ai-overviews-local-business | AI 검색 | |
