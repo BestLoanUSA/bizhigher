@@ -58,6 +58,7 @@
 - 한/영 가게 소개문 생성기 (무료, 이메일만 입력): https://bizhigher.com/tools/bilingual-intro/ — 한국어로 쓴 가게 소개를 구글 프로필 규격(750자)에 맞는 자연스러운 영어·한국어 소개로 다듬습니다.
 
 ## 블로그 (한인 비즈니스 마케팅 가이드)
+- 사진 속 글자는 AI가 못 읽는다? — 메뉴판·영업시간 이미지 대신 텍스트로 올리는 법: https://bizhigher.com/blog/text-in-images-ai-search/
 - 한국어로 물어도 우리 가게가 나올까 — 한인 가게의 AI 검색 이중 언어 전략: https://bizhigher.com/blog/korean-language-ai-search/
 - AI 검색 시대에도 리뷰가 중요한 이유 — AI가 인용하는 리뷰의 특징: https://bizhigher.com/blog/ai-search-reviews/
 - 구글 AI 모드에서 로컬 가게가 추천되는 조건: https://bizhigher.com/blog/google-ai-mode-local-business/
