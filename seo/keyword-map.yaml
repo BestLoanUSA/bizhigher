@@ -290,7 +290,7 @@ clusters:
     keywords: [구글 비즈니스 프로필, 구글 지도 등록, 구글 검색 노출, GBP 완전 가이드]
     intent: informational
     owner: /blog/google-business-profile-hub/
-    support: [/blog/google-business-profile-category-guide/, /blog/google-business-profile-guide/, /blog/google-business-profile-hours-update/, /blog/google-business-profile-qa-removed/, /blog/google-business-profile-services-guide/, /blog/korean-business-directory-list/, /blog/near-me-search-ranking/, /blog/not-showing-on-google/, /blog/store-photo-guide/, /blog/trade-area-analysis-google-maps/]
+    support: [/blog/google-business-profile-category-guide/, /blog/google-business-profile-guide/, /blog/google-business-profile-hours-update/, /blog/google-business-profile-qa-removed/, /blog/google-business-profile-services-guide/, /blog/google-business-profile-description/, /blog/korean-business-directory-list/, /blog/near-me-search-ranking/, /blog/not-showing-on-google/, /blog/store-photo-guide/, /blog/trade-area-analysis-google-maps/]
     related: /service/google-profile-optimization/
 
   - id: hub-review-management-hub
@@ -403,6 +403,13 @@ clusters:
     intent: informational
     owner: /blog/google-business-profile-qa-removed/
     support: [/blog/google-business-profile-hub/]
+    related: /service/google-profile-optimization/
+
+  - id: post-google-business-profile-description
+    keywords: [구글 프로필 소개글, 구글 비즈니스 프로필 설명, 구글 프로필 설명 750자, 구글 지도 가게 소개, Google Business Profile description]
+    intent: informational
+    owner: /blog/google-business-profile-description/
+    support: [/blog/google-business-profile-hub/, /tools/bilingual-intro/]
     related: /service/google-profile-optimization/
 
   - id: post-google-business-profile-services-guide
