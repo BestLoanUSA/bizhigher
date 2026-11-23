@@ -169,6 +169,7 @@ function nav(active) {
     <a href="/data/">데이터</a>
     <a href="/tools/">무료 도구</a>
     <a href="/free-audit/">무료 진단</a>
+    <a href="/about/">회사 소개</a>
     <a href="/login/">비즈니스 로그인</a>
     <a class="btn btn-primary btn-block" href="/free-audit/" style="border-bottom:none;color:#fff;">무료 진단 받기</a>
   </div>
@@ -1359,6 +1360,24 @@ ${guide && guide.faqs.length ? `
 
 /* ---------- 페이지: 홈 ---------- */
 
+/* 홈 "검증된 경험" 띠 — 회사 소개(/about/)로 보내는 증거 한 줄. 숫자는 data/case-study.json */
+function homeProofBand() {
+  const pts = CASE.monthlyRevenue, max = Math.max(...pts.map((p) => p[1]));
+  const W = 600, H = 150;
+  const d = pts.map((p, i) => `${i ? 'L' : 'M'}${(i * W / (pts.length - 1)).toFixed(1)},${(H - 6 - (p[1] / max) * (H - 16)).toFixed(1)}`).join('');
+  return `<section class="hp-proof">
+  <a class="container hp-proof-in" href="/about/">
+    <div class="hp-proof-txt">
+      <p class="eyebrow">PROVEN</p>
+      <h2 class="h2">한 고객의 월 매출을<br><span class="grad">${krMoney(pts[0][1])} → ${krMoney(max)}</span></h2>
+      <p>BizHigher 대표가 성과 기반으로 10년 넘게 맡았던 회사의 실제 Google Analytics 기록입니다. 누적 온라인 매출 <b>$${Math.round(CASE.totals.revenue).toLocaleString('en-US')}</b>. 그 방식을 이제 AI 에이전트로 여러분 가게에.</p>
+      <span class="hp-proof-go">BizHigher를 만든 이유 보기 →</span>
+    </div>
+    <svg class="hp-proof-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="hpg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2F6BFF" stop-opacity=".5"/><stop offset="1" stop-color="#2F6BFF" stop-opacity="0"/></linearGradient></defs><path d="${d}L${W},${H}L0,${H}Z" fill="url(#hpg)"/><path d="${d}" fill="none" stroke="#22D3EE" stroke-width="2.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>
+  </a>
+</section>`;
+}
+
 function homePage(posts) {
   const jsonLd = [
     {
@@ -2129,6 +2148,8 @@ ${showcaseSection()}
 })();
 </script>
 
+${homeProofBand()}
+
 <section class="section acc-section">
   <div class="container">
     <p class="eyebrow">EXPERTISE</p>
@@ -2488,6 +2509,166 @@ ${PV_JS}
     <div class="hero-ctas" style="margin-top:30px;"><a href="/pricing/#plans" class="btn btn-primary">플랜 비교하기 →</a></div>
   </div>
 </section>
+` + FOOTER;
+}
+
+/* ---------- 페이지: 회사 소개 /about/ (2026-11-16 David) ----------
+   David 가 에이전시 시절 성과 기반으로 10년 넘게 맡았던 고객 1곳의 실제 숫자(GA 원본 보고서) → BizHigher 를 만든 이유.
+   숫자는 data/case-study.json(원본에서 옮김, 고객사 이름은 공개하지 않는다). 원본 캡처는 src/about/(도메인이 보이는 머리는 잘라 냄).
+   움직임은 가시성 독트린대로 — 숫자·그래프는 기본으로 다 보이고, JS 가 붙은 뒤에만 비웠다가 채운다(3초 폴백, reduced-motion 이면 그대로) */
+const CASE = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'case-study.json'), 'utf8'));
+function krMoney(n) {
+  n = Math.round(n);
+  const eok = Math.floor(n / 1e8), man = Math.round((n % 1e8) / 1e4);
+  if (eok) return `$${eok}억${man ? ' ' + man.toLocaleString('en-US') + '만' : ''}`;
+  if (n >= 1e4) return `$${Math.round(n / 1e4).toLocaleString('en-US')}만`;
+  return '$' + n.toLocaleString('en-US');
+}
+const CH_KO = { 'Paid Search': '검색 광고', Direct: '직접 방문(재방문·브랜드)', '(Other)': '기타 채널', 'Organic Search': '자연 검색(SEO)', Social: '소셜', Referral: '추천 사이트·제휴', Display: '디스플레이 광고', Email: '이메일', TikTok: '틱톡' };
+
+function aboutChart() {
+  const pts = CASE.monthlyRevenue; const W = 1000, H = 420, L = 8, R = 8, T = 24, B = 34;
+  const max = Math.max(...pts.map((p) => p[1]));
+  const x = (i) => L + (i * (W - L - R)) / (pts.length - 1);
+  const y = (v) => T + (1 - v / (max * 1.08)) * (H - T - B);
+  const line = pts.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p[1]).toFixed(1)}`).join('');
+  const area = `${line}L${x(pts.length - 1).toFixed(1)},${H - B}L${x(0).toFixed(1)},${H - B}Z`;
+  const peakI = pts.findIndex((p) => p[1] === max);
+  const years = [...new Set(pts.map((p) => p[0].slice(0, 4)))];
+  const grid = [10e6, 20e6, 30e6].map((v) => `<line x1="${L}" x2="${W - R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" class="ab-grid"/><text x="${W - R}" y="${(y(v) - 6).toFixed(1)}" text-anchor="end" class="ab-ax">$${(v / 1e4).toLocaleString('en-US')}만</text>`).join('');
+  const yl = years.map((yr) => { const i = pts.findIndex((p) => p[0].startsWith(yr)); return `<text x="${x(i).toFixed(1)}" y="${H - 10}" class="ab-ax">${yr}</text>`; }).join('');
+  const dot = (i, cls) => `<circle cx="${x(i).toFixed(1)}" cy="${y(pts[i][1]).toFixed(1)}" r="7" class="ab-dot ${cls}"/>`;
+  return `<div class="ab-chart" id="abChart">
+  <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="월 매출 추이: 2017년 1월 ${krMoney(pts[0][1])}에서 ${pts[peakI][0].replace('-', '년 ')}월 ${krMoney(max)}까지">
+    <defs><linearGradient id="abFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2F6BFF" stop-opacity=".55"/><stop offset="1" stop-color="#2F6BFF" stop-opacity="0"/></linearGradient>
+    <linearGradient id="abLine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7DA2FF"/><stop offset=".6" stop-color="#2F6BFF"/><stop offset="1" stop-color="#22D3EE"/></linearGradient></defs>
+    ${grid}${yl}
+    <path d="${area}" class="ab-area" fill="url(#abFill)"/>
+    <path d="${line}" class="ab-line" stroke="url(#abLine)" pathLength="1"/>
+    ${dot(0, 'ab-d0')}${dot(peakI, 'ab-dpk')}
+  </svg>
+  <div class="ab-tag ab-t0" style="left:${(x(0) / W * 100).toFixed(1)}%;top:${(y(pts[0][1]) / H * 100 - 22).toFixed(1)}%"><b>${krMoney(pts[0][1])}</b><span>2017년 1월 · 첫 달</span></div>
+  <div class="ab-tag ab-tpk" style="left:${(x(peakI) / W * 100).toFixed(1)}%;top:${(y(max) / H * 100).toFixed(1)}%"><b>${krMoney(max)}</b><span>${pts[peakI][0].slice(0, 4)}년 ${+pts[peakI][0].slice(5)}월 · 한 달 매출</span></div>
+</div>`;
+}
+
+function aboutPage() {
+  const t = CASE.totals, pts = CASE.monthlyRevenue;
+  const max = Math.max(...pts.map((p) => p[1]));
+  const byYear = {}; pts.forEach(([m, v]) => { const yr = m.slice(0, 4); byYear[yr] = (byYear[yr] || 0) + v; });
+  const yrs = Object.entries(byYear); const ymax = Math.max(...yrs.map((e) => e[1]));
+  const chTotal = CASE.channelsByRevenue.reduce((s, c) => s + c.revenue, 0);
+  const chs = CASE.channelsByRevenue.filter((c) => c.revenue / chTotal >= 0.004);
+  const roasX = (parseFloat(String(CASE.googleAds.roas).replace(/,/g, '')) / 100).toFixed(1);
+  const jsonLd = [
+    { '@context': 'https://schema.org', '@type': 'AboutPage', name: 'BizHigher 회사 소개', url: `${SITE.domain}/about/`, inLanguage: 'ko', isPartOf: { '@id': WEBSITE_ID }, about: ORG_REF, publisher: ORG_REF },
+    breadcrumbList([{ name: '홈', url: `${SITE.domain}/` }, { name: '회사 소개', url: `${SITE.domain}/about/` }]),
+  ];
+  const stat = (n, label, attr = '') => `<div class="ab-stat"><b${attr}>${n}</b><span>${label}</span></div>`;
+  const ch = (no, yr, title, body) => `<li class="ab-step"><span class="ab-step-no">${no}</span><div><em>${yr}</em><h3>${title}</h3><p>${body}</p></div></li>`;
+  const map = (from, to, slug, name) => `<a class="ab-map" href="/service/${slug}/"><span class="ab-map-from">그 회사에서 한 일</span><b>${from}</b><span class="ab-map-arrow" aria-hidden="true">↓</span><span class="ab-map-from">여러분 가게에는</span><b class="ab-map-to">${to}</b><i>${name} →</i></a>`;
+  return head({
+    title: '회사 소개 — 한 고객의 월 매출을 $2만에서 $3,634만으로 | BizHigher',
+    description: `BizHigher 대표가 성과 기반 계약으로 10년 넘게 맡은 한 고객사는 Google Analytics 기록으로 누적 온라인 매출 ${krMoney(t.revenue)}, 한 달 최고 ${krMoney(max)}을 냈습니다. 그 경험을 AI 에이전트로 한인 사장님 모두에게 엽니다.`,
+    pathName: '/about/',
+    jsonLd,
+  }) + nav('about') + `
+<header class="ab-hero">
+  <div class="container">
+    ${crumbsHtml([{ name: '홈', url: '/' }, { name: '회사 소개' }])}
+    <p class="ab-eyebrow">BizHigher를 만든 이유</p>
+    <h1 class="ab-h1">한 고객을 위해 하던 일을,<br><span class="grad">이제 모든 한인 사장님께.</span></h1>
+    <div class="ab-big" aria-label="누적 온라인 매출 ${krMoney(t.revenue)}">
+      <span class="ab-big-n" data-count="${Math.round(t.revenue)}">$${Math.round(t.revenue).toLocaleString('en-US')}</span>
+      <span class="ab-big-l">제가 성과 기반으로 맡았던 고객사 한 곳의 온라인 매출 · Google Analytics 기록 (${pts[0][0].replace('-', '.')} ~ ${pts[pts.length - 1][0].replace('-', '.')})</span>
+    </div>
+    <div class="ab-stats">
+      ${stat(krMoney(max), '한 달 최고 매출')}
+      ${stat(t.transactions.toLocaleString('en-US') + '건', '온라인 주문')}
+      ${stat(Math.round(t.users / 1e4).toLocaleString('en-US') + '만 명', '사이트 방문자')}
+      ${stat(roasX + '배', `검색 광고 수익률(ROAS) · ${CASE.googleAds.period}`)}
+    </div>
+  </div>
+</header>
+
+<section class="section ab-sec">
+  <div class="container">
+    <p class="ab-kicker">숫자로 보는 여정</p>
+    <h2 class="h2 ab-h2">보여주기용 웹사이트에서,<br>한 달 ${krMoney(max)} 매출까지</h2>
+    <p class="ab-lead">구매 버튼조차 없던 회사였습니다. 사이트를 쇼핑몰로 바꾸고, 광고·검색·소셜·이메일을 매달 숫자로 고쳐 나갔습니다. 아래는 그 회사의 월별 온라인 매출입니다.</p>
+    ${aboutChart()}
+    <div class="ab-years">${yrs.map(([yr, v]) => `<div class="ab-yr"><i style="--h:${Math.max(4, Math.round((v / ymax) * 100))}%"></i><b>${krMoney(v)}</b><span>${yr}${yr === pts[pts.length - 1][0].slice(0, 4) && pts[pts.length - 1][0].slice(5) !== '12' ? `<small> (1~${+pts[pts.length - 1][0].slice(5)}월)</small>` : ''}</span></div>`).join('')}</div>
+    <p class="ab-foot">출처: 그 회사의 Google Analytics(유니버설 애널리틱스) 전자상거래 보고서, ${CASE.period}. 이 보고서에 매출이 기록된 달은 ${pts[0][0].replace('-', '년 ')}월 ~ ${pts[pts.length - 1][0].replace('-', '년 ')}월입니다. 2020~2021년은 온라인 쇼핑 특수도 함께 탔고, 그 특수가 꺼진 2022년에도 2~11월 매달 $600만~$990만대를 지켰습니다. 고객사 이름은 공개하지 않습니다.</p>
+  </div>
+</section>
+
+<section class="section section-gray ab-sec">
+  <div class="container-narrow">
+    <p class="ab-kicker">이야기</p>
+    <h2 class="h2 ab-h2">고객 한 명으로 충분했지만,<br>그래서 위태로웠습니다</h2>
+    <ol class="ab-story">
+      ${ch('1', '시작', '처음엔 "보여주기용" 웹사이트뿐이었습니다', '제품을 소개만 하고 살 수는 없는 사이트였습니다. 제가 광고를 맡으면서 가장 먼저 한 일은 사이트를 결제가 되는 쇼핑몰로 바꾸는 것이었습니다. 손님이 광고를 누르고 들어와서 바로 살 수 있어야 광고비가 매출이 되니까요.')}
+      ${ch('2', '10년 넘게', '고객이 벌어야 저도 버는 계약', '계약은 성과 기반이었습니다. 매출이 오르지 않으면 제 수입도 없었습니다. 그래서 광고만이 아니라 검색 노출, 소셜, 이메일, 사이트 개선까지 마케팅에 관한 일은 전부 맡았고, 매달 숫자를 보고 안 되는 것은 끄고 되는 것에 돈을 옮겼습니다.')}
+      ${ch('3', '그 결과', `한 달 ${krMoney(max)}`, `월 매출이 수백만 달러를 넘는 회사가 됐고, 가장 많이 판 달에는 한 달에 ${krMoney(max)}을 팔았습니다. 성과 기반이었으니 저도 그 고객 한 곳만으로 충분히 먹고살 수 있었습니다.`)}
+      ${ch('4', '하지만', '확장이 안 되는 구조', '풀타임 직원을 뽑기엔 애매한 수입이었고, 새 고객을 받으려면 제 시간이 모자랐습니다. 무엇보다 회사 전체가 고객 한 곳에 기대고 있었습니다. 그 한 곳이 흔들리면 모든 게 흔들리는 구조였습니다.')}
+      ${ch('5', '그래서', '그 매출을 내려놓고 BizHigher를 만들었습니다', '이제는 AI 에이전트 여러 개가 동시에 리서치·제작·광고 최적화를 합니다. 예전에 제가 밤새 하던 일을 에이전트들이 병렬로 처리하고, 저는 최종 결과물을 검수하는 데 집중합니다. 한 고객에게 쏟던 방식을, 이제 여러 가게에 동시에 쏟을 수 있게 됐습니다.')}
+    </ol>
+    <blockquote class="ab-quote">한 회사를 이렇게 키워 본 경험으로, 여러분의 가게가 잘되는 데 최선을 다하겠습니다.<cite>David · BizHigher 대표</cite></blockquote>
+  </div>
+</section>
+
+<section class="section ab-sec">
+  <div class="container">
+    <p class="ab-kicker">광고 하나가 아니라, 모든 채널</p>
+    <h2 class="h2 ab-h2">매출은 어디서 나왔나</h2>
+    <p class="ab-lead">검색 광고가 가장 컸지만 절반이 넘는 매출은 다른 채널에서 나왔습니다. 광고로 처음 온 손님이 다시 찾아오고(직접 방문), 검색에 걸리고, 소셜에서 다시 만나게 만든 결과입니다.</p>
+    <div class="ab-ch">${chs.map((c) => { const pct = (c.revenue / chTotal) * 100; return `<div class="ab-ch-row"><span class="ab-ch-n">${CH_KO[c.name] || c.name}</span><span class="ab-ch-bar"><i style="--w:${Math.max(1.5, (pct / ((chs[0].revenue / chTotal) * 100)) * 100).toFixed(1)}%"></i></span><span class="ab-ch-v"><b>${pct.toFixed(1)}%</b>${krMoney(c.revenue)}</span></div>`; }).join('')}</div>
+    <p class="ab-foot">채널별 매출 비중 · 같은 Google Analytics 보고서(${CASE.period}). 방문 ${Math.round(t.sessions / 1e4).toLocaleString('en-US')}만 회, 페이지뷰 ${Math.round(t.pageviews / 1e4).toLocaleString('en-US')}만, 방문당 ${t.pagesPerSession}페이지.</p>
+  </div>
+</section>
+
+<section class="section section-gray ab-sec">
+  <div class="container">
+    <p class="ab-kicker">같은 방식, 가게 크기에 맞게</p>
+    <h2 class="h2 ab-h2">그때 한 일이, 지금 BizHigher 상품입니다</h2>
+    <div class="ab-maps">
+      ${map('보여주기용 사이트 → 살 수 있는 쇼핑몰', '전화·예약·길찾기가 되는 웹사이트', 'website', '웹사이트 제작')}
+      ${map(`검색 광고 수익률 ${roasX}배`, '내 동네 손님만 노리는 구글·메타 광고', 'ads-setup', '광고 셋업')}
+      ${map('검색 노출 · 재방문 키우기', '구글 지도·검색·AI 답변에 걸리는 가게', 'seo-aio', 'SEO/AIO 관리')}
+      ${map('매달 숫자로 판단', '매달 무엇을 했고 무엇이 늘었는지 리포트', 'ai-marketing-report', 'AI 마케팅 리포트')}
+    </div>
+  </div>
+</section>
+
+<section class="section ab-sec">
+  <div class="container">
+    <p class="ab-kicker">원본 화면</p>
+    <h2 class="h2 ab-h2">지어낸 숫자가 아닙니다</h2>
+    <div class="ab-proof">
+      <figure><img src="/about/ga-acquisition-2017-2023.jpg" alt="Google Analytics 획득 개요 화면 — 2017년 1월~2023년 10월, 사용자 26,731,007명, 거래 239,991건, 매출 $546,464,221.62" width="1400" height="738" loading="lazy" decoding="async"><figcaption>Google Analytics 획득 개요 · ${CASE.period} · 사용자 ${t.users.toLocaleString('en-US')} · 거래 ${t.transactions.toLocaleString('en-US')} · 매출 $${t.revenue.toLocaleString('en-US')}</figcaption></figure>
+      <figure><img src="/about/google-ads-2024.jpg" alt="Google Ads 화면 — 2024년 2월 16일~4월 30일, 클릭 43만, 노출 3,270만, 구매 1,240건, 실제 ROAS 1,045.68%" width="992" height="328" loading="lazy" decoding="async"><figcaption>Google Ads · ${CASE.googleAds.period} · 클릭 ${CASE.googleAds.clicks} · 노출 ${CASE.googleAds.impressions} · 구매 ${CASE.googleAds.purchases}건 · ROAS ${CASE.googleAds.roas}</figcaption></figure>
+    </div>
+    <div class="ab-honest"><b>솔직하게 말씀드리면</b><p>이 숫자는 전국에 파는 온라인 쇼핑몰 한 곳의 결과입니다. 동네 식당·미용실·치과는 시장 크기도 예산도 다르니 같은 숫자를 약속드리지 않습니다. 다만 하는 방식은 같습니다 — 손님이 살 수 있게 만들고, 광고·검색·리뷰를 매달 숫자로 보고 고칩니다. 내 가게가 지금 어디서 새고 있는지는 60초 무료 진단으로 먼저 확인하실 수 있습니다.</p>
+      <div class="ab-cta"><a class="btn btn-primary" href="/free-audit/">내 가게 무료 진단 받기 →</a><a class="btn btn-ghost" href="/pricing/">가격 보기</a></div></div>
+  </div>
+</section>
+<script>
+(function () {
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce || !('IntersectionObserver' in window)) return;
+  var root = document.documentElement; root.classList.add('ab-js');
+  var done = false; function showAll() { if (done) return; done = true; root.classList.add('ab-in-all'); }
+  setTimeout(function () { document.querySelectorAll('.ab-anim').forEach(function (el) { el.classList.add('ab-in'); }); }, 3000);
+  var big = document.querySelector('.ab-big-n');
+  if (big) { var to = +big.getAttribute('data-count'), t0 = null; big.textContent = '$0';
+    function step(ts) { if (!t0) t0 = ts; var p = Math.min(1, (ts - t0) / 2200), e = 1 - Math.pow(1 - p, 4); big.textContent = '$' + Math.round(to * e).toLocaleString('en-US'); if (p < 1) requestAnimationFrame(step); }
+    requestAnimationFrame(step); setTimeout(function () { big.textContent = '$' + to.toLocaleString('en-US'); }, 3000); }
+  var els = document.querySelectorAll('#abChart, .ab-years, .ab-ch, .ab-step');
+  els.forEach(function (el) { el.classList.add('ab-anim'); });
+  var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('ab-in'); io.unobserve(e.target); } }); }, { threshold: 0.3 });
+  els.forEach(function (el) { io.observe(el); });
+})();
+</script>
 ` + FOOTER;
 }
 
@@ -4157,6 +4338,7 @@ function sitemap() {
     { u: '/' },
     { u: '/services/' },
     { u: '/pricing/' },
+    { u: '/about/' },
     { u: '/free-audit/' },
     { u: '/tools/' },
     ...TOOLS.own.map((t) => ({ u: `/tools/${t.slug}/` })),
@@ -4780,6 +4962,7 @@ function footerColsHtml() {
       </div>
       <div class="footer-col">
         <span class="footer-head">BizHigher</span>
+        ${link('/about/', '회사 소개')}
         ${link('/data/', '데이터 리포트')}
         ${link('/privacy/', '개인정보처리방침')}
         ${link('/terms/', '이용약관')}
@@ -4806,6 +4989,8 @@ const POSTS = loadPosts();
 write('index.html', homePage(POSTS));
 write('services/index.html', servicesPage());
 write('pricing/index.html', pricingPage());
+write('about/index.html', aboutPage());
+for (const f of fs.readdirSync(path.join(__dirname, 'src', 'about'))) { fs.mkdirSync(path.join(DIST, 'about'), { recursive: true }); fs.copyFileSync(path.join(__dirname, 'src', 'about', f), path.join(DIST, 'about', f)); }
 write('free-audit/index.html', auditPage());
 write('thanks/index.html', thanksPage());
 write('thanks/done/index.html', thanksDonePage());
