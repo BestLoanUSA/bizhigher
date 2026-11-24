@@ -1,5 +1,6 @@
 ---
 title: AI 검색 시대 가게 노출 완전 가이드 — ChatGPT·구글 AI 요약에 읽히는 가게 만들기
+seo_title: AI 검색 최적화: ChatGPT·구글 AI 노출 가이드
 slug: ai-search-hub
 date: 2026-10-12
 description: ChatGPT와 구글 AI 요약이 가게를 소개하는 방식, 준비해야 할 기본기, 연말 점검 순서를 AI 검색 관련 글들과 함께 단계별로 정리한 가이드입니다.
