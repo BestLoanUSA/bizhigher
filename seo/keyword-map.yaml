@@ -297,7 +297,7 @@ clusters:
     keywords: [리뷰 관리, 구글 리뷰, 나쁜 리뷰 대응, 옐프 관리, 리뷰 답글]
     intent: informational
     owner: /blog/review-management-hub/
-    support: [/blog/google-review-guide/, /blog/negative-review-response-guide/, /blog/photo-reviews-guide/, /blog/review-qr-code-placement/, /blog/yelp-management-guide/]
+    support: [/blog/google-review-guide/, /blog/negative-review-response-guide/, /blog/photo-reviews-guide/, /blog/review-qr-code-placement/, /blog/review-request-flow/, /blog/yelp-management-guide/]
     related: /service/review-reply/
 
   - id: hub-website-hub
@@ -481,6 +481,13 @@ clusters:
     owner: /blog/online-menu-guide/
     support: [/blog/website-hub/]
     related: /service/website/
+
+  - id: post-review-request-flow
+    keywords: [구글 리뷰 줄었을 때, 리뷰 요청 흐름, 단골 리뷰 요청, 리뷰 요청 문자, 구글 리뷰 속도]
+    intent: informational
+    owner: /blog/review-request-flow/
+    support: [/blog/review-management-hub/]
+    related: /service/review-reply/
 
   - id: post-photo-reviews-guide
     keywords: [포토 리뷰, 구글 사진 리뷰, 리뷰 사진 늘리기, 구글 지도 리뷰, 리뷰 요청 방법]
