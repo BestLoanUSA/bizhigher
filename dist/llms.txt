@@ -58,6 +58,7 @@
 - 한/영 가게 소개문 생성기 (무료, 이메일만 입력): https://bizhigher.com/tools/bilingual-intro/ — 한국어로 쓴 가게 소개를 구글 프로필 규격(750자)에 맞는 자연스러운 영어·한국어 소개로 다듬습니다.
 
 ## 블로그 (한인 비즈니스 마케팅 가이드)
+- 한인 가게 인스타그램 프로필 정리법 — 소개글·링크·하이라이트 설정: https://bizhigher.com/blog/instagram-profile-setup/
 - 단골 리뷰가 줄었을 때 — 자연스럽게 리뷰 요청 흐름 만드는 법: https://bizhigher.com/blog/review-request-flow/
 - 구글 프로필 소개글(설명) 750자 쓰는 법 — 검색과 AI 모두에 읽히는 문장: https://bizhigher.com/blog/google-business-profile-description/
 - 사진 속 글자는 AI가 못 읽는다? — 메뉴판·영업시간 이미지 대신 텍스트로 올리는 법: https://bizhigher.com/blog/text-in-images-ai-search/

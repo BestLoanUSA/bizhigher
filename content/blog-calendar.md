@@ -42,6 +42,7 @@
 
 | 상태 | 제목 | slug |
 |---|---|---|
+| ✅ 2026-11-27 | 한인 가게 인스타그램 프로필 정리법 — 소개글·링크·하이라이트 설정 | instagram-profile-setup |
 | ✅ 2026-11-25 | 단골 리뷰가 줄었을 때 — 자연스럽게 리뷰 요청 흐름 만드는 법 | review-request-flow |
 | ✅ 2026-11-23 | 구글 프로필 소개글(설명) 750자 쓰는 법 — 검색과 AI 모두에 읽히는 문장 | google-business-profile-description |
 | ✅ 2026-11-20 | 사진 속 글자는 AI가 못 읽는다? — 메뉴판·영업시간 이미지 대신 텍스트로 올리는 법 | text-in-images-ai-search |
@@ -90,7 +91,6 @@
 
 | 상태 | 제목 | 카테고리 | related |
 |---|---|---|---|
-| ⬜ | 한인 가게 인스타그램 프로필 정리법 — 소개글·링크·하이라이트 설정 | 콘텐츠·SNS | seo-blog-pack |
 | ⬜ | AI가 우리 가게 정보를 틀리게 말할 때 — 잘못된 출처 찾아 고치는 순서 | AI 검색 | seo-aio |
 | ⬜ | 빙(Bing Places) 등록, AI 검색 시대에 다시 봐야 하는 이유 — 코파일럿·챗GPT와의 관계 | AI 검색 | local-listing-setup |
 | ⬜ | 애플 지도에 우리 가게 제대로 띄우기 — Apple Business Connect 설정법 | 구글 노출 | local-listing-setup |
